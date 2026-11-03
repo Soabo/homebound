@@ -96,7 +96,7 @@ func _build() -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var grass_a := Color(0.16, 0.24, 0.08)
 	var grass_b := Color(0.25, 0.3, 0.1)
-	var forest_floor := Color(0.17, 0.15, 0.09)
+	var forest_floor := Color(0.11, 0.12, 0.06)
 	var road_col := Color(0.3, 0.24, 0.16)
 
 	for iz in steps + 1:

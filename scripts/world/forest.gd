@@ -79,13 +79,14 @@ func _build_trees() -> void:
 
 			if conifer:
 				var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), _rng.randf())
-				var layers := 8
-				var crown_r := h * _rng.randf_range(0.16, 0.21)
-				var bottom := h * _rng.randf_range(0.18, 0.3)
+				# Viele überlappende, schlanke Kegel ergeben die typische Tannenform.
+				var layers := 9
+				var crown_r := h * _rng.randf_range(0.15, 0.19)
+				var bottom := h * _rng.randf_range(0.12, 0.22)
 				for i in layers:
 					var f := float(i) / float(layers - 1)
-					var lr := crown_r * lerpf(1.0, 0.22, f) * _rng.randf_range(0.9, 1.1)
-					var lh := h * lerpf(0.2, 0.16, f)
+					var lr := crown_r * lerpf(1.0, 0.18, f) * _rng.randf_range(0.9, 1.1)
+					var lh := h * lerpf(0.3, 0.2, f)
 					var cy := g + lerpf(bottom, h * 0.92, f) + lh * 0.5
 					var col := green * lerpf(0.8, 1.2, f)
 					col.a = 1.0
