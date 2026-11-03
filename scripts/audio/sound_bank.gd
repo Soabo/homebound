@@ -36,6 +36,22 @@ static func get_sound(id: String) -> AudioStreamWAV:
 		"pickup": s = _click(0.6)
 		"heartbeat": s = _heartbeat()
 		"hurt": s = _hurt()
+		"crickets":
+			s = _crickets()
+			loop = true
+		"birds":
+			s = _birds()
+			loop = true
+		"owl": s = _owl()
+		"scratch": s = _scratch()
+		"roof_steps": s = _roof_steps()
+		"rattle": s = _rattle()
+		"signal": s = _signal()
+		"music_box": s = _music_box()
+		"radio":
+			s = _radio()
+			loop = true
+		"clatter": s = _clatter()
 		_: s = PackedFloat32Array([0.0])
 	var wav := _to_wav(s, loop)
 	_cache[id] = wav
@@ -254,6 +270,165 @@ static func _hurt() -> PackedFloat32Array:
 		var t := float(i) / RATE
 		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.3
 		b[i] = (sin(TAU * 110.0 * t) * 0.6 + lp) * exp(-t * 7.0)
+	return b
+
+
+## Grillenzirpen (nahtlose Schleife)
+static func _crickets() -> PackedFloat32Array:
+	var b := _buf(2.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 21
+	for c in 5:
+		var f := r.randf_range(4200.0, 5600.0)
+		var rate := r.randf_range(13.0, 19.0)
+		var off := r.randf()
+		var vol := r.randf_range(0.04, 0.09)
+		for i in b.size():
+			var t := float(i) / RATE
+			var chirp := fmod(t * rate + off, 1.0)
+			var env := 1.0 if chirp < 0.35 else 0.0
+			var burst := 1.0 if fmod(t + off * 2.0, 1.0) < 0.6 else 0.0
+			b[i] += sin(TAU * f * t) * env * burst * vol
+	return b
+
+
+## Vogelgezwitscher am Tag (Schleife)
+static func _birds() -> PackedFloat32Array:
+	var b := _buf(5.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 33
+	for k in 14:
+		var start := r.randf_range(0.0, 4.6)
+		var base := r.randf_range(2200.0, 4200.0)
+		var notes := r.randi_range(2, 5)
+		var vol := r.randf_range(0.05, 0.12)
+		for n in notes:
+			var ns := int((start + n * 0.09) * RATE)
+			var phase := 0.0
+			for i in int(0.07 * RATE):
+				if ns + i >= b.size():
+					break
+				var t := float(i) / RATE
+				var f := base + sin(t * 90.0) * 400.0 + (n % 2) * 300.0
+				phase += TAU * f / RATE
+				b[ns + i] += sin(phase) * sin(PI * t / 0.07) * vol
+	return b
+
+
+static func _owl() -> PackedFloat32Array:
+	var b := _buf(1.8)
+	for hoot in 3:
+		var start := int((0.05 + hoot * (0.5 if hoot < 2 else 0.4)) * RATE)
+		var len := 0.42 if hoot != 1 else 0.25
+		for i in int(len * RATE):
+			var t := float(i) / RATE
+			var f := 380.0 - t * 60.0
+			b[start + i] += sin(TAU * f * t) * sin(PI * t / len) * 0.5
+	return b
+
+
+## Krallen kratzen über Holz
+static func _scratch() -> PackedFloat32Array:
+	var b := _buf(1.6)
+	var r := RandomNumberGenerator.new()
+	r.seed = 41
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var stroke := fmod(t, 0.55)
+		var env := sin(PI * clampf(stroke / 0.45, 0.0, 1.0)) if stroke < 0.45 else 0.0
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.5
+		var grit := 1.0 + sin(TAU * 38.0 * t) * 0.6
+		b[i] = lp * env * grit * 0.5
+	return b
+
+
+## Knarrende Schritte auf dem Dach
+static func _roof_steps() -> PackedFloat32Array:
+	var b := _buf(3.2)
+	var r := RandomNumberGenerator.new()
+	r.seed = 52
+	for st in 5:
+		var start := int((0.1 + st * 0.6) * RATE)
+		var lp := 0.0
+		for i in int(0.35 * RATE):
+			var t := float(i) / RATE
+			lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.08
+			var creak := sin(TAU * (180.0 + sin(t * 40.0) * 30.0) * t) * 0.3 * exp(-t * 6.0)
+			b[start + i] += (lp * 2.0 * exp(-t * 18.0) + creak) * 0.8
+	return b
+
+
+## Türklinke wird gerüttelt
+static func _rattle() -> PackedFloat32Array:
+	var b := _buf(1.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 61
+	for k in 9:
+		var start := int((0.04 + k * 0.1 + r.randf() * 0.03) * RATE)
+		for i in int(0.05 * RATE):
+			var t := float(i) / RATE
+			b[start + i] += (sin(TAU * 2100.0 * t) * 0.3 + sin(TAU * 900.0 * t) * 0.3 + (r.randf() - 0.5) * 0.4) * exp(-t * 80.0)
+	return b
+
+
+## Fremdartiges elektronisches Signal
+static func _signal() -> PackedFloat32Array:
+	var b := _buf(2.4)
+	var phase := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var step := floorf(t * 5.0)
+		var f := 1800.0 - step * 140.0 + sin(t * 70.0) * 20.0
+		phase += TAU * f / RATE
+		var gate := 1.0 if fmod(t * 5.0, 1.0) < 0.7 else 0.0
+		b[i] = sin(phase) * gate * 0.35 * (1.0 - t / 2.6)
+	return b
+
+
+## Spieluhr-Melodie (leicht verstimmt) – lockt in den Wald
+static func _music_box() -> PackedFloat32Array:
+	var melody := [76, 74, 72, 74, 76, 76, 76, -1, 74, 74, 74, -1, 76, 79, 79, -1]
+	var step := 0.42
+	var b := _buf(melody.size() * step + 1.5)
+	for n in melody.size():
+		if melody[n] < 0:
+			continue
+		var f := 440.0 * pow(2.0, (float(melody[n]) - 69.0) / 12.0) * (1.0 - 0.012 * sin(n * 1.3))
+		var start := int(n * step * RATE)
+		for i in int(1.4 * RATE):
+			if start + i >= b.size():
+				break
+			var t := float(i) / RATE
+			var env := exp(-t * 3.5)
+			b[start + i] += (sin(TAU * f * t) + sin(TAU * f * 2.0 * t) * 0.3 + sin(TAU * f * 3.01 * t) * 0.1) * env * 0.22
+	return b
+
+
+## Radiorauschen mit einem einzelnen, wiederkehrenden Ton
+static func _radio() -> PackedFloat32Array:
+	var b := _buf(2.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 71
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.35
+		var tone := sin(TAU * 880.0 * t) * 0.12 if fmod(t, 1.0) < 0.12 else 0.0
+		b[i] = lp * 0.22 + tone
+	return b
+
+
+## Etwas fällt um (kleiner Gegenstand)
+static func _clatter() -> PackedFloat32Array:
+	var b := _buf(0.6)
+	var r := RandomNumberGenerator.new()
+	r.seed = 81
+	for k in 4:
+		var start := int((0.0 + k * 0.08 * (1.0 + k * 0.4)) * RATE)
+		for i in int(0.06 * RATE):
+			var t := float(i) / RATE
+			b[start + i] += (sin(TAU * 700.0 * t) * 0.5 + (r.randf() - 0.5) * 0.6) * exp(-t * 60.0) * (1.0 - k * 0.2)
 	return b
 
 

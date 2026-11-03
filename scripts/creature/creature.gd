@@ -46,6 +46,10 @@ var _attack_cooldown: float = 0.0
 var _player: Player
 var _breath: AudioStreamPlayer3D
 var _probes_left: int = 1
+var _saw_player: bool = false
+var _head_track: float = 0.0
+var _seen_by_player: bool = false
+var _unseen_time: float = 0.0
 
 
 ## Baut das Modell (auch für Trugbilder auf den Kameras verwendet).
@@ -59,7 +63,7 @@ static func build_model(root: Node3D) -> Dictionary:
 	eye.emission_enabled = true
 	eye.emission = Color(0.25, 0.45, 0.35)
 	eye.emission_energy_multiplier = 0.25
-	var p := {}
+	var p := {"eye_mat": eye}
 	var hips := Node3D.new()
 	hips.position = Vector3(0, 1.05, 0)
 	root.add_child(hips)
@@ -170,6 +174,16 @@ func _physics_process(delta: float) -> void:
 	_sounds(delta, moving)
 	var sees := _can_see_player()
 	_update_light(delta)
+	# Bemerkt den Spieler: Kopf dreht sich ruckartig zu ihm
+	if sees and not _saw_player:
+		_head_track = 4.0
+		SoundBank.play_at(get_parent(), "twig", global_position, -6.0, 1.3)
+	_saw_player = sees
+	_head_track -= delta
+	_check_vanish(delta)
+	var eye := _parts.get("eye_mat") as StandardMaterial3D
+	if eye:
+		eye.emission_energy_multiplier = lerpf(eye.emission_energy_multiplier, 3.5 if _lit_time > 0.0 else 0.25, clampf(delta * 6.0, 0.0, 1.0))
 
 	match state:
 		State.ARRIVE:
@@ -211,6 +225,10 @@ func _physics_process(delta: float) -> void:
 				_strike()
 				var dmg := ENTRY_HIT * (0.35 if mode == "probe" else 1.0)
 				_target_entry.call("receive_hit", dmg)
+				if _dist() < 10.0:
+					EventBus.screen_shake.emit(0.35)
+				if mode == "probe" and _target_entry is CabinWindow:
+					_target_entry.call("add_handprint")
 			if _target_entry.call("is_breached"):
 				state = State.REACH
 				_timer = 30.0
@@ -329,6 +347,7 @@ func _attack() -> void:
 	_strike()
 	SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 4.0, 1.2)
 	_player.take_damage(HIT_DAMAGE, global_position)
+	EventBus.screen_shake.emit(0.8)
 
 
 # --- Wahrnehmung --------------------------------------------------------
@@ -395,6 +414,30 @@ func _update_light(delta: float) -> void:
 		var away := (global_position - _player.global_position)
 		away.y = 0
 		_go([_ground(global_position + away.normalized() * 14.0)], CHASE_SPEED)
+
+
+## Ist die Kreatur gerade im Blickfeld des Spielers (und nicht verdeckt)?
+func is_in_player_view() -> bool:
+	var cam := _player.camera.global_transform
+	var to_me := (global_position + Vector3(0, 1.4, 0)) - cam.origin
+	if to_me.length() > 45.0:
+		return false
+	if (-cam.basis.z).dot(to_me.normalized()) < cos(deg_to_rad(38.0)):
+		return false
+	return _can_see_player()
+
+
+## Beobachter: Wer wegschaut, findet beim erneuten Hinsehen nur noch leeren Wald (GDD 2.3).
+func _check_vanish(delta: float) -> void:
+	if mode != "observe" or state != State.OBSERVE:
+		return
+	if is_in_player_view():
+		_seen_by_player = true
+		_unseen_time = 0.0
+	elif _seen_by_player:
+		_unseen_time += delta
+		if _unseen_time > 2.5:
+			queue_free()
 
 
 func _on_noise(pos: Vector3, radius: float) -> void:
@@ -530,6 +573,14 @@ func _animate(delta: float, moving: bool) -> void:
 		var t := Time.get_ticks_msec() / 1000.0
 		head.rotation_degrees.z = (sin(t * 0.4) * 18.0) if not moving else sin(_walk_phase * 0.5) * 4.0
 		head.rotation_degrees.x = -8.0 if state == State.OBSERVE else 0.0
+		if _head_track > 0.0 and _player:
+			# Kopf blickt direkt in die Kamera des Spielers
+			var local := to_local(_player.camera.global_position)
+			var yaw := clampf(rad_to_deg(atan2(local.x, local.z)), -80.0, 80.0)
+			head.rotation_degrees.y = lerpf(head.rotation_degrees.y, yaw, clampf(delta * 14.0, 0.0, 1.0))
+			head.rotation_degrees.z *= 0.2
+		else:
+			head.rotation_degrees.y = lerpf(head.rotation_degrees.y, 0.0, clampf(delta * 2.0, 0.0, 1.0))
 	var torso := _parts.get("torso") as Node3D
 	if torso:
 		torso.rotation_degrees.x = 22.0 if state == State.CHASE else 8.0

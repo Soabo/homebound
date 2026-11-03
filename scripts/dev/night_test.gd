@@ -21,6 +21,9 @@ func _run() -> void:
 		get_tree().quit()
 		return
 	_ran = true
+	if mode == "events":
+		await _event_test()
+		return
 	for i in 10:
 		await get_tree().physics_frame
 	TimeManager.set_time(1, 21.0)
@@ -61,4 +64,22 @@ func _run() -> void:
 	print("NIGHT TEST ENDE")
 	await get_tree().create_timer(6.0).timeout
 	print("Nach Neustart: Tag %d, %s, Szene neu geladen: %s" % [TimeManager.day, TimeManager.get_clock_text(), get_tree().current_scene != null])
+	get_tree().quit()
+
+
+func _event_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	TimeManager.set_time(1, 22.0)
+	for sw in get_tree().get_nodes_in_group("light_switch"):
+		sw.set_state(true)
+	var types := ["twig", "steps", "silence", "camera_glitch", "breath_wall", "phantom", "scratch", "roof",
+			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage"]
+	for t in types:
+		ThreatDirector._fire(t)
+		await get_tree().create_timer(0.5).timeout
+		print("Ereignis OK: ", t)
+	print("Strom nach Ausfall: ", PowerManager.has_power())
+	await get_tree().create_timer(5.0).timeout
+	print("EVENT TEST ENDE")
 	get_tree().quit()

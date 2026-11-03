@@ -46,7 +46,18 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.
 
-## Stand: Meilenstein 0.2
+## Stand: Phase 5 – Atmosphäre und Horror
+
+- Lebendige Natur: Vögel am Tag, Grillen und Eulen nachts – **verstummen sie, ist etwas in der Nähe**
+- Mehrdeutige Ereignisse: Kratzen an der Wand, Schritte auf dem Dach, Klopfen ohne Besucher,
+  rüttelnde Türklinke, flackerndes Licht, Radio springt an, Familienfoto fällt um, fremde Signale
+- Der Manipulator: eine Spieluhr-Melodie im dunklen Wald lockt dich hinaus
+- Handabdrücke mit drei langen Fingern an den Fenstern
+- Kreatur: Kopf dreht sich ruckartig zu dir, Augen reflektieren dein Licht,
+  der Beobachter ist weg, sobald du kurz wegschaust
+- Herzschlag und dunkler Bildrand, wenn sie nah ist; Bildwackeln bei Schlägen
+
+## Meilenstein 0.2
 
 - Stromsystem mit Generator, Benzin und Stromausfällen
 - Fenster und Haustür beschädigbar, Barrikaden und Reparatur mit Brettern

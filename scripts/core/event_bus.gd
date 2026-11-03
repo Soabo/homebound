@@ -24,6 +24,12 @@ signal camera_glitch(camera_index: int, seconds: float)
 ## Auf einer Kamera erscheint etwas, das in Wirklichkeit nicht da ist (GDD 7.5).
 signal camera_phantom(camera_index: int, seconds: float)
 
+## Angst des Spielers 0..1 (für Bildschirmrand, Herzschlag)
+signal fear_changed(fear: float)
+
+## Kamerawackeln (0..1), z. B. bei Schlägen gegen Tür und Fenster.
+signal screen_shake(strength: float)
+
 ## Der Spieler wurde verletzt (für Bildschirm-Effekte).
 signal player_hurt(amount: float)
 

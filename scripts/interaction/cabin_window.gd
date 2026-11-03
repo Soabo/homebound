@@ -22,6 +22,7 @@ var _cracks: Node3D
 var _shards: Node3D
 var _boards: Array[MeshInstance3D] = []
 var _board_body: StaticBody3D
+var _handprints: int = 0
 
 
 func _ready() -> void:
@@ -169,6 +170,9 @@ func strength() -> float:
 
 
 func receive_hit(damage: float) -> void:
+	var pl := get_tree().get_first_node_in_group("player") as Node3D
+	if pl and pl.global_position.distance_to(global_position) < 7.0:
+		EventBus.screen_shake.emit(0.3)
 	var pos := global_position + Vector3(0, height * 0.5, 0)
 	if health > 0.0:
 		var before := health
@@ -199,3 +203,20 @@ func _update_visuals() -> void:
 	for i in _boards.size():
 		_boards[i].visible = i < boards
 	_set_body(_board_body, barricade > 0.0)
+
+
+## Abdruck einer dreifingrigen, langen Hand außen auf dem Glas (GDD 7.5 / Phase 5).
+func add_handprint() -> void:
+	if health <= 0.0 or _handprints >= 3:
+		return
+	_handprints += 1
+	var mat := BuildKit.color_mat(Color(0.8, 0.85, 0.82), 0.3)
+	var hand := Node3D.new()
+	hand.position = Vector3(randf_range(-width * 0.25, width * 0.25), height * randf_range(0.35, 0.6), 0.012)
+	hand.rotation_degrees.z = randf_range(-20, 20)
+	_glass.add_child(hand)
+	hand.position -= Vector3(0, height * 0.5, 0)
+	BuildKit.box(hand, Vector3(0.07, 0.09, 0.002), Vector3.ZERO, mat, false)
+	for f in 3:
+		var finger := BuildKit.box(hand, Vector3(0.016, 0.16, 0.002), Vector3((f - 1) * 0.026, 0.12, 0), mat, false, Vector3(0, 0, (f - 1) * -9.0))
+		finger.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

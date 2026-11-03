@@ -32,6 +32,9 @@ var _height: float = STAND_HEIGHT
 var _bob_time: float = 0.0
 var _last_prompt: String = ""
 var _gravity: float = 9.8
+var _shake: float = 0.0
+var _fear: float = 0.0
+var _heart_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -91,6 +94,7 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	EventBus.sleep_requested.connect(_on_sleep_requested)
 	EventBus.sleep_finished.connect(_on_sleep_finished)
+	EventBus.screen_shake.connect(_on_shake)
 
 
 ## Sichtbare Taschenlampe unten rechts im Bild, gehalten von einem Ärmel.
@@ -126,6 +130,10 @@ func _build_flashlight_model() -> void:
 
 func _on_sleep_requested(_h: float) -> void:
 	input_locked = true
+
+
+func _on_shake(strength: float) -> void:
+	_shake = maxf(_shake, strength)
 
 
 func _on_sleep_finished() -> void:
@@ -207,6 +215,27 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	# Kamerawackeln
+	_shake = move_toward(_shake, 0.0, delta * 1.5)
+	camera.h_offset = randf_range(-1.0, 1.0) * _shake * 0.05
+	camera.v_offset = randf_range(-1.0, 1.0) * _shake * 0.05
+	# Angst: Herzschlag, wenn die Kreatur nah und sichtbar ist
+	var target_fear := 0.0
+	var c := ThreatDirector.creature as Creature
+	if is_instance_valid(c):
+		var d := c.global_position.distance_to(global_position)
+		if d < 20.0 and c.is_in_player_view():
+			target_fear = clampf(1.0 - d / 20.0, 0.2, 1.0)
+		elif d < 8.0:
+			target_fear = 0.4
+	_fear = move_toward(_fear, target_fear, delta * (0.8 if target_fear > _fear else 0.15))
+	if _fear > 0.05:
+		_heart_timer -= delta
+		if _heart_timer <= 0.0:
+			_heart_timer = lerpf(1.1, 0.45, _fear)
+			SoundBank.play_ui(self, "heartbeat", lerpf(-16.0, -2.0, _fear), lerpf(0.9, 1.15, _fear))
+	EventBus.fear_changed.emit(_fear)
+
 	var target := camera.global_transform
 	var t := clampf(delta * 14.0, 0.0, 1.0)
 	_flashlight_rig.global_transform = Transform3D(

@@ -129,6 +129,7 @@ func _ready() -> void:
 	EventBus.notification_requested.connect(show_notification)
 	EventBus.sleep_requested.connect(_on_sleep_requested)
 	EventBus.player_hurt.connect(_on_hurt)
+	EventBus.fear_changed.connect(_on_fear)
 	TimeManager.phase_changed.connect(_on_phase_changed)
 	TimeManager.day_changed.connect(_on_day_changed)
 	Inventory.changed.connect(_update_inventory)
@@ -239,6 +240,24 @@ func _on_day_changed(day: int) -> void:
 
 
 # --- Schaden und Tod ----------------------------------------------------
+
+var _fear_rect: ColorRect
+
+
+func _on_fear(fear: float) -> void:
+	if _fear_rect == null:
+		_fear_rect = ColorRect.new()
+		_fear_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_fear_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var m := ShaderMaterial.new()
+		var sh := Shader.new()
+		sh.code = "shader_type canvas_item;\nuniform float fear = 0.0;\nvoid fragment(){ vec2 v = UV - 0.5; float d = length(v) * 1.4; float pulse = 0.85 + 0.15 * sin(TIME * 7.0); COLOR = vec4(0.02, 0.0, 0.0, smoothstep(0.45, 1.0, d) * fear * pulse); }"
+		m.shader = sh
+		_fear_rect.material = m
+		_hurt.get_parent().add_child(_fear_rect)
+		_hurt.get_parent().move_child(_fear_rect, 0)
+	(_fear_rect.material as ShaderMaterial).set_shader_parameter("fear", fear)
+
 
 func _on_hurt(amount: float) -> void:
 	_hurt.color.a = clampf(0.25 + amount / 100.0, 0.0, 0.7)

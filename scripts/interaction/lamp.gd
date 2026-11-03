@@ -17,6 +17,7 @@ var _glass_mat: StandardMaterial3D
 
 
 func _ready() -> void:
+	add_to_group("lamp")
 	_bulb_mat = BuildKit.emissive_mat(light_color, 0.0)
 	_bulb_mat.albedo_color = Color(0.9, 0.88, 0.8)
 	var metal := BuildKit.color_mat(Color(0.12, 0.11, 0.1), 0.5, 0.6)
@@ -92,3 +93,15 @@ func _on_power_changed(_p: bool) -> void:
 			light.visible = not light.visible
 			await get_tree().create_timer(0.06).timeout
 	_refresh()
+
+
+## Unheimliches Flackern (Ereignis), danach wieder normal.
+func flicker(seconds: float) -> void:
+	if not is_on or light == null:
+		return
+	var end := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < end and is_inside_tree():
+		light.visible = randf() < 0.55 and PowerManager.has_power()
+		await get_tree().create_timer(randf_range(0.03, 0.18)).timeout
+	if is_inside_tree():
+		_refresh()

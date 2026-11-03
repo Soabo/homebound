@@ -33,6 +33,7 @@ funktionieren dadurch automatisch mit der Kreaturen-KI.
 ## Tests
 - `-- --walk-test`: läuft durch alle Türen und das Tor
 - `-- --night-test=attack|probe|observe|attack_locked`: Kreatur-Protokoll
+- `-- --night-test=events`: löst jedes Nacht-Ereignis einmal aus
 - `-- --screenshot-tour=ORDNER [--shots=01,05] [--frames=30]`
 
 ## Ordner

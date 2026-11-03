@@ -377,7 +377,7 @@ func _build_fireplace() -> void:
 	for i in 4:
 		BuildKit.cylinder(self, 0.06, 0.5, Vector3(-4.75 + (i % 2) * 0.1 - 0.05, y + 0.34 + (i / 2) * 0.1, 0.55), BuildKit.tex_mat("logs", 0.5), false, Vector3(90, 30 * i, 0), -1.0, 6)
 	# Auf dem Sims: Familienfoto (GDD 3.1), Krug, Kerzen
-	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12)
+	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12).add_to_group("family_photo")
 	BuildKit.cylinder(self, 0.08, 0.2, Vector3(-5.3, y + 1.52, 1.35), BuildKit.color_mat(Color(0.5, 0.22, 0.12), 0.7), false, Vector3.ZERO, 0.05, 10)
 	for z: float in [1.75, 1.9]:
 		BuildKit.cylinder(self, 0.025, 0.12 + (z - 1.75), Vector3(-5.3, y + 1.48 + (z - 1.75) * 0.5, z), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
@@ -488,7 +488,11 @@ func _build_living_room() -> void:
 	BuildKit.box_mm(self, Vector3(1.39, y + 0.82, 3.37), Vector3(1.4, y + 1.12, 3.88), BuildKit.color_mat(Color(0.05, 0.07, 0.06), 0.1), false)
 	BuildKit.box_mm(self, Vector3(1.35, y + 0.76, 3.98), Vector3(1.7, y + 0.78, 4.2), BuildKit.color_mat(Color(0.2, 0.2, 0.2)), false)
 	var radio := BuildKit.color_mat(Color(0.25, 0.17, 0.12), 0.5)
-	BuildKit.box_mm(self, Vector3(1.5, y + 0.76, 3.02), Vector3(1.85, y + 0.95, 3.25), radio, false, "Radio")
+	BuildKit.box_mm(self, Vector3(1.5, y + 0.76, 3.02), Vector3(1.85, y + 0.95, 3.25), radio, false, "RadioBody")
+	var radio_node := Radio.new()
+	radio_node.name = "Radio"
+	radio_node.anchor = Vector3(1.675, y + 0.76, 3.135)
+	add_child(radio_node)
 	BuildKit.box_mm(self, Vector3(1.49, y + 0.8, 3.06), Vector3(1.5, y + 0.92, 3.16), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
 	BuildKit.cylinder(self, 0.005, 0.35, Vector3(1.8, y + 1.1, 3.2), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
 	_chair(Vector3(0.85, y, 3.6), 90.0)
@@ -832,10 +836,11 @@ func _shelf(from: Vector3, to: Vector3, levels: int, books: bool) -> void:
 					x += 0.15
 
 
-func _photo(pos: Vector3, rot_y: float, w: float, h: float) -> void:
+func _photo(pos: Vector3, rot_y: float, w: float, h: float) -> Node3D:
 	var p := Node3D.new()
 	p.position = pos
 	p.rotation_degrees.y = rot_y
 	add_child(p)
 	BuildKit.box(p, Vector3(w, h, 0.015), Vector3(0, h * 0.5, 0), BuildKit.color_mat(Color(0.2, 0.15, 0.1), 0.6), false, Vector3(-12, 0, 0))
 	BuildKit.box(p, Vector3(w * 0.78, h * 0.72, 0.004), Vector3(0, h * 0.5, 0.009), BuildKit.color_mat(Color(0.55, 0.5, 0.42), 0.4), false, Vector3(-12, 0, 0))
+	return p

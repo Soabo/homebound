@@ -145,6 +145,9 @@ func strength() -> float:
 
 
 func receive_hit(damage: float) -> void:
+	var pl := get_tree().get_first_node_in_group("player") as Node3D
+	if pl and pl.global_position.distance_to(global_position) < 7.0:
+		EventBus.screen_shake.emit(0.3)
 	var pos := global_position + Vector3(width * 0.5, 1.2, 0)
 	if not is_locked and not is_open:
 		# Unverschlossene Tür: wird aufgestoßen
@@ -171,3 +174,14 @@ func set_open(value: bool) -> void:
 
 func get_state() -> Dictionary:
 	return {"open": is_open, "locked": is_locked}
+
+
+## Jemand rüttelt von außen an der Klinke (auch ohne dass jemand da ist …).
+func rattle() -> void:
+	SoundBank.play_at(self, "rattle", global_position + Vector3(width * 0.85, 1.0, 0.1), 2.0)
+	if is_open or _hinge == null:
+		return
+	for i in 6:
+		_hinge.rotation.y = randf_range(-0.012, 0.012) * open_sign
+		await get_tree().create_timer(0.08).timeout
+	_hinge.rotation.y = 0.0
