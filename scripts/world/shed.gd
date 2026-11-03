@@ -46,7 +46,7 @@ func _ready() -> void:
 	for i in 3:
 		BuildKit.box_mm(self, Vector3(1.4, 0.4 + i * 0.55, -1.4), Vector3(1.9, 0.43 + i * 0.55, 1.4), wood, true)
 	BuildKit.box_mm(self, Vector3(1.85, 0.03, -1.4), Vector3(1.9, 1.6, 1.4), wood, false)
-	BuildKit.box_mm(self, Vector3(1.5, 0.43, -1.2), Vector3(1.8, 0.75, -0.8), BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5), false, "GasCan")
+	Cabin.fuel_can(self, Vector3(1.65, 0.43, -1.0), 90.0)
 	BuildKit.box_mm(self, Vector3(1.5, 0.98, 0.2), Vector3(1.85, 1.15, 0.8), BuildKit.color_mat(Color(0.15, 0.3, 0.55), 0.5, 0.4), false, "Toolbox")
 	# Brennholzstapel an der Südseite (außen)
 	var log_mat := BuildKit.tex_mat("logs", 0.5)

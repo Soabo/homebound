@@ -1,0 +1,550 @@
+class_name Creature
+extends Node3D
+## Erste außerirdische Kreatur (GDD 9): ein großer, dünner "Grey".
+## Mischt die Archetypen Beobachter, Jäger und Manipulator (GDD 9.3):
+##  - observe: steht am Waldrand und starrt das Haus an; flieht vor Licht
+##  - probe:   schleicht ums Haus, testet ein Fenster/die Tür, geht wieder
+##  - attack:  versucht einzudringen; greift an, wenn der Spieler erreichbar ist
+## Wahrnehmung (GDD 9.4): Sicht (abhängig von Licht), Geräusche, Taschenlampe.
+## Der Threat Director entscheidet nur, DASS sie kommt – hier entscheidet sie, WIE.
+
+enum State { ARRIVE, OBSERVE, PROWL, GO_ENTRY, HIT_ENTRY, REACH, CHASE, RECOIL, LEAVE }
+
+const WALK_SPEED := 1.5
+const PROWL_SPEED := 2.1
+const CHASE_SPEED := 4.4
+const HIT_DAMAGE := 34.0
+const ENTRY_HIT := 14.0
+
+## Beobachtungsplätze am Waldrand (Blick aufs Haus)
+const OBSERVE_SPOTS := [
+	Vector3(-3.5, 0, 25.0), Vector3(-25.0, 0, 3.0), Vector3(26.0, 0, -6.0),
+	Vector3(2.0, 0, -23.0), Vector3(24.0, 0, 21.0), Vector3(-23.0, 0, -18.0),
+]
+## Ring ums Haus zwischen Hütte und Zaun (für Wege um die Hütte herum)
+const RING := [
+	Vector3(-8.5, 0, -7.0), Vector3(0.0, 0, -8.0), Vector3(8.5, 0, -7.0), Vector3(9.0, 0, 0.0),
+	Vector3(8.5, 0, 8.0), Vector3(0.5, 0, 9.5), Vector3(-8.5, 0, 8.5), Vector3(-9.0, 0, 0.0),
+]
+
+var mode: String = "observe"
+var state: State = State.ARRIVE
+var _path: Array[Vector3] = []
+var _speed: float = WALK_SPEED
+var _timer: float = 0.0
+var _hit_timer: float = 0.0
+var _step_timer: float = 0.0
+var _breath_timer: float = 4.0
+var _walk_phase: float = 0.0
+var _target_entry: Node3D = null
+var _spot: Vector3
+var _lit_time: float = 0.0
+var _lose_sight: float = 0.0
+var _rng := RandomNumberGenerator.new()
+var _parts: Dictionary = {}
+var _attack_cooldown: float = 0.0
+var _player: Player
+var _breath: AudioStreamPlayer3D
+var _probes_left: int = 1
+
+
+## Baut das Modell (auch für Trugbilder auf den Kameras verwendet).
+static func build_model(root: Node3D) -> Dictionary:
+	var skin := BuildKit.color_mat(Color(0.5, 0.53, 0.5), 0.55)
+	var skin_dark := BuildKit.color_mat(Color(0.36, 0.38, 0.36), 0.6)
+	var eye := StandardMaterial3D.new()
+	eye.albedo_color = Color(0.01, 0.01, 0.015)
+	eye.roughness = 0.05
+	eye.metallic_specular = 1.0
+	eye.emission_enabled = true
+	eye.emission = Color(0.25, 0.45, 0.35)
+	eye.emission_energy_multiplier = 0.25
+	var p := {}
+	var hips := Node3D.new()
+	hips.position = Vector3(0, 1.05, 0)
+	root.add_child(hips)
+	p["hips"] = hips
+	BuildKit.sphere(hips, 0.13, Vector3.ZERO, skin_dark, Vector3(1.2, 0.8, 0.9), 10)
+	# Rumpf: schmal, leicht nach vorn gebeugt
+	var torso := Node3D.new()
+	torso.rotation_degrees.x = 8.0
+	hips.add_child(torso)
+	p["torso"] = torso
+	BuildKit.cylinder(torso, 0.1, 0.62, Vector3(0, 0.33, 0), skin, false, Vector3.ZERO, 0.15, 10)
+	BuildKit.sphere(torso, 0.16, Vector3(0, 0.62, 0), skin, Vector3(1.25, 0.55, 0.8), 10)
+	for i in 4:
+		BuildKit.box(torso, Vector3(0.2, 0.012, 0.02), Vector3(0, 0.32 + i * 0.06, 0.1), skin_dark, false)
+	# Hals und Kopf
+	var neck := Node3D.new()
+	neck.position = Vector3(0, 0.68, 0)
+	torso.add_child(neck)
+	p["neck"] = neck
+	BuildKit.cylinder(neck, 0.035, 0.22, Vector3(0, 0.1, 0), skin, false, Vector3.ZERO, 0.03, 8)
+	var head := Node3D.new()
+	head.position = Vector3(0, 0.22, 0.02)
+	neck.add_child(head)
+	p["head"] = head
+	BuildKit.sphere(head, 0.2, Vector3(0, 0.16, 0), skin, Vector3(1.0, 1.15, 1.05), 16)
+	BuildKit.cylinder(head, 0.15, 0.2, Vector3(0, -0.02, 0.02), skin, false, Vector3(8, 0, 0), 0.04, 12)
+	for side: float in [-1.0, 1.0]:
+		var e := BuildKit.sphere(head, 0.075, Vector3(side * 0.085, 0.1, 0.16), eye, Vector3(1.0, 0.55, 0.45), 12)
+		e.rotation_degrees = Vector3(0, side * 15.0, side * -28.0)
+	BuildKit.box(head, Vector3(0.05, 0.006, 0.01), Vector3(0, -0.06, 0.16), skin_dark, false)
+	# Arme: lang, bis zu den Knien
+	for side: float in [-1.0, 1.0]:
+		var sh := Node3D.new()
+		sh.position = Vector3(side * 0.19, 0.6, 0)
+		torso.add_child(sh)
+		p["arm_%d" % int(side)] = sh
+		BuildKit.cylinder(sh, 0.035, 0.42, Vector3(0, -0.21, 0), skin, false, Vector3.ZERO, 0.03, 8)
+		var el := Node3D.new()
+		el.position = Vector3(0, -0.42, 0)
+		sh.add_child(el)
+		p["forearm_%d" % int(side)] = el
+		BuildKit.cylinder(el, 0.028, 0.42, Vector3(0, -0.21, 0), skin, false, Vector3.ZERO, 0.022, 8)
+		for f in 3:
+			var finger := BuildKit.cylinder(el, 0.009, 0.17, Vector3((f - 1) * 0.02, -0.5, 0.01 * f), skin_dark, false, Vector3((f - 1) * 6.0, 0, (f - 1) * 8.0), 0.005, 5)
+			finger.name = "finger"
+	# Beine
+	for side: float in [-1.0, 1.0]:
+		var hip := Node3D.new()
+		hip.position = Vector3(side * 0.09, 0, 0)
+		hips.add_child(hip)
+		p["leg_%d" % int(side)] = hip
+		BuildKit.cylinder(hip, 0.045, 0.5, Vector3(0, -0.25, 0), skin, false, Vector3.ZERO, 0.035, 8)
+		var knee := Node3D.new()
+		knee.position = Vector3(0, -0.5, 0)
+		hip.add_child(knee)
+		p["knee_%d" % int(side)] = knee
+		BuildKit.cylinder(knee, 0.035, 0.52, Vector3(0, -0.26, 0), skin, false, Vector3.ZERO, 0.025, 8)
+		BuildKit.box(knee, Vector3(0.06, 0.03, 0.16), Vector3(0, -0.53, 0.04), skin_dark, false)
+	for vi in root.find_children("*", "GeometryInstance3D", true, false):
+		(vi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	return p
+
+
+func _ready() -> void:
+	_rng.randomize()
+	_parts = build_model(self)
+	_player = get_tree().get_first_node_in_group("player") as Player
+	_breath = AudioStreamPlayer3D.new()
+	_breath.stream = SoundBank.get_sound("creature_breath")
+	_breath.unit_size = 2.0
+	_breath.max_distance = 16.0
+	_breath.position = Vector3(0, 1.8, 0)
+	add_child(_breath)
+	EventBus.noise_made.connect(_on_noise)
+
+
+## Wird vom Threat Director aufgerufen.
+func begin(m: String) -> void:
+	mode = m
+	_probes_left = 1 if mode == "probe" else 99
+	_spot = _pick_observe_spot()
+	# Erscheint tief im Wald und läuft zum Beobachtungsplatz
+	var dir := (_spot * Vector3(1, 0, 1)).normalized()
+	global_position = _ground(_spot + dir * 22.0)
+	_go([_spot], WALK_SPEED)
+	state = State.ARRIVE
+
+
+func leave() -> void:
+	if state == State.LEAVE:
+		return
+	state = State.LEAVE
+	var away := (global_position * Vector3(1, 0, 1)).normalized()
+	if away.length() < 0.1:
+		away = Vector3(0, 0, -1)
+	_go(_ring_path_to(_nearest_ring(global_position)) + [_nearest_observe_spot() + away * 25.0], PROWL_SPEED)
+
+
+# --- Hauptschleife ------------------------------------------------------
+
+func _physics_process(delta: float) -> void:
+	if _player == null or GameState.dead:
+		return
+	_timer -= delta
+	_attack_cooldown -= delta
+	var moving := _follow_path(delta)
+	_animate(delta, moving)
+	_sounds(delta, moving)
+	var sees := _can_see_player()
+	_update_light(delta)
+
+	match state:
+		State.ARRIVE:
+			if not moving:
+				state = State.OBSERVE
+				_timer = _rng.randf_range(25.0, 50.0) if mode == "observe" else _rng.randf_range(12.0, 25.0)
+		State.OBSERVE:
+			_face(_player.global_position)
+			if _player_outside() and sees and mode != "observe" and _dist() < 22.0:
+				_start_chase()
+			elif _timer <= 0.0:
+				if mode == "observe":
+					leave()
+				else:
+					_start_prowl()
+		State.PROWL:
+			if _player_outside() and sees and _dist() < 18.0:
+				_start_chase()
+			elif not moving:
+				_choose_entry()
+		State.GO_ENTRY:
+			if _player_outside() and sees and _dist() < 14.0:
+				_start_chase()
+			elif not moving:
+				state = State.HIT_ENTRY
+				_hit_timer = 0.8
+				_timer = 4.0 if mode == "probe" else 60.0
+				if not is_instance_valid(_target_entry) or _target_entry.call("is_breached"):
+					state = State.REACH
+					_timer = 25.0
+		State.HIT_ENTRY:
+			if not is_instance_valid(_target_entry):
+				leave()
+				return
+			_face(_target_entry.call("outside_point") - _forward_of_entry())
+			_hit_timer -= delta
+			if _hit_timer <= 0.0:
+				_hit_timer = _rng.randf_range(1.3, 2.0)
+				_strike()
+				var dmg := ENTRY_HIT * (0.35 if mode == "probe" else 1.0)
+				_target_entry.call("receive_hit", dmg)
+			if _target_entry.call("is_breached"):
+				state = State.REACH
+				_timer = 30.0
+				SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 0.0, 0.8)
+			elif _timer <= 0.0:
+				if mode == "probe":
+					_probes_left -= 1
+					ThreatDirector.remember_blocked(_target_entry.call("entry_name"))
+					if _probes_left <= 0:
+						leave()
+					else:
+						_choose_entry()
+				else:
+					# Zu stark – anderen Zugang versuchen (Lernverhalten)
+					ThreatDirector.remember_blocked(_target_entry.call("entry_name"))
+					_choose_entry()
+		State.REACH:
+			# Greift durch die Öffnung; kommt nicht ganz ins Haus
+			var inside: Vector3 = _target_entry.call("inside_point")
+			_face(inside)
+			var reach_dist := 1.4 if mode == "probe" else 2.6
+			if _player.global_position.distance_to(inside) < reach_dist and _attack_cooldown <= 0.0:
+				_attack()
+			if mode == "probe" and _timer > 6.0:
+				_timer = 6.0  # In der Erkundungsnacht nur kurz hineinstarren
+			if _timer <= 0.0:
+				if mode == "probe":
+					leave()
+					return
+				if mode == "attack" and _player_outside():
+					_start_chase()
+				else:
+					_start_prowl()
+		State.CHASE:
+			_lose_sight = _lose_sight - delta if not sees else 6.0
+			if _player_outside():
+				_path = [_ground(_player.global_position)]
+				_speed = CHASE_SPEED
+			if _dist() < 1.5 and _attack_cooldown <= 0.0:
+				_attack()
+			if _lose_sight <= 0.0 or not _player_outside():
+				if mode == "observe":
+					leave()
+				else:
+					_choose_entry()
+		State.RECOIL:
+			if not moving and _timer <= 0.0:
+				if mode == "observe":
+					leave()
+				else:
+					_start_prowl()
+		State.LEAVE:
+			if not moving:
+				queue_free()
+
+
+func _start_prowl() -> void:
+	state = State.PROWL
+	var start := _nearest_ring(global_position)
+	var lap: Array[Vector3] = []
+	var steps := _rng.randi_range(3, 6)
+	var dirn := 1 if _rng.randf() < 0.5 else -1
+	for i in steps:
+		lap.append(_ground(RING[posmod(start + i * dirn, RING.size())]))
+	_go(lap, PROWL_SPEED)
+
+
+func _start_chase() -> void:
+	if mode == "observe":
+		return
+	if state != State.CHASE:
+		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 2.0)
+	state = State.CHASE
+	_lose_sight = 6.0
+
+
+## Wählt einen Zugang: schwächere Stellen und solche, die noch nicht blockiert waren, bevorzugt.
+func _choose_entry() -> void:
+	var entries := get_tree().get_nodes_in_group("entry_point")
+	if entries.is_empty():
+		leave()
+		return
+	var best: Node3D = null
+	var best_score := INF
+	for e in entries:
+		var s: float = e.call("strength")
+		s += float(ThreatDirector.blocked_memory.get(e.call("entry_name"), 0)) * 60.0
+		s += _rng.randf_range(0.0, 40.0)
+		if e == _target_entry and state == State.HIT_ENTRY:
+			s += 80.0
+		if s < best_score:
+			best_score = s
+			best = e
+	_target_entry = best
+	var goal := _ground(best.call("outside_point"))
+	var route: Array = _ring_path_to(_nearest_ring(goal))
+	# Auf die Veranda nur über die Treppe
+	if goal.z > 4.6 and goal.z < 6.8 and goal.x > -5.8 and goal.x < 1.4:
+		route.append(Vector3(-3.0, 0, 8.4))
+		route.append(Vector3(-3.0, 0, 6.2))
+	route.append(goal)
+	_go(route, PROWL_SPEED)
+	state = State.GO_ENTRY
+
+
+func _strike() -> void:
+	var arm := _parts.get("arm_1") as Node3D
+	if arm:
+		var tw := create_tween()
+		tw.tween_property(arm, "rotation_degrees:x", -110.0, 0.15)
+		tw.tween_property(arm, "rotation_degrees:x", -20.0, 0.4)
+
+
+func _attack() -> void:
+	_attack_cooldown = 2.2
+	_strike()
+	SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 4.0, 1.2)
+	_player.take_damage(HIT_DAMAGE, global_position)
+
+
+# --- Wahrnehmung --------------------------------------------------------
+
+func _dist() -> float:
+	return global_position.distance_to(_player.global_position)
+
+
+func _player_outside() -> bool:
+	return not Cabin.is_inside(_player.global_position) and not Shed.is_inside(_player.global_position)
+
+
+## Sicht: Reichweite hängt davon ab, ob der Spieler Licht macht.
+func _can_see_player() -> bool:
+	var d := _dist()
+	var lit := _player.flashlight.visible or _player_near_light()
+	var range_m := 34.0 if lit else 13.0
+	if d > range_m:
+		return false
+	var eye := global_position + Vector3(0, 2.0, 0)
+	var target := _player.global_position + Vector3(0, 1.5, 0)
+	var q := PhysicsRayQueryParameters3D.create(eye, target)
+	q.exclude = [_player.get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+func _player_near_light() -> bool:
+	if not PowerManager.has_power():
+		return false
+	for sw in get_tree().get_nodes_in_group("light_switch"):
+		if sw.is_on and sw.global_position.distance_to(_player.global_position) < 6.0:
+			return true
+	return false
+
+
+## Taschenlampe: trifft der Lichtkegel die Kreatur?
+func _update_light(delta: float) -> void:
+	if not _player.flashlight.visible:
+		_lit_time = 0.0
+		return
+	var cam := _player.camera.global_transform
+	var to_me := (global_position + Vector3(0, 1.6, 0)) - cam.origin
+	var d := to_me.length()
+	if d > 30.0:
+		_lit_time = 0.0
+		return
+	var fwd := -cam.basis.z
+	if fwd.dot(to_me.normalized()) < cos(deg_to_rad(14.0)) or not _can_see_player():
+		_lit_time = 0.0
+		return
+	_lit_time += delta
+	if _lit_time > 0.6 and state in [State.OBSERVE, State.ARRIVE, State.PROWL]:
+		# Beobachter wollen nicht gesehen werden
+		if mode == "observe":
+			_lit_time = 0.0
+			SoundBank.play_at(get_parent(), "twig", global_position, 0.0)
+			leave()
+	if _lit_time > 0.4 and d < 9.0 and state in [State.REACH, State.CHASE, State.HIT_ENTRY]:
+		# Aus nächster Nähe geblendet: weicht zurück (Licht gezielt einsetzen, GDD 2.4)
+		_lit_time = 0.0
+		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 3.0, 0.6)
+		state = State.RECOIL
+		_timer = _rng.randf_range(12.0, 22.0)
+		var away := (global_position - _player.global_position)
+		away.y = 0
+		_go([_ground(global_position + away.normalized() * 14.0)], CHASE_SPEED)
+
+
+func _on_noise(pos: Vector3, radius: float) -> void:
+	if state in [State.LEAVE, State.CHASE, State.HIT_ENTRY, State.REACH, State.RECOIL]:
+		return
+	if global_position.distance_to(pos) > radius * 1.5 or mode == "observe":
+		return
+	# Neugierig: schaut nach, woher das Geräusch kam
+	var goal := _ground(pos + (global_position - pos).normalized() * 3.0)
+	if Cabin.is_inside(goal) or absf(goal.x) < 7.0 and absf(goal.z) < 5.5:
+		_choose_entry()
+	else:
+		_go([goal], PROWL_SPEED)
+		state = State.PROWL
+
+
+# --- Bewegung -----------------------------------------------------------
+
+func _go(points: Array, speed: float) -> void:
+	_path.clear()
+	for p in points:
+		_path.append(_ground(p))
+	_speed = speed
+
+
+func _follow_path(delta: float) -> bool:
+	if _path.is_empty():
+		return false
+	var target := _path[0]
+	var to := target - global_position
+	to.y = 0.0
+	var step := _speed * delta
+	if to.length() <= step + 0.05:
+		global_position = target
+		_path.remove_at(0)
+		return not _path.is_empty()
+	var dir := to.normalized()
+	var next := global_position + dir * step
+	global_position = _ground(next)
+	var look := global_position + dir
+	look.y = global_position.y
+	if look.distance_to(global_position) > 0.01:
+		var t := global_transform.looking_at(look, Vector3.UP)
+		global_transform.basis = global_transform.basis.slerp(t.basis.rotated(Vector3.UP, PI).orthonormalized(), clampf(delta * 6.0, 0.0, 1.0))
+	return true
+
+
+func _face(p: Vector3) -> void:
+	var look := p
+	look.y = global_position.y
+	if look.distance_to(global_position) < 0.05:
+		return
+	var t := global_transform.looking_at(look, Vector3.UP)
+	global_transform.basis = global_transform.basis.slerp(t.basis.rotated(Vector3.UP, PI).orthonormalized(), 0.05)
+
+
+func _forward_of_entry() -> Vector3:
+	if not is_instance_valid(_target_entry):
+		return Vector3.ZERO
+	var o: Vector3 = _target_entry.call("outside_point")
+	var i: Vector3 = _target_entry.call("inside_point")
+	return (o - i).normalized()
+
+
+## Bodenhöhe: Gelände, auf der Veranda die Dielen.
+static func _ground(p: Vector3) -> Vector3:
+	var y := Terrain.height_at(p.x, p.z)
+	if p.x > -5.6 and p.x < 1.2 and p.z > 4.6 and p.z < 6.6:
+		y = Cabin.FLOOR_Y
+	return Vector3(p.x, y, p.z)
+
+
+func _nearest_ring(p: Vector3) -> int:
+	var best := 0
+	var bd := INF
+	for i in RING.size():
+		var d: float = (RING[i] as Vector3).distance_to(Vector3(p.x, 0, p.z))
+		if d < bd:
+			bd = d
+			best = i
+	return best
+
+
+## Weg entlang des Rings vom nächsten Ringpunkt bis zum Ziel-Ringpunkt (kürzere Richtung).
+func _ring_path_to(target_index: int) -> Array[Vector3]:
+	var start := _nearest_ring(global_position)
+	var n := RING.size()
+	var fwd := posmod(target_index - start, n)
+	var dirn := 1 if fwd <= n / 2 else -1
+	var steps := fwd if dirn == 1 else n - fwd
+	var out: Array[Vector3] = []
+	for i in steps + 1:
+		out.append(RING[posmod(start + i * dirn, n)])
+	return out
+
+
+func _pick_observe_spot() -> Vector3:
+	return OBSERVE_SPOTS[_rng.randi() % OBSERVE_SPOTS.size()]
+
+
+func _nearest_observe_spot() -> Vector3:
+	var best: Vector3 = OBSERVE_SPOTS[0]
+	for s in OBSERVE_SPOTS:
+		if (s as Vector3).distance_to(global_position) < best.distance_to(global_position):
+			best = s
+	return best
+
+
+# --- Animation und Geräusche -------------------------------------------
+
+func _animate(delta: float, moving: bool) -> void:
+	var speed_factor := _speed / WALK_SPEED if moving else 0.0
+	if moving:
+		_walk_phase += delta * (2.4 + speed_factor * 1.6)
+	var swing := sin(_walk_phase) * (28.0 if moving else 0.0) * clampf(speed_factor, 0.6, 1.6)
+	for side: int in [-1, 1]:
+		var leg := _parts.get("leg_%d" % side) as Node3D
+		var knee := _parts.get("knee_%d" % side) as Node3D
+		var arm := _parts.get("arm_%d" % side) as Node3D
+		var fore := _parts.get("forearm_%d" % side) as Node3D
+		if leg:
+			leg.rotation_degrees.x = swing * side
+			knee.rotation_degrees.x = maxf(0.0, -swing * side) * 1.2 + (6.0 if moving else 2.0)
+		if arm and not (side == 1 and state == State.HIT_ENTRY):
+			arm.rotation_degrees.x = lerpf(arm.rotation_degrees.x, -swing * side * 0.6 - (25.0 if state == State.CHASE else 4.0), clampf(delta * 8.0, 0.0, 1.0))
+			fore.rotation_degrees.x = -10.0 - (30.0 if state == State.CHASE else 0.0)
+	var hips := _parts.get("hips") as Node3D
+	if hips:
+		hips.position.y = 1.05 + absf(sin(_walk_phase)) * 0.04
+	var head := _parts.get("head") as Node3D
+	if head:
+		# Unheimliches, langsames Neigen des Kopfes beim Stillstehen
+		var t := Time.get_ticks_msec() / 1000.0
+		head.rotation_degrees.z = (sin(t * 0.4) * 18.0) if not moving else sin(_walk_phase * 0.5) * 4.0
+		head.rotation_degrees.x = -8.0 if state == State.OBSERVE else 0.0
+	var torso := _parts.get("torso") as Node3D
+	if torso:
+		torso.rotation_degrees.x = 22.0 if state == State.CHASE else 8.0
+
+
+func _sounds(delta: float, moving: bool) -> void:
+	if moving:
+		_step_timer -= delta * (_speed / WALK_SPEED)
+		if _step_timer <= 0.0:
+			_step_timer = 0.55
+			SoundBank.play_at(get_parent(), "step_creature", global_position + Vector3(0, 0.1, 0), -3.0, _rng.randf_range(0.8, 1.0))
+			if _rng.randf() < 0.05:
+				SoundBank.play_at(get_parent(), "twig", global_position, -2.0)
+	_breath_timer -= delta
+	if _breath_timer <= 0.0 and _dist() < 14.0:
+		_breath_timer = _rng.randf_range(5.0, 10.0)
+		_breath.pitch_scale = _rng.randf_range(0.8, 1.0)
+		_breath.play()

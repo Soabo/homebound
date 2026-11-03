@@ -19,6 +19,8 @@ var head: Node3D
 var camera: Camera3D
 var flashlight: SpotLight3D
 var input_locked: bool = false
+var health: float = 100.0
+const MAX_HEALTH := 100.0
 var current_interactable: Interactable = null
 
 var _ray: RayCast3D
@@ -58,10 +60,13 @@ func _ready() -> void:
 	camera.far = 300.0
 	head.add_child(camera)
 	camera.current = true
+	# Trugbilder (Ebene 2) sieht nur die Überwachungskamera, nicht der Spieler
+	camera.cull_mask = 0xFFFFF & ~(1 << 1)
 
 	_ray = RayCast3D.new()
 	_ray.target_position = Vector3(0, 0, -interact_distance)
 	_ray.add_exception(self)
+	_ray.collide_with_areas = true
 	camera.add_child(_ray)
 
 	# Die Taschenlampe folgt der Blickrichtung mit leichter Verzögerung.
@@ -84,8 +89,8 @@ func _ready() -> void:
 	_build_flashlight_model()
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	EventBus.sleep_requested.connect(func(_h: float) -> void: input_locked = true)
-	EventBus.sleep_finished.connect(func() -> void: input_locked = false)
+	EventBus.sleep_requested.connect(_on_sleep_requested)
+	EventBus.sleep_finished.connect(_on_sleep_finished)
 
 
 ## Sichtbare Taschenlampe unten rechts im Bild, gehalten von einem Ärmel.
@@ -117,6 +122,14 @@ func _build_flashlight_model() -> void:
 	for mi in _viewmodel.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_viewmodel.visible = false
+
+
+func _on_sleep_requested(_h: float) -> void:
+	input_locked = true
+
+
+func _on_sleep_finished() -> void:
+	input_locked = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -177,8 +190,12 @@ func _physics_process(delta: float) -> void:
 	var horizontal := Vector2(velocity.x, velocity.z).length()
 	var bob := 0.0
 	if is_on_floor() and horizontal > 0.3:
+		var before := sin(_bob_time)
 		_bob_time += delta * horizontal * 2.2
 		bob = sin(_bob_time) * 0.035 * clampf(horizontal / walk_speed, 0.0, 1.5)
+		# Ein Schritt bei jedem Nulldurchgang der Kopfbewegung (links, rechts)
+		if signf(before) != signf(sin(_bob_time)):
+			_footstep(horizontal)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
 
 	if global_position.y < -30.0:
@@ -186,6 +203,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 	_update_interaction()
+	health = minf(health + delta * 1.5, MAX_HEALTH)
 
 
 func _process(delta: float) -> void:
@@ -194,6 +212,30 @@ func _process(delta: float) -> void:
 	_flashlight_rig.global_transform = Transform3D(
 			_flashlight_rig.global_transform.basis.orthonormalized().slerp(target.basis.orthonormalized(), t),
 			target.origin)
+
+
+func _footstep(speed: float) -> void:
+	var indoor := Cabin.is_inside(global_position) or Shed.is_inside(global_position) or global_position.y > 0.35
+	var vol := -14.0 if speed < walk_speed + 0.5 else -9.0
+	SoundBank.play_at(get_parent(), "step_wood" if indoor else "step_grass", global_position, vol, randf_range(0.85, 1.15))
+	# Rennen draußen ist laut (GDD 9.4)
+	if speed > walk_speed + 0.5 and not indoor:
+		EventBus.noise_made.emit(global_position, 16.0)
+
+
+func take_damage(amount: float, from: Vector3) -> void:
+	if GameState.dead:
+		return
+	health -= amount
+	EventBus.player_hurt.emit(amount)
+	SoundBank.play_ui(self, "hurt", -2.0, randf_range(0.9, 1.1))
+	var push := global_position - from
+	push.y = 0.0
+	velocity += push.normalized() * 4.0 + Vector3(0, 2.0, 0)
+	if health <= 0.0:
+		input_locked = true
+		set_flashlight(false)
+		GameState.kill_player()
 
 
 func _blocked_above() -> bool:

@@ -59,11 +59,36 @@ func _ready() -> void:
 	set_on(is_on)
 
 
+## Schalter-Stellung setzen. Leuchten tut die Lampe nur, wenn auch Strom da ist.
 func set_on(value: bool) -> void:
 	is_on = value
+	_refresh()
+
+
+func _refresh() -> void:
+	var lit := is_on and PowerManager.has_power()
 	if light:
-		light.visible = value
+		light.visible = lit
 	if _bulb_mat:
-		_bulb_mat.emission_energy_multiplier = 4.0 if value else 0.0
+		_bulb_mat.emission_energy_multiplier = 4.0 if lit else 0.0
 	if _glass_mat:
-		_glass_mat.emission_energy_multiplier = 1.2 if value else 0.0
+		_glass_mat.emission_energy_multiplier = 1.2 if lit else 0.0
+	PowerManager.set_consumer(str(get_instance_id()), is_on)
+
+
+func _enter_tree() -> void:
+	if not PowerManager.power_changed.is_connected(_on_power_changed):
+		PowerManager.power_changed.connect(_on_power_changed)
+
+
+func _exit_tree() -> void:
+	PowerManager.set_consumer(str(get_instance_id()), false)
+
+
+func _on_power_changed(_p: bool) -> void:
+	# Kurzes Flackern, wenn der Strom wiederkommt oder ausfällt
+	if is_on and light:
+		for i in 3:
+			light.visible = not light.visible
+			await get_tree().create_timer(0.06).timeout
+	_refresh()

@@ -21,6 +21,9 @@ const SHOTS := [
 	{"name": "08_schlafzimmer_nacht", "hour": 22.0, "pos": Vector3(-1.6, 0.45, -1.6), "look": Vector3(-5.0, 0.9, -3.8), "lights": true},
 	{"name": "09_bach_nachmittag", "hour": 15.5, "pos": Vector3(33.0, 0.0, 2.0), "look": Vector3(38.5, -1.0, 9.0)},
 	{"name": "10_kueche_abend_licht", "hour": 21.0, "pos": Vector3(-3.6, 0.45, 3.6), "look": Vector3(-0.8, 1.3, -0.9), "lights": true},
+	{"name": "12_kreatur_waldrand", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 5.6), "look": Vector3(-3.5, 1.6, 15.0), "flashlight": true, "creature_at": Vector3(-3.5, 0, 14.0), "lights": true},
+	{"name": "13_monitor_veranda", "hour": 22.6, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "creature_at": Vector3(-4.0, 0, 13.0)},
+	{"name": "14_fenster_kaputt", "hour": 21.5, "pos": Vector3(0.0, 0.45, 2.6), "look": Vector3(0.0, 1.5, 4.5), "lights": true, "break_window": true, "creature_at": Vector3(0.2, 0, 5.4)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -60,10 +63,29 @@ func _run() -> void:
 		player.set_flashlight(shot.get("flashlight", false))
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.set_state(shot.get("lights", false))
+		var creature: Creature = null
+		if shot.has("creature_at"):
+			creature = Creature.new()
+			get_tree().current_scene.add_child(creature)
+			creature.global_position = Creature._ground(shot["creature_at"])
+			creature.set_physics_process(false)
+			var face: Vector3 = pos
+			face.y = creature.global_position.y
+			creature.look_at(face, Vector3.UP)
+			creature.rotate_y(PI)
+		if shot.get("break_window", false):
+			var w := get_tree().current_scene.get_node("Cabin/WindowLiving") as CabinWindow
+			w.receive_hit(999.0)
+		if shot.get("monitor", false):
+			get_tree().call_group("hud", "open_monitor")
 		for f in frames:
 			await get_tree().process_frame
+		if shot.get("monitor", false):
+			(get_tree().get_first_node_in_group("hud") as Hud).close_monitor.call_deferred()
 		var img := get_viewport().get_texture().get_image()
 		var path := out_dir.path_join(String(shot["name"]) + ".png")
 		img.save_png(path)
 		print("Screenshot: ", path)
+		if creature:
+			creature.queue_free()
 	get_tree().quit()

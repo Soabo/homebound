@@ -18,6 +18,10 @@ boot_splash/show_image=false
 
 EventBus="*res://scripts/core/event_bus.gd"
 TimeManager="*res://scripts/systems/time_manager.gd"
+PowerManager="*res://scripts/systems/power_manager.gd"
+Inventory="*res://scripts/systems/inventory.gd"
+ThreatDirector="*res://scripts/systems/threat_director.gd"
+GameState="*res://scripts/systems/game_state.gd"
 GameInput="*res://scripts/core/game_input.gd"
 
 [display]

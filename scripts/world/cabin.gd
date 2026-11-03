@@ -24,6 +24,14 @@ const LOG_R := 0.155
 const CLAD := 0.14  ## Abstand der Innenverkleidung von der Wandmitte
 const ROOF_RISE := 2.2
 
+const WINDOW_NAMES := {
+	"WindowLiving": "Wohnzimmerfenster",
+	"WindowWorkshopFront": "Werkstattfenster",
+	"WindowBedroom": "Schlafzimmerfenster",
+	"WindowTechnical": "Technikraumfenster",
+	"WindowWorkshopEast": "Werkstattfenster Ost",
+}
+
 var front_door: Door
 var switches: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
@@ -250,6 +258,7 @@ func _build_openings() -> void:
 	front_door.open_sign = 1.0
 	front_door.position = Vector3(-3.5, FLOOR_Y, HALF_Z)
 	add_child(front_door)
+	front_door.make_entry()
 	_door_trim(Vector3(-3.0, FLOOR_Y, HALF_Z), 0.0, 1.0, 2.1, 0.36)
 
 	# Fenster (GDD 18.2: zwei zerstörbare Fenster im Wohnbereich – Schaden folgt später)
@@ -270,6 +279,7 @@ func _build_openings() -> void:
 func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) -> void:
 	var win := CabinWindow.new()
 	win.name = node_name
+	win.window_name = WINDOW_NAMES.get(node_name, "Fenster")
 	win.width = w
 	win.height = h
 	win.wall_thickness = 0.34
@@ -482,6 +492,11 @@ func _build_living_room() -> void:
 	BuildKit.box_mm(self, Vector3(1.49, y + 0.8, 3.06), Vector3(1.5, y + 0.92, 3.16), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
 	BuildKit.cylinder(self, 0.005, 0.35, Vector3(1.8, y + 1.1, 3.2), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
 	_chair(Vector3(0.85, y, 3.6), 90.0)
+	var station := MonitorStation.new()
+	station.name = "MonitorStation"
+	station.screen_center = Vector3(1.385, y + 0.97, 3.625)
+	station.screen_size = Vector2(0.48, 0.32)
+	add_child(station)
 	# Wanduhr
 	var clock := Node3D.new()
 	clock.position = Vector3(-1.4, y + 2.1, HALF_Z - CLAD - 0.03)
@@ -665,29 +680,31 @@ func _build_storage() -> void:
 
 func _build_technical_room() -> void:
 	var y := FLOOR_Y
-	# Generator (noch ohne Funktion – kommt mit dem Stromsystem)
+	# Generator (GDD 7.4) – die Teile hängen am Generator-Knoten, damit man ihn anvisieren kann
+	var gen := Generator.new()
+	gen.name = "Generator"
+	gen.anchor = Vector3(4.7, y, -3.825)
+	add_child(gen)
 	var red := BuildKit.tex_mat("metal", 0.4, Color(1.9, 0.6, 0.4), 0.55)
 	var frame := BuildKit.tex_mat("metal", 0.4, Color(0.8, 0.8, 0.8), 0.5)
-	BuildKit.box_mm(self, Vector3(4.0, y + 0.08, -4.2), Vector3(5.4, y + 0.12, -3.45), frame, true)
+	BuildKit.box_mm(gen, Vector3(4.0, y + 0.08, -4.2), Vector3(5.4, y + 0.12, -3.45), frame, false)
 	for x: float in [4.02, 5.38]:
 		for z: float in [-4.18, -3.47]:
-			BuildKit.box_mm(self, Vector3(x - 0.02, y + 0.12, z - 0.02), Vector3(x + 0.02, y + 0.8, z + 0.02), frame, false)
-		BuildKit.cylinder(self, 0.08, 0.06, Vector3(x, y + 0.08, -3.45), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3(0, 0, 90), -1.0, 8)
-	BuildKit.box_mm(self, Vector3(4.05, y + 0.62, -4.15), Vector3(5.35, y + 0.82, -3.5), red, true, "Generator")
-	BuildKit.box_mm(self, Vector3(4.1, y + 0.15, -4.05), Vector3(4.9, y + 0.6, -3.6), frame, false)
-	BuildKit.cylinder(self, 0.06, 0.04, Vector3(4.4, y + 0.84, -3.82), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
-	BuildKit.cylinder(self, 0.04, 0.9, Vector3(5.15, y + 0.75, -4.25), frame, false, Vector3.ZERO, -1.0, 6)
-	BuildKit.box_mm(self, Vector3(4.95, y + 0.2, -3.48), Vector3(5.3, y + 0.5, -3.44), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
+			BuildKit.box_mm(gen, Vector3(x - 0.02, y + 0.12, z - 0.02), Vector3(x + 0.02, y + 0.8, z + 0.02), frame, false)
+		BuildKit.cylinder(gen, 0.08, 0.06, Vector3(x, y + 0.08, -3.45), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3(0, 0, 90), -1.0, 8)
+	BuildKit.box_mm(gen, Vector3(4.05, y + 0.62, -4.15), Vector3(5.35, y + 0.82, -3.5), red, false, "Tank")
+	BuildKit.box_mm(gen, Vector3(4.1, y + 0.15, -4.05), Vector3(4.9, y + 0.6, -3.6), frame, false)
+	BuildKit.cylinder(gen, 0.06, 0.04, Vector3(4.4, y + 0.84, -3.82), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.cylinder(gen, 0.04, 0.9, Vector3(5.15, y + 0.75, -4.25), frame, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box_mm(gen, Vector3(4.95, y + 0.2, -3.48), Vector3(5.3, y + 0.5, -3.44), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
 	# Sicherungskasten mit Kabeln
 	var ex := HALF_X - CLAD
 	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
 	for i in 3:
 		BuildKit.box_mm(self, Vector3(ex - 0.04, y + 0.2 + i * 0.02, -3.0 + i * 0.12), Vector3(ex - 0.02, y + 1.2, -2.98 + i * 0.12), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false)
-	# Kanister
-	var can := BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5)
+	# Benzinkanister zum Mitnehmen
 	for x: float in [2.4, 2.8]:
-		BuildKit.box_mm(self, Vector3(x, y, -4.3), Vector3(x + 0.35, y + 0.45, -4.1), can, true)
-		BuildKit.box_mm(self, Vector3(x + 0.1, y + 0.45, -4.22), Vector3(x + 0.25, y + 0.5, -4.18), can, false)
+		fuel_can(self, Vector3(x + 0.175, y, -4.2))
 
 
 func _build_workshop() -> void:
@@ -714,8 +731,18 @@ func _build_workshop() -> void:
 		BuildKit.box(self, Vector3(0.12 if i % 2 == 0 else 0.06, 0.06, 0.03), Vector3(x, y + 1.6 + h * 0.5, fz - 0.05), m_iron, false)
 	# Bretterstapel an der Vorderwand (unter dem Fenster), Sägebock davor
 	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
+	var pile := ItemPickup.new()
+	pile.name = "PlankPile"
+	pile.item_id = "planks"
+	pile.amount = 10
+	pile.per_take = 2
+	pile.label = "Bretter"
+	pile.collider_size = Vector3(1.6, 0.4, 0.4)
+	pile.collider_offset = Vector3(4.25, y + 0.2, 4.1)
+	add_child(pile)
 	for i in 5:
-		BuildKit.box_mm(self, Vector3(3.45, y + i * 0.06, 3.95), Vector3(5.05, y + 0.05 + i * 0.06, 4.25), lumber, i == 0)
+		pile.visuals.append(BuildKit.box_mm(pile, Vector3(3.45, y + i * 0.06, 3.95), Vector3(5.05, y + 0.05 + i * 0.06, 4.25), lumber, false))
+	BuildKit.box_mm(self, Vector3(3.45, y, 3.95), Vector3(5.05, y + 0.05, 4.25), lumber, true)
 	for x: float in [3.3, 4.3]:
 		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 2.95), m_wood, false, Vector3(18, 0, 0))
 		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 3.25), m_wood, false, Vector3(-18, 0, 0))
@@ -743,6 +770,25 @@ func _build_reflection_probe() -> void:
 
 
 # --- Möbel-Helfer -------------------------------------------------------
+
+## Roter Benzinkanister zum Aufheben (auch vom Schuppen genutzt).
+static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0) -> ItemPickup:
+	var p := ItemPickup.new()
+	p.name = "FuelCan"
+	p.item_id = "fuel_can"
+	p.amount = 1
+	p.collider_size = Vector3(0.4, 0.5, 0.3)
+	p.collider_offset = Vector3(0, 0.25, 0)
+	p.position = pos
+	p.rotation_degrees.y = rot_y
+	parent.add_child(p)
+	var can := BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5)
+	var body := BuildKit.box(p, Vector3(0.35, 0.45, 0.2), Vector3(0, 0.225, 0), can, false)
+	p.visuals.append(body)
+	BuildKit.box(body, Vector3(0.15, 0.05, 0.04), Vector3(0, 0.25, 0), can, false)
+	BuildKit.cylinder(body, 0.025, 0.08, Vector3(0.12, 0.25, 0), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3(0, 0, -30), -1.0, 6)
+	return p
+
 
 func _table(from: Vector3, to: Vector3) -> void:
 	BuildKit.box_mm(self, Vector3(from.x, to.y - 0.05, from.z), to, m_wood, true)

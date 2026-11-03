@@ -14,6 +14,8 @@ func _ready() -> void:
 	add_child(Cabin.new())
 	add_child(Shed.new())
 	_build_world_limits()
+	_build_cameras()
+	add_child(Surveillance.new())
 
 	var player := Player.new()
 	player.position = PLAYER_SPAWN + Vector3(0, Terrain.height_at(PLAYER_SPAWN.x, PLAYER_SPAWN.z) + 0.05, 0)
@@ -29,6 +31,26 @@ func _ready() -> void:
 			add_child(ScreenshotTour.new())
 		if arg == "--walk-test":
 			add_child(WalkTest.new())
+		if arg.begins_with("--night-test"):
+			add_child(NightTest.new())
+
+
+## Drei Überwachungskameras (GDD 18.2): Veranda/Zufahrt, Garten hinten, Schuppen/Osten.
+func _build_cameras() -> void:
+	var setups := [
+		["Veranda / Zufahrt", Vector3(1.0, 2.45, 6.55), Vector3(-3.0, 0.8, 18.0), Vector3(-7.0, 0, 16.0)],
+		["Garten hinten", Vector3(-5.6, 2.95, -4.85), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
+		["Schuppen / Osten", Vector3(11.85, 2.25, 4.85), Vector3(18.0, 0.5, -10.0), Vector3(20.0, 0, -12.0)],
+	]
+	for i in setups.size():
+		var cam := SecurityCamera.new()
+		cam.name = "Camera%d" % (i + 1)
+		cam.index = i
+		cam.camera_name = setups[i][0]
+		cam.look_target = setups[i][2]
+		cam.phantom_spot = setups[i][3]
+		cam.position = setups[i][1]
+		add_child(cam)
 
 
 func _build_world_limits() -> void:

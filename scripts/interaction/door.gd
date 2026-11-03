@@ -55,29 +55,109 @@ func _build() -> void:
 
 
 func get_prompt(_player: Node) -> String:
+	if is_broken():
+		return "%s – aufgebrochen!" % door_name
 	if is_locked:
 		return "[E] %s (abgeschlossen)" % door_name
-	return "[E] %s %s" % [door_name, "schließen" if is_open else "öffnen"]
+	var dmg := ""
+	if is_entry and health < max_health:
+		dmg = "  – beschädigt %d%%" % int(health / max_health * 100.0)
+	return "[E] %s %s%s" % [door_name, "schließen" if is_open else "öffnen", dmg]
 
 
 func get_secondary_prompt(_player: Node) -> String:
+	if is_entry and (is_broken() or health < max_health * 0.99):
+		return "[R] Tür reparieren  (2 Bretter, du hast %d)" % Inventory.count("planks")
 	if not lockable or is_open:
 		return ""
 	return "[R] %s" % ("Aufschließen" if is_locked else "Abschließen")
 
 
 func interact(_player: Node) -> void:
+	if is_broken():
+		return
 	if is_locked:
 		EventBus.notify("Abgeschlossen.", 1.5)
 		return
 	set_open(not is_open)
+	if not is_open:
+		EventBus.noise_made.emit(global_position, 10.0)
 
 
 func secondary_interact(_player: Node) -> void:
+	if is_entry and (is_broken() or health < max_health * 0.99):
+		if not Inventory.remove("planks", 2):
+			EventBus.notify("Du brauchst 2 Bretter. In der Werkstatt liegt ein Stapel.", 3.0)
+			return
+		health = minf(health + max_health * 0.6, max_health)
+		SoundBank.play_at(self, "hammer", global_position + Vector3(width * 0.5, 1.0, 0), -2.0)
+		EventBus.noise_made.emit(global_position, 12.0)
+		if is_open:
+			set_open(false)
+		return
 	if not lockable or is_open:
 		return
 	is_locked = not is_locked
+	SoundBank.play_at(self, "switch", global_position + Vector3(width * 0.8, 1.0, 0), -4.0, 0.5)
 	EventBus.notify("%s %s." % [door_name, "abgeschlossen" if is_locked else "aufgeschlossen"], 1.5)
+
+
+# --- Zugang für Kreaturen (nur Türen mit is_entry) ----------------------
+
+var is_entry: bool = false
+var health: float = 180.0
+var max_health: float = 180.0
+
+
+func make_entry() -> void:
+	is_entry = true
+	add_to_group("entry_point")
+	if ThreatDirector.config:
+		max_health = ThreatDirector.config.door_health
+	health = max_health
+
+
+func entry_name() -> String:
+	return name
+
+
+func outside_point() -> Vector3:
+	return to_global(Vector3(width * 0.5, 0, 0.8))
+
+
+func inside_point() -> Vector3:
+	return to_global(Vector3(width * 0.5, 0, -1.0))
+
+
+func is_broken() -> bool:
+	return is_entry and health <= 0.0
+
+
+## Offen = Weg frei. Geschlossen, aber nicht abgeschlossen: Die Kreatur drückt sie einfach auf.
+func is_breached() -> bool:
+	return is_open or is_broken()
+
+
+func strength() -> float:
+	if is_open:
+		return 0.0
+	return health if is_locked else health * 0.15
+
+
+func receive_hit(damage: float) -> void:
+	var pos := global_position + Vector3(width * 0.5, 1.2, 0)
+	if not is_locked and not is_open:
+		# Unverschlossene Tür: wird aufgestoßen
+		SoundBank.play_at(self, "bang", pos, 0.0, 1.2)
+		set_open(true)
+		return
+	health = maxf(health - damage, 0.0)
+	SoundBank.play_at(self, "knock", pos, 2.0, randf_range(0.85, 1.05))
+	EventBus.noise_made.emit(pos, 20.0)
+	if health <= 0.0:
+		SoundBank.play_at(self, "wood_crack", pos, 4.0, 0.7)
+		is_locked = false
+		set_open(true)
 
 
 func set_open(value: bool) -> void:
