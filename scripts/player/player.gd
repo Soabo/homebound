@@ -107,6 +107,13 @@ func _build_flashlight_model() -> void:
 	# Hand und Ärmel
 	BuildKit.box(_viewmodel, Vector3(0.07, 0.06, 0.1), Vector3(0.0, -0.012, 0.05), skin, false, Vector3(0, 0, 10))
 	BuildKit.box(_viewmodel, Vector3(0.1, 0.1, 0.3), Vector3(0.02, -0.04, 0.24), sleeve, false, Vector3(-8, 0, 0))
+	# Schwaches Streulicht, damit Hand und Lampe im Dunkeln erkennbar bleiben
+	var fill := OmniLight3D.new()
+	fill.position = Vector3(-0.1, 0.12, -0.05)
+	fill.omni_range = 0.5
+	fill.light_energy = 0.35
+	fill.light_color = Color(1.0, 0.92, 0.8)
+	_viewmodel.add_child(fill)
 	for mi in _viewmodel.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_viewmodel.visible = false

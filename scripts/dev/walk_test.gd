@@ -7,6 +7,10 @@ const CASES := [
 	{"name": "Haustür rein", "door": "Cabin/FrontDoor", "from": Vector3(-3.0, 0.5, 6.0), "yaw": 0.0, "check": "z", "target": 3.5},
 	{"name": "Schuppentür rein", "door": "Shed/ShedDoor", "from": Vector3(10.5, 0.1, 6.5), "yaw": -90.0, "check": "x", "target": 13.5},
 	{"name": "Tor zur Straße", "door": "", "from": Vector3(-3.0, 0.1, 14.0), "yaw": 180.0, "check": "z", "target": 21.0},
+	{"name": "Wohnzimmer -> Schlafzimmer", "door": "", "from": Vector3(-2.5, 0.5, 0.2), "yaw": 0.0, "check": "z", "target": -2.0},
+	{"name": "Wohnzimmer -> Vorratsraum", "door": "", "from": Vector3(0.5, 0.5, 0.6), "yaw": 0.0, "check": "z", "target": -2.0},
+	{"name": "Wohnzimmer -> Werkstatt", "door": "", "from": Vector3(0.8, 0.5, 1.5), "yaw": -90.0, "check": "x", "target": 3.0},
+	{"name": "Werkstatt -> Technikraum", "door": "", "from": Vector3(4.0, 0.5, 1.0), "yaw": 0.0, "check": "z", "target": -2.5},
 ]
 
 

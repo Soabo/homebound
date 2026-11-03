@@ -99,10 +99,10 @@ func _build_props() -> void:
 	# Regentonne mit Eisenbändern
 	var barrel := BuildKit.tex_mat("planks_v", 0.5, Color(0.85, 0.8, 0.75))
 	var band := BuildKit.tex_mat("metal", 0.3, Color(0.7, 0.7, 0.7), 0.5)
-	BuildKit.cylinder(self, 0.4, 1.0, Vector3(6.75, 0.5, -4.95), barrel, true, Vector3.ZERO, 0.37, 12)
+	BuildKit.cylinder(self, 0.4, 1.0, Vector3(6.9, 0.5, -2.6), barrel, true, Vector3.ZERO, 0.37, 12)
 	for y: float in [0.15, 0.85]:
-		BuildKit.cylinder(self, 0.41, 0.05, Vector3(6.75, y, -4.95), band, false, Vector3.ZERO, -1.0, 12)
-	BuildKit.cylinder(self, 0.36, 0.01, Vector3(6.75, 0.95, -4.95), BuildKit.color_mat(Color(0.05, 0.07, 0.08), 0.05), false, Vector3.ZERO, -1.0, 12)
+		BuildKit.cylinder(self, 0.41, 0.05, Vector3(6.9, y, -2.6), band, false, Vector3.ZERO, -1.0, 12)
+	BuildKit.cylinder(self, 0.36, 0.01, Vector3(6.9, 0.95, -2.6), BuildKit.color_mat(Color(0.05, 0.07, 0.08), 0.05), false, Vector3.ZERO, -1.0, 12)
 	# Hackklotz mit Axt neben dem Schuppen, Späne
 	BuildKit.cylinder(self, 0.32, 0.5, Vector3(11.0, 0.25, 10.5), BuildKit.tex_mat("bark", 0.6), true, Vector3.ZERO, -1.0, 10)
 	BuildKit.cylinder(self, 0.3, 0.01, Vector3(11.0, 0.505, 10.5), BuildKit.color_mat(Color(0.6, 0.48, 0.32)), false, Vector3.ZERO, -1.0, 10)

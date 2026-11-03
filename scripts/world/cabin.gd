@@ -656,8 +656,8 @@ func _build_storage() -> void:
 				BuildKit.box(self, Vector3(w, _rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
 				x += w + 0.05
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
-	BuildKit.sphere(self, 0.28, Vector3(-0.5, y + 0.22, -1.6), sack, Vector3(1.0, 0.8, 0.8), 8)
-	BuildKit.sphere(self, 0.28, Vector3(-0.1, y + 0.22, -1.55), sack, Vector3(0.9, 0.8, 0.9), 8)
+	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.3), sack, Vector3(1.0, 0.8, 0.8), 10)
+	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.85), sack, Vector3(0.9, 0.8, 0.9), 10)
 	var crate := BuildKit.tex_mat("planks_h", 0.5, Color(1.1, 1.05, 0.95))
 	BuildKit.box_mm(self, Vector3(1.1, y, -1.9), Vector3(1.8, y + 0.45, -1.3), crate, true)
 	BuildKit.box_mm(self, Vector3(1.2, y + 0.45, -1.85), Vector3(1.75, y + 0.8, -1.35), crate, true)
@@ -704,27 +704,27 @@ func _build_workshop() -> void:
 	BuildKit.box(self, Vector3(0.03, 0.03, 0.3), Vector3(5.35, y + 0.94, 2.2), m_wood, false, Vector3(0, 40, 0))
 	BuildKit.box(self, Vector3(0.1, 0.05, 0.04), Vector3(5.42, y + 0.95, 2.32), m_iron, false, Vector3(0, 40, 0))
 	BuildKit.box(self, Vector3(0.08, 0.08, 0.25), Vector3(5.6, y + 0.96, 2.8), m_wood_dark, false)
-	# Werkzeugwand mit Silhouetten
-	var bz := -1.0 + INT_T * 0.5
-	BuildKit.box_mm(self, Vector3(3.0, y + 1.0, bz), Vector3(5.0, y + 2.0, bz + 0.03), BuildKit.tex_mat("planks_v", 0.6, Color(1.2, 1.1, 0.95)), false, "Pegboard")
-	for i in 7:
-		var x := 3.2 + i * 0.27
+	# Werkzeugwand an der Vorderwand links vom Werkstattfenster (nicht über einer Tür!)
+	var fz := HALF_Z - CLAD - 0.015
+	BuildKit.box_mm(self, Vector3(2.2, y + 1.0, fz - 0.03), Vector3(3.35, y + 2.0, fz), BuildKit.tex_mat("planks_v", 0.6, Color(1.2, 1.1, 0.95)), false, "Pegboard")
+	for i in 4:
+		var x := 2.38 + i * 0.27
 		var h := 0.25 + (i % 3) * 0.1
-		BuildKit.box(self, Vector3(0.04, h, 0.03), Vector3(x, y + 1.6, bz + 0.05), m_wood_dark, false)
-		BuildKit.box(self, Vector3(0.12 if i % 2 == 0 else 0.06, 0.06, 0.03), Vector3(x, y + 1.6 + h * 0.5, bz + 0.05), m_iron, false)
-	# Sägebock und Bretterstapel
-	for x: float in [3.0, 3.8]:
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 0.6), m_wood, false, Vector3(18, 0, 0))
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 0.9), m_wood, false, Vector3(-18, 0, 0))
-	BuildKit.box_mm(self, Vector3(2.8, y + 0.7, 0.68), Vector3(4.0, y + 0.76, 0.82), m_wood, true)
-	BuildKit.box(self, Vector3(1.6, 0.05, 0.22), Vector3(3.4, y + 0.79, 0.75), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
+		BuildKit.box(self, Vector3(0.04, h, 0.03), Vector3(x, y + 1.6, fz - 0.05), m_wood_dark, false)
+		BuildKit.box(self, Vector3(0.12 if i % 2 == 0 else 0.06, 0.06, 0.03), Vector3(x, y + 1.6 + h * 0.5, fz - 0.05), m_iron, false)
+	# Bretterstapel an der Vorderwand (unter dem Fenster), Sägebock davor
 	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
 	for i in 5:
-		BuildKit.box_mm(self, Vector3(2.4, y + i * 0.06, 3.6), Vector3(4.6, y + 0.05 + i * 0.06, 3.85), lumber, i == 0)
-	# Hackklotz mit Beil
-	BuildKit.cylinder(self, 0.22, 0.45, Vector3(2.7, y + 0.225, 2.6), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 10)
-	BuildKit.box(self, Vector3(0.035, 0.5, 0.035), Vector3(2.75, y + 0.65, 2.6), m_wood, false, Vector3(0, 0, 20))
-	BuildKit.box(self, Vector3(0.16, 0.1, 0.02), Vector3(2.68, y + 0.47, 2.6), m_iron, false, Vector3(0, 0, 20))
+		BuildKit.box_mm(self, Vector3(3.45, y + i * 0.06, 3.95), Vector3(5.05, y + 0.05 + i * 0.06, 4.25), lumber, i == 0)
+	for x: float in [3.3, 4.3]:
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 2.95), m_wood, false, Vector3(18, 0, 0))
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 3.25), m_wood, false, Vector3(-18, 0, 0))
+	BuildKit.box_mm(self, Vector3(3.1, y + 0.7, 3.03), Vector3(4.5, y + 0.76, 3.17), m_wood, true)
+	BuildKit.box(self, Vector3(1.6, 0.05, 0.22), Vector3(3.8, y + 0.79, 3.1), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
+	# Hackklotz mit Beil in der Ecke neben der Werkbank
+	BuildKit.cylinder(self, 0.22, 0.45, Vector3(5.45, y + 0.225, 3.95), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 12)
+	BuildKit.box(self, Vector3(0.035, 0.5, 0.035), Vector3(5.5, y + 0.65, 3.95), m_wood, false, Vector3(0, 0, 20))
+	BuildKit.box(self, Vector3(0.16, 0.1, 0.02), Vector3(5.43, y + 0.47, 3.95), m_iron, false, Vector3(0, 0, 20))
 
 
 func _build_reflection_probe() -> void:
