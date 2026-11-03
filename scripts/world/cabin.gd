@@ -6,9 +6,12 @@ extends Node3D
 ##   +-------------+---------+-----------+
 ##   | Schlafzimmer| Vorrat  | Technik   |   z -4.5 .. -1
 ##   +-------------+---------+-----------+
-##   |      Wohnzimmer       | Werkstatt |   z -1 .. 4.5
+##   |  Wohnzimmer + Küche   | Werkstatt |   z -1 .. 4.5
 ##   +----[Tür]--------------+-----------+
 ##   x -6        -1         2           6
+##
+## Außen liegen echte Rundholz-Stämme mit Eckköpfen; die Kollision kommt von
+## unsichtbaren Wandkörpern, innen sind die Wände mit Brettern verkleidet.
 
 const FLOOR_Y := 0.45
 const WALL_H := 2.8
@@ -17,9 +20,25 @@ const EXT_T := 0.25
 const INT_T := 0.15
 const HALF_X := 6.0
 const HALF_Z := 4.5
+const LOG_R := 0.155
+const CLAD := 0.14  ## Abstand der Innenverkleidung von der Wandmitte
+const ROOF_RISE := 2.2
 
 var front_door: Door
 var switches: Dictionary = {}
+var _rng := RandomNumberGenerator.new()
+
+# Materialien
+var m_logs: Material
+var m_wall: Material
+var m_floor: Material
+var m_stone: Material
+var m_stone_dark: Material
+var m_beam: Material
+var m_wood: Material
+var m_wood_dark: Material
+var m_iron: Material
+var m_fabric: Material
 
 
 ## Für Atmosphäre/Sound: steht ein Punkt in der Hütte?
@@ -29,6 +48,18 @@ static func is_inside(p: Vector3) -> bool:
 
 func _ready() -> void:
 	name = "Cabin"
+	_rng.seed = 2024
+	m_logs = BuildKit.tex_mat("logs", 1.1)
+	m_wall = BuildKit.tex_mat("planks_v", 1.0)
+	m_floor = BuildKit.tex_mat("floor", 1.4)
+	m_stone = BuildKit.tex_mat("stone", 0.8)
+	m_stone_dark = BuildKit.tex_mat("stone_dark", 0.9)
+	m_beam = BuildKit.tex_mat("planks_h", 2.0, Color(0.55, 0.5, 0.48))
+	m_wood = BuildKit.tex_mat("planks_h", 0.7)
+	m_wood_dark = BuildKit.tex_mat("planks_h", 0.7, Color(0.55, 0.5, 0.48))
+	m_iron = BuildKit.tex_mat("metal", 0.4, Color(0.55, 0.52, 0.5), 0.55)
+	m_fabric = BuildKit.tex_mat("fabric", 0.5)
+
 	_build_shell()
 	_build_roof()
 	_build_porch()
@@ -36,117 +67,176 @@ func _ready() -> void:
 	_build_fireplace()
 	_build_lights()
 	_build_living_room()
+	_build_kitchen()
 	_build_bedroom()
 	_build_storage()
 	_build_technical_room()
 	_build_workshop()
 	_build_reflection_probe()
-
-
-## Innenraum-Reflexionen: verhindert, dass sich drinnen der blaue Himmel spiegelt.
-func _build_reflection_probe() -> void:
-	var probe := ReflectionProbe.new()
-	probe.name = "InteriorProbe"
-	probe.size = Vector3(HALF_X * 2.0, WALL_H, HALF_Z * 2.0)
-	probe.position = Vector3(0, FLOOR_Y + WALL_H * 0.5, 0)
-	probe.interior = true
-	probe.box_projection = true
-	probe.ambient_mode = ReflectionProbe.AMBIENT_COLOR
-	probe.ambient_color = Color(0.2, 0.16, 0.12)
-	probe.ambient_color_energy = 0.6
-	probe.update_mode = ReflectionProbe.UPDATE_ONCE
-	add_child(probe)
+	# Staub in der Luft (sichtbar im Licht) und Rauch aus dem Schornstein
+	var dust := ParticlesKit.dust(Vector3(HALF_X - 0.4, WALL_H * 0.45, HALF_Z - 0.4))
+	dust.position = Vector3(0, FLOOR_Y + WALL_H * 0.5, 0)
+	add_child(dust)
+	var smoke := ParticlesKit.smoke()
+	smoke.position = Vector3(-HALF_X - 0.5, WALL_TOP + ROOF_RISE + 1.2, 1.75)
+	add_child(smoke)
 
 
 # --- Rohbau -------------------------------------------------------------
 
 func _build_shell() -> void:
-	var stone := BuildKit.stone_mat(Color(0.45, 0.43, 0.4), 0.28)
-	var logs := BuildKit.wood_mat(Color(0.42, 0.27, 0.16), 1, 0.27, 0.13)
-	var inner := BuildKit.wood_mat(Color(0.55, 0.4, 0.26), 1, 0.2, 0.06)
-	var floor_mat := BuildKit.wood_mat(Color(0.4, 0.27, 0.17), 0, 0.18, 0.05)
-
-	BuildKit.box_mm(self, Vector3(-HALF_X - 0.15, 0, -HALF_Z - 0.15), Vector3(HALF_X + 0.15, FLOOR_Y - 0.06, HALF_Z + 0.15), stone, true, "Foundation")
-	BuildKit.box_mm(self, Vector3(-HALF_X + 0.1, FLOOR_Y - 0.08, -HALF_Z + 0.1), Vector3(HALF_X - 0.1, FLOOR_Y, HALF_Z - 0.1), floor_mat, true, "Floor")
+	BuildKit.box_mm(self, Vector3(-HALF_X - 0.2, 0, -HALF_Z - 0.2), Vector3(HALF_X + 0.2, FLOOR_Y - 0.06, HALF_Z + 0.2), m_stone, true, "Foundation")
+	BuildKit.box_mm(self, Vector3(-HALF_X + 0.1, FLOOR_Y - 0.08, -HALF_Z + 0.1), Vector3(HALF_X - 0.1, FLOOR_Y, HALF_Z - 0.1), m_floor, true, "Floor")
 
 	var hz := HALF_Z - EXT_T * 0.5
-	# Außenwände – Öffnungen: Vector4(mitte, breite, unterkante, oberkante)
-	BuildKit.wall(self, Vector2(-HALF_X, HALF_Z), Vector2(HALF_X, HALF_Z), FLOOR_Y, WALL_H, EXT_T, logs,
-			[Vector4(3.0, 1.0, 0.0, 2.1), Vector4(6.0, 1.3, 0.9, 2.0), Vector4(10.0, 1.0, 1.0, 1.9)], "WallFront")
-	BuildKit.wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(HALF_X, -HALF_Z), FLOOR_Y, WALL_H, EXT_T, logs,
-			[Vector4(2.5, 1.0, 1.0, 1.9), Vector4(10.5, 0.6, 1.5, 2.0)], "WallBack")
-	BuildKit.wall(self, Vector2(-HALF_X, -hz), Vector2(-HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, logs, [], "WallWest")
-	BuildKit.wall(self, Vector2(HALF_X, -hz), Vector2(HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, logs,
-			[Vector4(2.0 + hz, 1.0, 1.0, 1.9)], "WallEast")
+	# Öffnungen: Vector4(mitte entlang der Wand, breite, unterkante, oberkante)
+	var front := [Vector4(3.0, 1.0, 0.0, 2.1), Vector4(6.0, 1.3, 0.9, 2.0), Vector4(10.0, 1.0, 1.0, 1.9)]
+	var back := [Vector4(2.5, 1.0, 1.0, 1.9), Vector4(10.5, 0.6, 1.5, 2.0)]
+	# Unsichtbare Kollision
+	BuildKit.wall(self, Vector2(-HALF_X, HALF_Z), Vector2(HALF_X, HALF_Z), FLOOR_Y, WALL_H, EXT_T, null, front, "WallFront")
+	BuildKit.wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(HALF_X, -HALF_Z), FLOOR_Y, WALL_H, EXT_T, null, back, "WallBack")
+	BuildKit.wall(self, Vector2(-HALF_X, -hz), Vector2(-HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, null, [], "WallWest")
+	BuildKit.wall(self, Vector2(HALF_X, -hz), Vector2(HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, null, [Vector4(2.0 + hz, 1.0, 1.0, 1.9)], "WallEast")
+
+	# Außen: Rundholz-Stämme. Vorder-/Rückwand und Seiten um eine halbe Lage versetzt.
+	var step := LOG_R * 1.85
+	var low := FLOOR_Y - 0.02
+	var to_world := func(ops: Array, y_off: float) -> Array:
+		var r := []
+		for o: Vector4 in ops:
+			r.append(Vector4(o.x, o.y, o.z + y_off, o.w + y_off))
+		return r
+	BuildKit.log_wall(self, Vector2(-HALF_X, HALF_Z), Vector2(HALF_X, HALF_Z), low, WALL_TOP, LOG_R, 0.38, m_logs, to_world.call(front, FLOOR_Y))
+	BuildKit.log_wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(HALF_X, -HALF_Z), low, WALL_TOP, LOG_R, 0.38, m_logs, to_world.call(back, FLOOR_Y))
+	BuildKit.log_wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(-HALF_X, HALF_Z), low + step * 0.5, WALL_TOP, LOG_R, 0.38, m_logs, [])
+	BuildKit.log_wall(self, Vector2(HALF_X, -HALF_Z), Vector2(HALF_X, HALF_Z), low + step * 0.5, WALL_TOP, LOG_R, 0.38, m_logs,
+			to_world.call([Vector4(2.0 + HALF_Z, 1.0, 1.0, 1.9)], FLOOR_Y))
+
+	# Innen: Bretterverkleidung der Außenwände (Öffnungen auf die verschobenen Startpunkte umgerechnet)
+	var ix := HALF_X - CLAD
+	var iz := HALF_Z - CLAD
+	var shift := HALF_X - ix
+	var front_in := []
+	for o: Vector4 in front:
+		front_in.append(Vector4(o.x - shift, o.y, o.z, o.w))
+	var back_in := []
+	for o: Vector4 in back:
+		back_in.append(Vector4(o.x - shift, o.y, o.z, o.w))
+	BuildKit.wall(self, Vector2(-ix, iz), Vector2(ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, front_in, "CladFront")
+	BuildKit.wall(self, Vector2(-ix, -iz), Vector2(ix, -iz), FLOOR_Y, WALL_H, 0.03, m_wall, back_in, "CladBack")
+	BuildKit.wall(self, Vector2(-ix, -iz), Vector2(-ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, [], "CladWest")
+	BuildKit.wall(self, Vector2(ix, -iz), Vector2(ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, [Vector4(2.0 + iz, 1.0, 1.0, 1.9)], "CladEast")
 
 	# Innenwände
-	var ix := HALF_X - EXT_T * 0.5
-	var iz := HALF_Z - EXT_T * 0.5
-	BuildKit.wall(self, Vector2(-ix, -1.0), Vector2(ix, -1.0), FLOOR_Y, WALL_H, INT_T, inner,
-			[Vector4(-2.5 + ix, 0.9, 0.0, 2.05), Vector4(0.5 + ix, 0.9, 0.0, 2.05), Vector4(4.0 + ix, 0.9, 0.0, 2.05)], "WallInnerHall")
-	BuildKit.wall(self, Vector2(-1.0, -iz), Vector2(-1.0, -1.075), FLOOR_Y, WALL_H, INT_T, inner, [], "WallBedStorage")
-	BuildKit.wall(self, Vector2(2.0, -iz), Vector2(2.0, -1.075), FLOOR_Y, WALL_H, INT_T, inner, [], "WallStorageTech")
-	BuildKit.wall(self, Vector2(2.0, -0.925), Vector2(2.0, iz), FLOOR_Y, WALL_H, INT_T, inner,
+	var px := HALF_X - EXT_T * 0.5
+	var pz := HALF_Z - EXT_T * 0.5
+	BuildKit.wall(self, Vector2(-px, -1.0), Vector2(px, -1.0), FLOOR_Y, WALL_H, INT_T, m_wall,
+			[Vector4(-2.5 + px, 0.9, 0.0, 2.05), Vector4(0.5 + px, 0.9, 0.0, 2.05), Vector4(4.0 + px, 0.9, 0.0, 2.05)], "WallInnerHall")
+	BuildKit.wall(self, Vector2(-1.0, -pz), Vector2(-1.0, -1.075), FLOOR_Y, WALL_H, INT_T, m_wall, [], "WallBedStorage")
+	BuildKit.wall(self, Vector2(2.0, -pz), Vector2(2.0, -1.075), FLOOR_Y, WALL_H, INT_T, m_wall, [], "WallStorageTech")
+	BuildKit.wall(self, Vector2(2.0, -0.925), Vector2(2.0, pz), FLOOR_Y, WALL_H, INT_T, m_wall,
 			[Vector4(1.5 + 0.925, 1.0, 0.0, 2.05)], "WallLivingWorkshop")
+	# Türzargen der Innentüren
+	for x: float in [-2.5, 0.5, 4.0]:
+		_door_trim(Vector3(x, FLOOR_Y, -1.0), 0.0, 0.9, 2.05, INT_T)
+	_door_trim(Vector3(2.0, FLOOR_Y, 1.5), 90.0, 1.0, 2.05, INT_T)
 
-	# Decke
-	var ceiling := BuildKit.wood_mat(Color(0.36, 0.25, 0.16), 0, 0.22, 0.05)
-	BuildKit.box_mm(self, Vector3(-HALF_X, WALL_TOP, -HALF_Z), Vector3(HALF_X, WALL_TOP + 0.1, HALF_Z), ceiling, false, "Ceiling")
-	# Deckenbalken
-	var beam := BuildKit.wood_mat(Color(0.3, 0.2, 0.12), 0, 0.5, 0.02)
-	for x: float in [-4.0, -1.5, 1.0, 3.5]:
-		BuildKit.box(self, Vector3(0.18, 0.2, HALF_Z * 2.0 - 0.3), Vector3(x, WALL_TOP - 0.1, 0), beam, false)
+	# Decke und Balken
+	BuildKit.box_mm(self, Vector3(-HALF_X, WALL_TOP, -HALF_Z), Vector3(HALF_X, WALL_TOP + 0.1, HALF_Z),
+			BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55)), false, "Ceiling")
+	for x: float in [-4.6, -2.2, 0.2, 2.6, 4.9]:
+		BuildKit.box(self, Vector3(0.22, 0.24, HALF_Z * 2.0 - 0.3), Vector3(x, WALL_TOP - 0.12, 0), m_beam, false)
+	# Fußleisten
+	var skirting := BuildKit.tex_mat("planks_h", 1.0, Color(0.5, 0.45, 0.42))
+	BuildKit.box_mm(self, Vector3(-ix, FLOOR_Y, -iz + 0.015), Vector3(ix, FLOOR_Y + 0.1, -iz + 0.04), skirting, false)
+	BuildKit.box_mm(self, Vector3(-ix + 0.015, FLOOR_Y, -iz), Vector3(-ix + 0.04, FLOOR_Y + 0.1, iz), skirting, false)
+
+
+func _door_trim(pos: Vector3, rot_y: float, w: float, h: float, wall_t: float) -> void:
+	var n := Node3D.new()
+	n.position = pos
+	n.rotation_degrees.y = rot_y
+	add_child(n)
+	var d := wall_t + 0.04
+	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(-w * 0.5 - 0.04, h * 0.5 + 0.04, 0), m_wood_dark, false)
+	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(w * 0.5 + 0.04, h * 0.5 + 0.04, 0), m_wood_dark, false)
+	BuildKit.box(n, Vector3(w + 0.16, 0.1, d), Vector3(0, h + 0.05, 0), m_wood_dark, false)
 
 
 func _build_roof() -> void:
-	var shingles := BuildKit.wood_mat(Color(0.2, 0.16, 0.14), 2, 0.22, 0.2)
-	var logs := BuildKit.wood_mat(Color(0.42, 0.27, 0.16), 1, 0.27, 0.13)
-	var rise := 2.2
-	var overhang := 0.6
-	var slope := rise / HALF_Z
+	var shingles := BuildKit.tex_mat("shingles", 1.3)
+	var overhang := 0.7
+	var slope := ROOF_RISE / HALF_Z
 	var angle := rad_to_deg(atan(slope))
 	var run := HALF_Z + overhang
 	var length := run / cos(atan(slope))
 	var center_z := run * 0.5
-	var center_y := WALL_TOP + rise - center_z * slope + 0.1
+	var center_y := WALL_TOP + ROOF_RISE - center_z * slope + 0.25
 	var roof_len := HALF_X * 2.0 + overhang * 2.0
-	BuildKit.box(self, Vector3(roof_len, 0.16, length), Vector3(0, center_y, center_z), shingles, false, Vector3(angle, 0, 0), "RoofSouth")
-	BuildKit.box(self, Vector3(roof_len, 0.16, length), Vector3(0, center_y, -center_z), shingles, false, Vector3(-angle, 0, 0), "RoofNorth")
-	BuildKit.box(self, Vector3(roof_len, 0.18, 0.25), Vector3(0, WALL_TOP + rise + 0.12, 0), BuildKit.color_mat(Color(0.15, 0.12, 0.1)), false)
-	BuildKit.gable(self, HALF_Z * 2.0, rise, EXT_T, Vector3(-HALF_X + EXT_T * 0.5, WALL_TOP, 0), 90.0, logs)
-	BuildKit.gable(self, HALF_Z * 2.0, rise, EXT_T, Vector3(HALF_X - EXT_T * 0.5, WALL_TOP, 0), 90.0, logs)
-	# Schornstein außen an der Westwand
-	var stone := BuildKit.stone_mat(Color(0.4, 0.39, 0.37), 0.25)
-	BuildKit.box_mm(self, Vector3(-HALF_X - 0.8, 0, 1.2), Vector3(-HALF_X - 0.12, WALL_TOP + rise + 1.0, 2.3), stone, true, "Chimney")
+	for side: float in [1.0, -1.0]:
+		BuildKit.box(self, Vector3(roof_len, 0.2, length), Vector3(0, center_y, center_z * side), shingles, false, Vector3(angle * side, 0, 0))
+		# Traufbrett
+		var eave_y := WALL_TOP + ROOF_RISE - run * slope + 0.18
+		BuildKit.box(self, Vector3(roof_len + 0.05, 0.22, 0.06), Vector3(0, eave_y, run * side), m_wood_dark, false, Vector3(angle * side, 0, 0))
+		# Ortgangbretter an den Giebelseiten
+		for x: float in [-roof_len * 0.5, roof_len * 0.5]:
+			BuildKit.box(self, Vector3(0.06, 0.28, length), Vector3(x, center_y - 0.04, center_z * side), m_wood_dark, false, Vector3(angle * side, 0, 0))
+	# Firstbalken als Stamm
+	BuildKit.cylinder(self, 0.16, roof_len + 0.1, Vector3(0, WALL_TOP + ROOF_RISE + 0.32, 0), m_logs, false, Vector3(0, 0, 90), -1.0, 8)
+	# Giebel aus kürzer werdenden Stämmen, dahinter eine Bretterfüllung
+	for sx: float in [-HALF_X, HALF_X]:
+		var y := WALL_TOP + LOG_R
+		while y < WALL_TOP + ROOF_RISE:
+			var half := HALF_Z * (1.0 - (y - WALL_TOP) / ROOF_RISE) + 0.15
+			BuildKit.cylinder(self, LOG_R * 0.95, half * 2.0, Vector3(sx, y, 0), m_logs, false, Vector3(90, 0, 0), -1.0, 8)
+			y += LOG_R * 1.85
+		BuildKit.gable(self, HALF_Z * 2.0, ROOF_RISE, 0.05, Vector3(sx - signf(sx) * 0.12, WALL_TOP, 0), 90.0, m_wall)
+	# Schornstein mit Abdeckplatte
+	var cx0 := -HALF_X - 0.85
+	var cx1 := -HALF_X - 0.15
+	BuildKit.box_mm(self, Vector3(cx0, 0, 1.15), Vector3(cx1, WALL_TOP + ROOF_RISE + 1.0, 2.35), m_stone, true, "Chimney")
+	BuildKit.box_mm(self, Vector3(cx0 - 0.08, WALL_TOP + ROOF_RISE + 1.0, 1.07), Vector3(cx1 + 0.08, WALL_TOP + ROOF_RISE + 1.1, 2.43), m_stone_dark, false)
+	BuildKit.box_mm(self, Vector3(cx0 + 0.15, WALL_TOP + ROOF_RISE + 1.1, 1.45), Vector3(cx1 - 0.15, WALL_TOP + ROOF_RISE + 1.12, 2.05), BuildKit.color_mat(Color(0.03, 0.03, 0.03)), false)
 
 
 func _build_porch() -> void:
-	var deck := BuildKit.wood_mat(Color(0.38, 0.27, 0.18), 0, 0.16, 0.08)
-	var stone := BuildKit.stone_mat(Color(0.42, 0.4, 0.38), 0.25)
-	var post := BuildKit.wood_mat(Color(0.33, 0.22, 0.14), 1, 0.6, 0.02)
-	var z0 := HALF_Z + EXT_T * 0.5
+	var deck := BuildKit.tex_mat("floor", 1.2, Color(0.95, 0.92, 0.9))
+	var z0 := HALF_Z + 0.2
 	BuildKit.box_mm(self, Vector3(-5.6, FLOOR_Y - 0.08, z0), Vector3(1.2, FLOOR_Y, 6.6), deck, true, "PorchDeck")
-	BuildKit.box_mm(self, Vector3(-5.6, 0, z0), Vector3(1.2, FLOOR_Y - 0.08, 6.5), stone, true)
+	BuildKit.box_mm(self, Vector3(-5.6, 0, z0), Vector3(1.2, FLOOR_Y - 0.08, 6.5), m_stone, true)
 	# Treppe: sichtbare Stufen, darunter eine unsichtbare Rampe zum Hochlaufen
 	BuildKit.box_mm(self, Vector3(-4.0, 0, 6.6), Vector3(-2.0, 0.3, 7.05), deck, false)
 	BuildKit.box_mm(self, Vector3(-4.0, 0, 7.05), Vector3(-2.0, 0.15, 7.5), deck, false)
 	var ramp_len := sqrt(1.3 * 1.3 + FLOOR_Y * FLOOR_Y)
 	var ramp_angle := rad_to_deg(atan(FLOOR_Y / 1.3))
 	BuildKit.collider_box(self, Vector3(2.0, 0.1, ramp_len), Vector3(-3.0, FLOOR_Y * 0.5 - 0.05, 7.25), Vector3(ramp_angle, 0, 0))
-	# Pfosten und Vordach
-	for x: float in [-5.4, -1.6, 1.0]:
-		BuildKit.box_mm(self, Vector3(x - 0.08, FLOOR_Y, 6.3), Vector3(x + 0.08, WALL_TOP - 0.68, 6.46), post, true)
+	# Pfosten aus Rundholz, Geländer
+	var post_top := WALL_TOP - 0.62
+	for x: float in [-5.4, -4.15, -1.85, 1.0]:
+		BuildKit.cylinder(self, 0.1, post_top - FLOOR_Y, Vector3(x, (FLOOR_Y + post_top) * 0.5, 6.4), m_logs, true, Vector3.ZERO, 0.09, 8)
+	for span: Vector2 in [Vector2(-5.4, -4.15), Vector2(-1.85, 1.0)]:
+		var mid := (span.x + span.y) * 0.5
+		var len := span.y - span.x
+		BuildKit.cylinder(self, 0.05, len, Vector3(mid, FLOOR_Y + 0.9, 6.4), m_logs, false, Vector3(0, 0, 90), -1.0, 6)
+		BuildKit.collider_box(self, Vector3(len, 0.9, 0.1), Vector3(mid, FLOOR_Y + 0.45, 6.4))
+		var n := int(len / 0.35)
+		for i in n:
+			BuildKit.box(self, Vector3(0.05, 0.85, 0.05), Vector3(span.x + 0.2 + i * (len - 0.4) / maxf(n - 1, 1), FLOOR_Y + 0.45, 6.4), m_wood, false)
 	var roof_angle := rad_to_deg(atan(0.5 / 2.4))
-	BuildKit.box(self, Vector3(7.2, 0.1, 2.5), Vector3(-2.2, WALL_TOP - 0.6, 5.8),
-			BuildKit.wood_mat(Color(0.2, 0.16, 0.14), 2, 0.22, 0.2), false, Vector3(roof_angle, 0, 0), "PorchRoof")
+	BuildKit.box(self, Vector3(7.2, 0.12, 2.6), Vector3(-2.2, WALL_TOP - 0.52, 5.85), BuildKit.tex_mat("shingles", 1.3), false, Vector3(roof_angle, 0, 0), "PorchRoof")
+	BuildKit.box(self, Vector3(7.0, 0.16, 0.16), Vector3(-2.2, post_top + 0.02, 6.4), m_beam, false)
+	# Sitzbank an der Hauswand
+	BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.42, 4.75), Vector3(0.6, FLOOR_Y + 0.48, 5.15), m_wood, true)
+	for x: float in [-1.35, 0.45]:
+		BuildKit.box_mm(self, Vector3(x - 0.05, FLOOR_Y, 4.8), Vector3(x + 0.05, FLOOR_Y + 0.42, 5.1), m_wood_dark, false)
+	BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.48, 4.72), Vector3(0.6, FLOOR_Y + 0.85, 4.78), m_wood, false)
 	# Feuerholz auf der Veranda
-	var log_mat := BuildKit.color_mat(Color(0.35, 0.25, 0.16))
-	for row in 4:
-		for i in 6 - row:
-			BuildKit.cylinder(self, 0.09, 0.9, Vector3(-5.35, FLOOR_Y + 0.09 + row * 0.16, 4.95 + i * 0.19 + row * 0.09),
-					log_mat, false, Vector3(0, 0, 90), -1.0, 8)
-	# Schaukelstuhl-Ersatz: einfacher Stuhl
-	_chair(Vector3(-0.1, FLOOR_Y, 5.5), 200.0)
+	var log_mat := BuildKit.tex_mat("logs", 0.6)
+	for row in 5:
+		for i in 7 - row:
+			BuildKit.cylinder(self, 0.09, 0.85, Vector3(-5.3, FLOOR_Y + 0.09 + row * 0.16, 4.95 + i * 0.19 + row * 0.09),
+					log_mat, false, Vector3(0, _rng.randf_range(-6, 6), 90), -1.0, 7)
+	BuildKit.collider_box(self, Vector3(0.9, 0.8, 1.4), Vector3(-5.3, FLOOR_Y + 0.4, 5.5))
 
 
 func _build_openings() -> void:
@@ -160,18 +250,21 @@ func _build_openings() -> void:
 	front_door.open_sign = 1.0
 	front_door.position = Vector3(-3.5, FLOOR_Y, HALF_Z)
 	add_child(front_door)
-	# Türrahmen
-	var frame := BuildKit.wood_mat(Color(0.28, 0.19, 0.12), 1, 0.3, 0.04)
-	BuildKit.box_mm(self, Vector3(-3.58, FLOOR_Y, HALF_Z - 0.15), Vector3(-3.5, FLOOR_Y + 2.1, HALF_Z + 0.15), frame, false)
-	BuildKit.box_mm(self, Vector3(-2.5, FLOOR_Y, HALF_Z - 0.15), Vector3(-2.42, FLOOR_Y + 2.1, HALF_Z + 0.15), frame, false)
-	BuildKit.box_mm(self, Vector3(-3.58, FLOOR_Y + 2.1, HALF_Z - 0.15), Vector3(-2.42, FLOOR_Y + 2.2, HALF_Z + 0.15), frame, false)
+	_door_trim(Vector3(-3.0, FLOOR_Y, HALF_Z), 0.0, 1.0, 2.1, 0.36)
 
-	# Fenster (GDD 18.2: zwei zerstörbare Fenster im Wohnbereich – Schaden folgt in Phase 2/4)
+	# Fenster (GDD 18.2: zwei zerstörbare Fenster im Wohnbereich – Schaden folgt später)
 	_window("WindowLiving", Vector3(0.0, FLOOR_Y + 0.9, HALF_Z), 0.0, 1.3, 1.1)
 	_window("WindowWorkshopFront", Vector3(4.0, FLOOR_Y + 1.0, HALF_Z), 0.0, 1.0, 0.9)
 	_window("WindowBedroom", Vector3(-3.5, FLOOR_Y + 1.0, -HALF_Z), 180.0, 1.0, 0.9)
 	_window("WindowTechnical", Vector3(4.5, FLOOR_Y + 1.5, -HALF_Z), 180.0, 0.6, 0.5)
 	_window("WindowWorkshopEast", Vector3(HALF_X, FLOOR_Y + 1.0, 2.0), 90.0, 1.0, 0.9)
+	# Fensterläden außen
+	_shutters(Vector3(0.0, FLOOR_Y + 0.9, HALF_Z + 0.2), 0.0, 1.3, 1.1)
+	_shutters(Vector3(4.0, FLOOR_Y + 1.0, HALF_Z + 0.2), 0.0, 1.0, 0.9)
+	_shutters(Vector3(-3.5, FLOOR_Y + 1.0, -HALF_Z - 0.2), 180.0, 1.0, 0.9)
+	# Vorhänge innen
+	_curtains(Vector3(0.0, FLOOR_Y + 2.15, HALF_Z - CLAD - 0.08), 0.0, 1.3, BuildKit.tex_mat("fabric", 0.6, Color(1.5, 1.3, 0.95)))
+	_curtains(Vector3(-3.5, FLOOR_Y + 2.05, -HALF_Z + CLAD + 0.08), 180.0, 1.0, BuildKit.tex_mat("fabric_red", 0.6))
 
 
 func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) -> void:
@@ -179,47 +272,128 @@ func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) 
 	win.name = node_name
 	win.width = w
 	win.height = h
+	win.wall_thickness = 0.34
 	win.position = pos
 	win.rotation_degrees.y = rot_y
 	add_child(win)
 
 
+func _shutters(pos: Vector3, rot_y: float, w: float, h: float) -> void:
+	var n := Node3D.new()
+	n.position = pos
+	n.rotation_degrees.y = rot_y
+	add_child(n)
+	var mat := BuildKit.tex_mat("planks_v", 0.6, Color(0.55, 0.6, 0.5))
+	for side: float in [-1.0, 1.0]:
+		var x := side * (w * 0.5 + w * 0.25 + 0.06)
+		BuildKit.box(n, Vector3(w * 0.5, h + 0.1, 0.04), Vector3(x, h * 0.5, 0.0), mat, false, Vector3(0, side * 8.0, 0))
+		BuildKit.box(n, Vector3(w * 0.45, 0.06, 0.02), Vector3(x, h * 0.25, 0.03), m_wood_dark, false)
+		BuildKit.box(n, Vector3(w * 0.45, 0.06, 0.02), Vector3(x, h * 0.75, 0.03), m_wood_dark, false)
+
+
+func _curtains(rod_pos: Vector3, rot_y: float, w: float, mat: Material) -> void:
+	var n := Node3D.new()
+	n.position = rod_pos
+	n.rotation_degrees.y = rot_y
+	add_child(n)
+	BuildKit.cylinder(n, 0.015, w + 0.6, Vector3.ZERO, m_iron, false, Vector3(0, 0, 90), -1.0, 6)
+	for side: float in [-1.0, 1.0]:
+		for f in 3:
+			var x := side * (w * 0.5 + 0.05 + f * 0.09)
+			BuildKit.box(n, Vector3(0.1, 1.4, 0.02), Vector3(x, -0.72, -0.02 + (f % 2) * 0.03), mat, false)
+
+
+# --- Kamin --------------------------------------------------------------
+
 func _build_fireplace() -> void:
-	var stone := BuildKit.stone_mat(Color(0.47, 0.45, 0.42), 0.2)
-	var wx := -HALF_X + EXT_T * 0.5
+	var wx := -HALF_X + CLAD
 	var y := FLOOR_Y
-	BuildKit.box_mm(self, Vector3(wx, y, 0.9), Vector3(-4.95, y + 0.12, 2.6), stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y, 1.0), Vector3(-5.2, y + 1.25, 1.3), stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y, 2.2), Vector3(-5.2, y + 1.25, 2.5), stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y + 0.8, 1.3), Vector3(-5.2, y + 1.25, 2.2), stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y + 0.12, 1.3), Vector3(wx + 0.05, y + 0.8, 2.2), BuildKit.color_mat(Color(0.06, 0.05, 0.05)), false)
-	BuildKit.box_mm(self, Vector3(wx, y + 1.25, 0.88), Vector3(-5.1, y + 1.33, 2.62), BuildKit.wood_mat(Color(0.3, 0.2, 0.12), 0, 0.5, 0.02), true, "Mantel")
-	BuildKit.box_mm(self, Vector3(wx, y + 1.33, 1.15), Vector3(-5.45, WALL_TOP, 2.35), stone, true)
+	var front_x := -5.15
+	# Kern: Herdplatte, Pfeiler, Sturz, Rückwand
+	BuildKit.box_mm(self, Vector3(wx, y, 0.85), Vector3(-4.85, y + 0.12, 2.65), m_stone, true)
+	BuildKit.box_mm(self, Vector3(wx, y, 0.95), Vector3(front_x, y + 1.32, 1.3), m_stone, true)
+	BuildKit.box_mm(self, Vector3(wx, y, 2.2), Vector3(front_x, y + 1.32, 2.55), m_stone, true)
+	BuildKit.box_mm(self, Vector3(wx, y + 0.95, 1.3), Vector3(front_x, y + 1.32, 2.2), m_stone, true)
+	BuildKit.box_mm(self, Vector3(wx, y + 0.12, 1.3), Vector3(wx + 0.06, y + 0.95, 2.2), m_stone_dark, false)
+	# Ruß im Feuerraum
+	BuildKit.box_mm(self, Vector3(wx + 0.06, y + 0.7, 1.3), Vector3(front_x - 0.05, y + 0.95, 2.2), BuildKit.color_mat(Color(0.04, 0.035, 0.03)), false)
+	# Einzelne Steine auf der Front für Tiefe
+	var sy := y + 0.14
+	var row := 0
+	while sy < y + 1.28:
+		var h := _rng.randf_range(0.11, 0.16)
+		var z := 0.95 + (0.0 if row % 2 == 0 else 0.1)
+		while z < 2.55:
+			var w := _rng.randf_range(0.14, 0.24)
+			var zc := z + w * 0.5
+			var in_opening := zc > 1.25 and zc < 2.25 and sy < y + 0.97
+			if not in_opening and zc < 2.55:
+				var tone := _rng.randf_range(0.75, 1.15)
+				BuildKit.box(self, Vector3(0.05, h - 0.02, w - 0.02), Vector3(front_x + 0.02, sy + h * 0.5, minf(zc, 2.5)),
+						BuildKit.tex_mat("stone", 0.8, Color(tone, tone, tone)), false, Vector3(_rng.randf_range(-4, 4), 0, 0))
+			z += w
+		sy += h
+		row += 1
+	# Bogensteine
+	var center := Vector2(1.75, y + 0.5)
+	for i in 9:
+		var a := PI * float(i) / 8.0
+		var p := center + Vector2(cos(a), sin(a)) * 0.62
+		BuildKit.box(self, Vector3(0.07, 0.12, 0.2), Vector3(front_x + 0.04, p.y, p.x), m_stone_dark, false, Vector3(rad_to_deg(a) - 90.0, 0, 0))
+	# Kaminsims
+	BuildKit.box_mm(self, Vector3(wx, y + 1.32, 0.82), Vector3(-5.0, y + 1.42, 2.68), m_beam, true, "Mantel")
+	for z: float in [1.0, 2.5]:
+		BuildKit.box_mm(self, Vector3(-5.2, y + 1.18, z - 0.05), Vector3(-5.05, y + 1.32, z + 0.05), m_beam, false)
+	# Kaminschacht bis zur Decke
+	BuildKit.box_mm(self, Vector3(wx, y + 1.42, 1.1), Vector3(-5.4, WALL_TOP, 2.4), m_stone_dark, true)
 	var fire := Fireplace.new()
 	fire.name = "Fireplace"
 	fire.position = Vector3(-5.6, y + 0.12, 1.75)
 	add_child(fire)
-	# Familienfoto auf dem Kaminsims (GDD 3.1)
-	_photo(Vector3(-5.35, y + 1.33, 2.2), 90.0, 0.16, 0.12)
+	# Funkenschutzgitter
+	var grate := Node3D.new()
+	grate.position = Vector3(-4.98, y + 0.12, 1.75)
+	add_child(grate)
+	BuildKit.box(grate, Vector3(0.02, 0.03, 1.0), Vector3(0, 0.6, 0), m_iron, false)
+	BuildKit.box(grate, Vector3(0.02, 0.03, 1.0), Vector3(0, 0.02, 0), m_iron, false)
+	for i in 11:
+		BuildKit.box(grate, Vector3(0.015, 0.6, 0.015), Vector3(0, 0.3, -0.5 + i * 0.1), m_iron, false)
+	# Kaminbesteck und Holzkorb
+	BuildKit.cylinder(self, 0.08, 0.02, Vector3(-4.75, y + 0.01, 2.85), m_iron, false, Vector3.ZERO, -1.0, 8)
+	BuildKit.cylinder(self, 0.012, 0.75, Vector3(-4.75, y + 0.38, 2.85), m_iron, false, Vector3.ZERO, -1.0, 4)
+	for i in 3:
+		BuildKit.cylinder(self, 0.008, 0.6, Vector3(-4.75 + (i - 1) * 0.04, y + 0.35, 2.9), m_iron, false, Vector3((i - 1) * 6.0, 0, (i - 1) * 6.0), -1.0, 4)
+	BuildKit.cylinder(self, 0.25, 0.3, Vector3(-4.75, y + 0.15, 0.55), BuildKit.tex_mat("planks_v", 0.4, Color(0.8, 0.7, 0.6)), true, Vector3.ZERO, 0.22, 10)
+	for i in 4:
+		BuildKit.cylinder(self, 0.06, 0.5, Vector3(-4.75 + (i % 2) * 0.1 - 0.05, y + 0.34 + (i / 2) * 0.1, 0.55), BuildKit.tex_mat("logs", 0.5), false, Vector3(90, 30 * i, 0), -1.0, 6)
+	# Auf dem Sims: Familienfoto (GDD 3.1), Krug, Kerzen
+	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12)
+	BuildKit.cylinder(self, 0.08, 0.2, Vector3(-5.3, y + 1.52, 1.35), BuildKit.color_mat(Color(0.5, 0.22, 0.12), 0.7), false, Vector3.ZERO, 0.05, 10)
+	for z: float in [1.75, 1.9]:
+		BuildKit.cylinder(self, 0.025, 0.12 + (z - 1.75), Vector3(-5.3, y + 1.48 + (z - 1.75) * 0.5, z), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
 
+
+# --- Licht --------------------------------------------------------------
 
 func _build_lights() -> void:
-	var living := _lamp(Vector3(-2.0, WALL_TOP, 1.75), 1.5, 8.5, true)
+	var living := _lamp(Vector3(-2.2, WALL_TOP - 0.24, 1.75), 1.5, 8.5, true)
 	var dining := _lamp(Vector3(-0.2, WALL_TOP, 3.0), 0.9, 5.0, false)
+	var lantern_a := _lantern(Vector3(-HALF_X + CLAD + 0.02, FLOOR_Y + 1.85, 0.6), 90.0)
+	var lantern_b := _lantern(Vector3(-HALF_X + CLAD + 0.02, FLOOR_Y + 1.85, 2.9), 90.0)
 	var bedroom := _lamp(Vector3(-3.5, WALL_TOP, -2.75), 1.0, 5.5, true)
 	var storage := _lamp(Vector3(0.5, WALL_TOP, -2.75), 0.8, 4.0, false)
 	var tech := _lamp(Vector3(4.0, WALL_TOP, -2.75), 1.0, 5.0, true)
 	var workshop := _lamp(Vector3(4.0, WALL_TOP, 1.75), 1.3, 6.5, true)
 	var porch := Lamp.new()
-	porch.style = "wall"
-	porch.energy = 1.4
+	porch.style = "lantern"
+	porch.energy = 1.5
 	porch.light_range = 9.0
-	porch.position = Vector3(-4.0, FLOOR_Y + 2.05, HALF_Z + EXT_T * 0.5)
+	porch.position = Vector3(-4.0, FLOOR_Y + 2.0, HALF_Z + 0.2)
 	add_child(porch)
 
-	var inside_front := HALF_Z - EXT_T * 0.5 - 0.012
+	var inside_front := HALF_Z - CLAD - 0.03
 	var hall_back := -1.0 - INT_T * 0.5 - 0.012
-	_switch("living", "Licht Wohnzimmer", Vector3(-3.8, FLOOR_Y + 1.25, inside_front), 180.0, [living, dining])
+	_switch("living", "Licht Wohnzimmer", Vector3(-3.8, FLOOR_Y + 1.25, inside_front), 180.0, [living, dining, lantern_a, lantern_b])
 	_switch("porch", "Licht Veranda", Vector3(-4.05, FLOOR_Y + 1.25, inside_front), 180.0, [porch])
 	_switch("bedroom", "Licht Schlafzimmer", Vector3(-1.75, FLOOR_Y + 1.25, hall_back), 180.0, [bedroom])
 	_switch("storage", "Licht Vorratsraum", Vector3(1.3, FLOOR_Y + 1.25, hall_back), 180.0, [storage])
@@ -237,6 +411,18 @@ func _lamp(pos: Vector3, energy: float, light_range: float, shadow: bool) -> Lam
 	return lamp
 
 
+func _lantern(pos: Vector3, rot_y: float) -> Lamp:
+	var lamp := Lamp.new()
+	lamp.style = "lantern"
+	lamp.energy = 0.7
+	lamp.light_range = 4.5
+	lamp.casts_shadow = false
+	lamp.position = pos
+	lamp.rotation_degrees.y = rot_y
+	add_child(lamp)
+	return lamp
+
+
 func _switch(key: String, label: String, pos: Vector3, rot_y: float, lamps: Array) -> void:
 	var sw := LightSwitch.new()
 	sw.name = "Switch_" + key
@@ -249,137 +435,319 @@ func _switch(key: String, label: String, pos: Vector3, rot_y: float, lamps: Arra
 	switches[key] = sw
 
 
-# --- Einrichtung --------------------------------------------------------
+# --- Wohnzimmer ---------------------------------------------------------
 
 func _build_living_room() -> void:
 	var y := FLOOR_Y
-	var fabric := BuildKit.color_mat(Color(0.29, 0.31, 0.26), 1.0)
-	var wood := BuildKit.wood_mat(Color(0.38, 0.25, 0.15), 0, 0.12, 0.04)
-	BuildKit.box_mm(self, Vector3(-5.0, y, 0.6), Vector3(-2.4, y + 0.012, 2.9), BuildKit.color_mat(Color(0.33, 0.12, 0.1), 1.0), false, "Rug")
-	# Sofa Richtung Kamin
-	BuildKit.box_mm(self, Vector3(-3.0, y, 0.9), Vector3(-2.1, y + 0.45, 2.6), fabric, true, "Sofa")
-	BuildKit.box_mm(self, Vector3(-2.3, y + 0.45, 0.9), Vector3(-2.05, y + 0.95, 2.6), fabric, false)
-	BuildKit.box_mm(self, Vector3(-3.0, y + 0.45, 0.75), Vector3(-2.05, y + 0.65, 0.92), fabric, false)
-	BuildKit.box_mm(self, Vector3(-3.0, y + 0.45, 2.58), Vector3(-2.05, y + 0.65, 2.75), fabric, false)
-	BuildKit.box_mm(self, Vector3(-4.2, y, 1.3), Vector3(-3.5, y + 0.42, 2.2), wood, true, "CoffeeTable")
-	BuildKit.cylinder(self, 0.04, 0.12, Vector3(-3.8, y + 0.48, 1.6), BuildKit.color_mat(Color(0.8, 0.8, 0.78), 0.3), false)
-	# Sessel
-	BuildKit.box_mm(self, Vector3(-4.9, y, 3.2), Vector3(-4.2, y + 0.45, 3.9), fabric, true)
-	BuildKit.box_mm(self, Vector3(-4.9, y + 0.45, 3.75), Vector3(-4.2, y + 0.95, 3.95), fabric, false)
-	# Bücherregal an der Innenwand
-	_shelf(Vector3(-5.6, y, -0.92), Vector3(-4.4, y + 1.9, -0.6), 4, true)
+	BuildKit.box_mm(self, Vector3(-4.6, y, 0.6), Vector3(-2.4, y + 0.015, 2.9), BuildKit.tex_mat("rug", 2.2), false, "Rug")
+	_sofa(Vector3(-2.5, y, 1.75), 90.0)
+	_rocking_chair(Vector3(-4.3, y, 3.45), 140.0)
+	# Couchtisch mit Becher und Buch
+	BuildKit.box_mm(self, Vector3(-4.2, y + 0.38, 1.3), Vector3(-3.5, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
+	for p: Vector2 in [Vector2(-4.12, 1.38), Vector2(-3.58, 1.38), Vector2(-4.12, 2.12), Vector2(-3.58, 2.12)]:
+		BuildKit.box_mm(self, Vector3(p.x - 0.03, y, p.y - 0.03), Vector3(p.x + 0.03, y + 0.38, p.y + 0.03), m_wood_dark, false)
+	BuildKit.cylinder(self, 0.04, 0.1, Vector3(-3.8, y + 0.49, 1.55), BuildKit.color_mat(Color(0.75, 0.73, 0.68), 0.6), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-3.85, y + 0.46, 1.95), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
+	# Bücherregal
+	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
 	# Esstisch – für vier gedeckt, benutzt wird nur ein Platz (GDD 3.1)
 	_table(Vector3(-0.9, y, 2.5), Vector3(0.5, y + 0.76, 3.6))
 	var plate := BuildKit.color_mat(Color(0.86, 0.85, 0.82), 0.7)
 	for p: Vector3 in [Vector3(-0.55, 0, 2.75), Vector3(0.15, 0, 2.75), Vector3(-0.55, 0, 3.35), Vector3(0.15, 0, 3.35)]:
-		BuildKit.cylinder(self, 0.13, 0.015, Vector3(p.x, y + 0.775, p.z), plate, false, Vector3.ZERO, -1.0, 20)
+		BuildKit.cylinder(self, 0.13, 0.015, Vector3(p.x, y + 0.775, p.z), plate, false, Vector3.ZERO, -1.0, 12)
+		BuildKit.box(self, Vector3(0.015, 0.005, 0.16), Vector3(p.x + 0.17, y + 0.773, p.z), m_iron, false)
+	BuildKit.cylinder(self, 0.035, 0.18, Vector3(-0.2, y + 0.85, 3.05), BuildKit.color_mat(Color(0.25, 0.35, 0.25, 1), 0.2), false, Vector3.ZERO, 0.02, 8)
 	_chair(Vector3(-0.55, y, 2.15), 0.0)
 	_chair(Vector3(0.15, y, 2.15), 0.0)
 	_chair(Vector3(-0.55, y, 3.95), 180.0)
 	_chair(Vector3(0.15, y, 3.95), 180.0)
 	# Kinderzeichnung an der Wand
 	var paper := BuildKit.color_mat(Color(0.92, 0.9, 0.84), 0.9)
-	var drawing_z := -1.0 + INT_T * 0.5 + 0.006
-	BuildKit.box_mm(self, Vector3(-0.6, y + 1.35, drawing_z), Vector3(-0.2, y + 1.65, drawing_z + 0.004), paper, false)
-	BuildKit.box_mm(self, Vector3(-0.55, y + 1.38, drawing_z + 0.004), Vector3(-0.25, y + 1.43, drawing_z + 0.006), BuildKit.color_mat(Color(0.2, 0.55, 0.2)), false)
-	BuildKit.box_mm(self, Vector3(-0.48, y + 1.43, drawing_z + 0.004), Vector3(-0.36, y + 1.56, drawing_z + 0.006), BuildKit.color_mat(Color(0.8, 0.25, 0.2)), false)
-	BuildKit.sphere(self, 0.035, Vector3(-0.27, y + 1.59, drawing_z + 0.008), BuildKit.color_mat(Color(0.95, 0.8, 0.1)), Vector3(1, 1, 0.2), 8)
-	# Schreibtisch mit altem Monitor – wird später die Überwachungsstation (GDD 7.5)
-	BuildKit.box_mm(self, Vector3(1.2, y, 3.0), Vector3(1.925, y + 0.75, 4.25), wood, true, "Desk")
-	var dark := BuildKit.color_mat(Color(0.1, 0.1, 0.1), 0.6)
-	BuildKit.box_mm(self, Vector3(1.45, y + 0.75, 3.35), Vector3(1.9, y + 1.15, 3.9), dark, false, "Monitor")
-	BuildKit.box_mm(self, Vector3(1.44, y + 0.8, 3.4), Vector3(1.45, y + 1.1, 3.85), BuildKit.color_mat(Color(0.03, 0.05, 0.04), 0.1), false)
+	var dz := -1.0 + INT_T * 0.5 + 0.006
+	BuildKit.box_mm(self, Vector3(-4.2, y + 1.35, dz), Vector3(-3.8, y + 1.65, dz + 0.004), paper, false)
+	BuildKit.box_mm(self, Vector3(-4.15, y + 1.38, dz + 0.004), Vector3(-3.85, y + 1.43, dz + 0.006), BuildKit.color_mat(Color(0.2, 0.55, 0.2)), false)
+	BuildKit.box_mm(self, Vector3(-4.08, y + 1.43, dz + 0.004), Vector3(-3.96, y + 1.56, dz + 0.006), BuildKit.color_mat(Color(0.8, 0.25, 0.2)), false)
+	BuildKit.box_mm(self, Vector3(-3.94, y + 1.55, dz + 0.004), Vector3(-3.88, y + 1.61, dz + 0.007), BuildKit.color_mat(Color(0.95, 0.8, 0.1)), false)
+	# Schreibtisch mit altem Röhrenmonitor und Radio – später die Überwachungsstation (GDD 7.5)
+	BuildKit.box_mm(self, Vector3(1.2, y + 0.7, 3.0), Vector3(1.925, y + 0.76, 4.25), m_wood, true, "Desk")
+	BuildKit.box_mm(self, Vector3(1.25, y, 3.05), Vector3(1.9, y + 0.7, 3.45), m_wood_dark, true)
+	BuildKit.box_mm(self, Vector3(1.85, y, 4.15), Vector3(1.9, y + 0.7, 4.2), m_wood_dark, false)
+	var plastic := BuildKit.color_mat(Color(0.62, 0.6, 0.55), 0.6)
+	BuildKit.box_mm(self, Vector3(1.4, y + 0.76, 3.3), Vector3(1.9, y + 1.18, 3.95), plastic, false, "Monitor")
+	BuildKit.box_mm(self, Vector3(1.75, y + 0.8, 3.38), Vector3(1.92, y + 1.12, 3.87), plastic, false)
+	BuildKit.box_mm(self, Vector3(1.39, y + 0.82, 3.37), Vector3(1.4, y + 1.12, 3.88), BuildKit.color_mat(Color(0.05, 0.07, 0.06), 0.1), false)
+	BuildKit.box_mm(self, Vector3(1.35, y + 0.76, 3.98), Vector3(1.7, y + 0.78, 4.2), BuildKit.color_mat(Color(0.2, 0.2, 0.2)), false)
+	var radio := BuildKit.color_mat(Color(0.25, 0.17, 0.12), 0.5)
+	BuildKit.box_mm(self, Vector3(1.5, y + 0.76, 3.02), Vector3(1.85, y + 0.95, 3.25), radio, false, "Radio")
+	BuildKit.box_mm(self, Vector3(1.49, y + 0.8, 3.06), Vector3(1.5, y + 0.92, 3.16), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
+	BuildKit.cylinder(self, 0.005, 0.35, Vector3(1.8, y + 1.1, 3.2), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
 	_chair(Vector3(0.85, y, 3.6), 90.0)
+	# Wanduhr
+	var clock := Node3D.new()
+	clock.position = Vector3(-1.4, y + 2.1, HALF_Z - CLAD - 0.03)
+	add_child(clock)
+	BuildKit.cylinder(clock, 0.17, 0.04, Vector3.ZERO, m_wood_dark, false, Vector3(90, 0, 0), -1.0, 14)
+	BuildKit.cylinder(clock, 0.14, 0.01, Vector3(0, 0, -0.022), BuildKit.color_mat(Color(0.88, 0.86, 0.8)), false, Vector3(90, 0, 0), -1.0, 14)
+	BuildKit.box(clock, Vector3(0.012, 0.1, 0.005), Vector3(0.02, 0.04, -0.03), BuildKit.color_mat(Color(0.05, 0.05, 0.05)), false, Vector3(0, 0, -30))
+	BuildKit.box(clock, Vector3(0.012, 0.07, 0.005), Vector3(-0.025, -0.01, -0.03), BuildKit.color_mat(Color(0.05, 0.05, 0.05)), false, Vector3(0, 0, 110))
+	# Pflanzen in Tontöpfen
+	_plant(Vector3(-5.45, y, 0.3), 1.0)
+	_plant(Vector3(0.95, y, 4.1), 0.8)
+	_plant(Vector3(-5.5, y, 4.0), 1.2)
 
+
+func _build_kitchen() -> void:
+	var y := FLOOR_Y
+	var z0 := -1.0 + INT_T * 0.5
+	var counter := BuildKit.tex_mat("planks_v", 0.7, Color(0.45, 0.42, 0.4))
+	BuildKit.box_mm(self, Vector3(-1.95, y, z0), Vector3(-0.1, y + 0.86, z0 + 0.6), counter, true, "Counter")
+	BuildKit.box_mm(self, Vector3(-1.98, y + 0.86, z0), Vector3(-0.07, y + 0.92, z0 + 0.63), m_wood, false)
+	for x: float in [-1.5, -1.0, -0.55]:
+		BuildKit.box(self, Vector3(0.012, 0.6, 0.01), Vector3(x, y + 0.45, z0 + 0.605), BuildKit.color_mat(Color(0.12, 0.1, 0.08)), false)
+	# Spüle aus Stein
+	BuildKit.box_mm(self, Vector3(-1.75, y + 0.78, z0 + 0.08), Vector3(-1.15, y + 0.93, z0 + 0.52), BuildKit.tex_mat("stone", 0.5, Color(1.2, 1.2, 1.2)), false)
+	BuildKit.box_mm(self, Vector3(-1.7, y + 0.86, z0 + 0.12), Vector3(-1.2, y + 0.935, z0 + 0.48), BuildKit.color_mat(Color(0.12, 0.12, 0.12)), false)
+	BuildKit.cylinder(self, 0.015, 0.25, Vector3(-1.45, y + 1.05, z0 + 0.06), m_iron, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box(self, Vector3(0.02, 0.02, 0.15), Vector3(-1.45, y + 1.17, z0 + 0.12), m_iron, false)
+	# Holzofen mit Rohr
+	var iron_dark := BuildKit.tex_mat("metal", 0.4, Color(0.4, 0.38, 0.36), 0.5)
+	BuildKit.box_mm(self, Vector3(1.0, y, z0 + 0.05), Vector3(1.75, y + 0.8, z0 + 0.6), iron_dark, true, "Stove")
+	BuildKit.box_mm(self, Vector3(0.98, y + 0.8, z0 + 0.03), Vector3(1.77, y + 0.84, z0 + 0.62), iron_dark, false)
+	BuildKit.box_mm(self, Vector3(1.1, y + 0.2, z0 + 0.6), Vector3(1.45, y + 0.5, z0 + 0.62), BuildKit.color_mat(Color(0.1, 0.09, 0.09), 0.4), false)
+	for i in 2:
+		BuildKit.cylinder(self, 0.11, 0.01, Vector3(1.2 + i * 0.35, y + 0.845, z0 + 0.32), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.cylinder(self, 0.07, WALL_TOP - y - 0.84, Vector3(1.6, (y + 0.84 + WALL_TOP) * 0.5, z0 + 0.2), iron_dark, false, Vector3.ZERO, -1.0, 8)
+	BuildKit.cylinder(self, 0.14, 0.12, Vector3(1.3, y + 0.9, z0 + 0.3), iron_dark, false, Vector3.ZERO, 0.12, 10)
+	# Hängende Stange mit Pfannen, Kräutern und Würsten (wie in einer Jagdhütte)
+	var rack_y := WALL_TOP - 0.62
+	BuildKit.cylinder(self, 0.02, 1.9, Vector3(-1.02, rack_y, z0 + 0.35), m_iron, false, Vector3(0, 0, 90), -1.0, 6)
+	for x: float in [-1.85, -0.2]:
+		BuildKit.box(self, Vector3(0.008, 0.62, 0.008), Vector3(x, rack_y + 0.31, z0 + 0.35), m_iron, false)
+	var dark_meat := BuildKit.color_mat(Color(0.25, 0.1, 0.08), 0.7)
+	var herb := BuildKit.color_mat(Color(0.3, 0.38, 0.18), 1.0)
+	var pan := BuildKit.tex_mat("metal", 0.3, Color(0.5, 0.48, 0.46), 0.4)
+	for i in 7:
+		var x := -1.8 + i * 0.26
+		BuildKit.box(self, Vector3(0.006, 0.12, 0.006), Vector3(x, rack_y - 0.06, z0 + 0.35), m_iron, false)
+		match i % 3:
+			0:
+				BuildKit.cylinder(self, 0.035, 0.35, Vector3(x, rack_y - 0.3, z0 + 0.35), dark_meat, false, Vector3(0, 0, 4), 0.03, 6)
+			1:
+				BuildKit.cylinder(self, 0.06, 0.25, Vector3(x, rack_y - 0.25, z0 + 0.35), herb, false, Vector3(180, 0, 0), 0.015, 6)
+			2:
+				BuildKit.cylinder(self, 0.13, 0.025, Vector3(x, rack_y - 0.28, z0 + 0.36), pan, false, Vector3(90, 0, 0), -1.0, 10)
+				BuildKit.box(self, Vector3(0.025, 0.18, 0.01), Vector3(x, rack_y - 0.09, z0 + 0.36), pan, false)
+
+
+func _sofa(pos: Vector3, rot_y: float) -> void:
+	var n := Node3D.new()
+	n.position = pos
+	n.rotation_degrees.y = rot_y
+	add_child(n)
+	var fabric := BuildKit.tex_mat("fabric", 0.5)
+	var leg := m_wood_dark
+	# Lokale Achsen: Sitzfläche entlang x, Front zeigt nach -z
+	BuildKit.box_mm(n, Vector3(-0.85, 0.1, -0.45), Vector3(0.85, 0.32, 0.45), fabric, true)
+	for i in 3:
+		BuildKit.box_mm(n, Vector3(-0.8 + i * 0.54, 0.32, -0.42), Vector3(-0.28 + i * 0.54, 0.46, 0.2), fabric, false)
+	BuildKit.box_mm(n, Vector3(-0.85, 0.32, 0.18), Vector3(0.85, 0.9, 0.45), fabric, false)
+	for x: float in [-0.92, 0.92]:
+		BuildKit.box_mm(n, Vector3(x - 0.1, 0.1, -0.45), Vector3(x + 0.1, 0.55, 0.45), fabric, false)
+		BuildKit.cylinder(n, 0.12, 0.9, Vector3(x, 0.58, 0.0), fabric, false, Vector3(90, 0, 0), -1.0, 8)
+	for p: Vector2 in [Vector2(-0.95, -0.4), Vector2(0.95, -0.4), Vector2(-0.95, 0.4), Vector2(0.95, 0.4)]:
+		BuildKit.box_mm(n, Vector3(p.x - 0.03, 0, p.y - 0.03), Vector3(p.x + 0.03, 0.1, p.y + 0.03), leg, false)
+	# Kissen
+	BuildKit.box(n, Vector3(0.38, 0.36, 0.12), Vector3(-0.55, 0.62, 0.08), BuildKit.tex_mat("blanket", 0.3), false, Vector3(-15, 10, 0))
+	BuildKit.box(n, Vector3(0.36, 0.34, 0.12), Vector3(0.6, 0.6, 0.08), BuildKit.tex_mat("fabric_red", 0.3), false, Vector3(-15, -12, 5))
+	# Wolldecke über der Lehne
+	BuildKit.box(n, Vector3(0.6, 0.02, 0.5), Vector3(0.1, 0.86, 0.2), BuildKit.tex_mat("blanket", 0.5), false, Vector3(-70, 0, 0))
+
+
+func _rocking_chair(pos: Vector3, rot_y: float) -> void:
+	var n := Node3D.new()
+	n.position = pos
+	n.rotation_degrees.y = rot_y
+	add_child(n)
+	var w := m_wood_dark
+	# Kufen aus drei Segmenten
+	for x: float in [-0.25, 0.25]:
+		for s in 3:
+			var z := -0.3 + s * 0.3
+			BuildKit.box(n, Vector3(0.04, 0.04, 0.32), Vector3(x, 0.04 + absf(s - 1) * 0.03, z), w, false, Vector3((s - 1) * -12.0, 0, 0))
+		BuildKit.box(n, Vector3(0.04, 0.38, 0.04), Vector3(x, 0.25, -0.2), w, false)
+		BuildKit.box(n, Vector3(0.04, 0.38, 0.04), Vector3(x, 0.25, 0.2), w, false)
+		BuildKit.box(n, Vector3(0.05, 0.04, 0.5), Vector3(x, 0.66, -0.02), w, false)
+		BuildKit.box(n, Vector3(0.04, 0.26, 0.04), Vector3(x, 0.55, -0.22), w, false)
+	BuildKit.box_mm(n, Vector3(-0.27, 0.42, -0.24), Vector3(0.27, 0.46, 0.24), m_wood, true)
+	var back := Node3D.new()
+	back.position = Vector3(0, 0.46, 0.24)
+	back.rotation_degrees.x = -12
+	n.add_child(back)
+	for i in 5:
+		BuildKit.box(back, Vector3(0.06, 0.7, 0.025), Vector3(-0.2 + i * 0.1, 0.35, 0), m_wood, false)
+	BuildKit.box(back, Vector3(0.56, 0.08, 0.04), Vector3(0, 0.72, 0), w, false)
+
+
+func _plant(pos: Vector3, s: float) -> void:
+	var pot := BuildKit.color_mat(Color(0.55, 0.3, 0.18), 0.9)
+	BuildKit.cylinder(self, 0.16 * s, 0.32 * s, pos + Vector3(0, 0.16 * s, 0), pot, true, Vector3.ZERO, 0.21 * s, 10)
+	BuildKit.cylinder(self, 0.2 * s, 0.03, pos + Vector3(0, 0.32 * s, 0), BuildKit.color_mat(Color(0.18, 0.12, 0.08)), false, Vector3.ZERO, -1.0, 10)
+	var leaf := BuildKit.cutout_mat("fern")
+	for i in 3:
+		var q := MeshInstance3D.new()
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.7, 0.7) * s
+		qm.material = leaf
+		q.mesh = qm
+		q.position = pos + Vector3(0, 0.32 * s + 0.33 * s, 0)
+		q.rotation_degrees.y = i * 60.0
+		add_child(q)
+
+
+# --- Schlafzimmer -------------------------------------------------------
 
 func _build_bedroom() -> void:
 	var y := FLOOR_Y
 	var bed := Bed.new()
 	bed.name = "Bed"
-	bed.position = Vector3(-5.85, y, -4.35)
+	bed.position = Vector3(-5.82, y, -4.32)
 	add_child(bed)
-	# Nachttisch mit Familienbild
-	var wood := BuildKit.wood_mat(Color(0.35, 0.23, 0.14), 0, 0.15, 0.04)
-	BuildKit.box_mm(self, Vector3(-4.2, y, -4.35), Vector3(-3.75, y + 0.55, -3.9), wood, true)
-	_photo(Vector3(-4.0, y + 0.55, -4.25), 0.0, 0.18, 0.14)
-	# Kleiderschrank
-	BuildKit.box_mm(self, Vector3(-2.0, y, -4.35), Vector3(-1.15, y + 2.0, -3.65), wood, true, "Wardrobe")
+	BuildKit.box_mm(self, Vector3(-4.2, y, -2.3), Vector3(-2.6, y + 0.012, -1.3), BuildKit.tex_mat("rug", 1.6), false)
+	# Nachttisch mit Kerze und Familienbild
+	BuildKit.box_mm(self, Vector3(-4.2, y + 0.5, -4.33), Vector3(-3.72, y + 0.55, -3.88), m_wood, true)
+	BuildKit.box_mm(self, Vector3(-4.18, y, -4.31), Vector3(-3.74, y + 0.5, -3.9), m_wood_dark, false)
+	BuildKit.box(self, Vector3(0.012, 0.012, 0.06), Vector3(-3.95, y + 0.4, -3.89), m_iron, false)
+	_photo(Vector3(-4.05, y + 0.55, -4.22), 0.0, 0.18, 0.14)
+	BuildKit.cylinder(self, 0.03, 0.1, Vector3(-3.85, y + 0.6, -4.05), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
+	# Kleiderschrank mit zwei Türen
+	BuildKit.box_mm(self, Vector3(-2.05, y, -4.33), Vector3(-1.13, y + 2.05, -3.65), m_wall, true, "Wardrobe")
+	BuildKit.box_mm(self, Vector3(-2.06, y + 2.05, -4.35), Vector3(-1.12, y + 2.12, -3.62), m_wood_dark, false)
+	for x: float in [-1.62, -1.56]:
+		BuildKit.box(self, Vector3(0.02, 0.12, 0.02), Vector3(x, y + 1.1, -3.64), m_iron, false)
+	BuildKit.box_mm(self, Vector3(-1.6, y + 0.05, -3.66), Vector3(-1.58, y + 2.0, -3.645), m_wood_dark, false)
 	# Ungeöffnetes Geburtstagsgeschenk (GDD 3.1)
 	BuildKit.box_mm(self, Vector3(-1.62, y, -1.65), Vector3(-1.3, y + 0.28, -1.33), BuildKit.color_mat(Color(0.65, 0.12, 0.14), 0.6), true, "Gift")
 	var ribbon := BuildKit.color_mat(Color(0.95, 0.78, 0.2), 0.4)
 	BuildKit.box_mm(self, Vector3(-1.49, y, -1.66), Vector3(-1.43, y + 0.285, -1.32), ribbon, false)
 	BuildKit.box_mm(self, Vector3(-1.63, y, -1.52), Vector3(-1.29, y + 0.285, -1.46), ribbon, false)
-	BuildKit.sphere(self, 0.05, Vector3(-1.46, y + 0.3, -1.49), ribbon, Vector3(1.2, 0.6, 1.2), 8)
+	BuildKit.sphere(self, 0.05, Vector3(-1.46, y + 0.3, -1.49), ribbon, Vector3(1.2, 0.6, 1.2), 6)
+	# Kleiderhaken mit Jacke
+	var hz := -1.0 - INT_T * 0.5
+	BuildKit.box_mm(self, Vector3(-5.6, y + 1.6, hz - 0.03), Vector3(-4.6, y + 1.7, hz), m_wood_dark, false)
+	BuildKit.box(self, Vector3(0.4, 0.75, 0.08), Vector3(-5.2, y + 1.25, hz - 0.07), BuildKit.tex_mat("fabric", 0.4, Color(0.7, 0.85, 0.75)), false, Vector3(4, 0, 0))
 
+
+# --- Vorratsraum, Technik, Werkstatt -----------------------------------
 
 func _build_storage() -> void:
 	var y := FLOOR_Y
 	_shelf(Vector3(-0.85, y, -4.35), Vector3(1.85, y + 2.1, -3.9), 5, false)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 42
 	var colors := [Color(0.6, 0.5, 0.3), Color(0.4, 0.45, 0.3), Color(0.7, 0.3, 0.2), Color(0.5, 0.5, 0.55), Color(0.75, 0.7, 0.55)]
 	for level in 5:
 		var sy := y + 0.05 + level * (2.05 / 5.0)
 		var x := -0.75
 		while x < 1.7:
-			var c: Color = colors[rng.randi() % colors.size()]
-			if rng.randf() < 0.5:
-				BuildKit.cylinder(self, 0.05, 0.13, Vector3(x, sy + 0.065, -4.12), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 10)
+			var c: Color = colors[_rng.randi() % colors.size()]
+			if _rng.randf() < 0.5:
+				BuildKit.cylinder(self, 0.05, 0.13, Vector3(x, sy + 0.065, -4.12), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
 				x += 0.13
 			else:
-				var w := rng.randf_range(0.15, 0.3)
-				BuildKit.box(self, Vector3(w, rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
+				var w := _rng.randf_range(0.15, 0.3)
+				BuildKit.box(self, Vector3(w, _rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
 				x += w + 0.05
-	# Säcke
-	var sack := BuildKit.color_mat(Color(0.6, 0.53, 0.4), 1.0)
-	BuildKit.sphere(self, 0.28, Vector3(-0.5, y + 0.22, -1.6), sack, Vector3(1.0, 0.8, 0.8), 10)
-	BuildKit.sphere(self, 0.28, Vector3(-0.1, y + 0.22, -1.55), sack, Vector3(0.9, 0.8, 0.9), 10)
+	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
+	BuildKit.sphere(self, 0.28, Vector3(-0.5, y + 0.22, -1.6), sack, Vector3(1.0, 0.8, 0.8), 8)
+	BuildKit.sphere(self, 0.28, Vector3(-0.1, y + 0.22, -1.55), sack, Vector3(0.9, 0.8, 0.9), 8)
+	var crate := BuildKit.tex_mat("planks_h", 0.5, Color(1.1, 1.05, 0.95))
+	BuildKit.box_mm(self, Vector3(1.1, y, -1.9), Vector3(1.8, y + 0.45, -1.3), crate, true)
+	BuildKit.box_mm(self, Vector3(1.2, y + 0.45, -1.85), Vector3(1.75, y + 0.8, -1.35), crate, true)
 
 
 func _build_technical_room() -> void:
 	var y := FLOOR_Y
-	# Generator (noch ohne Funktion – Phase 3)
-	var body := BuildKit.color_mat(Color(0.55, 0.15, 0.1), 0.6, 0.3)
-	var metal := BuildKit.color_mat(Color(0.2, 0.2, 0.2), 0.5, 0.7)
-	BuildKit.box_mm(self, Vector3(4.0, y, -4.25), Vector3(5.4, y + 0.1, -3.4), metal, true)
-	BuildKit.box_mm(self, Vector3(4.1, y + 0.1, -4.15), Vector3(5.3, y + 0.75, -3.5), body, true, "Generator")
-	BuildKit.cylinder(self, 0.18, 0.5, Vector3(4.45, y + 0.6, -3.82), metal, false, Vector3(0, 0, 90), -1.0, 12)
-	BuildKit.cylinder(self, 0.05, 0.9, Vector3(5.0, y + 1.1, -4.3), metal, false, Vector3.ZERO, -1.0, 8)
-	# Sicherungskasten
-	BuildKit.box_mm(self, Vector3(5.8, y + 1.2, -3.2), Vector3(5.875, y + 1.8, -2.6), BuildKit.color_mat(Color(0.6, 0.6, 0.58), 0.5, 0.5), false, "FuseBox")
+	# Generator (noch ohne Funktion – kommt mit dem Stromsystem)
+	var red := BuildKit.tex_mat("metal", 0.4, Color(1.9, 0.6, 0.4), 0.55)
+	var frame := BuildKit.tex_mat("metal", 0.4, Color(0.8, 0.8, 0.8), 0.5)
+	BuildKit.box_mm(self, Vector3(4.0, y + 0.08, -4.2), Vector3(5.4, y + 0.12, -3.45), frame, true)
+	for x: float in [4.02, 5.38]:
+		for z: float in [-4.18, -3.47]:
+			BuildKit.box_mm(self, Vector3(x - 0.02, y + 0.12, z - 0.02), Vector3(x + 0.02, y + 0.8, z + 0.02), frame, false)
+		BuildKit.cylinder(self, 0.08, 0.06, Vector3(x, y + 0.08, -3.45), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3(0, 0, 90), -1.0, 8)
+	BuildKit.box_mm(self, Vector3(4.05, y + 0.62, -4.15), Vector3(5.35, y + 0.82, -3.5), red, true, "Generator")
+	BuildKit.box_mm(self, Vector3(4.1, y + 0.15, -4.05), Vector3(4.9, y + 0.6, -3.6), frame, false)
+	BuildKit.cylinder(self, 0.06, 0.04, Vector3(4.4, y + 0.84, -3.82), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.cylinder(self, 0.04, 0.9, Vector3(5.15, y + 0.75, -4.25), frame, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box_mm(self, Vector3(4.95, y + 0.2, -3.48), Vector3(5.3, y + 0.5, -3.44), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
+	# Sicherungskasten mit Kabeln
+	var ex := HALF_X - CLAD
+	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
+	for i in 3:
+		BuildKit.box_mm(self, Vector3(ex - 0.04, y + 0.2 + i * 0.02, -3.0 + i * 0.12), Vector3(ex - 0.02, y + 1.2, -2.98 + i * 0.12), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false)
 	# Kanister
-	var red := BuildKit.color_mat(Color(0.7, 0.12, 0.08), 0.5)
-	BuildKit.box_mm(self, Vector3(2.4, y, -4.3), Vector3(2.75, y + 0.45, -4.1), red, true)
-	BuildKit.box_mm(self, Vector3(2.8, y, -4.3), Vector3(3.15, y + 0.45, -4.1), red, true)
+	var can := BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5)
+	for x: float in [2.4, 2.8]:
+		BuildKit.box_mm(self, Vector3(x, y, -4.3), Vector3(x + 0.35, y + 0.45, -4.1), can, true)
+		BuildKit.box_mm(self, Vector3(x + 0.1, y + 0.45, -4.22), Vector3(x + 0.25, y + 0.5, -4.18), can, false)
 
 
 func _build_workshop() -> void:
 	var y := FLOOR_Y
-	var wood := BuildKit.wood_mat(Color(0.45, 0.32, 0.2), 0, 0.15, 0.04)
-	var metal := BuildKit.color_mat(Color(0.3, 0.3, 0.32), 0.45, 0.8)
-	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.2), Vector3(5.875, y + 0.9, 3.6), wood, true, "Workbench")
-	for z: float in [-0.1, 3.5]:
-		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), wood, true)
-	BuildKit.box_mm(self, Vector3(5.2, y + 0.9, 0.3), Vector3(5.45, y + 1.02, 0.6), metal, false, "Vise")
-	# Werkzeugwand
-	var board_z := -1.0 + INT_T * 0.5
-	BuildKit.box_mm(self, Vector3(3.0, y + 1.0, board_z), Vector3(5.0, y + 2.0, board_z + 0.03), BuildKit.color_mat(Color(0.6, 0.5, 0.36)), false, "Pegboard")
-	for i in 6:
-		BuildKit.box(self, Vector3(0.05, 0.3 + (i % 3) * 0.08, 0.03), Vector3(3.25 + i * 0.3, y + 1.5, board_z + 0.05), metal, false)
-	# Bretterstapel
-	var lumber := BuildKit.wood_mat(Color(0.55, 0.42, 0.28), 0, 0.5, 0.02)
+	var ex := HALF_X - CLAD
+	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.2), Vector3(ex, y + 0.92, 3.6), BuildKit.tex_mat("floor", 0.8, Color(1.15, 1.1, 1.0)), true, "Workbench")
+	for z: float in [-0.1, 1.7, 3.5]:
+		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), m_wood_dark, true)
+	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.1), Vector3(5.8, y + 0.24, 3.5), m_wood, false)
+	BuildKit.box_mm(self, Vector3(5.2, y + 0.92, 0.3), Vector3(5.45, y + 1.04, 0.6), m_iron, false, "Vise")
+	# Säge, Hammer, Hobel auf der Werkbank
+	BuildKit.box(self, Vector3(0.12, 0.01, 0.6), Vector3(5.5, y + 0.93, 1.2), BuildKit.tex_mat("metal", 0.3, Color(1.4, 1.4, 1.4), 0.3), false, Vector3(0, 10, 0))
+	BuildKit.box(self, Vector3(0.1, 0.05, 0.15), Vector3(5.5, y + 0.95, 0.85), m_wood, false)
+	BuildKit.box(self, Vector3(0.03, 0.03, 0.3), Vector3(5.35, y + 0.94, 2.2), m_wood, false, Vector3(0, 40, 0))
+	BuildKit.box(self, Vector3(0.1, 0.05, 0.04), Vector3(5.42, y + 0.95, 2.32), m_iron, false, Vector3(0, 40, 0))
+	BuildKit.box(self, Vector3(0.08, 0.08, 0.25), Vector3(5.6, y + 0.96, 2.8), m_wood_dark, false)
+	# Werkzeugwand mit Silhouetten
+	var bz := -1.0 + INT_T * 0.5
+	BuildKit.box_mm(self, Vector3(3.0, y + 1.0, bz), Vector3(5.0, y + 2.0, bz + 0.03), BuildKit.tex_mat("planks_v", 0.6, Color(1.2, 1.1, 0.95)), false, "Pegboard")
+	for i in 7:
+		var x := 3.2 + i * 0.27
+		var h := 0.25 + (i % 3) * 0.1
+		BuildKit.box(self, Vector3(0.04, h, 0.03), Vector3(x, y + 1.6, bz + 0.05), m_wood_dark, false)
+		BuildKit.box(self, Vector3(0.12 if i % 2 == 0 else 0.06, 0.06, 0.03), Vector3(x, y + 1.6 + h * 0.5, bz + 0.05), m_iron, false)
+	# Sägebock und Bretterstapel
+	for x: float in [3.0, 3.8]:
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 0.6), m_wood, false, Vector3(18, 0, 0))
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 0.9), m_wood, false, Vector3(-18, 0, 0))
+	BuildKit.box_mm(self, Vector3(2.8, y + 0.7, 0.68), Vector3(4.0, y + 0.76, 0.82), m_wood, true)
+	BuildKit.box(self, Vector3(1.6, 0.05, 0.22), Vector3(3.4, y + 0.79, 0.75), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
+	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
 	for i in 5:
 		BuildKit.box_mm(self, Vector3(2.4, y + i * 0.06, 3.6), Vector3(4.6, y + 0.05 + i * 0.06, 3.85), lumber, i == 0)
+	# Hackklotz mit Beil
+	BuildKit.cylinder(self, 0.22, 0.45, Vector3(2.7, y + 0.225, 2.6), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 10)
+	BuildKit.box(self, Vector3(0.035, 0.5, 0.035), Vector3(2.75, y + 0.65, 2.6), m_wood, false, Vector3(0, 0, 20))
+	BuildKit.box(self, Vector3(0.16, 0.1, 0.02), Vector3(2.68, y + 0.47, 2.6), m_iron, false, Vector3(0, 0, 20))
+
+
+func _build_reflection_probe() -> void:
+	var probe := ReflectionProbe.new()
+	probe.name = "InteriorProbe"
+	probe.size = Vector3(HALF_X * 2.0, WALL_H, HALF_Z * 2.0)
+	probe.position = Vector3(0, FLOOR_Y + WALL_H * 0.5, 0)
+	probe.interior = true
+	probe.box_projection = true
+	probe.ambient_mode = ReflectionProbe.AMBIENT_COLOR
+	probe.ambient_color = Color(0.2, 0.16, 0.12)
+	probe.ambient_color_energy = 0.6
+	probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	add_child(probe)
 
 
 # --- Möbel-Helfer -------------------------------------------------------
 
 func _table(from: Vector3, to: Vector3) -> void:
-	var wood := BuildKit.wood_mat(Color(0.4, 0.26, 0.16), 0, 0.12, 0.04)
-	BuildKit.box_mm(self, Vector3(from.x, to.y - 0.05, from.z), to, wood, true)
-	for p: Vector2 in [Vector2(from.x + 0.06, from.z + 0.06), Vector2(to.x - 0.06, from.z + 0.06),
-			Vector2(from.x + 0.06, to.z - 0.06), Vector2(to.x - 0.06, to.z - 0.06)]:
-		BuildKit.box_mm(self, Vector3(p.x - 0.04, from.y, p.y - 0.04), Vector3(p.x + 0.04, to.y - 0.05, p.y + 0.04), wood, true)
+	BuildKit.box_mm(self, Vector3(from.x, to.y - 0.05, from.z), to, m_wood, true)
+	for p: Vector2 in [Vector2(from.x + 0.08, from.z + 0.08), Vector2(to.x - 0.08, from.z + 0.08),
+			Vector2(from.x + 0.08, to.z - 0.08), Vector2(to.x - 0.08, to.z - 0.08)]:
+		BuildKit.cylinder(self, 0.045, to.y - 0.05 - from.y, Vector3(p.x, (from.y + to.y - 0.05) * 0.5, p.y), m_wood_dark, true, Vector3.ZERO, 0.035, 6)
 
 
 func _chair(pos: Vector3, rot_y: float) -> void:
@@ -387,32 +755,34 @@ func _chair(pos: Vector3, rot_y: float) -> void:
 	chair.position = pos
 	chair.rotation_degrees.y = rot_y
 	add_child(chair)
-	var wood := BuildKit.wood_mat(Color(0.36, 0.24, 0.15), 0, 0.12, 0.04)
-	BuildKit.box_mm(chair, Vector3(-0.21, 0.42, -0.21), Vector3(0.21, 0.46, 0.21), wood, true)
-	BuildKit.box_mm(chair, Vector3(-0.21, 0.46, -0.21), Vector3(0.21, 0.95, -0.18), wood, false)
+	BuildKit.box_mm(chair, Vector3(-0.21, 0.42, -0.21), Vector3(0.21, 0.46, 0.21), m_wood, true)
+	for x: float in [-0.18, 0.18]:
+		BuildKit.box_mm(chair, Vector3(x - 0.025, 0.46, -0.21), Vector3(x + 0.025, 0.98, -0.17), m_wood_dark, false)
+	for yy: float in [0.68, 0.9]:
+		BuildKit.box_mm(chair, Vector3(-0.18, yy - 0.04, -0.205), Vector3(0.18, yy + 0.04, -0.18), m_wood, false)
 	for p: Vector2 in [Vector2(-0.18, -0.18), Vector2(0.18, -0.18), Vector2(-0.18, 0.18), Vector2(0.18, 0.18)]:
-		BuildKit.box_mm(chair, Vector3(p.x - 0.025, 0, p.y - 0.025), Vector3(p.x + 0.025, 0.42, p.y + 0.025), wood, false)
+		BuildKit.box_mm(chair, Vector3(p.x - 0.022, 0, p.y - 0.022), Vector3(p.x + 0.022, 0.42, p.y + 0.022), m_wood_dark, false)
 
 
 func _shelf(from: Vector3, to: Vector3, levels: int, books: bool) -> void:
-	var wood := BuildKit.wood_mat(Color(0.34, 0.23, 0.14), 0, 0.12, 0.03)
 	var lo := Vector3(minf(from.x, to.x), from.y, minf(from.z, to.z))
 	var hi := Vector3(maxf(from.x, to.x), to.y, maxf(from.z, to.z))
-	BuildKit.box_mm(self, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x + 0.03, hi.y, hi.z), wood, true)
-	BuildKit.box_mm(self, Vector3(hi.x - 0.03, lo.y, lo.z), Vector3(hi.x, hi.y, hi.z), wood, true)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = int(absf(from.x * 100.0 + from.z * 10.0))
+	BuildKit.box_mm(self, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x + 0.04, hi.y, hi.z), m_wood_dark, true)
+	BuildKit.box_mm(self, Vector3(hi.x - 0.04, lo.y, lo.z), Vector3(hi.x, hi.y, hi.z), m_wood_dark, true)
 	for i in levels:
 		var sy := lo.y + 0.05 + i * ((hi.y - lo.y - 0.05) / float(levels))
-		BuildKit.box_mm(self, Vector3(lo.x, sy - 0.025, lo.z), Vector3(hi.x, sy, hi.z), wood, true)
+		BuildKit.box_mm(self, Vector3(lo.x, sy - 0.03, lo.z), Vector3(hi.x, sy, hi.z), m_wood, true)
 		if books:
-			var x := lo.x + 0.05
-			while x < hi.x - 0.1:
-				var w := rng.randf_range(0.03, 0.07)
-				var h := rng.randf_range(0.2, 0.3)
-				var c := Color.from_hsv(rng.randf(), rng.randf_range(0.3, 0.6), rng.randf_range(0.25, 0.5))
-				BuildKit.box(self, Vector3(w, h, (hi.z - lo.z) * 0.8), Vector3(x + w * 0.5, sy + h * 0.5, (lo.z + hi.z) * 0.5), BuildKit.color_mat(c), false)
-				x += w + 0.005
+			var x := lo.x + 0.06
+			while x < hi.x - 0.12:
+				var w := _rng.randf_range(0.03, 0.07)
+				var h := _rng.randf_range(0.18, 0.3)
+				var c := Color.from_hsv(_rng.randf(), _rng.randf_range(0.3, 0.6), _rng.randf_range(0.2, 0.45))
+				var tilt := _rng.randf_range(-8, 8) if _rng.randf() < 0.15 else 0.0
+				BuildKit.box(self, Vector3(w, h, (hi.z - lo.z) * 0.8), Vector3(x + w * 0.5, sy + h * 0.5, (lo.z + hi.z) * 0.5), BuildKit.color_mat(c), false, Vector3(0, 0, tilt))
+				x += w + 0.006
+				if _rng.randf() < 0.08:
+					x += 0.15
 
 
 func _photo(pos: Vector3, rot_y: float, w: float, h: float) -> void:

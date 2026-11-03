@@ -9,12 +9,17 @@ const WIDTH := 1.5
 
 
 func _ready() -> void:
-	var frame := BuildKit.wood_mat(Color(0.33, 0.22, 0.14), 0, 0.15, 0.06)
-	var sheet := BuildKit.color_mat(Color(0.72, 0.7, 0.64), 0.95)
-	var blanket := BuildKit.color_mat(Color(0.25, 0.3, 0.38), 0.95)
-	var pillow := BuildKit.color_mat(Color(0.82, 0.8, 0.75), 0.95)
-	BuildKit.box_mm(self, Vector3(0, 0, 0), Vector3(WIDTH, 0.32, LENGTH), frame, true)
-	BuildKit.box_mm(self, Vector3(0, 0, -0.04), Vector3(WIDTH, 0.95, 0.04), frame, true)
+	var frame := BuildKit.tex_mat("planks_h", 0.8, Color(0.75, 0.7, 0.68))
+	var sheet := BuildKit.tex_mat("fabric", 0.5, Color(1.7, 1.66, 1.55))
+	var blanket := BuildKit.tex_mat("blanket", 0.6)
+	var pillow := BuildKit.tex_mat("fabric", 0.4, Color(1.9, 1.85, 1.75))
+	BuildKit.box_mm(self, Vector3(0, 0.1, 0), Vector3(WIDTH, 0.32, LENGTH), frame, true)
+	# Pfosten am Kopf- und Fußende
+	for p: Vector2 in [Vector2(0.05, 0.0), Vector2(WIDTH - 0.05, 0.0), Vector2(0.05, LENGTH - 0.05), Vector2(WIDTH - 0.05, LENGTH - 0.05)]:
+		var h := 1.1 if p.y < 0.1 else 0.65
+		BuildKit.cylinder(self, 0.05, h, Vector3(p.x, h * 0.5, p.y), frame, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box_mm(self, Vector3(0.05, 0.4, -0.03), Vector3(WIDTH - 0.05, 1.0, 0.03), frame, true)
+	BuildKit.box_mm(self, Vector3(0.05, 0.3, LENGTH - 0.08), Vector3(WIDTH - 0.05, 0.6, LENGTH - 0.02), frame, false)
 	BuildKit.box_mm(self, Vector3(0.05, 0.32, 0.05), Vector3(WIDTH - 0.05, 0.5, LENGTH - 0.05), sheet, false)
 	BuildKit.box_mm(self, Vector3(0.03, 0.5, 0.75), Vector3(WIDTH - 0.03, 0.56, LENGTH - 0.02), blanket, false)
 	# Ein Kissen benutzt, eines unberührt.

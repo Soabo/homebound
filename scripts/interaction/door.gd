@@ -37,10 +37,14 @@ func _build() -> void:
 	cs.shape = shape
 	body.add_child(cs)
 
-	var plank := BuildKit.wood_mat(color, 0, 0.16, 0.08)
+	var tint := Color(color.r / 0.42, color.g / 0.28, color.b / 0.17)
+	var plank := BuildKit.tex_mat("planks_v", 0.9, tint)
 	BuildKit.box(body, Vector3(width - 0.02, height, thickness), Vector3.ZERO, plank, false)
-	# Querleisten
-	var batten := BuildKit.wood_mat(color.darkened(0.25), 1, 0.2, 0.1)
+	# Querleisten und Diagonalstrebe (Brettertür)
+	var batten := BuildKit.tex_mat("planks_h", 1.2, tint.darkened(0.25))
+	var diag := atan2(height * 0.64, width - 0.2)
+	BuildKit.box(body, Vector3(sqrt(pow(width - 0.2, 2) + pow(height * 0.64, 2)), 0.1, 0.02),
+			Vector3(0, 0, thickness * 0.5 + 0.01), batten, false, Vector3(0, 0, rad_to_deg(diag)))
 	for y: float in [-height * 0.32, height * 0.32]:
 		BuildKit.box(body, Vector3(width - 0.12, 0.12, 0.02), Vector3(0, y, thickness * 0.5 + 0.01), batten, false)
 		BuildKit.box(body, Vector3(width - 0.12, 0.12, 0.02), Vector3(0, y, -thickness * 0.5 - 0.01), batten, false)

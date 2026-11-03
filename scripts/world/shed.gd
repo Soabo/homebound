@@ -14,8 +14,8 @@ static func is_inside(p: Vector3) -> bool:
 func _ready() -> void:
 	name = "Shed"
 	position = ORIGIN
-	var boards := BuildKit.wood_mat(Color(0.38, 0.33, 0.26), 1, 0.18, 0.1)
-	var floor_mat := BuildKit.wood_mat(Color(0.3, 0.25, 0.19), 0, 0.2, 0.08)
+	var boards := BuildKit.tex_mat("planks_v", 0.9, Color(0.85, 0.85, 0.82))
+	var floor_mat := BuildKit.tex_mat("floor", 1.0, Color(0.8, 0.78, 0.75))
 	var t := 0.1
 	BuildKit.box_mm(self, Vector3(-HALF.x, -0.1, -HALF.y), Vector3(HALF.x, 0.03, HALF.y), floor_mat, true, "Floor")
 	var hz := HALF.y - t * 0.5
@@ -27,7 +27,7 @@ func _ready() -> void:
 			[Vector4(HALF.x + t * 0.5 + 1.0, 0.5, 1.3, 1.7)], "WallSouth")
 	# Pultdach
 	BuildKit.box(self, Vector3(HALF.x * 2.0 + 0.6, 0.1, HALF.y * 2.0 + 0.6), Vector3(0, WALL_H + 0.18, 0),
-			BuildKit.color_mat(Color(0.18, 0.18, 0.19), 0.7, 0.4), false, Vector3(0, 0, -6), "Roof")
+			BuildKit.tex_mat("metal", 0.6, Color(0.9, 0.9, 0.9), 0.6), false, Vector3(0, 0, -6), "Roof")
 
 	var door := Door.new()
 	door.name = "ShedDoor"
@@ -42,14 +42,14 @@ func _ready() -> void:
 	add_child(door)
 
 	# Innen: Regal, Kanister, Werkzeug
-	var wood := BuildKit.wood_mat(Color(0.35, 0.27, 0.19), 0, 0.12, 0.04)
+	var wood := BuildKit.tex_mat("planks_h", 0.7)
 	for i in 3:
 		BuildKit.box_mm(self, Vector3(1.4, 0.4 + i * 0.55, -1.4), Vector3(1.9, 0.43 + i * 0.55, 1.4), wood, true)
 	BuildKit.box_mm(self, Vector3(1.85, 0.03, -1.4), Vector3(1.9, 1.6, 1.4), wood, false)
-	BuildKit.box_mm(self, Vector3(1.5, 0.43, -1.2), Vector3(1.8, 0.75, -0.8), BuildKit.color_mat(Color(0.7, 0.12, 0.08), 0.5), false, "GasCan")
+	BuildKit.box_mm(self, Vector3(1.5, 0.43, -1.2), Vector3(1.8, 0.75, -0.8), BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5), false, "GasCan")
 	BuildKit.box_mm(self, Vector3(1.5, 0.98, 0.2), Vector3(1.85, 1.15, 0.8), BuildKit.color_mat(Color(0.15, 0.3, 0.55), 0.5, 0.4), false, "Toolbox")
 	# Brennholzstapel an der Südseite (außen)
-	var log_mat := BuildKit.color_mat(Color(0.36, 0.26, 0.17))
+	var log_mat := BuildKit.tex_mat("logs", 0.5)
 	for row in 5:
 		for i in 14:
 			BuildKit.cylinder(self, 0.1, 0.45, Vector3(-1.7 + i * 0.23 + (row % 2) * 0.1, 0.1 + row * 0.18, HALF.y + 0.35),

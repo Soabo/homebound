@@ -15,6 +15,7 @@ const KEY_ACTIONS := {
 	"flashlight": [KEY_F],
 	"pause_menu": [KEY_ESCAPE],
 	"toggle_help": [KEY_F1],
+	"toggle_retro": [KEY_F2],
 	"toggle_fullscreen": [KEY_F11],
 	"debug_time_fast": [KEY_T],
 }

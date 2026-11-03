@@ -46,7 +46,30 @@ static func road_distance(x: float, z: float) -> float:
 	return absf(x - road_x_at(z))
 
 
+## Verlauf des Bachs östlich des Grundstücks (GDD 3.2).
+static func stream_x_at(z: float) -> float:
+	return 34.0 + 5.0 * sin(z / 14.0) + 2.0 * sin(z / 5.3)
+
+
+static func stream_distance(x: float, z: float) -> float:
+	return absf(x - stream_x_at(z))
+
+
+## Höhe des Bachbetts (ohne Einschnitt) – das Wasser folgt dieser Linie.
+static func stream_bed_height(z: float) -> float:
+	return _raw_height(stream_x_at(z), z) - 1.1
+
+
 static func height_at(x: float, z: float) -> float:
+	var h := _raw_height(x, z)
+	var sd := stream_distance(x, z)
+	if sd < 5.0:
+		var cut := 1.0 - smoothstep(1.3, 4.0, sd)
+		h = lerpf(h, stream_bed_height(z), cut)
+	return h
+
+
+static func _raw_height(x: float, z: float) -> float:
 	_ensure_noise()
 	var d := maxf(yard_distance(x, z), 0.0)
 	var hills := (_noise.get_noise_2d(x, z) * 0.5 + 0.5) * 7.0 + _detail.get_noise_2d(x, z) * 0.35
@@ -88,6 +111,10 @@ func _build() -> void:
 			var road := 1.0 - smoothstep(1.6, 3.2, road_distance(x, z))
 			if z > 6.5:
 				col = col.lerp(road_col, road)
+			# Bachufer: moosig, im Bett Kies und Schlamm
+			var sd := stream_distance(x, z)
+			col = col.lerp(Color(0.14, 0.2, 0.08), 1.0 - smoothstep(2.5, 5.0, sd))
+			col = col.lerp(Color(0.22, 0.2, 0.16), 1.0 - smoothstep(1.0, 2.0, sd))
 			st.set_color(col)
 			st.set_uv(Vector2(x, z) * 0.25)
 			st.add_vertex(Vector3(x, h, z))
@@ -108,20 +135,11 @@ func _build() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.roughness = 1.0
-	var tex := NoiseTexture2D.new()
-	tex.seamless = true
-	tex.width = 256
-	tex.height = 256
-	var tn := FastNoiseLite.new()
-	tn.frequency = 0.05
-	tex.noise = tn
-	var ramp := Gradient.new()
-	ramp.set_color(0, Color(0.72, 0.72, 0.72))
-	ramp.set_color(1, Color(1.0, 1.0, 1.0))
-	tex.color_ramp = ramp
-	mat.albedo_texture = tex
-	mat.uv1_scale = Vector3(0.6, 0.6, 0.6)
+	mat.albedo_texture = TextureFactory.get_texture("grass_ground")
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	mat.uv1_scale = Vector3(1.0, 1.0, 1.0)
 	mesh.surface_set_material(0, mat)
+	_build_stream()
 
 	var mi := MeshInstance3D.new()
 	mi.name = "Ground"
@@ -133,3 +151,55 @@ func _build() -> void:
 	cs.shape = mesh.create_trimesh_shape()
 	body.add_child(cs)
 	add_child(body)
+
+
+## Wasserband entlang des Bachs, folgt dem Bachbett.
+func _build_stream() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half_w := 1.6
+	var z := -HALF_SIZE
+	var prev_l := Vector3.ZERO
+	var prev_r := Vector3.ZERO
+	var first := true
+	while z <= HALF_SIZE:
+		var cx := stream_x_at(z)
+		var y := stream_bed_height(z) + 0.35
+		var l := Vector3(cx - half_w, y, z)
+		var r := Vector3(cx + half_w, y, z)
+		if not first:
+			for v: Vector3 in [prev_l, prev_r, r, prev_l, r, l]:
+				st.set_uv(Vector2(v.x, v.z) * 0.5)
+				st.add_vertex(v)
+		prev_l = l
+		prev_r = r
+		first = false
+		z += 1.0
+	st.generate_normals()
+	var mesh := st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = TextureFactory.get_texture("water")
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	mat.albedo_color = Color(1, 1, 1, 0.82)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.roughness = 0.08
+	mat.metallic_specular = 0.8
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh.surface_set_material(0, mat)
+	var mi := MeshInstance3D.new()
+	mi.name = "Stream"
+	mi.mesh = mesh
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	_water_mat = mat
+
+
+var _water_mat: StandardMaterial3D
+var _flow: float = 0.0
+
+
+func _process(delta: float) -> void:
+	# Wasser fließt langsam nach Süden
+	if _water_mat:
+		_flow += delta * 0.25
+		_water_mat.uv1_offset = Vector3(0, -_flow, 0)

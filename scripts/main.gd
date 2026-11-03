@@ -20,6 +20,7 @@ func _ready() -> void:
 	add_child(player)
 
 	add_child(WindAmbience.new())
+	add_child(RetroFilter.new())
 	add_child(Hud.new())
 	add_child(PauseMenu.new())
 

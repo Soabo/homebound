@@ -12,7 +12,7 @@ var health: float = 100.0
 
 
 func _ready() -> void:
-	var frame := BuildKit.wood_mat(Color(0.28, 0.19, 0.12), 1, 0.3, 0.05)
+	var frame := BuildKit.tex_mat("planks_h", 0.6, Color(0.6, 0.55, 0.5))
 	var f := 0.07
 	var d := wall_thickness + 0.04
 	BuildKit.box(self, Vector3(width, f, d), Vector3(0, f * 0.5, 0), frame, false)
@@ -24,7 +24,7 @@ func _ready() -> void:
 	BuildKit.box(self, Vector3(width - f * 2.0, 0.035, 0.05), Vector3(0, height * 0.5, 0), frame, false)
 	# Fensterbank innen
 	BuildKit.box(self, Vector3(width + 0.12, 0.04, 0.22), Vector3(0, -0.02, -wall_thickness * 0.5 - 0.06),
-			BuildKit.wood_mat(Color(0.4, 0.28, 0.17), 0, 0.2, 0.05), false)
+			BuildKit.tex_mat("planks_h", 0.8), false)
 	# Glas mit Kollision
 	var glass := BuildKit.box(self, Vector3(width - f * 2.0, height - f * 2.0, 0.012),
 			Vector3(0, height * 0.5, 0), BuildKit.glass_mat(), true)

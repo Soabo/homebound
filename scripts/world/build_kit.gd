@@ -76,6 +76,45 @@ static func stone_mat(color: Color, size: float = 0.32) -> ShaderMaterial:
 	return m
 
 
+## Material mit Pixel-Textur, in Weltkoordinaten projiziert (keine UVs nötig).
+## repeat_m = wie viele Meter eine Textur-Kachel abdeckt.
+static func tex_mat(kind: String, repeat_m: float = 1.0, tint: Color = Color.WHITE,
+		roughness: float = 0.9) -> StandardMaterial3D:
+	var key := "t_%s_%.2f_%s_%.2f" % [kind, repeat_m, tint.to_html(), roughness]
+	if _materials.has(key):
+		return _materials[key]
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = TextureFactory.get_texture(kind)
+	m.albedo_color = tint
+	m.roughness = roughness
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = true
+	m.uv1_triplanar_sharpness = 4.0
+	var s := 1.0 / repeat_m
+	m.uv1_scale = Vector3(s, s, s)
+	_materials[key] = m
+	return m
+
+
+## Pflanzen-Karte: Textur mit Transparenz, beidseitig sichtbar.
+static func cutout_mat(kind: String, tint: Color = Color.WHITE) -> StandardMaterial3D:
+	var key := "cut_%s_%s" % [kind, tint.to_html()]
+	if _materials.has(key):
+		return _materials[key]
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = TextureFactory.get_texture(kind)
+	m.albedo_color = tint
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	m.alpha_scissor_threshold = 0.5
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.roughness = 1.0
+	m.vertex_color_use_as_albedo = true
+	_materials[key] = m
+	return m
+
+
 # --- Grundformen --------------------------------------------------------
 
 static func box(parent: Node, size: Vector3, pos: Vector3, mat: Material, collide: bool = true,
@@ -189,6 +228,47 @@ static func wall(parent: Node, a: Vector2, b: Vector2, y0: float, height: float,
 	return root
 
 
+## Stück einer Rundholzwand: liegende Stämme von a nach b (Draufsicht),
+## an Öffnungen unterbrochen, an den Enden überstehend (Eckköpfe).
+## openings wie bei wall(); first_row_y = Mitte der untersten Stammlage.
+static func log_wall(parent: Node, a: Vector2, b: Vector2, first_row_y: float, top_y: float,
+		radius: float, overhang: float, mat: Material, openings: Array = []) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Logs"
+	parent.add_child(root)
+	var d := b - a
+	var length := d.length()
+	var dir := d / length
+	root.position = Vector3(a.x, 0, a.y)
+	root.rotation.y = -atan2(dir.y, dir.x)
+	var step := radius * 1.85
+	var y := first_row_y
+	var row := 0
+	while y <= top_y:
+		# Freie Abschnitte dieser Lage bestimmen
+		var cuts: Array[Vector2] = []
+		for o: Vector4 in openings:
+			if y + radius * 0.6 > o.z and y - radius * 0.6 < o.w:
+				cuts.append(Vector2(o.x - o.y * 0.5, o.x + o.y * 0.5))
+		cuts.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.x < q.x)
+		var start := -overhang
+		var segments: Array[Vector2] = []
+		for c in cuts:
+			if c.x > start + 0.05:
+				segments.append(Vector2(start, c.x))
+			start = c.y
+		if length + overhang > start + 0.05:
+			segments.append(Vector2(start, length + overhang))
+		var rr := radius * (0.92 + 0.08 * sin(float(row) * 2.3))
+		for s in segments:
+			var len := s.y - s.x
+			cylinder(root, rr, len, Vector3((s.x + s.y) * 0.5, y, 0), mat, false,
+					Vector3(0, 0, 90), -1.0, 8)
+		y += step
+		row += 1
+	return root
+
+
 ## Dreieckiger Giebel (Prisma). Basis liegt auf y=0, Spitze bei y=height.
 static func gable(parent: Node, base_width: float, height: float, thickness: float, pos: Vector3,
 		rot_y_deg: float, mat: Material) -> MeshInstance3D:
@@ -218,7 +298,11 @@ static func gable(parent: Node, base_width: float, height: float, thickness: flo
 static func _wall_piece(root: Node3D, s: float, e: float, y_from: float, y_to: float,
 		thickness: float, mat: Material) -> void:
 	var size := Vector3(e - s, y_to - y_from, thickness)
-	box(root, size, Vector3((s + e) * 0.5, (y_from + y_to) * 0.5, 0.0), mat, true)
+	var pos := Vector3((s + e) * 0.5, (y_from + y_to) * 0.5, 0.0)
+	if mat == null:
+		collider_box(root, size, pos)
+	else:
+		box(root, size, pos, mat, true)
 
 
 static func _attach_collider(mi: MeshInstance3D, shape: Shape3D) -> void:

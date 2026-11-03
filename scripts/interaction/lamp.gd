@@ -13,6 +13,7 @@ extends Node3D
 var is_on: bool = false
 var light: OmniLight3D
 var _bulb_mat: StandardMaterial3D
+var _glass_mat: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -20,7 +21,23 @@ func _ready() -> void:
 	_bulb_mat.albedo_color = Color(0.9, 0.88, 0.8)
 	var metal := BuildKit.color_mat(Color(0.12, 0.11, 0.1), 0.5, 0.6)
 	var light_pos := Vector3.ZERO
-	if style == "wall":
+	if style == "lantern":
+		# Wandlaterne: Halter, Eisenrahmen, Glas, warmes Licht
+		var iron := BuildKit.tex_mat("metal", 0.5, Color(0.6, 0.55, 0.5), 0.6)
+		BuildKit.box(self, Vector3(0.04, 0.04, 0.22), Vector3(0, 0.22, 0.1), iron, false)
+		BuildKit.box(self, Vector3(0.08, 0.14, 0.03), Vector3(0, 0.2, 0.015), iron, false)
+		BuildKit.cylinder(self, 0.09, 0.03, Vector3(0, 0.12, 0.2), iron, false, Vector3.ZERO, 0.04, 6)
+		BuildKit.cylinder(self, 0.08, 0.04, Vector3(0, -0.16, 0.2), iron, false, Vector3.ZERO, -1.0, 6)
+		for p: Vector2 in [Vector2(-0.06, -0.06), Vector2(0.06, -0.06), Vector2(-0.06, 0.06), Vector2(0.06, 0.06)]:
+			BuildKit.box(self, Vector3(0.012, 0.25, 0.012), Vector3(p.x, -0.02, 0.2 + p.y), iron, false)
+		var glass := BuildKit.emissive_mat(Color(1.0, 0.75, 0.4), 0.0)
+		glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		glass.albedo_color = Color(1.0, 0.85, 0.6, 0.35)
+		_glass_mat = glass
+		BuildKit.box(self, Vector3(0.11, 0.2, 0.11), Vector3(0, -0.02, 0.2), glass, false)
+		BuildKit.sphere(self, 0.025, Vector3(0, -0.04, 0.2), _bulb_mat, Vector3(1, 1.6, 1), 6)
+		light_pos = Vector3(0, -0.02, 0.32)
+	elif style == "wall":
 		BuildKit.box(self, Vector3(0.14, 0.2, 0.06), Vector3(0, 0, 0.03), metal, false)
 		BuildKit.sphere(self, 0.07, Vector3(0, 0.02, 0.13), _bulb_mat)
 		BuildKit.cylinder(self, 0.11, 0.12, Vector3(0, 0.1, 0.13), metal, false, Vector3.ZERO, 0.05)
@@ -48,3 +65,5 @@ func set_on(value: bool) -> void:
 		light.visible = value
 	if _bulb_mat:
 		_bulb_mat.emission_energy_multiplier = 4.0 if value else 0.0
+	if _glass_mat:
+		_glass_mat.emission_energy_multiplier = 1.2 if value else 0.0

@@ -25,6 +25,7 @@ var _ray: RayCast3D
 var _shape: CollisionShape3D
 var _capsule: CapsuleShape3D
 var _flashlight_rig: Node3D
+var _viewmodel: Node3D
 var _height: float = STAND_HEIGHT
 var _bob_time: float = 0.0
 var _last_prompt: String = ""
@@ -68,7 +69,7 @@ func _ready() -> void:
 	_flashlight_rig.top_level = true
 	add_child(_flashlight_rig)
 	flashlight = SpotLight3D.new()
-	flashlight.position = Vector3(0.18, -0.2, 0.0)
+	flashlight.position = Vector3(0.25, -0.24, -0.62)
 	flashlight.light_color = Color(1.0, 0.95, 0.85)
 	flashlight.light_energy = 5.0
 	flashlight.spot_range = 28.0
@@ -80,10 +81,35 @@ func _ready() -> void:
 	flashlight.visible = false
 	_flashlight_rig.add_child(flashlight)
 	_flashlight_rig.global_transform = camera.global_transform
+	_build_flashlight_model()
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	EventBus.sleep_requested.connect(func(_h: float) -> void: input_locked = true)
 	EventBus.sleep_finished.connect(func() -> void: input_locked = false)
+
+
+## Sichtbare Taschenlampe unten rechts im Bild, gehalten von einem Ärmel.
+func _build_flashlight_model() -> void:
+	_viewmodel = Node3D.new()
+	_viewmodel.name = "FlashlightModel"
+	_viewmodel.position = Vector3(0.24, -0.25, -0.42)
+	_viewmodel.rotation_degrees = Vector3(4, 6, 0)
+	camera.add_child(_viewmodel)
+	var metal := BuildKit.tex_mat("metal", 0.15, Color(1.3, 1.3, 1.35), 0.4)
+	var rubber := BuildKit.tex_mat("metal", 0.1, Color(0.35, 0.35, 0.35), 0.8)
+	var sleeve := BuildKit.tex_mat("fabric", 0.15, Color(0.55, 0.65, 0.6))
+	var skin := BuildKit.color_mat(Color(0.62, 0.46, 0.38), 0.8)
+	BuildKit.cylinder(_viewmodel, 0.028, 0.22, Vector3(0, 0, 0.02), rubber, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.cylinder(_viewmodel, 0.042, 0.07, Vector3(0, 0, -0.12), metal, false, Vector3(90, 0, 0), 0.03, 8)
+	var lens := BuildKit.emissive_mat(Color(1.0, 0.95, 0.8), 2.0)
+	BuildKit.cylinder(_viewmodel, 0.036, 0.005, Vector3(0, 0, -0.158), lens, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.box(_viewmodel, Vector3(0.012, 0.015, 0.03), Vector3(0, 0.03, 0.0), metal, false)
+	# Hand und Ärmel
+	BuildKit.box(_viewmodel, Vector3(0.07, 0.06, 0.1), Vector3(0.0, -0.012, 0.05), skin, false, Vector3(0, 0, 10))
+	BuildKit.box(_viewmodel, Vector3(0.1, 0.1, 0.3), Vector3(0.02, -0.04, 0.24), sleeve, false, Vector3(-8, 0, 0))
+	for mi in _viewmodel.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_viewmodel.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -106,7 +132,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			current_interactable.secondary_interact(self)
 			_update_prompt(true)
 	elif event.is_action_pressed("flashlight"):
-		flashlight.visible = not flashlight.visible
+		set_flashlight(not flashlight.visible)
+
+
+func set_flashlight(on: bool) -> void:
+	flashlight.visible = on
+	if _viewmodel:
+		_viewmodel.visible = on
 
 
 func _physics_process(delta: float) -> void:

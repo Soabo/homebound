@@ -19,6 +19,9 @@ const SHOTS := [
 	{"name": "06_wald_nacht_taschenlampe", "hour": 23.5, "pos": Vector3(-1.0, 0.0, 30.0), "look": Vector3(4.0, 1.5, 45.0), "flashlight": true},
 	{"name": "07_nacht_blick_zur_huette", "hour": 0.5, "pos": Vector3(-3.5, 0.0, 26.0), "look": Vector3(-2.0, 1.5, 0.0), "lights": true},
 	{"name": "08_schlafzimmer_nacht", "hour": 22.0, "pos": Vector3(-1.6, 0.45, -1.6), "look": Vector3(-5.0, 0.9, -3.8), "lights": true},
+	{"name": "09_bach_nachmittag", "hour": 15.5, "pos": Vector3(27.0, 0.0, 2.0), "look": Vector3(35.0, -0.5, 12.0)},
+	{"name": "10_kueche_abend_licht", "hour": 21.0, "pos": Vector3(-3.6, 0.45, 3.6), "look": Vector3(-0.8, 1.3, -0.9), "lights": true},
+	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
 
@@ -54,7 +57,7 @@ func _run() -> void:
 		var d := (look - eye).normalized()
 		player.rotation.y = atan2(-d.x, -d.z)
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
-		player.flashlight.visible = shot.get("flashlight", false)
+		player.set_flashlight(shot.get("flashlight", false))
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.set_state(shot.get("lights", false))
 		for f in frames:
