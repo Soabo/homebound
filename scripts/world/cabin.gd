@@ -40,6 +40,22 @@ func _ready() -> void:
 	_build_storage()
 	_build_technical_room()
 	_build_workshop()
+	_build_reflection_probe()
+
+
+## Innenraum-Reflexionen: verhindert, dass sich drinnen der blaue Himmel spiegelt.
+func _build_reflection_probe() -> void:
+	var probe := ReflectionProbe.new()
+	probe.name = "InteriorProbe"
+	probe.size = Vector3(HALF_X * 2.0, WALL_H, HALF_Z * 2.0)
+	probe.position = Vector3(0, FLOOR_Y + WALL_H * 0.5, 0)
+	probe.interior = true
+	probe.box_projection = true
+	probe.ambient_mode = ReflectionProbe.AMBIENT_COLOR
+	probe.ambient_color = Color(0.2, 0.16, 0.12)
+	probe.ambient_color_energy = 0.6
+	probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	add_child(probe)
 
 
 # --- Rohbau -------------------------------------------------------------
