@@ -5,6 +5,10 @@ extends Node
 ## Wird nur geladen, wenn das Argument gesetzt ist.
 
 var out_dir: String = "user://screenshots"
+## Optional nur bestimmte Bilder, z. B. --shots=01,05
+var only: PackedStringArray = []
+## Frames bis zum Foto (Nebel/Schatten brauchen ein paar Bilder zum Einschwingen).
+var frames: int = 50
 
 const SHOTS := [
 	{"name": "01_ankunft_nachmittag", "hour": 16.5, "pos": Vector3(-3.0, 0.0, 12.0), "look": Vector3(-2.0, 2.0, 0.0)},
@@ -23,6 +27,10 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot-tour="):
 			out_dir = arg.get_slice("=", 1)
+		elif arg.begins_with("--shots="):
+			only = arg.get_slice("=", 1).split(",")
+		elif arg.begins_with("--frames="):
+			frames = int(arg.get_slice("=", 1))
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	_run.call_deferred()
 
@@ -33,6 +41,8 @@ func _run() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	TimeManager.running = false
 	for shot: Dictionary in SHOTS:
+		if not only.is_empty() and not String(shot["name"]).left(2) in only:
+			continue
 		TimeManager.set_time(1, shot["hour"])
 		var pos: Vector3 = shot["pos"]
 		if pos.y <= 0.0:
@@ -47,7 +57,7 @@ func _run() -> void:
 		player.flashlight.visible = shot.get("flashlight", false)
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.set_state(shot.get("lights", false))
-		for f in 50:
+		for f in frames:
 			await get_tree().process_frame
 		var img := get_viewport().get_texture().get_image()
 		var path := out_dir.path_join(String(shot["name"]) + ".png")
