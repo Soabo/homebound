@@ -148,7 +148,7 @@ func _fire(type: String) -> void:
 			_play_phantom_steps(scene)
 		"breath_wall":
 			var p := Vector3(_rng.randf_range(-6.5, 6.5), 1.4, -4.9 if _rng.randf() < 0.5 else 4.9)
-			SoundBank.play_at(scene, "creature_breath", p, -6.0, 0.9)
+			CreatureSounds.play_phrase(scene, "breath", p, -5.0, _rng.randf_range(4.0, 6.0), 14.0)
 		"camera_glitch":
 			EventBus.camera_glitch.emit(_rng.randi_range(0, 2), _rng.randf_range(2.0, 5.0))
 		"phantom":
@@ -222,7 +222,7 @@ func _play_phantom_steps(scene: Node) -> void:
 	for i in 6:
 		var p := start + dir * i * 0.7
 		p.y = Terrain.height_at(p.x, p.z) + 0.1
-		SoundBank.play_at(scene, "step_creature", p, -1.0, _rng.randf_range(0.85, 1.05))
+		CreatureSounds.play(scene, "step", p, -3.0, _rng.randf_range(0.9, 1.05), 40.0)
 		await get_tree().create_timer(0.6).timeout
 
 

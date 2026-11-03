@@ -44,7 +44,7 @@ var _rng := RandomNumberGenerator.new()
 var _parts: Dictionary = {}
 var _attack_cooldown: float = 0.0
 var _player: Player
-var _breath: AudioStreamPlayer3D
+var _voice: AudioStreamPlayer3D  ## gerade laufendes Atmen/Klicken
 var _probes_left: int = 1
 var _saw_player: bool = false
 var _breaking: Structure = null
@@ -133,12 +133,6 @@ func _ready() -> void:
 	_rng.randomize()
 	_parts = build_model(self)
 	_player = get_tree().get_first_node_in_group("player") as Player
-	_breath = AudioStreamPlayer3D.new()
-	_breath.stream = SoundBank.get_sound("creature_breath")
-	_breath.unit_size = 2.0
-	_breath.max_distance = 16.0
-	_breath.position = Vector3(0, 1.8, 0)
-	add_child(_breath)
 	EventBus.noise_made.connect(_on_noise)
 
 
@@ -179,7 +173,7 @@ func _physics_process(delta: float) -> void:
 	# Bemerkt den Spieler: Kopf dreht sich ruckartig zu ihm
 	if sees and not _saw_player:
 		_head_track = 4.0
-		SoundBank.play_at(get_parent(), "twig", global_position, -6.0, 1.3)
+		CreatureSounds.play(get_parent(), "head_snap", global_position + Vector3(0, 1.9, 0), -1.0, _rng.randf_range(0.9, 1.1))
 	_saw_player = sees
 	_head_track -= delta
 	_check_vanish(delta)
@@ -197,7 +191,7 @@ func _physics_process(delta: float) -> void:
 			_breaking.receive_hit(22.0)
 			if is_instance_valid(_breaking) and _breaking.hurts():
 				# Spieße: tut weh – die Kreatur weicht zurück
-				SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 2.0, 0.7)
+				CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 2.0, _rng.randf_range(0.9, 1.05))
 				var spike_pos := _breaking.global_position
 				_breaking.receive_hit(15.0)
 				_breaking = null
@@ -252,7 +246,7 @@ func _physics_process(delta: float) -> void:
 			if _target_entry.call("is_breached"):
 				state = State.REACH
 				_timer = 30.0
-				SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 0.0, 0.8)
+				CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 0.0, 0.85)
 			elif _timer <= 0.0:
 				if mode == "probe":
 					_probes_left -= 1
@@ -320,7 +314,7 @@ func _start_chase() -> void:
 	if mode == "observe":
 		return
 	if state != State.CHASE:
-		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 2.0)
+		CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 2.0)
 	state = State.CHASE
 	_lose_sight = 6.0
 
@@ -365,7 +359,7 @@ func _strike() -> void:
 func _attack() -> void:
 	_attack_cooldown = 2.2
 	_strike()
-	SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 4.0, 1.2)
+	CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 3.0, 1.1)
 	_player.take_damage(HIT_DAMAGE, global_position)
 	EventBus.screen_shake.emit(0.8)
 
@@ -428,7 +422,7 @@ func _update_light(delta: float) -> void:
 	if _lit_time > 0.4 and d < 9.0 and state in [State.REACH, State.CHASE, State.HIT_ENTRY]:
 		# Aus nächster Nähe geblendet: weicht zurück (Licht gezielt einsetzen, GDD 2.4)
 		_lit_time = 0.0
-		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 3.0, 0.6)
+		CreatureSounds.play(get_parent(), "recoil", global_position + Vector3(0, 1.8, 0), 3.0)
 		state = State.RECOIL
 		_timer = _rng.randf_range(12.0, 22.0)
 		var away := (global_position - _player.global_position)
@@ -542,7 +536,7 @@ func on_bright_light(source: Vector3) -> void:
 	if mode == "observe":
 		leave()
 	elif _rng.randf() < 0.6:
-		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 1.0, 0.65)
+		CreatureSounds.play(get_parent(), "recoil", global_position + Vector3(0, 1.8, 0), 1.0)
 		_recoil_from(source)
 
 
@@ -662,11 +656,22 @@ func _sounds(delta: float, moving: bool) -> void:
 		_step_timer -= delta * (_speed / WALK_SPEED)
 		if _step_timer <= 0.0:
 			_step_timer = 0.55
-			SoundBank.play_at(get_parent(), "step_creature", global_position + Vector3(0, 0.1, 0), -3.0, _rng.randf_range(0.8, 1.0))
+			CreatureSounds.play(get_parent(), "step", global_position + Vector3(0, 0.1, 0), -5.0 if _speed <= WALK_SPEED else -1.0, _rng.randf_range(0.9, 1.05), 40.0)
 			if _rng.randf() < 0.05:
 				SoundBank.play_at(get_parent(), "twig", global_position, -2.0)
+	# Atmen und Klicken: beim Beobachten eher Klicken, beim Herumschleichen gemischt,
+	# ganz nah (am Fenster, auf der Jagd) schweres Atmen
 	_breath_timer -= delta
-	if _breath_timer <= 0.0 and _dist() < 14.0:
-		_breath_timer = _rng.randf_range(5.0, 10.0)
-		_breath.pitch_scale = _rng.randf_range(0.8, 1.0)
-		_breath.play()
+	if _breath_timer <= 0.0 and _dist() < 22.0 and not is_instance_valid(_voice) and state != State.LEAVE:
+		var kind := "breath_click"
+		var vol := -4.0
+		if state == State.OBSERVE:
+			kind = "click" if _rng.randf() < 0.7 else "breath_click"
+			vol = -8.0
+		elif state in [State.REACH, State.CHASE, State.HIT_ENTRY] or _dist() < 6.0:
+			kind = "breath" if _rng.randf() < 0.65 else "breath_click"
+			vol = -2.0
+		var dur := _rng.randf_range(2.5, 5.5)
+		_voice = CreatureSounds.play_phrase(self, kind, global_position + Vector3(0, 1.8, 0), vol, dur)
+		# Pausen dazwischen – Stille macht es unheimlicher
+		_breath_timer = dur + _rng.randf_range(2.0, 7.0)

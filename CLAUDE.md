@@ -21,7 +21,10 @@
 - Sounds: Christian liefert echte Aufnahmen (oft lange Clips mit vielen Schritten).
   `tools/audio/slice.py QUELLE ZIEL 12` schneidet sie in Einzelschritte, mono OGG, gleich laut normiert.
   Ablage `assets/audio/steps/<wood|carpet|porch|grass|forest>/<sneak|walk|run>_NN.ogg`;
-  Lautstärke je Untergrund/Gangart in `scripts/audio/footsteps.gd`. Übrige Geräusche noch prozedural (`SoundBank`).
+  Lautstärke je Untergrund/Gangart in `scripts/audio/footsteps.gd`. Kreatur: `assets/audio/creature/<art>_NN.ogg` über `CreatureSounds`
+  (`tools/audio/prepare.py oneshot|long`; lange Atmen/Klicken-Aufnahmen werden als Zufallsausschnitte gespielt).
+  Designentscheidung Kreaturklang: Mischung aus Insektenklicken und verzerrtem Atmen.
+  Übrige Geräusche noch prozedural (`SoundBank`).
 
 ## Befehle (Cloud-Workspace)
 ```bash

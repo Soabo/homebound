@@ -64,6 +64,8 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 - Schritte aus echten Aufnahmen: Holzboden, Teppich, Veranda, Gras und Waldboden – jeweils schleichen, gehen und rennen.
   Springen und Landen sind ebenfalls zu hören.
+- Die Kreatur: Klicken beim Beobachten, verzerrtes Atmen aus der Nähe, Knacken wenn der Kopf herumruckt,
+  Schrei, Schmerzlaut an den Spießen, Zischen bei grellem Licht, eigene Schritte.
 
 ## Stand: Phase 5 – Atmosphäre und Horror
 

@@ -46,7 +46,7 @@ func _process(delta: float) -> void:
 	var indoor := player != null and (Cabin.is_inside(player.global_position) or Shed.is_inside(player.global_position))
 
 	var target_silence := 0.0
-	var creature := ThreatDirector.creature as Node3D
+	var creature: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if is_instance_valid(creature) and player and creature.global_position.distance_to(player.global_position) < CREATURE_SILENCE_RADIUS:
 		target_silence = 1.0
 	if _t < _forced_silence_until:

@@ -253,7 +253,7 @@ func _process(delta: float) -> void:
 	camera.v_offset = randf_range(-1.0, 1.0) * _shake * 0.05
 	# Angst: Herzschlag, wenn die Kreatur nah und sichtbar ist
 	var target_fear := 0.0
-	var c := ThreatDirector.creature as Creature
+	var c: Creature = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if is_instance_valid(c):
 		var d := c.global_position.distance_to(global_position)
 		if d < 20.0 and c.is_in_player_view():

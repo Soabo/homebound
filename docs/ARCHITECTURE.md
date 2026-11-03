@@ -52,8 +52,8 @@ scripts/world/   Gelände, Wald, Garten, Hütte, Schuppen, Licht/Himmel, BuildKi
 scripts/interaction/ Türen, Fenster, Lampen, Schalter, Bett
 scripts/player/  First-Person-Controller
 scripts/ui/      HUD, Pausenmenü
-scripts/audio/   SoundBank (prozedurale Platzhalter), Footsteps (echte Schritt-Aufnahmen)
-assets/audio/    Tondateien (Schritte je Untergrund und Gangart)
+scripts/audio/   SoundBank (prozedurale Platzhalter), Footsteps (echte Schritt-Aufnahmen), CreatureSounds (Kreatur)
+assets/audio/    Tondateien (steps/ je Untergrund und Gangart, creature/)
 tools/audio/     Python-Werkzeuge zum Zuschneiden von Aufnahmen (nicht im Spiel)
 scripts/dev/     Entwickler-Werkzeuge (Screenshot-Tour)
 shaders/         Holz- und Stein-Shader

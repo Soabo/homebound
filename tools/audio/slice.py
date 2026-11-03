@@ -1,9 +1,12 @@
 ## Schneidet lange Schritt-Aufnahmen in einzelne Schritte.
+# Aufruf: python3 slice.py QUELLORDNER ZIELORDNER [ANZAHL] [gruppe/name]
 import sys, os, glob, subprocess, numpy as np
 from scipy.signal import find_peaks, butter, sosfilt
 sys.path.insert(0, os.path.dirname(__file__)); from analyze import load, SR
 SRC, OUT = sys.argv[1], sys.argv[2]
 KEEP = int(sys.argv[3]) if len(sys.argv) > 3 else 12
+## Optional: alle Dateien in eine Gruppe, z. B. "creature/step" -> ZIEL/creature/step_NN.ogg
+FORCED = sys.argv[4].split("/") if len(sys.argv) > 4 else None
 SURF = {"carpet": "carpet", "forest floor": "forest", "grass": "grass", "wooden floor": "wood", "wooden porch": "porch"}
 HOP = 240
 hp = butter(4, 70, "highpass", fs=SR, output="sos")
@@ -52,7 +55,7 @@ for p in sorted(glob.glob(SRC + "/*.mp3")):
         pre = x[max(0, start-int(0.05*SR)):start]
         snr = 20*np.log10((np.abs(seg).max()+1e-6)/(np.sqrt(np.mean(pre**2))+1e-6))
         segs.append((snr, props["prominences"][i], seg, n))
-    key = (surf_of(n), gait_of(n))
+    key = tuple(FORCED) if FORCED else (surf_of(n), gait_of(n))
     groups.setdefault(key, []).extend(segs)
     print(f"{n[:50]:50s} periode={per:.2f}s schritte={len(segs)}")
 

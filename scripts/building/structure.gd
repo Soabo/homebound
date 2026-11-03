@@ -173,7 +173,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_t += delta
 	_alarm_cooldown -= delta
-	var c := ThreatDirector.creature as Node3D
+	var c: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if not is_instance_valid(c):
 		if _light and _light.visible:
 			_light_time -= delta
