@@ -26,7 +26,7 @@ func _ready() -> void:
 	_light.position = Vector3(0.35, 0.45, 0)
 	_light.light_color = Color(1.0, 0.55, 0.25)
 	_light.light_energy = 2.2
-	_light.omni_range = 8.5
+	_light.omni_range = 10.0
 	_light.omni_attenuation = 1.4
 	_light.shadow_enabled = true
 	add_child(_light)
@@ -40,6 +40,6 @@ func _process(delta: float) -> void:
 	_t += delta
 	var n := _noise.get_noise_1d(_t * 10.0) * 0.5 + 0.5
 	var n2 := _noise.get_noise_1d(_t * 31.0 + 100.0) * 0.5 + 0.5
-	_light.light_energy = 1.6 + n * 1.0 + n2 * 0.4
+	_light.light_energy = 2.4 + n * 1.2 + n2 * 0.5
 	_light.position.z = (n2 - 0.5) * 0.12
 	_ember_mat.emission_energy_multiplier = 2.2 + n * 1.6
