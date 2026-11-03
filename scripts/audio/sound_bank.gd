@@ -60,8 +60,13 @@ static func get_sound(id: String) -> AudioStreamWAV:
 
 ## Spielt einen Klang an einer Position in der Welt ab.
 static func play_at(parent: Node, id: String, pos: Vector3, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	play_stream_at(parent, get_sound(id), pos, volume_db, pitch)
+
+
+## Wie play_at, aber mit einer fertigen Tondatei (z. B. echte Aufnahmen).
+static func play_stream_at(parent: Node, stream: AudioStream, pos: Vector3, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	var p := AudioStreamPlayer3D.new()
-	p.stream = get_sound(id)
+	p.stream = stream
 	p.volume_db = volume_db
 	p.pitch_scale = pitch
 	p.unit_size = 4.0

@@ -60,6 +60,11 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   Rennen kostet Ausdauer. Du kannst höchstens 40 kg tragen.
 - Was du gebaut und verbarrikadiert hast, bleibt auch nach einem Tod erhalten (Stand: Tagesbeginn).
 
+## Sound
+
+- Schritte aus echten Aufnahmen: Holzboden, Teppich, Veranda, Gras und Waldboden – jeweils schleichen, gehen und rennen.
+  Springen und Landen sind ebenfalls zu hören.
+
 ## Stand: Phase 5 – Atmosphäre und Horror
 
 - Lebendige Natur: Vögel am Tag, Grillen und Eulen nachts – **verstummen sie, ist etwas in der Nähe**

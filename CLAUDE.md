@@ -18,6 +18,10 @@
 - Persistente Objekte brauchen feste, eindeutige Knotennamen (sonst passt der Spielstand nicht).
 - Designentscheidung Phase 6: keine Waffen, Hunger/Durst sanft, freies Bauen.
 - Systeme kommunizieren über `EventBus` (Autoload) statt sich direkt zu kennen.
+- Sounds: Christian liefert echte Aufnahmen (oft lange Clips mit vielen Schritten).
+  `tools/audio/slice.py QUELLE ZIEL 12` schneidet sie in Einzelschritte, mono OGG, gleich laut normiert.
+  Ablage `assets/audio/steps/<wood|carpet|porch|grass|forest>/<sneak|walk|run>_NN.ogg`;
+  Lautstärke je Untergrund/Gangart in `scripts/audio/footsteps.gd`. Übrige Geräusche noch prozedural (`SoundBank`).
 
 ## Befehle (Cloud-Workspace)
 ```bash

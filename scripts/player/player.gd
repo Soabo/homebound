@@ -211,7 +211,14 @@ func _physics_process(delta: float) -> void:
 	var accel := 10.0 if is_on_floor() else 2.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, clampf(accel * delta, 0.0, 1.0))
 	velocity.z = lerpf(velocity.z, dir.z * speed, clampf(accel * delta, 0.0, 1.0))
+	var fall_speed := -velocity.y
+	var was_airborne := not is_on_floor()
 	move_and_slide()
+	# Landung nach Sprung oder Sturz: zwei schnelle, kräftigere Schritte
+	if was_airborne and is_on_floor() and fall_speed > 3.0:
+		var extra := clampf((fall_speed - 3.0) * 1.5, 0.0, 6.0)
+		Footsteps.play(get_parent(), global_position, "run", 4.0 + extra)
+		get_tree().create_timer(0.07).timeout.connect(_landing_second_step.bind(extra))
 
 	# Kopfwippen beim Gehen
 	var horizontal := Vector2(velocity.x, velocity.z).length()
@@ -222,7 +229,7 @@ func _physics_process(delta: float) -> void:
 		bob = sin(_bob_time) * 0.035 * clampf(horizontal / walk_speed, 0.0, 1.5)
 		# Ein Schritt bei jedem Nulldurchgang der Kopfbewegung (links, rechts)
 		if signf(before) != signf(sin(_bob_time)):
-			_footstep(horizontal)
+			_footstep(horizontal, crouching)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
 
 	if global_position.y < -30.0:
@@ -268,13 +275,17 @@ func _process(delta: float) -> void:
 			target.origin)
 
 
-func _footstep(speed: float) -> void:
+func _footstep(speed: float, crouching: bool = false) -> void:
 	var indoor := Cabin.is_inside(global_position) or Shed.is_inside(global_position) or global_position.y > 0.35
-	var vol := -14.0 if speed < walk_speed + 0.5 else -9.0
-	SoundBank.play_at(get_parent(), "step_wood" if indoor else "step_grass", global_position, vol, randf_range(0.85, 1.15))
+	var gait := "sneak" if crouching or speed < crouch_speed + 0.4 else ("run" if speed > walk_speed + 0.5 else "walk")
+	Footsteps.play(get_parent(), global_position, gait)
 	# Rennen draußen ist laut (GDD 9.4)
 	if speed > walk_speed + 0.5 and not indoor:
 		EventBus.noise_made.emit(global_position, 16.0)
+
+
+func _landing_second_step(extra: float) -> void:
+	Footsteps.play(get_parent(), global_position, "run", extra)
 
 
 func take_damage(amount: float, from: Vector3) -> void:
