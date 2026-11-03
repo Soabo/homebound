@@ -30,6 +30,10 @@ static func get_texture(kind: String) -> Texture2D:
 		"fern": img = _fern()
 		"grass_blades": img = _grass_blades()
 		"water": img = _water()
+		"needles": img = _needles()
+		"leaves": img = _leaves()
+		"log_end": img = _log_end()
+		"moss": img = _moss()
 		_:
 			img = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.MAGENTA)
@@ -336,6 +340,79 @@ static func _water() -> Image:
 			var c := Color(0.14, 0.2, 0.2).lerp(Color(0.32, 0.4, 0.38), w * w)
 			if r.randf() < 0.02:
 				c = Color(0.6, 0.66, 0.62)
+			c.a = 1.0
+			img.set_pixel(x, y, c)
+	return img
+
+
+## Tannennadeln: dunkle, schräge Nadelbüschel (wird mit der Baumfarbe multipliziert).
+static func _needles() -> Image:
+	var img := _img()
+	var r := _rng(31)
+	img.fill(Color(0.55, 0.6, 0.55))
+	for k in 260:
+		var p := Vector2(r.randf() * SIZE, r.randf() * SIZE)
+		var len := r.randi_range(3, 7)
+		var dir := 1 if r.randf() < 0.5 else -1
+		var v := r.randf_range(0.7, 1.5)
+		for i in len:
+			var x := (int(p.x) + i * dir + SIZE) % SIZE
+			var y := (int(p.y) + i + SIZE) % SIZE
+			img.set_pixel(x, y, Color(v, v * 1.05, v * 0.85))
+	for k in 140:
+		img.set_pixel(r.randi() % SIZE, r.randi() % SIZE, Color(0.3, 0.32, 0.28))
+	return img
+
+
+## Laub: viele kleine Blätter auf transparentem Grund (für Laubkronen-Karten).
+static func _leaves() -> Image:
+	var img := _img()
+	img.fill(Color(0, 0, 0, 0))
+	var r := _rng(17)
+	for k in 170:
+		var c := Vector2(r.randf_range(4, SIZE - 4), r.randf_range(4, SIZE - 4))
+		# Runde Gesamtform der Krone
+		if c.distance_to(Vector2(SIZE / 2.0, SIZE / 2.0)) > SIZE * 0.47:
+			continue
+		var col := Color(0.55, 0.8, 0.35).lerp(Color(0.95, 1.05, 0.55), r.randf()) * r.randf_range(0.6, 1.1)
+		var a := r.randf() * PI
+		for dy in range(-3, 4):
+			for dx in range(-3, 4):
+				var q := Vector2(dx, dy).rotated(a)
+				if (q.x * q.x) / 9.0 + (q.y * q.y) / 2.5 <= 1.0:
+					_plot(img, c + Vector2(dx, dy), col * (0.85 if dy > 0 else 1.0))
+	return img
+
+
+## Jahresringe für Stammenden.
+static func _log_end() -> Image:
+	var img := _img()
+	var r := _rng(4)
+	var center := Vector2(SIZE / 2.0, SIZE / 2.0)
+	for y in SIZE:
+		for x in SIZE:
+			var d := Vector2(x, y).distance_to(center) / (SIZE * 0.5)
+			var ring := sin(d * 38.0 + sin(atan2(y - center.y, x - center.x) * 3.0) * 0.6) * 0.5 + 0.5
+			var c := Color(0.68, 0.52, 0.34).lerp(Color(0.52, 0.37, 0.22), ring)
+			if d > 0.88:
+				c = Color(0.28, 0.2, 0.14)
+			if absf(x - center.x) < 1.0 and d < 0.6 and r.randf() < 0.7:
+				c = c * 0.6
+			c = c * (1.0 + (r.randf() - 0.5) * 0.08)
+			c.a = 1.0
+			img.set_pixel(x, y, c)
+	return img
+
+
+static func _moss() -> Image:
+	var img := _img()
+	var r := _rng(12)
+	for y in SIZE:
+		for x in SIZE:
+			var v := r.randf_range(0.7, 1.2)
+			var c := Color(0.25, 0.36, 0.14) * v
+			if r.randf() < 0.06:
+				c = Color(0.42, 0.5, 0.2)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
 	return img

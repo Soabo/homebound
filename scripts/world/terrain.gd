@@ -180,10 +180,10 @@ func _build_stream() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_texture = TextureFactory.get_texture("water")
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-	mat.albedo_color = Color(1, 1, 1, 0.82)
+	mat.albedo_color = Color(0.65, 0.78, 0.72, 0.85)
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.08
-	mat.metallic_specular = 0.8
+	mat.roughness = 0.3
+	mat.metallic_specular = 0.35
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mesh.surface_set_material(0, mat)
 	var mi := MeshInstance3D.new()

@@ -97,6 +97,23 @@ static func tex_mat(kind: String, repeat_m: float = 1.0, tint: Color = Color.WHI
 	return m
 
 
+## Jahresringe: Textur über normale UVs (Deckfläche des Zylinders).
+static func log_end_mat() -> StandardMaterial3D:
+	var key := "log_end"
+	if _materials.has(key):
+		return _materials[key]
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = TextureFactory.get_texture("log_end")
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.uv1_triplanar = true
+	m.uv1_world_triplanar = false
+	m.uv1_scale = Vector3(1.0 / 0.32, 1.0 / 0.32, 1.0 / 0.32)
+	m.uv1_offset = Vector3(0.5, 0.5, 0.5)
+	m.roughness = 0.9
+	_materials[key] = m
+	return m
+
+
 ## Pflanzen-Karte: Textur mit Transparenz, beidseitig sichtbar.
 static func cutout_mat(kind: String, tint: Color = Color.WHITE) -> StandardMaterial3D:
 	var key := "cut_%s_%s" % [kind, tint.to_html()]
@@ -263,7 +280,10 @@ static func log_wall(parent: Node, a: Vector2, b: Vector2, first_row_y: float, t
 		for s in segments:
 			var len := s.y - s.x
 			cylinder(root, rr, len, Vector3((s.x + s.y) * 0.5, y, 0), mat, false,
-					Vector3(0, 0, 90), -1.0, 8)
+					Vector3(0, 0, 90), -1.0, 12)
+			# Stammenden mit Jahresringen
+			for e: float in [s.x - 0.004, s.y + 0.004]:
+				cylinder(root, rr * 0.97, 0.01, Vector3(e, y, 0), log_end_mat(), false, Vector3(0, 0, 90), -1.0, 12)
 		y += step
 		row += 1
 	return root

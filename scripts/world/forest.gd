@@ -17,6 +17,7 @@ func _ready() -> void:
 	_build_trees()
 	_build_rocks()
 	_build_ground_plants()
+	_build_forest_details()
 
 
 static func _tree_allowed(x: float, z: float) -> bool:
@@ -34,19 +35,10 @@ func _build_trees() -> void:
 	trunk_mesh.top_radius = 0.55
 	trunk_mesh.bottom_radius = 1.0
 	trunk_mesh.height = 1.0
-	trunk_mesh.radial_segments = 7
+	trunk_mesh.radial_segments = 10
 	trunk_mesh.rings = 1
-	var cone_mesh := CylinderMesh.new()
-	cone_mesh.top_radius = 0.0
-	cone_mesh.bottom_radius = 1.0
-	cone_mesh.height = 1.0
-	cone_mesh.radial_segments = 7
-	cone_mesh.rings = 1
-	var crown_mesh := SphereMesh.new()
-	crown_mesh.radius = 1.0
-	crown_mesh.height = 2.0
-	crown_mesh.radial_segments = 8
-	crown_mesh.rings = 5
+	var cone_mesh := _fir_layer_mesh(11)
+	var crown_mesh := _leaf_cluster_mesh()
 
 	var trunks: Array[Transform3D] = []
 	var trunk_cols: Array[Color] = []
@@ -91,15 +83,18 @@ func _build_trees() -> void:
 					var col := green * lerpf(0.8, 1.2, f)
 					col.a = 1.0
 					var tilt := Vector3(_rng.randf_range(-0.06, 0.06), yaw + i * 0.7, _rng.randf_range(-0.06, 0.06))
-					cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy, z)))
+					cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy - lh * 0.5, z)))
 					cone_cols.append(col)
 			else:
 				var leaf := Color(0.14, 0.2, 0.08).lerp(Color(0.24, 0.26, 0.1), _rng.randf())
-				for i in 5:
-					var off := Vector3(_rng.randf_range(-1.6, 1.6), _rng.randf_range(-0.8, 1.2), _rng.randf_range(-1.6, 1.6))
-					var s := _rng.randf_range(1.5, 2.5)
-					crowns.append(Transform3D(Basis().scaled(Vector3(s, s * 0.75, s)), Vector3(x, g + trunk_h + 0.4, z) + off))
-					crown_cols.append(leaf * _rng.randf_range(0.85, 1.15))
+				for i in 9:
+					var off := Vector3(_rng.randf_range(-1.8, 1.8), _rng.randf_range(-1.2, 1.6), _rng.randf_range(-1.8, 1.8))
+					var s := _rng.randf_range(2.2, 3.4)
+					var rot := Basis.from_euler(Vector3(_rng.randf_range(-0.4, 0.4), _rng.randf() * TAU, _rng.randf_range(-0.4, 0.4)))
+					crowns.append(Transform3D(rot.scaled(Vector3(s, s, s)), Vector3(x, g + trunk_h - 0.4, z) + off))
+					var lc := Color(0.75, 0.85, 0.6) * _rng.randf_range(0.75, 1.15)
+					lc.a = 1.0
+					crown_cols.append(lc)
 
 			var cs := CollisionShape3D.new()
 			var shape := CylinderShape3D.new()
@@ -110,8 +105,9 @@ func _build_trees() -> void:
 			colliders.add_child(cs)
 
 	var bark_mat := _textured("bark", 1.5)
-	var needle_mat := _textured("grass_ground", 0.8)
-	var leaf_mat := _textured("grass_ground", 0.6)
+	var needle_mat := _textured("needles", 0.9)
+	needle_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var leaf_mat := BuildKit.cutout_mat("leaves")
 	_add_multimesh("Trunks", trunk_mesh, trunks, trunk_cols, bark_mat, true)
 	_add_multimesh("Needles", cone_mesh, cones, cone_cols, needle_mat, true)
 	_add_multimesh("Crowns", crown_mesh, crowns, crown_cols, leaf_mat, true)
@@ -178,12 +174,12 @@ func _build_ground_plants() -> void:
 
 	# Grasbüschel: dicht im Garten (nicht auf Wegen, nicht unter Gebäuden) und am Waldrand
 	var tries := 0
-	while grass.size() < 6000 and tries < 30000:
+	while grass.size() < 15000 and tries < 80000:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT, LIMIT)
 		var z := _rng.randf_range(-LIMIT, LIMIT)
 		var yd := Terrain.yard_distance(x, z)
-		if yd > 8.0 and _rng.randf() < 0.75:
+		if yd > 8.0 and _rng.randf() < 0.6:
 			continue
 		if _blocked_for_plants(x, z):
 			continue
@@ -195,7 +191,7 @@ func _build_ground_plants() -> void:
 
 	# Farn im Wald und am Bach
 	tries = 0
-	while ferns.size() < 1600 and tries < 20000:
+	while ferns.size() < 3000 and tries < 40000:
 		tries += 1
 		var by_stream := _rng.randf() < 0.3
 		var z := _rng.randf_range(-LIMIT, LIMIT)
@@ -222,7 +218,7 @@ func _build_ground_plants() -> void:
 
 	# Kleine weiße und gelbe Blüten am Waldrand und am Bach
 	tries = 0
-	while flowers.size() < 900 and tries < 20000:
+	while flowers.size() < 2200 and tries < 40000:
 		tries += 1
 		var cx := _rng.randf_range(-LIMIT, LIMIT)
 		var cz := _rng.randf_range(-LIMIT, LIMIT)
@@ -249,6 +245,154 @@ func _build_ground_plants() -> void:
 	flower_mat.vertex_color_use_as_albedo = true
 	flower_mat.roughness = 1.0
 	_add_multimesh("Flowers", flower_mesh, flowers, flower_cols, flower_mat, false)
+
+
+## Baumstümpfe, umgestürzte Stämme, Pilze, junge Tannen und Schilf am Bach.
+func _build_forest_details() -> void:
+	var bark := BuildKit.tex_mat("bark", 1.0)
+	var ends := BuildKit.log_end_mat()
+	var body := StaticBody3D.new()
+	body.name = "DetailColliders"
+	add_child(body)
+	var cap_white := BuildKit.color_mat(Color(0.85, 0.8, 0.7), 0.8)
+	var cap_red := BuildKit.color_mat(Color(0.7, 0.15, 0.1), 0.6)
+	var stem := BuildKit.color_mat(Color(0.88, 0.85, 0.78), 0.9)
+
+	var spots: Array[Vector3] = []
+	var tries := 0
+	while spots.size() < 70 and tries < 3000:
+		tries += 1
+		var x := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
+		var z := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
+		if not _tree_allowed(x, z) or Terrain.yard_distance(x, z) < 4.0:
+			continue
+		spots.append(Vector3(x, Terrain.height_at(x, z), z))
+
+	for i in spots.size():
+		var p := spots[i]
+		if i < 40:
+			# Baumstumpf
+			var r := _rng.randf_range(0.25, 0.45)
+			var h := _rng.randf_range(0.3, 0.7)
+			BuildKit.cylinder(self, r, h, p + Vector3(0, h * 0.5 - 0.05, 0), bark, false, Vector3(_rng.randf_range(-4, 4), 0, 0), r * 0.92, 10)
+			BuildKit.cylinder(self, r * 0.9, 0.01, p + Vector3(0, h - 0.04, 0), ends, false, Vector3.ZERO, -1.0, 10)
+			_add_col_cylinder(body, r, h, p + Vector3(0, h * 0.5, 0))
+		else:
+			# Umgestürzter, moosiger Stamm
+			var r := _rng.randf_range(0.2, 0.35)
+			var len := _rng.randf_range(3.0, 7.0)
+			var yaw := _rng.randf() * 180.0
+			var log := BuildKit.cylinder(self, r, len, p + Vector3(0, r * 0.7, 0), bark, false, Vector3(0, yaw, 90), r * 0.8, 10)
+			var moss := BuildKit.cylinder(log, r * 1.02, len * 0.6, Vector3(0, 0, 0), BuildKit.tex_mat("moss", 0.6), false, Vector3(0, 0, 0), r * 0.85, 10)
+			moss.scale = Vector3(1.0, 1.0, 0.6)
+			moss.position = Vector3(-r * 0.25, _rng.randf_range(-0.5, 0.5), 0)
+			var cs := CollisionShape3D.new()
+			var shape := CylinderShape3D.new()
+			shape.radius = r
+			shape.height = len
+			cs.shape = shape
+			cs.position = log.position
+			cs.rotation_degrees = Vector3(0, yaw, 90)
+			body.add_child(cs)
+		# Pilze an Stumpf/Stamm
+		for k in _rng.randi_range(2, 6):
+			var q := p + Vector3(_rng.randf_range(-0.7, 0.7), 0, _rng.randf_range(-0.7, 0.7))
+			q.y = Terrain.height_at(q.x, q.z)
+			var s := _rng.randf_range(0.6, 1.4)
+			BuildKit.cylinder(self, 0.012 * s, 0.07 * s, q + Vector3(0, 0.035 * s, 0), stem, false, Vector3.ZERO, -1.0, 5)
+			BuildKit.cylinder(self, 0.045 * s, 0.03 * s, q + Vector3(0, 0.075 * s, 0), cap_red if _rng.randf() < 0.3 else cap_white, false, Vector3.ZERO, 0.01, 7)
+
+	# Junge Tannen am Waldrand
+	var saplings: Array[Transform3D] = []
+	var sap_cols: Array[Color] = []
+	tries = 0
+	while saplings.size() < 600 and tries < 10000:
+		tries += 1
+		var x := _rng.randf_range(-LIMIT, LIMIT)
+		var z := _rng.randf_range(-LIMIT, LIMIT)
+		var yd := Terrain.yard_distance(x, z)
+		if yd < 1.5 or yd > 20.0 or not _tree_allowed(x, z) and yd > 2.5:
+			continue
+		if _blocked_for_plants(x, z) or Terrain.stream_distance(x, z) < 2.0:
+			continue
+		var g := Terrain.height_at(x, z)
+		var h := _rng.randf_range(0.6, 2.4)
+		for i in 3:
+			var f := float(i) / 2.0
+			var lr := h * lerpf(0.35, 0.12, f)
+			var lh := h * 0.5
+			saplings.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(lr, lh, lr)), Vector3(x, g + h * f * 0.55, z)))
+			sap_cols.append(Color(0.1, 0.2, 0.09) * _rng.randf_range(0.9, 1.3))
+	_add_multimesh("Saplings", _fir_layer_mesh(8), saplings, sap_cols, _textured("needles", 0.6), true)
+
+	# Schilf und hohe Gräser am Bachufer
+	var reeds: Array[Transform3D] = []
+	var reed_cols: Array[Color] = []
+	tries = 0
+	while reeds.size() < 1400 and tries < 10000:
+		tries += 1
+		var z := _rng.randf_range(-LIMIT, LIMIT)
+		var side := -1.0 if _rng.randf() < 0.5 else 1.0
+		var x := Terrain.stream_x_at(z) + side * _rng.randf_range(1.3, 2.8)
+		var g := Terrain.height_at(x, z)
+		var s := _rng.randf_range(0.7, 1.3)
+		reeds.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 0.7, s * 1.6, s * 0.7)), Vector3(x, g - 0.05, z)))
+		reed_cols.append(Color(0.95, 1.1, 0.65) * _rng.randf_range(0.8, 1.1))
+	_add_multimesh("Reeds", _cross_quad_mesh(), reeds, reed_cols, BuildKit.cutout_mat("grass_blades"), false)
+
+
+func _add_col_cylinder(body: StaticBody3D, r: float, h: float, pos: Vector3) -> void:
+	var cs := CollisionShape3D.new()
+	var shape := CylinderShape3D.new()
+	shape.radius = r
+	shape.height = h
+	cs.shape = shape
+	cs.position = pos
+	body.add_child(cs)
+
+
+## Eine Astebene einer Tanne: gezackter Stern mit hängenden Zweigspitzen.
+## Fußpunkt bei y = 0, Spitze bei y = 1, Radius 1.
+static func _fir_layer_mesh(branches: int) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var apex := Vector3(0, 1, 0)
+	var under := Vector3(0, 0.22, 0)
+	var rim: Array[Vector3] = []
+	for i in branches * 2:
+		var a := TAU * float(i) / float(branches * 2)
+		var tip := i % 2 == 0
+		var rad := 1.0 if tip else 0.5
+		var y := 0.0 if tip else 0.2
+		rim.append(Vector3(cos(a) * rad, y, sin(a) * rad))
+	for i in rim.size():
+		var a := rim[i]
+		var b := rim[(i + 1) % rim.size()]
+		for v: Vector3 in [apex, a, b, under, b, a]:
+			st.add_vertex(v)
+	st.generate_normals()
+	return st.commit()
+
+
+## Laubbüschel: drei gekreuzte senkrechte und eine waagrechte Blattkarte.
+static func _leaf_cluster_mesh() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var uvs := [Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]
+	for k in 3:
+		var a := PI * float(k) / 3.0
+		var d := Vector3(cos(a), 0, sin(a)) * 0.5
+		var pts := [-d - Vector3(0, 0.5, 0), d - Vector3(0, 0.5, 0), d + Vector3(0, 0.5, 0), -d + Vector3(0, 0.5, 0)]
+		for idx: int in [0, 2, 1, 0, 3, 2]:
+			st.set_normal(Vector3.UP)
+			st.set_uv(uvs[idx])
+			st.add_vertex(pts[idx])
+	var flat := [Vector3(-0.5, 0, -0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, 0, 0.5), Vector3(-0.5, 0, 0.5)]
+	for idx: int in [0, 1, 2, 0, 2, 3]:
+		st.set_normal(Vector3.UP)
+		st.set_uv(uvs[idx])
+		st.add_vertex(flat[idx])
+	return st.commit()
 
 
 ## Keine Pflanzen auf Wegen, im Haus, im Schuppen oder im Wasser.

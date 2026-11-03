@@ -126,6 +126,7 @@ func _build_props() -> void:
 	for x: float in [-11.8, -10.2]:
 		BuildKit.box(self, Vector3(0.08, 0.85, 0.08), Vector3(x, 0.38, -3.0), m_wood, false, Vector3(30, 0, 0))
 		BuildKit.box(self, Vector3(0.08, 0.85, 0.08), Vector3(x, 0.38, -3.0), m_wood, false, Vector3(-30, 0, 0))
+	_build_planting()
 	# Zwei alte Laubbäume auf dem Grundstück
 	_garden_tree(Vector3(-16.0, 0, -12.0), 1.0)
 	_garden_tree(Vector3(17.5, 0, 14.0), 0.85)
@@ -145,3 +146,60 @@ func _garden_tree(pos: Vector3, s: float) -> void:
 		var r := _rng.randf_range(1.5, 2.3) * s
 		var crown := BuildKit.sphere(self, r, pos + Vector3(0, 5.8 * s, 0) + off, leaves, Vector3(1, 0.8, 1), 8)
 		crown.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+
+## Sträucher und Blumen rund um die Hütte und vor der Veranda.
+func _build_planting() -> void:
+	var leaf_mesh := Forest._leaf_cluster_mesh()
+	var shrubs: Array[Transform3D] = []
+	var flowers: Array[Transform3D] = []
+	var flower_cols: Array[Color] = []
+	var spots: Array[Vector2] = []
+	# Entlang der West-, Nord- und Ostwand
+	for i in 16:
+		spots.append(Vector2(-6.9, -4.2 + i * 0.55))
+		spots.append(Vector2(-5.5 + i * 0.75, -5.4))
+	for i in 10:
+		spots.append(Vector2(6.95, 0.0 + i * 0.45))
+	# Vor der Veranda links und rechts der Treppe
+	for i in 6:
+		spots.append(Vector2(-5.4 + i * 0.25, 7.0))
+		spots.append(Vector2(-1.6 + i * 0.45, 7.0))
+	for p in spots:
+		if absf(p.x + 7.0) < 0.6 and p.y > 0.9 and p.y < 2.6:
+			continue  # Schornstein
+		var s := _rng.randf_range(0.5, 0.95)
+		shrubs.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s, s, s)),
+				Vector3(p.x + _rng.randf_range(-0.15, 0.15), s * 0.42, p.y + _rng.randf_range(-0.15, 0.15))))
+		for k in 3:
+			flowers.append(Transform3D(Basis().scaled(Vector3(0.04, 0.03, 0.04)),
+					Vector3(p.x + _rng.randf_range(-0.4, 0.4), _rng.randf_range(0.35, 0.7), p.y + _rng.randf_range(-0.3, 0.3))))
+			var c := [Color(0.9, 0.85, 0.95), Color(0.85, 0.3, 0.25), Color(0.95, 0.8, 0.25), Color(0.6, 0.45, 0.85)]
+			flower_cols.append(c[_rng.randi() % c.size()])
+	var cols: Array[Color] = []
+	for i in shrubs.size():
+		cols.append(Color(0.7, 0.9, 0.55) * _rng.randf_range(0.8, 1.1))
+	_multimesh(leaf_mesh, shrubs, cols, BuildKit.cutout_mat("leaves"))
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.0
+	sphere.height = 2.0
+	sphere.radial_segments = 6
+	sphere.rings = 3
+	var fm := StandardMaterial3D.new()
+	fm.vertex_color_use_as_albedo = true
+	_multimesh(sphere, flowers, flower_cols, fm)
+
+
+func _multimesh(mesh: Mesh, transforms: Array[Transform3D], colors: Array[Color], mat: Material) -> void:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = mesh
+	mm.instance_count = transforms.size()
+	for i in transforms.size():
+		mm.set_instance_transform(i, transforms[i])
+		mm.set_instance_color(i, colors[i])
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.material_override = mat
+	add_child(mmi)
