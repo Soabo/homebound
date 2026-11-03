@@ -5,7 +5,7 @@ extends CanvasLayer
 
 const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Leertaste  Springen\n" + \
 		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe\n" + \
-		"T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        F11  Vollbild        Esc  Menü        F1  Hilfe"
+		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        Esc  Menü        F1  Hilfe"
 
 var _clock: Label
 var _prompt: Label
@@ -102,6 +102,7 @@ func _ready() -> void:
 	_help.text = HELP_TEXT
 	_help.modulate.a = 0.85
 
+	_build_bars(root)
 	_build_monitor(root)
 
 	_fade = ColorRect.new()
@@ -172,6 +173,7 @@ func _process(delta: float) -> void:
 		_hurt.color.a = maxf(_hurt.color.a, (50.0 - player.health) / 50.0 * 0.25)
 	if _monitor_open:
 		_update_monitor(delta)
+	_update_bars()
 
 
 func show_notification(text: String, duration: float = 3.0) -> void:
@@ -272,6 +274,58 @@ func _on_player_died() -> void:
 	tw.tween_property(_hurt, "color:a", 0.6, 0.3)
 	tw.tween_property(_fade, "color:a", 1.0, 1.8)
 	tw.parallel().tween_property(_death, "modulate:a", 1.0, 1.5)
+
+
+# --- Survival-Anzeige ---------------------------------------------------
+
+var _bars: Dictionary = {}
+var _bar_root: VBoxContainer
+
+
+func _build_bars(root: Control) -> void:
+	_bar_root = VBoxContainer.new()
+	_bar_root.anchor_top = 1.0
+	_bar_root.anchor_bottom = 1.0
+	_bar_root.offset_left = 32
+	_bar_root.offset_top = -190
+	_bar_root.offset_right = 260
+	_bar_root.offset_bottom = -120
+	_bar_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bar_root.add_theme_constant_override("separation", 4)
+	root.add_child(_bar_root)
+	for key: String in ["Ausdauer", "Hunger", "Durst", "Gesundheit"]:
+		var row := HBoxContainer.new()
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var l := _label(row, 14, HORIZONTAL_ALIGNMENT_LEFT)
+		l.text = key
+		l.custom_minimum_size = Vector2(90, 0)
+		var bg := ColorRect.new()
+		bg.color = Color(0, 0, 0, 0.5)
+		bg.custom_minimum_size = Vector2(120, 8)
+		bg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(bg)
+		var fg := ColorRect.new()
+		fg.color = {"Ausdauer": Color(0.9, 0.9, 0.85), "Hunger": Color(0.9, 0.6, 0.25), "Durst": Color(0.35, 0.65, 0.95), "Gesundheit": Color(0.85, 0.2, 0.2)}[key]
+		fg.size = Vector2(120, 8)
+		fg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bg.add_child(fg)
+		_bar_root.add_child(row)
+		_bars[key] = [row, fg]
+
+
+func _update_bars() -> void:
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var values := {"Ausdauer": Survival.stamina, "Hunger": Survival.hunger, "Durst": Survival.thirst,
+			"Gesundheit": player.health if player else 100.0}
+	for key in _bars:
+		var v: float = values[key]
+		var row: Control = _bars[key][0]
+		var fg: ColorRect = _bars[key][1]
+		fg.size.x = 120.0 * clampf(v / 100.0, 0.0, 1.0)
+		# Nur zeigen, wenn es etwas zu sehen gibt
+		var show := v < 60.0 if key in ["Hunger", "Durst"] else v < 99.0
+		row.modulate.a = move_toward(row.modulate.a, 1.0 if show else 0.0, 0.05)
 
 
 # --- Monitor-Ansicht ----------------------------------------------------

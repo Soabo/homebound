@@ -67,7 +67,7 @@ func get_prompt(_player: Node) -> String:
 
 func get_secondary_prompt(_player: Node) -> String:
 	if is_entry and (is_broken() or health < max_health * 0.99):
-		return "[R] Tür reparieren  (2 Bretter, du hast %d)" % Inventory.count("planks")
+		return "[R] Tür reparieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	if not lockable or is_open:
 		return ""
 	return "[R] %s" % ("Aufschließen" if is_locked else "Abschließen")
@@ -86,8 +86,8 @@ func interact(_player: Node) -> void:
 
 func secondary_interact(_player: Node) -> void:
 	if is_entry and (is_broken() or health < max_health * 0.99):
-		if not Inventory.remove("planks", 2):
-			EventBus.notify("Du brauchst 2 Bretter. In der Werkstatt liegt ein Stapel.", 3.0)
+		if not Inventory.remove_all({"planks": 2, "nails": 4}):
+			EventBus.notify("Du brauchst 2 Bretter und 4 Nägel. Beides gibt es in der Werkstatt.", 3.0)
 			return
 		health = minf(health + max_health * 0.6, max_health)
 		SoundBank.play_at(self, "hammer", global_position + Vector3(width * 0.5, 1.0, 0), -2.0)
@@ -109,12 +109,54 @@ var health: float = 180.0
 var max_health: float = 180.0
 
 
+var upgraded: bool = false
+
+
 func make_entry() -> void:
 	is_entry = true
 	add_to_group("entry_point")
+	add_to_group("persistent")
 	if ThreatDirector.config:
 		max_health = ThreatDirector.config.door_health
 	health = max_health
+	GameState.restore(self)
+
+
+## Verstärkte Tür (Werkbank-Rezept): doppelte Lebenspunkte, Eisenbeschläge.
+func upgrade() -> void:
+	if upgraded:
+		return
+	upgraded = true
+	max_health *= 2.0
+	health = max_health
+	_add_iron_bands()
+
+
+func _add_iron_bands() -> void:
+	var body := _hinge.get_child(0) as Node3D
+	var iron := BuildKit.tex_mat("metal", 0.3, Color(0.8, 0.8, 0.8), 0.5)
+	for yy: float in [-height * 0.38, 0.0, height * 0.38]:
+		BuildKit.box(body, Vector3(width - 0.06, 0.07, 0.012), Vector3(0, yy, thickness * 0.5 + 0.022), iron, false)
+		BuildKit.box(body, Vector3(width - 0.06, 0.07, 0.012), Vector3(0, yy, -thickness * 0.5 - 0.022), iron, false)
+
+
+func persist_key() -> String:
+	return str(get_path())
+
+
+func get_state() -> Dictionary:
+	return {"health": health, "locked": is_locked, "open": is_open, "upgraded": upgraded}
+
+
+func set_state(s: Dictionary) -> void:
+	if bool(s.get("upgraded", false)) and not upgraded:
+		upgraded = true
+		max_health *= 2.0
+		_add_iron_bands.call_deferred()
+	health = float(s.get("health", health))
+	is_locked = bool(s.get("locked", false))
+	if bool(s.get("open", false)) != is_open:
+		set_open.call_deferred(bool(s.get("open", false)))
 
 
 func entry_name() -> String:
@@ -170,10 +212,6 @@ func set_open(value: bool) -> void:
 	_tween = create_tween()
 	var target := deg_to_rad(open_angle_deg) * open_sign if is_open else 0.0
 	_tween.tween_property(_hinge, "rotation:y", target, 0.7).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-
-func get_state() -> Dictionary:
-	return {"open": is_open, "locked": is_locked}
 
 
 ## Jemand rüttelt von außen an der Klinke (auch ohne dass jemand da ist …).

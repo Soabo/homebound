@@ -35,6 +35,7 @@ var _gravity: float = 9.8
 var _shake: float = 0.0
 var _fear: float = 0.0
 var _heart_timer: float = 0.0
+var _exhausted: bool = false
 
 
 func _ready() -> void:
@@ -142,6 +143,8 @@ func _on_sleep_finished() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		if input_locked:
+			return
 		if event is InputEventMouseButton and event.pressed:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			get_viewport().set_input_as_handled()
@@ -152,15 +155,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * mouse_sensitivity, -1.45, 1.45)
 	elif event.is_action_pressed("interact"):
+		if _building():
+			return
 		if current_interactable:
 			current_interactable.interact(self)
 			_update_prompt(true)
 	elif event.is_action_pressed("interact_secondary"):
+		if _building():
+			return
 		if current_interactable:
 			current_interactable.secondary_interact(self)
 			_update_prompt(true)
 	elif event.is_action_pressed("flashlight"):
 		set_flashlight(not flashlight.visible)
+
+
+func _building() -> bool:
+	var bc := get_tree().get_first_node_in_group("build_controller") as BuildController
+	return bc != null and bc.active
 
 
 func set_flashlight(on: bool) -> void:
@@ -186,7 +198,14 @@ func _physics_process(delta: float) -> void:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 		if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching:
 			velocity.y = jump_velocity
-	var sprinting := not crouching and Input.is_action_pressed("sprint") and input.y < 0.0
+	var wants_sprint := not crouching and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
+	if Survival.stamina <= 0.0:
+		_exhausted = true
+	elif Survival.stamina > 30.0:
+		_exhausted = false
+	var sprinting := wants_sprint and not _exhausted and Survival.use_stamina(20.0 * delta)
+	if not sprinting:
+		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
 	var speed := crouch_speed if crouching else (sprint_speed if sprinting else walk_speed)
 	var dir := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
 	var accel := 10.0 if is_on_floor() else 2.0
@@ -211,7 +230,13 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 	_update_interaction()
-	health = minf(health + delta * 1.5, MAX_HEALTH)
+	var starve := Survival.starvation_damage()
+	if starve > 0.0:
+		health -= starve * delta
+		if health <= 0.0 and not GameState.dead:
+			GameState.kill_player()
+	elif Survival.hunger > 30.0 and Survival.thirst > 30.0:
+		health = minf(health + delta * 1.5, MAX_HEALTH)
 
 
 func _process(delta: float) -> void:
@@ -288,6 +313,8 @@ func _update_interaction() -> void:
 
 
 func _update_prompt(force: bool) -> void:
+	if _building():
+		return
 	var text := ""
 	if current_interactable:
 		text = current_interactable.get_prompt(self)

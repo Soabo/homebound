@@ -63,7 +63,7 @@ func _run() -> void:
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
 		player.set_flashlight(shot.get("flashlight", false))
 		for sw in get_tree().get_nodes_in_group("light_switch"):
-			sw.set_state(shot.get("lights", false))
+			sw.switch_to(shot.get("lights", false))
 		var creature: Creature = null
 		if shot.has("creature_at"):
 			creature = Creature.new()

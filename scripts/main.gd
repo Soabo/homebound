@@ -13,8 +13,10 @@ func _ready() -> void:
 	add_child(Garden.new())
 	add_child(Cabin.new())
 	add_child(Shed.new())
+	add_child(CarWreck.new())
 	_build_world_limits()
 	_build_cameras()
+	Builder.spawn_all(self)
 	add_child(Surveillance.new())
 
 	var player := Player.new()
@@ -25,6 +27,8 @@ func _ready() -> void:
 	add_child(NatureAmbience.new())
 	add_child(RetroFilter.new())
 	add_child(Hud.new())
+	add_child(GameMenus.new())
+	add_child(BuildController.new())
 	add_child(PauseMenu.new())
 
 	for arg in OS.get_cmdline_user_args():

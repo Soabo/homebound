@@ -22,6 +22,8 @@ func _ready() -> void:
 	BuildKit.box(self, Vector3(0.08, 0.12, 0.015), Vector3.ZERO, plate_mat, false)
 	_toggle = BuildKit.box(self, Vector3(0.025, 0.045, 0.02), Vector3(0, 0, 0.015),
 			BuildKit.color_mat(Color(0.7, 0.68, 0.62), 0.5), false)
+	add_to_group("persistent")
+	GameState.restore(self)
 	_update_visual()
 
 
@@ -30,10 +32,10 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(_player: Node) -> void:
-	set_state(not is_on)
+	switch_to(not is_on)
 
 
-func set_state(value: bool) -> void:
+func switch_to(value: bool) -> void:
 	is_on = value
 	for lamp in lamps:
 		lamp.set_on(is_on)
@@ -43,3 +45,15 @@ func set_state(value: bool) -> void:
 func _update_visual() -> void:
 	if _toggle:
 		_toggle.rotation_degrees.x = -18.0 if is_on else 18.0
+
+
+func persist_key() -> String:
+	return str(get_path())
+
+
+func get_state() -> Dictionary:
+	return {"on": is_on}
+
+
+func set_state(s: Dictionary) -> void:
+	switch_to.call_deferred(bool(s.get("on", false)))

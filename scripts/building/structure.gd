@@ -1,0 +1,219 @@
+class_name Structure
+extends Interactable
+## Ein vom Spieler gebautes Objekt auf dem Grundstück (GDD 7.2).
+##  - fence_panel / stone_wall: Hindernis, die Kreatur muss es zerlegen
+##  - spike_barricade: Hindernis, verletzt und verscheucht die Kreatur
+##  - can_alarm: klappert laut, wenn etwas durchläuft (Frühwarnung)
+##  - motion_light: Batterielampe, springt bei Bewegung an; Licht scheucht auf
+## Werte kommen aus data/items/buildables.json.
+
+var uid: int = 0
+var type: String = "fence_panel"
+var health: float = 50.0
+var max_health: float = 50.0
+var size: Vector3 = Vector3.ONE
+var is_obstacle: bool = false
+var preview: bool = false  ## true = nur Bauvorschau, ohne Kollision und Logik
+
+var _alarm_cooldown: float = 0.0
+var _light: SpotLight3D
+var _light_mat: StandardMaterial3D
+var _light_time: float = 0.0
+var _scared_at: float = -999.0
+var _t: float = 0.0
+
+
+func _ready() -> void:
+	var def := DataDB.buildable(type)
+	max_health = float(def.get("health", 50))
+	if health <= 0.0 or health > max_health:
+		health = max_health
+	var sz: Array = def.get("size", [1, 1, 1])
+	size = Vector3(sz[0], sz[1], sz[2])
+	is_obstacle = bool(def.get("obstacle", false)) and not preview
+	_build_visual()
+	if preview:
+		return
+	if is_obstacle:
+		add_to_group("obstacle")
+	add_to_group("structure")
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size if is_obstacle or type == "motion_light" else Vector3(size.x, 0.3, 0.4)
+	cs.shape = shape
+	cs.position = Vector3(0, shape.size.y * 0.5, 0)
+	body.add_child(cs)
+	add_child(body)
+
+
+func _build_visual() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = uid * 77 + 3
+	match type:
+		"fence_panel":
+			var post := BuildKit.tex_mat("logs", 0.8)
+			var board := BuildKit.tex_mat("planks_h", 1.0, Color(1.15, 1.1, 1.0))
+			for x: float in [-1.1, 1.1]:
+				BuildKit.cylinder(self, 0.07, 1.3, Vector3(x, 0.65, 0), post, false, Vector3.ZERO, 0.06, 7)
+			for i in 4:
+				BuildKit.box(self, Vector3(2.35, 0.2, 0.04), Vector3(0, 0.25 + i * 0.26, 0.06), board, false, Vector3(0, 0, rng.randf_range(-1.5, 1.5)))
+			BuildKit.box(self, Vector3(2.5, 0.12, 0.04), Vector3(0, 0.6, 0.1), board, false, Vector3(0, 0, 24))
+		"spike_barricade":
+			var stake := BuildKit.tex_mat("logs", 0.5, Color(1.1, 1.0, 0.9))
+			BuildKit.cylinder(self, 0.08, 1.9, Vector3(0, 0.35, 0), stake, false, Vector3(0, 0, 90), -1.0, 7)
+			for i in 6:
+				var x := -0.75 + i * 0.3
+				for side: float in [-1.0, 1.0]:
+					BuildKit.cylinder(self, 0.05, 1.2, Vector3(x, 0.55, side * 0.18), stake, false, Vector3(side * 50.0, 0, rng.randf_range(-8, 8)), 0.0, 6)
+		"stone_wall":
+			var stone := BuildKit.tex_mat("stone", 0.6)
+			for row in 3:
+				for i in 4:
+					var w := rng.randf_range(0.35, 0.5)
+					BuildKit.box(self, Vector3(w, 0.28, size.z * rng.randf_range(0.85, 1.0)),
+							Vector3(-0.6 + i * 0.4 + (row % 2) * 0.12, 0.15 + row * 0.29, 0), stone, false,
+							Vector3(rng.randf_range(-4, 4), rng.randf_range(-6, 6), rng.randf_range(-3, 3)))
+		"can_alarm":
+			var peg := BuildKit.tex_mat("logs", 0.4)
+			var wire := BuildKit.color_mat(Color(0.7, 0.7, 0.68), 0.4, 0.6)
+			var can := BuildKit.tex_mat("metal", 0.2, Color(1.5, 1.5, 1.5), 0.4)
+			for x: float in [-1.5, 1.5]:
+				BuildKit.cylinder(self, 0.03, 0.45, Vector3(x, 0.22, 0), peg, false, Vector3.ZERO, 0.02, 5)
+			BuildKit.box(self, Vector3(3.0, 0.006, 0.006), Vector3(0, 0.3, 0), wire, false)
+			for i in 5:
+				BuildKit.cylinder(self, 0.035, 0.1, Vector3(-1.0 + i * 0.5, 0.22, 0), can, false, Vector3(rng.randf_range(-15, 15), 0, 0), -1.0, 8)
+		"motion_light":
+			var pole := BuildKit.tex_mat("metal", 0.4, Color(0.9, 0.9, 0.9), 0.5)
+			BuildKit.cylinder(self, 0.04, 2.1, Vector3(0, 1.05, 0), pole, false, Vector3.ZERO, -1.0, 6)
+			BuildKit.box(self, Vector3(0.3, 0.2, 0.15), Vector3(0, 0.25, 0), pole, false)
+			var head := BuildKit.box(self, Vector3(0.3, 0.18, 0.18), Vector3(0, 2.1, 0.08), pole, false, Vector3(-30, 0, 0))
+			_light_mat = BuildKit.emissive_mat(Color(1.0, 0.95, 0.85), 0.0)
+			BuildKit.box(head, Vector3(0.24, 0.12, 0.01), Vector3(0, 0, 0.095), _light_mat, false)
+			BuildKit.sphere(self, 0.04, Vector3(0, 1.95, 0.12), BuildKit.color_mat(Color(0.2, 0.2, 0.2), 0.2), Vector3.ONE, 6)
+			if not preview:
+				_light = SpotLight3D.new()
+				_light.position = Vector3(0, 2.05, 0.2)
+				_light.rotation_degrees.x = -40.0
+				_light.spot_range = 16.0
+				_light.spot_angle = 50.0
+				_light.light_energy = 6.0
+				_light.light_color = Color(1.0, 0.95, 0.85)
+				_light.shadow_enabled = true
+				_light.visible = false
+				add_child(_light)
+
+
+## Bauvorschau einfärben (grün = passt, rot = geht hier nicht).
+func set_preview_valid(valid: bool) -> void:
+	var m := StandardMaterial3D.new()
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.3, 1.0, 0.4, 0.45) if valid else Color(1.0, 0.25, 0.2, 0.45)
+	for gi in find_children("*", "GeometryInstance3D", true, false):
+		var g := gi as GeometryInstance3D
+		g.material_override = m
+		g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+# --- Interaktion --------------------------------------------------------
+
+func get_prompt(_player: Node) -> String:
+	var def := DataDB.buildable(type)
+	return "%s  (%d%%)" % [def.get("name", type), int(health / max_health * 100.0)]
+
+
+func get_secondary_prompt(_player: Node) -> String:
+	return "[R] Abbauen"
+
+
+func secondary_interact(_player: Node) -> void:
+	# Unbeschädigt gibt es das Bauteil zurück, beschädigt nur einen Teil des Holzes
+	if health >= max_health * 0.6:
+		if Inventory.add(type, 1) <= 0:
+			EventBus.notify("Zu schwer – du kannst nicht mehr tragen.", 2.0)
+			return
+		EventBus.notify("%s abgebaut." % DataDB.buildable(type).get("name", type), 2.0)
+	else:
+		EventBus.notify("Zu beschädigt – nur Reste übrig.", 2.0)
+	SoundBank.play_at(get_parent(), "wood_crack", global_position + Vector3(0, 0.5, 0), -4.0)
+	_destroy(false)
+
+
+# --- Kreaturen ----------------------------------------------------------
+
+## Liegt ein Punkt (Welt) im Bereich dieses Hindernisses?
+func blocks_point(p: Vector3, margin: float = 0.45) -> bool:
+	var l := to_local(p)
+	return absf(l.x) < size.x * 0.5 + margin and absf(l.z) < size.z * 0.5 + margin
+
+
+func receive_hit(damage: float) -> void:
+	health -= damage
+	SoundBank.play_at(get_parent(), "wood_crack" if type != "stone_wall" else "bang", global_position + Vector3(0, 0.6, 0), 0.0, randf_range(0.8, 1.1))
+	EventBus.noise_made.emit(global_position, 18.0)
+	Builder.update_health(uid, health)
+	if health <= 0.0:
+		_destroy(true)
+
+
+func hurts() -> bool:
+	return bool(DataDB.buildable(type).get("hurts", false))
+
+
+func _destroy(loud: bool) -> void:
+	if loud:
+		SoundBank.play_at(get_parent(), "bang", global_position + Vector3(0, 0.5, 0), 2.0, 0.8)
+	Builder.remove(uid)
+	queue_free()
+
+
+func _physics_process(delta: float) -> void:
+	if preview:
+		return
+	_t += delta
+	_alarm_cooldown -= delta
+	var c := ThreatDirector.creature as Node3D
+	if not is_instance_valid(c):
+		if _light and _light.visible:
+			_light_time -= delta
+			if _light_time <= 0.0:
+				_set_light(false)
+		return
+	var d := global_position.distance_to(c.global_position)
+	match type:
+		"can_alarm":
+			if _alarm_cooldown <= 0.0 and blocks_point(c.global_position, 0.8):
+				_alarm_cooldown = 40.0
+				for i in 3:
+					SoundBank.play_at(get_parent(), "clatter", global_position + Vector3(randf_range(-1, 1), 0.3, 0), 6.0, randf_range(0.8, 1.2))
+				EventBus.notify("Dosen klappern – %s!" % _direction_from_player(), 3.0)
+		"motion_light":
+			if d < 9.0:
+				_light_time = 15.0
+				if not _light.visible:
+					_set_light(true)
+				# Grelles Licht: die Kreatur weicht zurück (höchstens einmal pro Minute)
+				if d < 7.0 and _t - _scared_at > 60.0:
+					_scared_at = _t
+					c.call("on_bright_light", global_position)
+	if _light and _light.visible:
+		_light_time -= delta
+		if _light_time <= 0.0:
+			_set_light(false)
+
+
+func _set_light(on: bool) -> void:
+	_light.visible = on
+	_light_mat.emission_energy_multiplier = 5.0 if on else 0.0
+	SoundBank.play_at(get_parent(), "switch", global_position + Vector3(0, 2, 0), -2.0, 0.6)
+
+
+func _direction_from_player() -> String:
+	var p := get_tree().get_first_node_in_group("player") as Node3D
+	if p == null:
+		return "draußen"
+	var v := global_position - p.global_position
+	var dirs := ["im Norden", "im Nordosten", "im Osten", "im Südosten", "im Süden", "im Südwesten", "im Westen", "im Nordwesten"]
+	var a := fposmod(atan2(v.x, -v.z), TAU)
+	return dirs[int(round(a / (TAU / 8.0))) % 8]

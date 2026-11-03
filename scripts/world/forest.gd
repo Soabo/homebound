@@ -294,6 +294,21 @@ func _build_forest_details() -> void:
 			cs.position = log.position
 			cs.rotation_degrees = Vector3(0, yaw, 90)
 			body.add_child(cs)
+			# Holz hacken (braucht die Axt), wächst langsam nach
+			var wood := ResourceNode.new()
+			wood.name = "WoodLog_%d" % i
+			wood.item_id = "wood"
+			wood.per_action = 2
+			wood.amount = 6
+			wood.max_amount = 6
+			wood.regrow_per_day = 2
+			wood.tool = "axe"
+			wood.action_label = "Holz hacken"
+			wood.action_time = 1.8
+			wood.sound = "wood_crack"
+			wood.anchor = p + Vector3(0, 0, 0)
+			wood.collider_size = Vector3(1.2, r * 2.0 + 0.2, 1.2)
+			add_child(wood)
 		# Pilze an Stumpf/Stamm
 		for k in _rng.randi_range(2, 6):
 			var q := p + Vector3(_rng.randf_range(-0.7, 0.7), 0, _rng.randf_range(-0.7, 0.7))
@@ -339,6 +354,44 @@ func _build_forest_details() -> void:
 		reeds.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 0.7, s * 1.6, s * 0.7)), Vector3(x, g - 0.05, z)))
 		reed_cols.append(Color(0.95, 1.1, 0.65) * _rng.randf_range(0.8, 1.1))
 	_add_multimesh("Reeds", _cross_quad_mesh(), reeds, reed_cols, BuildKit.cutout_mat("grass_blades"), false)
+	_build_stream_spots()
+
+
+## Steinhaufen zum Sammeln und Trinkstellen entlang des Bachs.
+func _build_stream_spots() -> void:
+	var stone_mat := BuildKit.tex_mat("stone", 0.5)
+	var k := 0
+	var z := -58.0
+	while z <= 58.0:
+		var side := 1.0 if k % 2 == 0 else -1.0
+		var x := Terrain.stream_x_at(z) + side * 2.3
+		var g := Terrain.height_at(x, z)
+		var pile := ResourceNode.new()
+		pile.name = "Stones_%d" % k
+		pile.item_id = "stone"
+		pile.per_action = 2
+		pile.amount = 6
+		pile.max_amount = 6
+		pile.regrow_per_day = 3
+		pile.action_label = "Steine sammeln"
+		pile.action_time = 1.2
+		pile.sound = "step_wood"
+		pile.anchor = Vector3(x, g, z)
+		pile.collider_size = Vector3(1.0, 0.5, 1.0)
+		add_child(pile)
+		for i in 6:
+			BuildKit.sphere(self, _rng.randf_range(0.1, 0.2), Vector3(x + _rng.randf_range(-0.35, 0.35), g + 0.06, z + _rng.randf_range(-0.35, 0.35)),
+					stone_mat, Vector3(1.2, 0.6, 1.0), 6)
+		if k % 2 == 0:
+			var drink := WaterSource.new()
+			drink.name = "StreamDrink_%d" % k
+			drink.label = "Bach"
+			drink.thirst_gain = 35.0
+			drink.anchor = Vector3(Terrain.stream_x_at(z), Terrain.stream_bed_height(z) + 0.2, z)
+			drink.collider_size = Vector3(2.4, 0.4, 2.0)
+			add_child(drink)
+		k += 1
+		z += 13.0
 
 
 func _add_col_cylinder(body: StaticBody3D, r: float, h: float, pos: Vector3) -> void:

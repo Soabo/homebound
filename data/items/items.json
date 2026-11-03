@@ -1,0 +1,20 @@
+{
+  "_info": "Gegenstände (GDD 6.2/6.3). weight = kg pro Stück, stack = max. Anzahl, use = Wirkung beim Benutzen.",
+  "wood":        {"name": "Holz",            "weight": 1.5,  "stack": 20, "category": "Ressource"},
+  "planks":      {"name": "Bretter",         "weight": 1.0,  "stack": 20, "category": "Ressource"},
+  "nails":       {"name": "Nägel",           "weight": 0.02, "stack": 99, "category": "Ressource"},
+  "stone":       {"name": "Steine",          "weight": 2.0,  "stack": 12, "category": "Ressource"},
+  "scrap":       {"name": "Metallschrott",   "weight": 1.2,  "stack": 15, "category": "Ressource"},
+  "cans":        {"name": "Blechdosen",      "weight": 0.1,  "stack": 20, "category": "Ressource"},
+  "electronics": {"name": "Elektronik",      "weight": 0.4,  "stack": 10, "category": "Ressource"},
+  "battery":     {"name": "Batterie",        "weight": 1.5,  "stack": 4,  "category": "Ressource"},
+  "fuel_can":    {"name": "Benzinkanister",  "weight": 5.0,  "stack": 3,  "category": "Ressource"},
+  "food":        {"name": "Konserve",        "weight": 0.5,  "stack": 8,  "category": "Nahrung", "use": {"hunger": 35}},
+  "water":       {"name": "Wasserflasche",   "weight": 1.0,  "stack": 4,  "category": "Nahrung", "use": {"thirst": 40}},
+  "axe":         {"name": "Axt",             "weight": 2.0,  "stack": 1,  "category": "Werkzeug"},
+  "fence_panel":     {"name": "Holzzaun-Element",       "weight": 4.0, "stack": 6, "category": "Bauteil", "build": "fence_panel"},
+  "spike_barricade": {"name": "Spießbarrikade",         "weight": 5.0, "stack": 4, "category": "Bauteil", "build": "spike_barricade"},
+  "stone_wall":      {"name": "Steinwall",              "weight": 8.0, "stack": 4, "category": "Bauteil", "build": "stone_wall"},
+  "can_alarm":       {"name": "Dosenalarm",             "weight": 1.0, "stack": 6, "category": "Bauteil", "build": "can_alarm"},
+  "motion_light":    {"name": "Bewegungsmelder-Leuchte","weight": 3.0, "stack": 4, "category": "Bauteil", "build": "motion_light"}
+}

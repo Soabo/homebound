@@ -1,0 +1,8 @@
+{
+  "_info": "Bauobjekte fürs Grundstück (GDD 7.2/7.3). health = Lebenspunkte gegen Kreaturen, obstacle = versperrt den Weg.",
+  "fence_panel":     {"name": "Holzzaun",               "health": 90,  "obstacle": true,  "size": [2.4, 1.2, 0.2]},
+  "spike_barricade": {"name": "Spießbarrikade",         "health": 110, "obstacle": true,  "size": [1.8, 1.0, 0.8], "hurts": true},
+  "stone_wall":      {"name": "Steinwall",              "health": 220, "obstacle": true,  "size": [1.6, 0.9, 0.6]},
+  "can_alarm":       {"name": "Dosenalarm",             "health": 30,  "obstacle": false, "size": [3.0, 0.4, 0.2]},
+  "motion_light":    {"name": "Bewegungsmelder-Leuchte","health": 40,  "obstacle": false, "size": [0.4, 2.2, 0.4]}
+}

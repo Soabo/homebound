@@ -1,0 +1,13 @@
+{
+  "_info": "Werkbank-Rezepte (GDD 6/7.2). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand.",
+  "recipes": [
+    {"id": "planks",          "needs": {"wood": 1},                                  "gives": {"planks": 2}},
+    {"id": "nails",           "needs": {"scrap": 1},                                 "gives": {"nails": 12}},
+    {"id": "fence_panel",     "needs": {"planks": 3, "nails": 6},                    "gives": {"fence_panel": 1}},
+    {"id": "spike_barricade", "needs": {"wood": 3, "nails": 6},                      "gives": {"spike_barricade": 1}},
+    {"id": "stone_wall",      "needs": {"stone": 4},                                 "gives": {"stone_wall": 1}},
+    {"id": "can_alarm",       "needs": {"cans": 4, "scrap": 1},                      "gives": {"can_alarm": 1}},
+    {"id": "motion_light",    "needs": {"scrap": 2, "battery": 1, "electronics": 1}, "gives": {"motion_light": 1}},
+    {"id": "door_upgrade",    "name": "Haustür verstärken", "needs": {"scrap": 3, "planks": 4, "nails": 12}, "special": "door_upgrade"}
+  ]
+}

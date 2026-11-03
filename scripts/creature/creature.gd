@@ -47,6 +47,8 @@ var _player: Player
 var _breath: AudioStreamPlayer3D
 var _probes_left: int = 1
 var _saw_player: bool = false
+var _breaking: Structure = null
+var _break_timer: float = 0.0
 var _head_track: float = 0.0
 var _seen_by_player: bool = false
 var _unseen_time: float = 0.0
@@ -169,7 +171,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer -= delta
 	_attack_cooldown -= delta
-	var moving := _follow_path(delta)
+	var moving := false if is_instance_valid(_breaking) else _follow_path(delta)
 	_animate(delta, moving)
 	_sounds(delta, moving)
 	var sees := _can_see_player()
@@ -184,6 +186,24 @@ func _physics_process(delta: float) -> void:
 	var eye := _parts.get("eye_mat") as StandardMaterial3D
 	if eye:
 		eye.emission_energy_multiplier = lerpf(eye.emission_energy_multiplier, 3.5 if _lit_time > 0.0 else 0.25, clampf(delta * 6.0, 0.0, 1.0))
+
+	# Ein Bauwerk versperrt den Weg: erst zerlegen (GDD 7.3)
+	if is_instance_valid(_breaking):
+		_face(_breaking.global_position)
+		_break_timer -= delta
+		if _break_timer <= 0.0:
+			_break_timer = _rng.randf_range(1.2, 1.7)
+			_strike()
+			_breaking.receive_hit(22.0)
+			if is_instance_valid(_breaking) and _breaking.hurts():
+				# Spieße: tut weh – die Kreatur weicht zurück
+				SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 2.0, 0.7)
+				var spike_pos := _breaking.global_position
+				_breaking.receive_hit(15.0)
+				_breaking = null
+				_recoil_from(spike_pos)
+		return
+	_breaking = null
 
 	match state:
 		State.ARRIVE:
@@ -459,8 +479,24 @@ func _on_noise(pos: Vector3, radius: float) -> void:
 func _go(points: Array, speed: float) -> void:
 	_path.clear()
 	for p in points:
-		_path.append(_ground(p))
+		_path.append(_ground(_outside_house(p)))
 	_speed = speed
+
+
+## Die Kreatur betritt das Haus nicht: Ziele im Grundriss werden nach draußen geschoben.
+static func _outside_house(p: Vector3) -> Vector3:
+	var hx := Cabin.HALF_X + 0.9
+	var hz := Cabin.HALF_Z + 0.9
+	if absf(p.x) >= hx or absf(p.z) >= hz:
+		return p
+	# Veranda ist erlaubt (dort stehen Tür und Wohnzimmerfenster)
+	if p.z > Cabin.HALF_Z + 0.1 and p.x > -5.8 and p.x < 1.4:
+		return p
+	var dx := hx - absf(p.x)
+	var dz := hz - absf(p.z)
+	if dx < dz:
+		return Vector3(signf(p.x) * hx, p.y, p.z)
+	return Vector3(p.x, p.y, signf(p.z) * hz)
 
 
 func _follow_path(delta: float) -> bool:
@@ -476,6 +512,12 @@ func _follow_path(delta: float) -> bool:
 		return not _path.is_empty()
 	var dir := to.normalized()
 	var next := global_position + dir * step
+	var ob := _obstacle_at(global_position + dir * 0.6)
+	if ob:
+		if _breaking != ob:
+			_breaking = ob
+			_break_timer = 0.5
+		return false
 	global_position = _ground(next)
 	var look := global_position + dir
 	look.y = global_position.y
@@ -483,6 +525,35 @@ func _follow_path(delta: float) -> bool:
 		var t := global_transform.looking_at(look, Vector3.UP)
 		global_transform.basis = global_transform.basis.slerp(t.basis.rotated(Vector3.UP, PI).orthonormalized(), clampf(delta * 6.0, 0.0, 1.0))
 	return true
+
+
+func _obstacle_at(p: Vector3) -> Structure:
+	for o in get_tree().get_nodes_in_group("obstacle"):
+		if (o as Structure).blocks_point(p, 0.35):
+			return o
+	return null
+
+
+## Grelles Licht (Bewegungsmelder): Beobachter fliehen, andere weichen kurz zurück.
+func on_bright_light(source: Vector3) -> void:
+	if state == State.LEAVE:
+		return
+	_lit_time = 0.5
+	if mode == "observe":
+		leave()
+	elif _rng.randf() < 0.6:
+		SoundBank.play_at(get_parent(), "creature_shriek", global_position + Vector3(0, 1.8, 0), 1.0, 0.65)
+		_recoil_from(source)
+
+
+func _recoil_from(source: Vector3) -> void:
+	state = State.RECOIL
+	_timer = _rng.randf_range(10.0, 18.0)
+	var away := global_position - source
+	away.y = 0.0
+	if away.length() < 0.1:
+		away = global_position * Vector3(1, 0, 1)
+	_go([_ground(global_position + away.normalized() * 10.0)], CHASE_SPEED)
 
 
 func _face(p: Vector3) -> void:

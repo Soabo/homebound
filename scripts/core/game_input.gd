@@ -16,6 +16,8 @@ const KEY_ACTIONS := {
 	"pause_menu": [KEY_ESCAPE],
 	"toggle_help": [KEY_F1],
 	"toggle_retro": [KEY_F2],
+	"inventory": [KEY_TAB, KEY_I],
+	"build": [KEY_B],
 	"toggle_fullscreen": [KEY_F11],
 	"debug_time_fast": [KEY_T],
 }

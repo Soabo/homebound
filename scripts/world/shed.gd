@@ -46,7 +46,7 @@ func _ready() -> void:
 	for i in 3:
 		BuildKit.box_mm(self, Vector3(1.4, 0.4 + i * 0.55, -1.4), Vector3(1.9, 0.43 + i * 0.55, 1.4), wood, true)
 	BuildKit.box_mm(self, Vector3(1.85, 0.03, -1.4), Vector3(1.9, 1.6, 1.4), wood, false)
-	Cabin.fuel_can(self, Vector3(1.65, 0.43, -1.0), 90.0)
+	Cabin.fuel_can(self, Vector3(1.65, 0.43, -1.0), 90.0, "FuelCan")
 	BuildKit.box_mm(self, Vector3(1.5, 0.98, 0.2), Vector3(1.85, 1.15, 0.8), BuildKit.color_mat(Color(0.15, 0.3, 0.55), 0.5, 0.4), false, "Toolbox")
 	# Brennholzstapel an der Südseite (außen)
 	var log_mat := BuildKit.tex_mat("logs", 0.5)
@@ -54,4 +54,15 @@ func _ready() -> void:
 		for i in 14:
 			BuildKit.cylinder(self, 0.1, 0.45, Vector3(-1.7 + i * 0.23 + (row % 2) * 0.1, 0.1 + row * 0.18, HALF.y + 0.35),
 					log_mat, false, Vector3(90, 0, 0), -1.0, 8)
-	BuildKit.collider_box(self, Vector3(3.4, 0.95, 0.5), Vector3(-0.05, 0.47, HALF.y + 0.35))
+	var pile := ResourceNode.new()
+	pile.name = "Woodpile"
+	pile.item_id = "wood"
+	pile.per_action = 2
+	pile.amount = 10
+	pile.max_amount = 10
+	pile.action_label = "Brennholz nehmen"
+	pile.action_time = 0.6
+	pile.sound = "step_wood"
+	pile.anchor = Vector3(-0.05, 0.0, HALF.y + 0.35)
+	pile.collider_size = Vector3(3.4, 0.95, 0.5)
+	add_child(pile)

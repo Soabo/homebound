@@ -18,11 +18,23 @@ func _ready() -> void:
 func _run() -> void:
 	if _ran:
 		print("Nach Neustart: Tag %d, %s" % [TimeManager.day, TimeManager.get_clock_text()])
+		if mode == "craft":
+			for i in 5:
+				await get_tree().physics_frame
+			var w := get_tree().current_scene.get_node("Cabin/WindowLiving") as CabinWindow
+			print("PERSISTENZ Fenster-Barrikade: %.0f (erwartet > 0)" % w.barricade)
+			print("PERSISTENZ Bauten: %d Datensätze, %d in der Welt" % [Builder.records.size(), get_tree().get_nodes_in_group("structure").size()])
+			print("PERSISTENZ Axt im Inventar: %d, Axt-Aufheber noch da: %d" % [Inventory.count("axe"), (get_tree().current_scene.get_node("Garden/Axe") as ItemPickup).amount])
+			var door := get_tree().current_scene.get_node("Cabin/FrontDoor") as Door
+			print("PERSISTENZ Tür verstärkt: %s, abgeschlossen: %s" % [door.upgraded, door.is_locked])
 		get_tree().quit()
 		return
 	_ran = true
 	if mode == "events":
 		await _event_test()
+		return
+	if mode == "craft":
+		await _craft_test()
 		return
 	for i in 10:
 		await get_tree().physics_frame
@@ -72,7 +84,7 @@ func _event_test() -> void:
 		await get_tree().physics_frame
 	TimeManager.set_time(1, 22.0)
 	for sw in get_tree().get_nodes_in_group("light_switch"):
-		sw.set_state(true)
+		sw.switch_to(true)
 	var types := ["twig", "steps", "silence", "camera_glitch", "breath_wall", "phantom", "scratch", "roof",
 			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage"]
 	for t in types:
@@ -83,3 +95,59 @@ func _event_test() -> void:
 	await get_tree().create_timer(5.0).timeout
 	print("EVENT TEST ENDE")
 	get_tree().quit()
+
+
+func _craft_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	# Ausrüsten
+	(scene.get_node("Garden/Axe") as ItemPickup).interact(player)
+	for id: String in ["wood", "scrap", "stone", "cans", "battery", "electronics"]:
+		Inventory.add(id, 6)
+	print("Inventar vorher: ", Inventory.items, "  Gewicht %.1f" % Inventory.total_weight())
+	for r: Dictionary in DataDB.recipes():
+		var msg := Workbench.craft(r, get_tree())
+		print("Rezept %-16s -> %s" % [r["id"], "OK" if msg == "" else msg])
+	print("Inventar nachher: ", Inventory.items)
+	# Fenster verbarrikadieren
+	Inventory.add("planks", 4)
+	Inventory.add("nails", 8)
+	var w := scene.get_node("Cabin/WindowLiving") as CabinWindow
+	w.secondary_interact(player)
+	print("Fenster-Barrikade: %.0f" % w.barricade)
+	var door := scene.get_node("Cabin/FrontDoor") as Door
+	door.is_locked = true
+	# Bauen: Zaun quer über den Weg der Kreatur, Spießbarrikade daneben
+	var fence := Builder.place("fence_panel", Creature._ground(Vector3(-3.0, 0, 17.0)), 0.0)
+	var spikes := Builder.place("spike_barricade", Creature._ground(Vector3(-3.0, 0, 13.0)), 0.0)
+	Builder.place("can_alarm", Creature._ground(Vector3(-3.0, 0, 11.0)), 0.0)
+	Builder.place("motion_light", Creature._ground(Vector3(0.0, 0, 11.0)), 0.0)
+	print("Gebaut: %d Bauten" % Builder.records.size())
+	GameState.take_snapshot()
+	# Kreatur läuft durch Zaun und Spieße
+	TimeManager.set_time(1, 21.0)
+	TimeManager.running = false
+	ThreatDirector.set_process(false)
+	Engine.time_scale = 4.0
+	var c := Creature.new()
+	scene.add_child(c)
+	ThreatDirector.creature = c
+	c.begin("attack")
+	c.global_position = Creature._ground(Vector3(-3.0, 0, 21.0))
+	c._path.clear()
+	c._path.append(Creature._ground(Vector3(-3.0, 0, 8.0)))
+	c.state = Creature.State.PROWL
+	var names := Creature.State.keys()
+	for sec in 40:
+		await get_tree().create_timer(1.0).timeout
+		if not is_instance_valid(c):
+			break
+		var f := "weg" if not is_instance_valid(fence) else "%.0f" % fence.health
+		var sp := "weg" if not is_instance_valid(spikes) else "%.0f" % spikes.health
+		if sec % 2 == 0:
+			print("t=%2d %-9s z=%.1f  zerlegt=%s  Zaun=%s  Spieße=%s" % [sec, names[c.state], c.global_position.z, is_instance_valid(c._breaking), f, sp])
+	Engine.time_scale = 1.0
+	print("CRAFT TEST: Tod auslösen, Neustart prüfen")
+	GameState.kill_player()

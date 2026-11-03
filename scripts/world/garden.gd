@@ -103,11 +103,27 @@ func _build_props() -> void:
 	for y: float in [0.15, 0.85]:
 		BuildKit.cylinder(self, 0.41, 0.05, Vector3(6.9, y, -2.6), band, false, Vector3.ZERO, -1.0, 12)
 	BuildKit.cylinder(self, 0.36, 0.01, Vector3(6.9, 0.95, -2.6), BuildKit.color_mat(Color(0.05, 0.07, 0.08), 0.05), false, Vector3.ZERO, -1.0, 12)
+	var barrel_water := WaterSource.new()
+	barrel_water.name = "RainBarrel"
+	barrel_water.label = "Regentonne"
+	barrel_water.anchor = Vector3(6.9, 0.0, -2.6)
+	barrel_water.collider_size = Vector3(0.9, 1.05, 0.9)
+	add_child(barrel_water)
 	# Hackklotz mit Axt neben dem Schuppen, Späne
 	BuildKit.cylinder(self, 0.32, 0.5, Vector3(11.0, 0.25, 10.5), BuildKit.tex_mat("bark", 0.6), true, Vector3.ZERO, -1.0, 10)
 	BuildKit.cylinder(self, 0.3, 0.01, Vector3(11.0, 0.505, 10.5), BuildKit.color_mat(Color(0.6, 0.48, 0.32)), false, Vector3.ZERO, -1.0, 10)
-	BuildKit.box(self, Vector3(0.04, 0.7, 0.04), Vector3(11.05, 0.8, 10.5), m_wood, false, Vector3(0, 0, 25))
-	BuildKit.box(self, Vector3(0.18, 0.12, 0.03), Vector3(10.95, 0.55, 10.5), band, false, Vector3(0, 0, 25))
+	var axe := ItemPickup.new()
+	axe.name = "Axe"
+	axe.item_id = "axe"
+	axe.amount = 1
+	axe.collider_size = Vector3(0.5, 0.8, 0.5)
+	axe.collider_offset = Vector3(11.0, 0.8, 10.5)
+	add_child(axe)
+	var axe_vis := Node3D.new()
+	axe.add_child(axe_vis)
+	axe.visuals.append(axe_vis)
+	BuildKit.box(axe_vis, Vector3(0.04, 0.7, 0.04), Vector3(11.05, 0.8, 10.5), m_wood, false, Vector3(0, 0, 25))
+	BuildKit.box(axe_vis, Vector3(0.18, 0.12, 0.03), Vector3(10.95, 0.55, 10.5), band, false, Vector3(0, 0, 25))
 	for i in 12:
 		BuildKit.box(self, Vector3(0.08, 0.01, 0.04), Vector3(11.0 + _rng.randf_range(-0.8, 0.8), 0.01, 10.5 + _rng.randf_range(-0.8, 0.8)),
 				BuildKit.color_mat(Color(0.62, 0.5, 0.34)), false, Vector3(0, _rng.randf() * 180, 0))

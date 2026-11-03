@@ -527,6 +527,12 @@ func _build_kitchen() -> void:
 	BuildKit.box_mm(self, Vector3(-1.75, y + 0.78, z0 + 0.08), Vector3(-1.15, y + 0.93, z0 + 0.52), BuildKit.tex_mat("stone", 0.5, Color(1.2, 1.2, 1.2)), false)
 	BuildKit.box_mm(self, Vector3(-1.7, y + 0.86, z0 + 0.12), Vector3(-1.2, y + 0.935, z0 + 0.48), BuildKit.color_mat(Color(0.12, 0.12, 0.12)), false)
 	BuildKit.cylinder(self, 0.015, 0.25, Vector3(-1.45, y + 1.05, z0 + 0.06), m_iron, false, Vector3.ZERO, -1.0, 6)
+	var tap := WaterSource.new()
+	tap.name = "KitchenTap"
+	tap.label = "Wasserhahn"
+	tap.anchor = Vector3(-1.45, y + 0.8, z0 + 0.3)
+	tap.collider_size = Vector3(0.6, 0.4, 0.45)
+	add_child(tap)
 	BuildKit.box(self, Vector3(0.02, 0.02, 0.15), Vector3(-1.45, y + 1.17, z0 + 0.12), m_iron, false)
 	# Holzofen mit Rohr
 	var iron_dark := BuildKit.tex_mat("metal", 0.4, Color(0.4, 0.38, 0.36), 0.5)
@@ -674,6 +680,10 @@ func _build_storage() -> void:
 				var w := _rng.randf_range(0.15, 0.3)
 				BuildKit.box(self, Vector3(w, _rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
 				x += w + 0.05
+	# Vorräte zum Mitnehmen: Konserven, Wasserflaschen, leere Dosen
+	_pickup("FoodShelf", "food", 6, 1, Vector3(0.2, y + 0.9, -4.12), Vector3(0.6, 0.25, 0.35), BuildKit.tex_mat("metal", 0.2, Color(1.6, 1.3, 0.9), 0.4))
+	_pickup("WaterBottles", "water", 4, 1, Vector3(1.2, y + 0.9, -4.12), Vector3(0.45, 0.3, 0.3), BuildKit.color_mat(Color(0.5, 0.7, 0.8), 0.1))
+	_pickup("EmptyCans", "cans", 8, 4, Vector3(1.45, y + 0.8, -1.6), Vector3(0.4, 0.2, 0.4), BuildKit.tex_mat("metal", 0.2, Color(1.5, 1.5, 1.5), 0.4))
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.3), sack, Vector3(1.0, 0.8, 0.8), 10)
 	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.85), sack, Vector3(0.9, 0.8, 0.9), 10)
@@ -707,8 +717,8 @@ func _build_technical_room() -> void:
 	for i in 3:
 		BuildKit.box_mm(self, Vector3(ex - 0.04, y + 0.2 + i * 0.02, -3.0 + i * 0.12), Vector3(ex - 0.02, y + 1.2, -2.98 + i * 0.12), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false)
 	# Benzinkanister zum Mitnehmen
-	for x: float in [2.4, 2.8]:
-		fuel_can(self, Vector3(x + 0.175, y, -4.2))
+	for i in 2:
+		fuel_can(self, Vector3(2.575 + i * 0.4, y, -4.2), 0.0, "FuelCan_%d" % i)
 
 
 func _build_workshop() -> void:
@@ -719,6 +729,13 @@ func _build_workshop() -> void:
 		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), m_wood_dark, true)
 	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.1), Vector3(5.8, y + 0.24, 3.5), m_wood, false)
 	BuildKit.box_mm(self, Vector3(5.2, y + 0.92, 0.3), Vector3(5.45, y + 1.04, 0.6), m_iron, false, "Vise")
+	# Werkbank zum Herstellen (Crafting)
+	var bench := Workbench.new()
+	bench.name = "WorkbenchStation"
+	bench.anchor = Vector3(5.5, y + 0.92, 1.7)
+	add_child(bench)
+	# Kiste mit Nägeln
+	_pickup("NailBox", "nails", 24, 12, Vector3(5.6, y + 0.92, 3.1), Vector3(0.3, 0.15, 0.25), BuildKit.tex_mat("planks_h", 0.4, Color(0.9, 0.85, 0.8)))
 	# Säge, Hammer, Hobel auf der Werkbank
 	BuildKit.box(self, Vector3(0.12, 0.01, 0.6), Vector3(5.5, y + 0.93, 1.2), BuildKit.tex_mat("metal", 0.3, Color(1.4, 1.4, 1.4), 0.3), false, Vector3(0, 10, 0))
 	BuildKit.box(self, Vector3(0.1, 0.05, 0.15), Vector3(5.5, y + 0.95, 0.85), m_wood, false)
@@ -775,10 +792,27 @@ func _build_reflection_probe() -> void:
 
 # --- Möbel-Helfer -------------------------------------------------------
 
-## Roter Benzinkanister zum Aufheben (auch vom Schuppen genutzt).
-static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0) -> ItemPickup:
+## Stapel zum Aufheben: mehrere kleine Kisten/Dosen als Anzeige, wie viel noch da ist.
+func _pickup(n: String, item: String, amount: int, per_take: int, at: Vector3, box_size: Vector3, mat: Material) -> ItemPickup:
 	var p := ItemPickup.new()
-	p.name = "FuelCan"
+	p.name = n
+	p.item_id = item
+	p.amount = amount
+	p.per_take = per_take
+	p.collider_size = box_size + Vector3(0.1, 0.1, 0.1)
+	p.collider_offset = at + Vector3(0, box_size.y * 0.5, 0)
+	add_child(p)
+	var parts := 4
+	for i in parts:
+		var w := box_size.x / parts
+		p.visuals.append(BuildKit.box(p, Vector3(w * 0.85, box_size.y, box_size.z), at + Vector3(-box_size.x * 0.5 + w * (i + 0.5), box_size.y * 0.5, 0), mat, false))
+	return p
+
+
+## Roter Benzinkanister zum Aufheben (auch vom Schuppen genutzt).
+static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0, node_name: String = "FuelCan") -> ItemPickup:
+	var p := ItemPickup.new()
+	p.name = node_name
 	p.item_id = "fuel_can"
 	p.amount = 1
 	p.collider_size = Vector3(0.4, 0.5, 0.3)

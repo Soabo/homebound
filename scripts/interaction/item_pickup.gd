@@ -16,6 +16,9 @@ var visuals: Array[Node3D] = []
 
 
 func _ready() -> void:
+	add_to_group("persistent")
+	_initial()
+	GameState.restore(self)
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -25,6 +28,8 @@ func _ready() -> void:
 	body.add_child(cs)
 	add_child(body)
 	_update_visuals()
+	if amount <= 0:
+		body.queue_free()
 
 
 func get_prompt(_player: Node) -> String:
@@ -68,3 +73,15 @@ func _initial() -> int:
 	if _initial_amount < 0:
 		_initial_amount = amount
 	return _initial_amount
+
+
+func persist_key() -> String:
+	return str(get_path())
+
+
+func get_state() -> Dictionary:
+	return {"amount": amount}
+
+
+func set_state(s: Dictionary) -> void:
+	amount = int(s.get("amount", amount))

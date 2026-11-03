@@ -92,6 +92,8 @@ func _ready() -> void:
 	acs.position = Vector3(0, height * 0.5, 0)
 	aim.add_child(acs)
 	add_child(aim)
+	add_to_group("persistent")
+	GameState.restore(self)
 	_update_visuals()
 
 
@@ -127,9 +129,9 @@ func get_prompt(_player: Node) -> String:
 
 func get_secondary_prompt(_player: Node) -> String:
 	if barricade <= 0.0:
-		return "[R] Verbarrikadieren  (2 Bretter, du hast %d)" % Inventory.count("planks")
+		return "[R] Verbarrikadieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	if barricade < max_barricade:
-		return "[R] Barrikade ausbessern  (1 Brett, du hast %d)" % Inventory.count("planks")
+		return "[R] Barrikade ausbessern  (1 Brett + 2 Nägel)"
 	return ""
 
 
@@ -137,8 +139,8 @@ func secondary_interact(_player: Node) -> void:
 	var need := 2 if barricade <= 0.0 else 1
 	if barricade >= max_barricade:
 		return
-	if not Inventory.remove("planks", need):
-		EventBus.notify("Du brauchst %d Bretter. In der Werkstatt liegt ein Stapel." % need, 3.0)
+	if not Inventory.remove_all({"planks": need, "nails": need * 2}):
+		EventBus.notify("Du brauchst %d Bretter und %d Nägel. Beides gibt es in der Werkstatt." % [need, need * 2], 3.0)
 		return
 	barricade = max_barricade if need == 2 else minf(barricade + max_barricade * 0.5, max_barricade)
 	SoundBank.play_at(self, "hammer", global_position + Vector3(0, height * 0.5, 0), -2.0)
@@ -220,3 +222,16 @@ func add_handprint() -> void:
 	for f in 3:
 		var finger := BuildKit.box(hand, Vector3(0.016, 0.16, 0.002), Vector3((f - 1) * 0.026, 0.12, 0), mat, false, Vector3(0, 0, (f - 1) * -9.0))
 		finger.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+func persist_key() -> String:
+	return str(get_path())
+
+
+func get_state() -> Dictionary:
+	return {"health": health, "barricade": barricade}
+
+
+func set_state(s: Dictionary) -> void:
+	health = float(s.get("health", health))
+	barricade = float(s.get("barricade", barricade))
