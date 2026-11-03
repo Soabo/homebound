@@ -1,0 +1,95 @@
+# Baut bei jeder Änderung automatisch:
+#  - die Browser-Version und veröffentlicht sie auf GitHub Pages
+#  - die Windows-Version als ZIP im Release "Neueste Version"
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: build-deploy
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: 4.7.2
+  GODOT_RELEASE: stable
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Godot-Exportvorlagen aus dem Cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/godot
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSION }}-${{ env.GODOT_RELEASE }}-web-win
+
+      - name: Godot herunterladen
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          V="${GODOT_VERSION}-${GODOT_RELEASE}"
+          mkdir -p ~/godot
+          cd ~/godot
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/$V/Godot_v${V}_linux.x86_64.zip"
+          unzip -q godot.zip && rm godot.zip
+          mv Godot_v${V}_linux.x86_64 godot
+          curl -sSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/$V/Godot_v${V}_export_templates.tpz"
+          T=~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE}
+          mkdir -p "$T"
+          unzip -o -j templates.tpz 'templates/version.txt' 'templates/windows_release_x86_64.exe' \
+            'templates/web_nothreads_release.zip' -d "$T"
+          rm templates.tpz
+
+      - name: Projekt importieren
+        run: ~/godot/godot --headless --path . --import || true
+
+      - name: Browser-Version exportieren
+        run: |
+          mkdir -p build/web
+          ~/godot/godot --headless --path . --export-release "Web" build/web/index.html
+          touch build/web/.nojekyll
+
+      - name: Windows-Version exportieren
+        run: |
+          mkdir -p build/windows
+          ~/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/Homebound.exe
+          cp README.md build/windows/LIESMICH.md
+          cd build/windows && zip -q -9 ../Homebound_Windows.zip Homebound.exe LIESMICH.md
+
+      - name: Windows-ZIP im Release "Neueste Version" ablegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="Automatisch gebaut aus Commit ${GITHUB_SHA::7}: $(git log -1 --format=%s)"
+          if gh release view neueste-version >/dev/null 2>&1; then
+            gh release edit neueste-version --notes "$NOTES"
+          else
+            gh release create neueste-version --title "Neueste Version" --notes "$NOTES" --latest
+          fi
+          gh release upload neueste-version build/Homebound_Windows.zip --clobber
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
