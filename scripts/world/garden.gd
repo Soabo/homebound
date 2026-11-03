@@ -26,8 +26,9 @@ func _build_fence() -> void:
 	# Torpfosten
 	var gate := BuildKit.wood_mat(Color(0.28, 0.21, 0.15), 1, 0.4, 0.03)
 	for x: float in [-5.0, -1.0]:
-		BuildKit.box(self, Vector3(0.22, 1.7, 0.22), Vector3(x, 0.85, FENCE_MAX.y), gate, true)
-	BuildKit.box(self, Vector3(4.3, 0.18, 0.18), Vector3(-3.0, 1.75, FENCE_MAX.y), gate, false)
+		BuildKit.box(self, Vector3(0.22, 2.7, 0.22), Vector3(x, 1.35, FENCE_MAX.y), gate, true)
+	# Querbalken hoch genug, dass man (auch springend) darunter durchkommt
+	BuildKit.box(self, Vector3(4.3, 0.18, 0.18), Vector3(-3.0, 2.7, FENCE_MAX.y), gate, false)
 
 
 ## Zaunlinie entlang x oder z. gap = (von, bis) entlang der Laufrichtung, Vector2.ZERO = keine Lücke.

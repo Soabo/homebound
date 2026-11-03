@@ -23,8 +23,8 @@ func _ready() -> void:
 	gen.mix_rate = RATE
 	gen.buffer_length = 0.25
 	stream = gen
-	volume_db = -6.0
-	_noise.frequency = 0.08
+	volume_db = -22.0
+	_noise.frequency = 0.05
 	play()
 	_playback = get_stream_playback()
 
@@ -33,9 +33,11 @@ func _process(delta: float) -> void:
 	if _playback == null:
 		return
 	_t += delta
-	var gust := 0.55 + 0.45 * (_noise.get_noise_1d(_t * 6.0) * 0.5 + 0.5)
+	# Böen kommen und gehen – dazwischen ist es fast still.
+	var n := _noise.get_noise_1d(_t * 4.0) * 0.5 + 0.5
+	var gust := smoothstep(0.35, 0.85, n)
 	var indoor := _player_indoors()
-	var target_gain := gust * (1.25 if TimeManager.is_night() else 0.85) * (0.3 if indoor else 1.0)
+	var target_gain := (0.08 + gust) * (1.2 if TimeManager.is_night() else 0.8) * (0.25 if indoor else 1.0)
 	var target_cutoff := 0.018 if indoor else 0.05 + gust * 0.03
 	var frames := _playback.get_frames_available()
 	for i in frames:

@@ -27,7 +27,8 @@ func _build() -> void:
 	_hinge = Node3D.new()
 	_hinge.name = "Hinge"
 	add_child(_hinge)
-	var body := AnimatableBody3D.new()
+	# StaticBody folgt der Drehung des Scharniers zuverlässig (AnimatableBody tat das mit Jolt nicht).
+	var body := StaticBody3D.new()
 	body.position = Vector3(width * 0.5, height * 0.5, 0.0)
 	_hinge.add_child(body)
 	var cs := CollisionShape3D.new()

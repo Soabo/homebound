@@ -26,6 +26,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot-tour"):
 			add_child(ScreenshotTour.new())
+		if arg == "--walk-test":
+			add_child(WalkTest.new())
 
 
 func _build_world_limits() -> void:
