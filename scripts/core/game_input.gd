@@ -35,6 +35,21 @@ func _ready() -> void:
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
 	InputMap.action_add_event("interact", click)
+	Engine.max_fps = FPS_LIMIT
+
+
+## Obergrenze für Bilder pro Sekunde: schont Grafikkarte und Akku
+## (ohne Grenze rechnet ein schneller Laptop sonst mit 165+ Bildern pro Sekunde).
+const FPS_LIMIT := 60
+## Im Hintergrund (anderes Fenster aktiv) fast nichts mehr zeichnen.
+const FPS_BACKGROUND := 10
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Engine.max_fps = FPS_BACKGROUND
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		Engine.max_fps = FPS_LIMIT
 
 
 func _process(_delta: float) -> void:
