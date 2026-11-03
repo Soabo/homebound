@@ -46,6 +46,7 @@ func _run() -> void:
 		await get_tree().process_frame
 	var player := get_tree().get_first_node_in_group("player") as Player
 	TimeManager.running = false
+	ThreatDirector.set_process(false)  # keine zufälligen Ereignisse während der Fotos
 	for shot: Dictionary in SHOTS:
 		if not only.is_empty() and not String(shot["name"]).left(2) in only:
 			continue

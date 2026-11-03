@@ -26,14 +26,36 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Strg / C | Ducken |
 | Leertaste | Springen |
 | E / Linksklick | Benutzen (Türen, Lichtschalter, Bett) |
-| R | Tür ab- bzw. aufschließen |
+| R | Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
 | F | Taschenlampe |
 | T (halten) | Zeit vorspulen – nur zum Testen |
+| A / D (am Monitor) | Kamera wechseln |
+| F2 | Retro-Filter ein/aus |
 | F1 | Steuerungshilfe ein/aus |
 | F11 | Vollbild |
 | Esc | Pause / Beenden |
 
-## Stand: Meilenstein 0.1
+## So überlebst du die Nacht
+
+- **Strom:** Der Generator im Technikraum braucht Benzin. Kanister liegen im Technikraum und im Schuppen.
+  Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du rüber und neu starten.
+- **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
+- **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
+- **Kameras:** Am Monitor im Wohnzimmer siehst du Veranda, Garten hinten und Schuppen. Traue nicht allem, was du siehst.
+- **Licht:** Die Taschenlampe verrät dich – aber aus der Nähe blendet sie.
+- **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
+- **Tod:** Du beginnst den Tag von vorn.
+
+## Stand: Meilenstein 0.2
+
+- Stromsystem mit Generator, Benzin und Stromausfällen
+- Fenster und Haustür beschädigbar, Barrikaden und Reparatur mit Brettern
+- Drei Überwachungskameras mit Monitor
+- Threat Director: jede Nacht anders (ruhig, unheimlich, Erkundung, Angriff)
+- Erste Kreatur mit Wahrnehmung (Sicht, Licht, Geräusch) und Lernverhalten
+- Prozedurale Geräusche, Tod und Neustart am Tagesbeginn
+
+## Meilenstein 0.1
 
 - Begehbare Blockhütte mit Wohnzimmer (Kamin), Schlafzimmer, Vorratsraum, Technikraum und Werkstatt
 - Veranda, Garten mit Zaun, Schuppen, Wald mit Hügeln und alter Zufahrtsstraße
