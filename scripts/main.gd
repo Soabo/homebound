@@ -39,7 +39,7 @@ func _ready() -> void:
 ## Drei Überwachungskameras (GDD 18.2): Veranda/Zufahrt, Garten hinten, Schuppen/Osten.
 func _build_cameras() -> void:
 	var setups := [
-		["Veranda / Zufahrt", Vector3(1.0, 2.45, 6.55), Vector3(-3.0, 0.8, 18.0), Vector3(-7.0, 0, 16.0)],
+		["Veranda / Zufahrt", Vector3(1.65, 2.45, 7.25), Vector3(-3.0, 0.8, 18.0), Vector3(-7.0, 0, 16.0)],
 		["Garten hinten", Vector3(-5.6, 2.95, -4.85), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
 		["Schuppen / Osten", Vector3(11.85, 2.25, 4.85), Vector3(18.0, 0.5, -10.0), Vector3(20.0, 0, -12.0)],
 	]
