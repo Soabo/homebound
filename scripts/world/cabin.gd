@@ -452,7 +452,7 @@ func _build_living_room() -> void:
 	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
 	# Esstisch – für vier gedeckt, benutzt wird nur ein Platz (GDD 3.1)
 	_table(Vector3(-0.9, y, 2.5), Vector3(0.5, y + 0.76, 3.6))
-	var plate := BuildKit.color_mat(Color(0.86, 0.85, 0.82), 0.7)
+	var plate := BuildKit.color_mat(Color(0.86, 0.82, 0.74), 1.0)
 	for p: Vector3 in [Vector3(-0.55, 0, 2.75), Vector3(0.15, 0, 2.75), Vector3(-0.55, 0, 3.35), Vector3(0.15, 0, 3.35)]:
 		BuildKit.cylinder(self, 0.13, 0.015, Vector3(p.x, y + 0.775, p.z), plate, false, Vector3.ZERO, -1.0, 12)
 		BuildKit.box(self, Vector3(0.015, 0.005, 0.16), Vector3(p.x + 0.17, y + 0.773, p.z), m_iron, false)
@@ -735,9 +735,10 @@ func _build_reflection_probe() -> void:
 	probe.interior = true
 	probe.box_projection = true
 	probe.ambient_mode = ReflectionProbe.AMBIENT_COLOR
-	probe.ambient_color = Color(0.2, 0.16, 0.12)
-	probe.ambient_color_energy = 0.6
+	probe.ambient_color = Color(0.32, 0.25, 0.18)
+	probe.ambient_color_energy = 1.0
 	probe.update_mode = ReflectionProbe.UPDATE_ONCE
+	probe.add_to_group("interior_probe")
 	add_child(probe)
 
 

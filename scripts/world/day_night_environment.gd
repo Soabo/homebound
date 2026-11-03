@@ -113,7 +113,10 @@ func _apply(h: float) -> void:
 	# bläulich aufhellen – deshalb in Innenräumen deutlich weniger Umgebungslicht.
 	var target_indoor := 1.0 if _player_indoors() else 0.0
 	_indoor = move_toward(_indoor, target_indoor, get_process_delta_time() * 1.5)
-	env.ambient_light_energy = lerpf(0.04, 0.6, day) * lerpf(1.0, 0.4, _indoor)
+	env.ambient_light_energy = lerpf(0.04, 0.6, day) * lerpf(1.0, 0.85, _indoor)
+	# Grundlicht in der Hütte folgt dem Tageslicht – nachts bleibt es drinnen dunkel.
+	for probe in get_tree().get_nodes_in_group("interior_probe"):
+		(probe as ReflectionProbe).ambient_color_energy = lerpf(0.03, 1.0, day)
 	env.ambient_light_color = Color(0.05, 0.06, 0.09).lerp(Color(0.55, 0.52, 0.46), day)
 	env.background_energy_multiplier = lerpf(0.5, 1.0, day)
 	env.fog_light_color = Color(0.015, 0.02, 0.03).lerp(Color(0.62, 0.68, 0.74), day).lerp(SUNSET_HORIZON * 0.7, low_sun * 0.4)
