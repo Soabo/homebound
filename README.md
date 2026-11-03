@@ -3,7 +3,14 @@
 First-Person-Survival-Horror in einer abgelegenen Waldhütte.
 Umgesetzt mit **Godot 4.7**. Das Game Design Document liegt unter [`docs/GDD.md`](docs/GDD.md).
 
-## Spielen (Windows)
+## Spielen
+
+- **Im Browser:** https://soabo.github.io/homebound/ (einfachere Grafik, ideal für schnelle Checks)
+- **Windows (volle Grafik):** https://github.com/Soabo/homebound/releases/tag/neueste-version
+
+Beides wird bei jeder Änderung automatisch neu gebaut.
+
+## Windows-Version starten
 
 1. Die ZIP-Datei mit dem aktuellen Build entpacken, z. B. nach `C:\Spiele\Homebound`.
 2. `Homebound.exe` starten.
