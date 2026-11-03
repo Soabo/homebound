@@ -10,15 +10,19 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 | Power (GDD 7.4) | Autoload `PowerManager` | ✅ Generator, Benzin, Verbraucher, Ausfall |
 | Überwachung (GDD 7.5) | `Surveillance` + `SecurityCamera` + `MonitorStation` | ✅ 3 Kameras, Störungen, Trugbilder (Sichtebene 2) |
 | World State Manager | Autoload, Terraforming-Zustand | ⏳ Phase 8 |
-| Base Building Manager | Platzierungssystem fürs Grundstück | ⏳ Phase 2/6 |
+| Base Building Manager | Autoload `Builder` + `BuildController` + `Structure` | ✅ freies Platzieren, Hindernisse, Fallen, Alarm, Licht; Daten in `data/items/buildables.json` |
 | Research Manager | Autoload + Forschungsobjekte als Ressourcen | ⏳ Phase 7 |
-| Inventory Manager | Autoload `Inventory` | 🟡 Grundlage (Benzin, Bretter); Item-Daten noch im Skript |
+| Inventory Manager | Autoload `Inventory` + `DataDB` | ✅ Traglast, Essen/Trinken; Daten in `data/items/items.json`, Rezepte in `recipes.json` |
+| Survival (GDD 6.1) | Autoload `Survival` | ✅ Hunger, Durst, Ausdauer |
 | Episode Manager | Autoload | ⏳ Phase 9 |
-| Save Manager | Autoload `GameState` | 🟡 Schnappschuss zu Tagesbeginn, Neustart nach Tod; Speichern auf Platte folgt |
+| Save Manager | Autoload `GameState` | 🟡 Tages-Schnappschuss inkl. Weltzustand (Gruppe `persistent`) und Bauten; Speichern auf Platte folgt |
 
 ## Grundregeln
 - **Entkopplung:** Systeme senden Signale über `EventBus`. Der Threat Director löst nur
   Ereignisse aus; wie sich eine Kreatur verhält, entscheidet ihre eigene KI (GDD 17.3).
+- **Spielstand:** Objekte mit Zustand sind in der Gruppe `persistent`, haben einen stabilen
+  Namen und bieten `persist_key()`, `get_state()`, `set_state()`; in `_ready()` rufen sie
+  `GameState.restore(self)` auf.
 - **Daten statt Code:** Inhalte (Ereignisse, Spezies, Bauobjekte, Forschung) werden als
   `Resource`-Dateien unter `data/` angelegt, damit neue Inhalte ohne Umbau hinzukommen.
 - **Interaktion:** Alles Benutzbare erbt von `Interactable` (`get_prompt`, `interact`,
@@ -34,6 +38,7 @@ funktionieren dadurch automatisch mit der Kreaturen-KI.
 - `-- --walk-test`: läuft durch alle Türen und das Tor
 - `-- --night-test=attack|probe|observe|attack_locked`: Kreatur-Protokoll
 - `-- --night-test=events`: löst jedes Nacht-Ereignis einmal aus
+- `-- --night-test=craft`: Rezepte, Barrikade, Bauen, Kreatur gegen Hindernisse, Neustart-Persistenz
 - `-- --screenshot-tour=ORDNER [--shots=01,05] [--frames=30]`
 
 ## Ordner

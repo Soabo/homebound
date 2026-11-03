@@ -30,6 +30,8 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | F | Taschenlampe |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
+| Tab / I | Inventar (essen, trinken, bauen, ablegen) |
+| B | Baumodus: Bauteil wählen / weiter / beenden (R dreht, E setzt) |
 | F2 | Retro-Filter ein/aus |
 | F1 | Steuerungshilfe ein/aus |
 | F11 | Vollbild |
@@ -45,6 +47,18 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Licht:** Die Taschenlampe verrät dich – aber aus der Nähe blendet sie.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.
+
+## Tagsüber vorbereiten (Phase 6)
+
+- **Axt** steckt im Hackklotz beim Schuppen. Damit hackst du **Holz** an umgestürzten Stämmen im Wald.
+- **Steine** liegen am Bach, **Schrott, Benzin, Batterie, Elektronik** im alten Autowrack an der Zufahrt.
+- **Werkbank** in der Werkstatt: Bretter, Nägel, Holzzaun, Spießbarrikade, Steinwall, Dosenalarm,
+  Bewegungsmelder-Leuchte und eine verstärkte Haustür.
+- **Bauen** (B): freies Platzieren auf dem Grundstück. Die Kreatur muss Zäune und Wälle erst zerlegen,
+  Spieße verletzen sie, der Dosenalarm warnt dich, grelles Licht scheucht sie auf.
+- **Hunger und Durst** sinken langsam: Konserven im Vorratsraum, trinken an Regentonne, Spüle oder Bach.
+  Rennen kostet Ausdauer. Du kannst höchstens 40 kg tragen.
+- Was du gebaut und verbarrikadiert hast, bleibt auch nach einem Tod erhalten (Stand: Tagesbeginn).
 
 ## Stand: Phase 5 – Atmosphäre und Horror
 

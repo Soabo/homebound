@@ -12,7 +12,11 @@
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,
   Materialien und Shader-Holz/-Stein.
-- Spielwerte gehören in Datendateien unter `data/` (GDD 17.4), z. B. `data/time/default_time_config.tres`.
+- Spielwerte gehören in Datendateien unter `data/` (GDD 17.4): `.tres` für Konfiguration
+  (Zeit, Bedrohung), JSON für Inhalte (`data/items/items.json`, `recipes.json`, `buildables.json`).
+  JSON wird über `include_filter="*.json"` mit exportiert.
+- Persistente Objekte brauchen feste, eindeutige Knotennamen (sonst passt der Spielstand nicht).
+- Designentscheidung Phase 6: keine Waffen, Hunger/Durst sanft, freies Bauen.
 - Systeme kommunizieren über `EventBus` (Autoload) statt sich direkt zu kennen.
 
 ## Befehle (Cloud-Workspace)

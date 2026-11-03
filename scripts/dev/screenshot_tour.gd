@@ -24,6 +24,11 @@ const SHOTS := [
 	{"name": "12_kreatur_waldrand", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 5.6), "look": Vector3(-3.5, 1.6, 15.0), "flashlight": true, "creature_at": Vector3(-3.5, 0, 14.0), "lights": true},
 	{"name": "13_monitor_veranda", "hour": 22.6, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "creature_at": Vector3(-4.0, 0, 13.0)},
 	{"name": "14_fenster_kaputt", "hour": 21.5, "pos": Vector3(0.0, 0.45, 2.6), "look": Vector3(0.0, 1.5, 4.5), "lights": true, "break_window": true, "creature_at": Vector3(0.2, 0, 5.4)},
+	{"name": "15_autowrack", "hour": 15.0, "pos": Vector3(0.5, 0.0, 27.5), "look": Vector3(4.6, 0.6, 33.0)},
+	{"name": "16_werkbank", "hour": 14.0, "pos": Vector3(4.2, 0.45, 1.7), "look": Vector3(5.6, 1.2, 1.7), "menu": "crafting"},
+	{"name": "17_verteidigung_nacht", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 6.0), "look": Vector3(-2.0, 0.6, 14.0), "lights": true, "flashlight": true,
+		"build": [["fence_panel", Vector3(-6.5, 0, 12.5), 0.2], ["spike_barricade", Vector3(-1.0, 0, 12.0), 0.0], ["stone_wall", Vector3(2.5, 0, 13.0), -0.3],
+			["can_alarm", Vector3(-3.0, 0, 15.5), 0.0], ["motion_light", Vector3(1.5, 0, 10.5), 2.6]], "creature_at": Vector3(-1.5, 0, 16.5)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -74,6 +79,13 @@ func _run() -> void:
 			face.y = creature.global_position.y
 			creature.look_at(face, Vector3.UP)
 			creature.rotate_y(PI)
+		var built: Array[Structure] = []
+		for b in shot.get("build", []):
+			built.append(Builder.place(b[0], Creature._ground(b[1]), b[2]))
+		if shot.has("menu"):
+			for id: String in ["wood", "scrap", "nails", "planks", "battery", "electronics"]:
+				Inventory.add(id, 4)
+			get_tree().call_group("game_menus", "open_crafting")
 		if shot.get("break_window", false):
 			var w := get_tree().current_scene.get_node("Cabin/WindowLiving") as CabinWindow
 			w.receive_hit(999.0)
@@ -89,4 +101,10 @@ func _run() -> void:
 		print("Screenshot: ", path)
 		if creature:
 			creature.queue_free()
+		for b in built:
+			if is_instance_valid(b):
+				Builder.remove(b.uid)
+				b.queue_free()
+		if shot.has("menu"):
+			get_tree().call_group("game_menus", "close")
 	get_tree().quit()
