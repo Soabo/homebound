@@ -1,0 +1,12 @@
+# Godot
+.godot/
+*.translation
+export_credentials.cfg
+
+# Builds
+build/
+
+# System
+.DS_Store
+Thumbs.db
+*.tmp

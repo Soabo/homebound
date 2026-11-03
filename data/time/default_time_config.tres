@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TimeConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/time_config.gd" id="1_time"]
+
+[resource]
+script = ExtResource("1_time")
+day_start_hour = 7.0
+night_start_hour = 19.0
+day_duration_minutes = 10.0
+night_duration_minutes = 10.0
+start_day = 1
+start_hour = 16.5
+sleep_allowed_from_hour = 16.0
+sleep_allowed_until_hour = 5.0
+wake_up_hour = 7.0
+debug_fast_forward_multiplier = 40.0

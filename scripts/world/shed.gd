@@ -1,0 +1,57 @@
+class_name Shed
+extends Node3D
+## Kleiner Holzschuppen im Garten (GDD 3.2). 4 x 3 m, Tür nach Westen zur Hütte.
+
+const ORIGIN := Vector3(14.0, 0.0, 6.5)
+const HALF := Vector2(2.0, 1.5)
+const WALL_H := 2.2
+
+
+static func is_inside(p: Vector3) -> bool:
+	return absf(p.x - ORIGIN.x) < HALF.x and absf(p.z - ORIGIN.z) < HALF.y and p.y < WALL_H + 0.5
+
+
+func _ready() -> void:
+	name = "Shed"
+	position = ORIGIN
+	var boards := BuildKit.wood_mat(Color(0.38, 0.33, 0.26), 1, 0.18, 0.1)
+	var floor_mat := BuildKit.wood_mat(Color(0.3, 0.25, 0.19), 0, 0.2, 0.08)
+	var t := 0.1
+	BuildKit.box_mm(self, Vector3(-HALF.x, -0.1, -HALF.y), Vector3(HALF.x, 0.03, HALF.y), floor_mat, true, "Floor")
+	var hz := HALF.y - t * 0.5
+	BuildKit.wall(self, Vector2(-HALF.x, -hz), Vector2(-HALF.x, hz), 0.03, WALL_H, t, boards,
+			[Vector4(hz, 0.95, 0.0, 1.95)], "WallWest")
+	BuildKit.wall(self, Vector2(HALF.x, -hz), Vector2(HALF.x, hz), 0.03, WALL_H, t, boards, [], "WallEast")
+	BuildKit.wall(self, Vector2(-HALF.x - t * 0.5, -HALF.y), Vector2(HALF.x + t * 0.5, -HALF.y), 0.03, WALL_H, t, boards, [], "WallNorth")
+	BuildKit.wall(self, Vector2(-HALF.x - t * 0.5, HALF.y), Vector2(HALF.x + t * 0.5, HALF.y), 0.03, WALL_H, t, boards,
+			[Vector4(HALF.x + t * 0.5 + 1.0, 0.5, 1.3, 1.7)], "WallSouth")
+	# Pultdach
+	BuildKit.box(self, Vector3(HALF.x * 2.0 + 0.6, 0.1, HALF.y * 2.0 + 0.6), Vector3(0, WALL_H + 0.18, 0),
+			BuildKit.color_mat(Color(0.18, 0.18, 0.19), 0.7, 0.4), false, Vector3(0, 0, -6), "Roof")
+
+	var door := Door.new()
+	door.name = "ShedDoor"
+	door.door_name = "Schuppentür"
+	door.width = 0.95
+	door.height = 1.93
+	door.thickness = 0.05
+	door.open_sign = 1.0
+	door.color = Color(0.32, 0.27, 0.2)
+	door.position = Vector3(-HALF.x, 0.03, -hz + hz - 0.475)
+	door.rotation_degrees.y = -90.0
+	add_child(door)
+
+	# Innen: Regal, Kanister, Werkzeug
+	var wood := BuildKit.wood_mat(Color(0.35, 0.27, 0.19), 0, 0.12, 0.04)
+	for i in 3:
+		BuildKit.box_mm(self, Vector3(1.4, 0.4 + i * 0.55, -1.4), Vector3(1.9, 0.43 + i * 0.55, 1.4), wood, true)
+	BuildKit.box_mm(self, Vector3(1.85, 0.03, -1.4), Vector3(1.9, 1.6, 1.4), wood, false)
+	BuildKit.box_mm(self, Vector3(1.5, 0.43, -1.2), Vector3(1.8, 0.75, -0.8), BuildKit.color_mat(Color(0.7, 0.12, 0.08), 0.5), false, "GasCan")
+	BuildKit.box_mm(self, Vector3(1.5, 0.98, 0.2), Vector3(1.85, 1.15, 0.8), BuildKit.color_mat(Color(0.15, 0.3, 0.55), 0.5, 0.4), false, "Toolbox")
+	# Brennholzstapel an der Südseite (außen)
+	var log_mat := BuildKit.color_mat(Color(0.36, 0.26, 0.17))
+	for row in 5:
+		for i in 14:
+			BuildKit.cylinder(self, 0.1, 0.45, Vector3(-1.7 + i * 0.23 + (row % 2) * 0.1, 0.1 + row * 0.18, HALF.y + 0.35),
+					log_mat, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.collider_box(self, Vector3(3.4, 0.95, 0.5), Vector3(-0.05, 0.47, HALF.y + 0.35))
