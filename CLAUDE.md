@@ -6,6 +6,9 @@
 - Kommunikation mit Christian auf Deutsch, ohne Fachjargon.
 - Kommentare im Code auf Deutsch, Bezeichner auf Englisch.
 - Offene Designfragen aus GDD Kap. 21 nicht eigenmächtig festschreiben – nachfragen.
+- Nach jedem Update immer die Links ausschreiben (nicht nur „der gewohnte Link“):
+  Windows: https://github.com/Soabo/homebound/releases/tag/neueste-version
+  Browser: https://soabo.github.io/homebound/
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
