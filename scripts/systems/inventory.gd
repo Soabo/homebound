@@ -3,10 +3,66 @@ extends Node
 ## Die Gegenstandsdaten kommen aus data/items/items.json.
 
 signal changed
+## Schnellplätze oder Auswahl haben sich geändert
+signal hotbar_changed
 
 const MAX_WEIGHT := 40.0
+const SLOTS := 9
 
 var items: Dictionary = {}
+## Schnellplätze 1–9: Gegenstands-IDs für die rechte Hand ("" = leer → Faust)
+var hotbar: Array = ["", "", "", "", "", "", "", "", ""]
+var selected: int = 0
+
+
+## Kann man den Gegenstand in die rechte Hand nehmen?
+func is_holdable(id: String) -> bool:
+	return DataDB.item(id).has("hand")
+
+
+## Was gerade in der rechten Hand liegt ("" = Faust).
+func equipped() -> String:
+	var id: String = hotbar[selected]
+	return id if id != "" and count(id) > 0 else ""
+
+
+func select(i: int) -> void:
+	i = posmod(i, SLOTS)
+	if i != selected:
+		selected = i
+		hotbar_changed.emit()
+
+
+func set_slot(i: int, id: String) -> void:
+	# ein Gegenstand liegt nur auf einem Platz
+	for k in SLOTS:
+		if hotbar[k] == id and id != "":
+			hotbar[k] = ""
+	hotbar[i] = id
+	hotbar_changed.emit()
+
+
+func swap_slots(a: int, b: int) -> void:
+	var t: String = hotbar[a]
+	hotbar[a] = hotbar[b]
+	hotbar[b] = t
+	hotbar_changed.emit()
+
+
+func slot_of(id: String) -> int:
+	return hotbar.find(id)
+
+
+## Neue Handgegenstände landen automatisch auf dem ersten freien Platz.
+func _auto_slot(id: String) -> void:
+	if not is_holdable(id) or slot_of(id) >= 0:
+		return
+	for k in SLOTS:
+		if hotbar[k] == "":
+			hotbar[k] = id
+			hotbar_changed.emit()
+			EventBus.notify("%s liegt auf Taste %d" % [display_name(id), k + 1], 3.0)
+			return
 
 
 func count(id: String) -> int:
@@ -38,6 +94,7 @@ func add(id: String, amount: int = 1) -> int:
 	if added > 0:
 		items[id] = count(id) + added
 		changed.emit()
+		_auto_slot(id)
 	return added
 
 
@@ -47,6 +104,10 @@ func remove(id: String, amount: int = 1) -> bool:
 	items[id] = count(id) - amount
 	if items[id] <= 0:
 		items.erase(id)
+		var k := slot_of(id)
+		if k >= 0:
+			hotbar[k] = ""
+			hotbar_changed.emit()
 	changed.emit()
 	return true
 
@@ -77,9 +138,15 @@ func use(id: String) -> bool:
 
 
 func get_state() -> Dictionary:
-	return items.duplicate()
+	return {"items": items.duplicate(), "hotbar": hotbar.duplicate(), "selected": selected}
 
 
 func set_state(s: Dictionary) -> void:
-	items = s.duplicate()
+	if s.has("items"):
+		items = (s["items"] as Dictionary).duplicate()
+		hotbar = (s.get("hotbar", hotbar) as Array).duplicate()
+		selected = int(s.get("selected", 0))
+	else:
+		items = s.duplicate()
 	changed.emit()
+	hotbar_changed.emit()

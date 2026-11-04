@@ -32,9 +32,23 @@ func _ready() -> void:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = key
 			InputMap.action_add_event(action, ev)
-	var click := InputEventMouseButton.new()
-	click.button_index = MOUSE_BUTTON_LEFT
-	InputMap.action_add_event("interact", click)
+	# Maus: links = Angriff/Benutzen des Gegenstands in der Hand, rechts = Blocken,
+	# Mausrad = Schnellplatz wechseln
+	for pair: Array in [["attack", MOUSE_BUTTON_LEFT], ["block", MOUSE_BUTTON_RIGHT],
+			["slot_prev", MOUSE_BUTTON_WHEEL_UP], ["slot_next", MOUSE_BUTTON_WHEEL_DOWN]]:
+		if not InputMap.has_action(pair[0]):
+			InputMap.add_action(pair[0])
+		var mb := InputEventMouseButton.new()
+		mb.button_index = pair[1]
+		InputMap.action_add_event(pair[0], mb)
+	# Ziffern 1–9: Schnellplätze
+	for i in 9:
+		var action := "slot_%d" % (i + 1)
+		if not InputMap.has_action(action):
+			InputMap.add_action(action)
+		var ev := InputEventKey.new()
+		ev.physical_keycode = KEY_1 + i
+		InputMap.action_add_event(action, ev)
 	Engine.max_fps = FPS_LIMIT
 
 

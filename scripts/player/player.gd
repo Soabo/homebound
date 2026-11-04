@@ -1,7 +1,7 @@
 class_name Player
 extends CharacterBody3D
 ## First-Person-Steuerung (GDD 18.2): Gehen, Rennen, Ducken, Springen,
-## Benutzen (E / R) und Taschenlampe (F).
+## Benutzen (E / R), Smartwatch-Lampe (F), Hände (Linksklick/Rechtsklick, 1–9, Mausrad).
 
 @export var walk_speed: float = 3.0
 @export var sprint_speed: float = 5.4
@@ -17,7 +17,8 @@ const RADIUS := 0.32
 
 var head: Node3D
 var camera: Camera3D
-var flashlight: SpotLight3D
+var flashlight: SpotLight3D  ## LED der Smartwatch (linke Hand)
+var hands: PlayerHands
 var input_locked: bool = false
 var health: float = 100.0
 const MAX_HEALTH := 100.0
@@ -28,8 +29,6 @@ var current_target_body: CollisionObject3D = null
 var _ray: RayCast3D
 var _shape: CollisionShape3D
 var _capsule: CapsuleShape3D
-var _flashlight_rig: Node3D
-var _viewmodel: Node3D
 var _height: float = STAND_HEIGHT
 var _bob_time: float = 0.0
 var _last_prompt: String = ""
@@ -75,60 +74,16 @@ func _ready() -> void:
 	_ray.collide_with_areas = true
 	camera.add_child(_ray)
 
-	# Die Taschenlampe folgt der Blickrichtung mit leichter Verzögerung.
-	_flashlight_rig = Node3D.new()
-	_flashlight_rig.top_level = true
-	add_child(_flashlight_rig)
-	flashlight = SpotLight3D.new()
-	flashlight.position = Vector3(0.25, -0.24, -0.62)
-	flashlight.light_color = Color(1.0, 0.95, 0.85)
-	flashlight.light_energy = 5.0
-	flashlight.spot_range = 28.0
-	flashlight.spot_angle = 26.0
-	flashlight.spot_angle_attenuation = 1.6
-	flashlight.spot_attenuation = 1.0
-	flashlight.shadow_enabled = true
-	flashlight.light_volumetric_fog_energy = 1.4
-	flashlight.visible = false
-	_flashlight_rig.add_child(flashlight)
-	_flashlight_rig.global_transform = camera.global_transform
-	_build_flashlight_model()
+	# Hände im Bild: rechts Faust/Gegenstand, links Smartwatch-Lampe und Bauhammer
+	hands = PlayerHands.new()
+	hands.player = self
+	camera.add_child(hands)
+	flashlight = hands.watch_light
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	EventBus.sleep_requested.connect(_on_sleep_requested)
 	EventBus.sleep_finished.connect(_on_sleep_finished)
 	EventBus.screen_shake.connect(_on_shake)
-
-
-## Sichtbare Taschenlampe unten rechts im Bild, gehalten von einem Ärmel.
-func _build_flashlight_model() -> void:
-	_viewmodel = Node3D.new()
-	_viewmodel.name = "FlashlightModel"
-	_viewmodel.position = Vector3(0.24, -0.25, -0.42)
-	_viewmodel.rotation_degrees = Vector3(4, 6, 0)
-	camera.add_child(_viewmodel)
-	var metal := BuildKit.tex_mat("metal", 0.15, Color(1.3, 1.3, 1.35), 0.4)
-	var rubber := BuildKit.tex_mat("metal", 0.1, Color(0.35, 0.35, 0.35), 0.8)
-	var sleeve := BuildKit.tex_mat("fabric", 0.15, Color(0.55, 0.65, 0.6))
-	var skin := BuildKit.color_mat(Color(0.62, 0.46, 0.38), 0.8)
-	BuildKit.cylinder(_viewmodel, 0.028, 0.22, Vector3(0, 0, 0.02), rubber, false, Vector3(90, 0, 0), -1.0, 8)
-	BuildKit.cylinder(_viewmodel, 0.042, 0.07, Vector3(0, 0, -0.12), metal, false, Vector3(90, 0, 0), 0.03, 8)
-	var lens := BuildKit.emissive_mat(Color(1.0, 0.95, 0.8), 2.0)
-	BuildKit.cylinder(_viewmodel, 0.036, 0.005, Vector3(0, 0, -0.158), lens, false, Vector3(90, 0, 0), -1.0, 8)
-	BuildKit.box(_viewmodel, Vector3(0.012, 0.015, 0.03), Vector3(0, 0.03, 0.0), metal, false)
-	# Hand und Ärmel
-	BuildKit.box(_viewmodel, Vector3(0.07, 0.06, 0.1), Vector3(0.0, -0.012, 0.05), skin, false, Vector3(0, 0, 10))
-	BuildKit.box(_viewmodel, Vector3(0.1, 0.1, 0.3), Vector3(0.02, -0.04, 0.24), sleeve, false, Vector3(-8, 0, 0))
-	# Schwaches Streulicht, damit Hand und Lampe im Dunkeln erkennbar bleiben
-	var fill := OmniLight3D.new()
-	fill.position = Vector3(-0.1, 0.12, -0.05)
-	fill.omni_range = 0.5
-	fill.light_energy = 0.35
-	fill.light_color = Color(1.0, 0.92, 0.8)
-	_viewmodel.add_child(fill)
-	for mi in _viewmodel.find_children("*", "MeshInstance3D", true, false):
-		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_viewmodel.visible = false
 
 
 func _on_sleep_requested(_h: float) -> void:
@@ -179,9 +134,7 @@ func _building() -> bool:
 
 
 func set_flashlight(on: bool) -> void:
-	flashlight.visible = on
-	if _viewmodel:
-		_viewmodel.visible = on
+	hands.set_watch(on)
 
 
 func _physics_process(delta: float) -> void:
@@ -272,12 +225,6 @@ func _process(delta: float) -> void:
 			PlayerSounds.play(self, "heartbeat", lerpf(-14.0, 0.0, _fear), lerpf(0.95, 1.12, _fear))
 	EventBus.fear_changed.emit(_fear)
 
-	var target := camera.global_transform
-	var t := clampf(delta * 14.0, 0.0, 1.0)
-	_flashlight_rig.global_transform = Transform3D(
-			_flashlight_rig.global_transform.basis.orthonormalized().slerp(target.basis.orthonormalized(), t),
-			target.origin)
-
 
 func _footstep(speed: float, crouching: bool = false) -> void:
 	var indoor := Cabin.is_inside(global_position) or Shed.is_inside(global_position) or global_position.y > 0.35
@@ -294,18 +241,23 @@ var _breath_player: AudioStreamPlayer = null
 
 
 func _update_breathing(sprinting: bool) -> void:
-	if sprinting and Survival.stamina < 35.0:
+	# setzt früh ein, bleibt aber zunächst leise und wird mit der Erschöpfung lauter
+	if sprinting and Survival.stamina < 65.0:
 		_out_of_breath = true
-	elif Survival.stamina > 75.0 or GameState.dead:
+	elif Survival.stamina > 85.0 or GameState.dead:
 		_out_of_breath = false
 	if _out_of_breath and not is_instance_valid(_breath_player):
-		var strength := 1.0 - clampf(Survival.stamina / 75.0, 0.0, 1.0)
-		_breath_player = PlayerSounds.play_phrase(self, "breath", lerpf(-16.0, -5.0, strength), randf_range(3.0, 4.5))
+		var strength := 1.0 - clampf(Survival.stamina / 85.0, 0.0, 1.0)
+		_breath_player = PlayerSounds.play_phrase(self, "breath", lerpf(-26.0, -10.0, strength), randf_range(3.0, 4.5))
 
 
 func take_damage(amount: float, from: Vector3) -> void:
 	if GameState.dead:
 		return
+	var f := hands.block_factor(from)
+	if f < 1.0:
+		amount *= f
+		SoundBank.play_ui(self, "knock", -4.0, 0.8)
 	health -= amount
 	EventBus.player_hurt.emit(amount)
 	SoundBank.play_ui(self, "hurt", -2.0, randf_range(0.9, 1.1))

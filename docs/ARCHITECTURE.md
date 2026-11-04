@@ -42,6 +42,7 @@ funktionieren dadurch automatisch mit der Kreaturen-KI.
 - `-- --walk-test`: läuft durch alle Türen und das Tor
 - `-- --night-test=attack|probe|observe|attack_locked`: Kreatur-Protokoll
 - `-- --night-test=events`: löst jedes Nacht-Ereignis einmal aus
+- `-- --night-test=melee`: Hände – Faust/Axt gegen Kreatur, Blocken, Schnellplatz-Wechsel, Uhr-Lampe
 - `-- --night-test=craft`: Rezepte, Barrikade, Bauen, Kreatur gegen Hindernisse, Neustart-Persistenz
 - `-- --screenshot-tour=ORDNER [--shots=01,05] [--frames=30]`
 
@@ -54,7 +55,7 @@ scripts/core/    EventBus, Tastenbelegung
 scripts/systems/ Manager (Zeit …)
 scripts/world/   Gelände, Wald, Garten, Hütte, Schuppen, Licht/Himmel, BuildKit
 scripts/interaction/ Türen, Fenster, Lampen, Schalter, Bett
-scripts/player/  First-Person-Controller
+scripts/player/  First-Person-Controller, Hände (PlayerHands)
 scripts/ui/      HUD, Pausenmenü
 scripts/audio/   SoundBank (prozedurale Platzhalter), Footsteps (echte Schritt-Aufnahmen), CreatureSounds (Kreatur)
 assets/audio/    Tondateien (steps/ je Untergrund und Gangart, creature/)

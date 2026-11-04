@@ -43,6 +43,12 @@ func get_prompt(_player: Node) -> String:
 		return "%s – leer%s" % [Inventory.display_name(item_id), "" if regrow_per_day <= 0 else " (wächst nach)"]
 	if tool != "" and Inventory.count(tool) <= 0:
 		return "%s – dafür brauchst du: %s" % [action_label, Inventory.display_name(tool)]
+	if tool != "" and Inventory.equipped() != tool:
+		var slot := Inventory.slot_of(tool)
+		var how := ("Taste %d" % (slot + 1)) if slot >= 0 else "Inventar (Tab), auf einen Platz 1–9 ziehen"
+		return "%s – %s in die Hand nehmen (%s)" % [action_label, Inventory.display_name(tool), how]
+	if tool != "":
+		return "[Linksklick / E] %s  (%s, noch %d)" % [action_label, Inventory.display_name(item_id), amount]
 	return "[E] %s  (%s, noch %d)" % [action_label, Inventory.display_name(item_id), amount]
 
 
@@ -51,6 +57,9 @@ func interact(player: Node) -> void:
 		return
 	if tool != "" and Inventory.count(tool) <= 0:
 		EventBus.notify("Dafür brauchst du: %s." % Inventory.display_name(tool), 2.5)
+		return
+	if tool != "" and Inventory.equipped() != tool:
+		EventBus.notify("Nimm erst %s in die Hand." % Inventory.display_name(tool), 2.5)
 		return
 	if Inventory.total_weight() + Inventory.weight_of(item_id) > Inventory.MAX_WEIGHT:
 		EventBus.notify("Zu schwer – du kannst nicht mehr tragen.", 2.0)
@@ -61,6 +70,9 @@ func interact(player: Node) -> void:
 		p.input_locked = true
 	var steps := maxi(1, int(round(action_time / 0.45)))
 	for i in steps:
+		# mit Werkzeug in der Hand: sichtbarer Hieb pro Schlag
+		if tool != "" and p and p.hands:
+			p.hands.tool_swing()
 		SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.85, 1.15))
 		EventBus.noise_made.emit(to_global(anchor), 10.0)
 		await get_tree().create_timer(action_time / steps).timeout

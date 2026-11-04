@@ -85,7 +85,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact_secondary"):
 		_rot += PI * 0.25
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("interact"):
+	elif event.is_action_pressed("interact") or (active and event.is_action_pressed("attack")):
 		get_viewport().set_input_as_handled()
 		_place()
 
@@ -114,7 +114,7 @@ func _physics_process(_delta: float) -> void:
 	_preview.rotation.y = _rot
 	_valid = _check_valid(p)
 	_preview.set_preview_valid(_valid)
-	EventBus.interaction_prompt_changed.emit("%s  –  [E] platzieren   [R] drehen   [B] weiter / beenden%s" % [
+	EventBus.interaction_prompt_changed.emit("%s  –  [E / Linksklick] platzieren   [R] drehen   [B] weiter / beenden%s" % [
 		Inventory.display_name(type), "" if _valid else "\nHier geht es nicht."])
 
 

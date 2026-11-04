@@ -470,6 +470,20 @@ func on_bright_light(source: Vector3) -> void:
 		_recoil_from(source)
 
 
+## Faustschlag oder Axthieb des Spielers: tut weh und verscheucht die Kreatur eine Weile.
+## (Töten kann man sie damit nicht.) strength 0..1 – die Axt wirkt länger als die Faust.
+func on_melee_hit(strength: float, from: Vector3) -> void:
+	if state == State.LEAVE:
+		return
+	CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 2.0, _rng.randf_range(0.95, 1.1))
+	_head_track = 2.0
+	if mode == "observe":
+		leave()
+		return
+	_recoil_from(from)
+	_timer = lerpf(5.0, 14.0, strength)
+
+
 func _recoil_from(source: Vector3) -> void:
 	state = State.RECOIL
 	_timer = _rng.randf_range(10.0, 18.0)

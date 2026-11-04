@@ -48,6 +48,7 @@ func _ready() -> void:
 	root.add_child(_hurt)
 
 	root.add_child(InteractFrame.new())
+	root.add_child(HotbarHud.new())
 
 	var cross := ColorRect.new()
 	cross.color = Color(1, 1, 1, 0.55)

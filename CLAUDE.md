@@ -16,7 +16,7 @@
 1. Analysegerät gefunden (z. B. Absturzstelle im Wald) oder aus dem alten Funkgerät umgebaut?
 2. Forschung passiv (Fund einlegen, warten) oder aktive Experimente (Strom, Licht, vergleichen) – Schwerpunkt?
 3. Story: erste Hinweise, was die Wesen wollen, oder bleibt es ganz rätselhaft?
-4. Phase-6-Wahl bestätigen: keine Waffen, Hunger/Durst sanft, freies Bauen.
+4. Phase-6-Wahl bestätigen: Hunger/Durst sanft, freies Bauen (Nahkampf Faust/Axt ist inzwischen gewünscht).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
@@ -27,7 +27,10 @@
   (Zeit, Bedrohung), JSON für Inhalte (`data/items/items.json`, `recipes.json`, `buildables.json`).
   JSON wird über `include_filter="*.json"` mit exportiert.
 - Persistente Objekte brauchen feste, eindeutige Knotennamen (sonst passt der Spielstand nicht).
-- Designentscheidung Phase 6: keine Waffen, Hunger/Durst sanft, freies Bauen.
+- Designentscheidung Phase 6: Hunger/Durst sanft, freies Bauen. Keine Schusswaffen; Nahkampf mit Faust/Axt
+  (Christians Wunsch) verscheucht die Kreatur nur (`Creature.on_melee_hit`), töten geht nicht.
+- Hände: `PlayerHands` (an der Kamera). Rechts = Schnellplatz 1–9 (`Inventory.hotbar`, Items mit `"hand"` in items.json),
+  leer = Faust. Links = Smartwatch-LED (F, `player.flashlight`) und Bauhammer im Baumodus. Nachschwingen per Feder.
 - Systeme kommunizieren über `EventBus` (Autoload) statt sich direkt zu kennen.
 - Sounds: Christian liefert echte Aufnahmen (oft lange Clips mit vielen Schritten).
   `tools/audio/slice.py QUELLE ZIEL 12` schneidet sie in Einzelschritte, mono OGG, gleich laut normiert.

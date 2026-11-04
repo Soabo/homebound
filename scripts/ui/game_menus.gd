@@ -8,6 +8,107 @@ var _title: Label
 var _list: VBoxContainer
 var _info: Label
 var _mode: String = ""  ## "", "inventory", "crafting"
+var _slots_row: HBoxContainer
+var _slot_boxes: Array[SlotBox] = []
+
+
+## Schnellplatz im Inventar: Gegenstände hierher ziehen, untereinander tauschen,
+## Rechtsklick leert den Platz, Linksklick wählt ihn aus.
+class SlotBox extends PanelContainer:
+	var index: int = 0
+	var _name_label: Label
+
+	func setup(i: int) -> void:
+		index = i
+		custom_minimum_size = Vector2(92, 64)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		tooltip_text = "Taste %d – Gegenstand hierher ziehen, Rechtsklick leert den Platz" % (i + 1)
+		var v := VBoxContainer.new()
+		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(v)
+		var num := Label.new()
+		num.text = str(i + 1)
+		num.add_theme_font_size_override("font_size", 14)
+		num.add_theme_color_override("font_color", Color(0.75, 0.7, 0.6))
+		v.add_child(num)
+		_name_label = Label.new()
+		_name_label.add_theme_font_size_override("font_size", 15)
+		_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		v.add_child(_name_label)
+		refresh()
+
+	func refresh() -> void:
+		var id: String = Inventory.hotbar[index]
+		var has := id != "" and Inventory.count(id) > 0
+		_name_label.text = Inventory.display_name(id) if has else "Faust"
+		_name_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.8) if has else Color(0.5, 0.48, 0.44))
+		var st := StyleBoxFlat.new()
+		var sel := index == Inventory.selected
+		st.bg_color = Color(0.14, 0.12, 0.1) if sel else Color(0.1, 0.09, 0.08)
+		st.border_color = Color(0.95, 0.85, 0.6) if sel else Color(0.4, 0.33, 0.25)
+		st.set_border_width_all(2)
+		st.set_content_margin_all(6)
+		add_theme_stylebox_override("panel", st)
+
+	func _get_drag_data(_at: Vector2) -> Variant:
+		var id: String = Inventory.hotbar[index]
+		if id == "":
+			return null
+		set_drag_preview(GameMenus.drag_preview(Inventory.display_name(id)))
+		return {"id": id, "from_slot": index}
+
+	func _can_drop_data(_at: Vector2, data: Variant) -> bool:
+		return data is Dictionary and data.has("id") and Inventory.is_holdable(String(data["id"]))
+
+	func _drop_data(_at: Vector2, data: Variant) -> void:
+		if data.has("from_slot"):
+			Inventory.swap_slots(int(data["from_slot"]), index)
+		else:
+			Inventory.set_slot(index, String(data["id"]))
+		SoundBank.play_ui(self, "switch", -10.0, 1.2)
+
+	func _gui_input(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				Inventory.set_slot(index, "")
+			elif event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+				Inventory.select(index)
+
+
+## Gegenstand in der Liste: lässt sich auf einen Schnellplatz ziehen (wenn er in die Hand passt).
+class ItemDrag extends Label:
+	var id: String = ""
+
+	func _get_drag_data(_at: Vector2) -> Variant:
+		if not Inventory.is_holdable(id):
+			return null
+		set_drag_preview(GameMenus.drag_preview(Inventory.display_name(id)))
+		return {"id": id}
+
+
+## Liste: einen Schnellplatz hierher ziehen = Platz leeren.
+class ClearArea extends ScrollContainer:
+	func _can_drop_data(_at: Vector2, data: Variant) -> bool:
+		return data is Dictionary and data.has("from_slot")
+
+	func _drop_data(_at: Vector2, data: Variant) -> void:
+		Inventory.set_slot(int(data["from_slot"]), "")
+
+
+static func drag_preview(text: String) -> Control:
+	var p := PanelContainer.new()
+	var st := StyleBoxFlat.new()
+	st.bg_color = Color(0.2, 0.16, 0.1, 0.9)
+	st.border_color = Color(0.95, 0.85, 0.6)
+	st.set_border_width_all(1)
+	st.set_content_margin_all(6)
+	p.add_theme_stylebox_override("panel", st)
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 18)
+	p.add_child(l)
+	return p
 
 
 func _ready() -> void:
@@ -46,7 +147,16 @@ func _ready() -> void:
 	_info.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD
 	v.add_child(_info)
-	var scroll := ScrollContainer.new()
+	# Schnellplätze 1–9 ganz oben im Inventar
+	_slots_row = HBoxContainer.new()
+	_slots_row.add_theme_constant_override("separation", 6)
+	v.add_child(_slots_row)
+	for i in Inventory.SLOTS:
+		var box := SlotBox.new()
+		box.setup(i)
+		_slots_row.add_child(box)
+		_slot_boxes.append(box)
+	var scroll := ClearArea.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(scroll)
 	_list = VBoxContainer.new()
@@ -59,6 +169,7 @@ func _ready() -> void:
 	hint.add_theme_color_override("font_color", Color(0.6, 0.58, 0.52))
 	v.add_child(hint)
 	Inventory.changed.connect(_refresh)
+	Inventory.hotbar_changed.connect(_refresh_slots)
 
 
 func _input(event: InputEvent) -> void:
@@ -113,7 +224,14 @@ func is_open() -> bool:
 	return _mode != ""
 
 
+func _refresh_slots() -> void:
+	for b in _slot_boxes:
+		b.refresh()
+
+
 func _refresh() -> void:
+	_refresh_slots()
+	_slots_row.visible = _mode == "inventory"
 	if _mode == "":
 		return
 	for c in _list.get_children():
@@ -126,7 +244,7 @@ func _refresh() -> void:
 
 func _fill_inventory() -> void:
 	_title.text = "Inventar"
-	_info.text = "Traglast %.1f / %.0f kg      Hunger %d%%   Durst %d%%   Ausdauer %d%%" % [
+	_info.text = "Traglast %.1f / %.0f kg      Hunger %d%%   Durst %d%%   Ausdauer %d%%\nGegenstände für die Hand (✋) auf einen Platz 1–9 ziehen. Leerer Platz = Faust." % [
 		Inventory.total_weight(), Inventory.MAX_WEIGHT, int(Survival.hunger), int(Survival.thirst), int(Survival.stamina)]
 	if Inventory.items.is_empty():
 		_list.add_child(_text("Du trägst nichts bei dir."))
@@ -135,7 +253,17 @@ func _fill_inventory() -> void:
 		var def := DataDB.item(id)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 16)
-		var l := _text("%s  ×%d" % [def.get("name", id), Inventory.count(id)])
+		var l := ItemDrag.new()
+		l.id = id
+		var hand := Inventory.is_holdable(id)
+		var slot := Inventory.slot_of(id)
+		l.text = "%s%s  ×%d%s" % ["✋ " if hand else "", def.get("name", id), Inventory.count(id), ("   [Platz %d]" % (slot + 1)) if slot >= 0 else ""]
+		l.add_theme_font_size_override("font_size", 20)
+		l.add_theme_color_override("font_color", Color(0.95, 0.88, 0.7) if hand else Color(0.9, 0.88, 0.82))
+		if hand:
+			l.mouse_filter = Control.MOUSE_FILTER_STOP
+			l.mouse_default_cursor_shape = Control.CURSOR_DRAG
+			l.tooltip_text = "Auf einen Platz 1–9 ziehen"
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(l)
 		row.add_child(_text("%s · %.1f kg" % [def.get("category", ""), Inventory.weight_of(id) * Inventory.count(id)], 16, Color(0.6, 0.58, 0.5)))

@@ -25,13 +25,16 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Shift | Rennen |
 | Strg / C | Ducken |
 | Leertaste | Springen |
-| E / Linksklick | Benutzen (Türen, Lichtschalter, Bett) |
+| E | Benutzen (Türen, Lichtschalter, Bett) |
+| Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit Axt Holz hacken, Konserve essen, Flasche trinken |
+| Rechtsklick (halten) | Blocken mit Faust oder Axt |
+| 1–9 / Mausrad | Schnellplatz wählen (leer = Faust) |
 | R | Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
-| F | Taschenlampe |
+| F | LED der Smartwatch am linken Arm (Taschenlampe) – auch zusätzlich zu einem Gegenstand rechts |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
-| Tab / I | Inventar (essen, trinken, bauen, ablegen) |
-| B | Baumodus: Bauteil wählen / weiter / beenden (R dreht, E setzt) |
+| Tab / I | Inventar (essen, trinken, bauen, ablegen); oben die Schnellplätze 1–9 – Gegenstände mit ✋ dorthin ziehen |
+| B | Baumodus mit dem Bauhammer in der linken Hand: Bauteil wählen / weiter / beenden (R dreht, E oder Linksklick setzt) |
 | F2 | Retro-Filter ein/aus |
 | F1 | Steuerungshilfe ein/aus |
 | F11 | Vollbild |
@@ -50,7 +53,9 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 ## Tagsüber vorbereiten (Phase 6)
 
-- **Axt** steckt im Hackklotz beim Schuppen. Damit hackst du **Holz** an umgestürzten Stämmen im Wald.
+- **Axt** steckt im Hackklotz beim Schuppen. Sie landet auf einem Schnellplatz; nimm sie mit der Ziffer in die Hand
+  und hacke mit Linksklick **Holz** an umgestürzten Stämmen im Wald.
+- **Faust und Axt** verscheuchen die Kreatur (töten kann man sie nicht). Rechtsklick blockt Schläge von vorne.
 - **Steine** liegen am Bach, **Schrott, Benzin, Batterie, Elektronik** im alten Autowrack an der Zufahrt.
 - **Werkbank** in der Werkstatt: Bretter, Nägel, Holzzaun, Spießbarrikade, Steinwall, Dosenalarm,
   Bewegungsmelder-Leuchte und eine verstärkte Haustür.

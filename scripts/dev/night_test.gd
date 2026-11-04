@@ -36,6 +36,10 @@ func _run() -> void:
 	if mode == "craft":
 		await _craft_test()
 		return
+	if mode == "melee":
+		await _melee_test()
+		get_tree().quit()
+		return
 	for i in 10:
 		await get_tree().physics_frame
 	TimeManager.set_time(1, 21.0)
@@ -104,6 +108,18 @@ func _craft_test() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	# Ausrüsten
 	(scene.get_node("Garden/Axe") as ItemPickup).interact(player)
+	# Axt liegt automatisch auf einem Schnellplatz; ausrüsten und einen Stamm hacken
+	var axe_slot := Inventory.slot_of("axe")
+	print("AXT auf Platz: ", axe_slot + 1)
+	Inventory.select(axe_slot)
+	var trunks := scene.find_children("WoodLog_*", "", true, false)
+	var trunk: ResourceNode = trunks[0] if not trunks.is_empty() else null
+	if trunk:
+		var wood_before := Inventory.count("wood")
+		trunk.interact(player)
+		await get_tree().create_timer(trunk.action_time + 0.6).timeout
+		print("HACKEN mit Axt in der Hand: Holz +", Inventory.count("wood") - wood_before)
+		Inventory.remove("wood", Inventory.count("wood"))
 	for id: String in ["wood", "scrap", "stone", "cans", "battery", "electronics"]:
 		Inventory.add(id, 6)
 	print("Inventar vorher: ", Inventory.items, "  Gewicht %.1f" % Inventory.total_weight())
@@ -151,3 +167,58 @@ func _craft_test() -> void:
 	Engine.time_scale = 1.0
 	print("CRAFT TEST: Tod auslösen, Neustart prüfen")
 	GameState.kill_player()
+
+
+## Hände: Faust- und Axthieb verscheuchen die Kreatur, Blocken mindert Schaden, Wechsel der Schnellplätze.
+func _melee_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var player := get_tree().get_first_node_in_group("player") as Player
+	player.global_position = Creature._ground(Vector3(6.0, 0, 12.0))
+	player.rotation.y = 0.0
+	player.head.rotation.x = 0.0
+	TimeManager.running = false
+	var c := Creature.new()
+	get_tree().current_scene.add_child(c)
+	ThreatDirector.creature = c
+	c.begin("attack")
+	c.global_position = Creature._ground(player.global_position + Vector3(0, 0, -1.3))
+	c._path.clear()
+	c.state = Creature.State.CHASE
+	for i in 30:
+		await get_tree().physics_frame
+	c.state = Creature.State.CHASE
+	print("MELEE Hand: ", player.hands.current_kind())
+	var cam := player.camera.global_transform
+	var to := c.global_position + Vector3(0, 1.3, 0) - cam.origin
+	print("MELEE Abstand %.2f, Richtung %.2f, Hand draußen %.2f, Abklingen %.2f" % [to.length(), (-cam.basis.z).dot(to.normalized()), player.hands._right_out, player.hands._cooldown])
+	player.hands._primary()
+	print("MELEE Aktion: ", player.hands._action)
+	for i in 40:
+		await get_tree().physics_frame
+	print("MELEE Faust -> Zustand: ", Creature.State.keys()[c.state])
+	# Axt aufnehmen, auf Platz legen, wechseln
+	Inventory.add("axe", 1)
+	Inventory.select(Inventory.slot_of("axe"))
+	for i in 30:
+		await get_tree().physics_frame
+	print("MELEE Hand nach Wechsel: ", player.hands.current_kind())
+	c.state = Creature.State.CHASE
+	c.global_position = Creature._ground(player.global_position + Vector3(0, 0, -1.6))
+	player.hands._cooldown = 0.0
+	player.hands._primary()
+	for i in 50:
+		await get_tree().physics_frame
+	print("MELEE Axt -> Zustand: ", Creature.State.keys()[c.state])
+	# Blocken: Schaden von vorne wird gemindert
+	player.hands._block_amount = 1.0
+	var f := player.hands.block_factor(player.global_position + Vector3(0, 0, -1.0))
+	print("MELEE Block-Faktor Axt von vorne: %.2f, von hinten: %.2f" % [f, player.hands.block_factor(player.global_position + Vector3(0, 0, 1.0))])
+	Inventory.select(8)
+	for i in 30:
+		await get_tree().physics_frame
+	print("MELEE leerer Platz -> ", player.hands.current_kind())
+	player.set_flashlight(true)
+	for i in 30:
+		await get_tree().physics_frame
+	print("MELEE Uhr-Lampe an: ", player.flashlight.visible)
