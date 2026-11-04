@@ -64,6 +64,7 @@ func set_active(i: int) -> void:
 		return
 	active_index = posmod(i, cameras.size())
 	camera.global_transform = cameras[active_index].eye_transform()
+	camera.fov = cameras[active_index].fov
 
 
 func active_name() -> String:

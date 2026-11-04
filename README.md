@@ -43,7 +43,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du rüber und neu starten.
 - **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
 - **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
-- **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und das Maisfeld am Schuppen. Traue nicht allem, was du siehst.
+- **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und – vom Schuppen aus im Weitwinkel – den Platz zwischen Maisfeld und Hütte. Traue nicht allem, was du siehst.
 - **Licht:** Die Taschenlampe verrät dich – aber aus der Nähe blendet sie.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.

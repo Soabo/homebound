@@ -49,7 +49,8 @@ func _build_cameras() -> void:
 		# Name, Punkt auf der Wand, Wand-Richtung nach außen, Blickziel, Trugbild-Ort
 		["Hausfront / Veranda", Vector3(5.7, Cabin.WALL_TOP - 0.35, front_z), Vector3(0, 0, 1), Vector3(-3.5, 0.5, 9.0), Vector3(-1.5, 0, 10.5)],
 		["Garten hinten", Vector3(-5.0, Cabin.WALL_TOP - 0.35, -front_z), Vector3(0, 0, -1), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
-		["Schuppen / Maisfeld", Vector3(15.7, 2.0, Shed.ORIGIN.z + Shed.HALF.y + 0.05), Vector3(0, 0, 1), Vector3(18.5, 0.7, 16.0), Vector3(18.5, 0, 13.0)],
+		# an der Südwest-Ecke des Schuppens, starker Weitwinkel: links der Maisfeldrand, rechts die Hütte
+		["Schuppen / Maisfeld", Vector3(Shed.ORIGIN.x - Shed.HALF.x - 0.05, 2.05, Shed.ORIGIN.z + Shed.HALF.y + 0.05), Vector3(-1, 0, 1), Vector3(5.4, 0.3, 14.4), Vector3(12.0, 0, 12.5), 106.0],
 	]
 	for i in setups.size():
 		var cam := SecurityCamera.new()
@@ -60,6 +61,8 @@ func _build_cameras() -> void:
 		cam.wall_normal = setups[i][2]
 		cam.look_target = setups[i][3]
 		cam.phantom_spot = setups[i][4]
+		if setups[i].size() > 5:
+			cam.fov = setups[i][5]
 		add_child(cam)
 
 

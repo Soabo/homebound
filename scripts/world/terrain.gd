@@ -55,17 +55,73 @@ static func stream_distance(x: float, z: float) -> float:
 	return absf(x - stream_x_at(z))
 
 
-## Höhe des Bachbetts (ohne Einschnitt) – das Wasser folgt dieser Linie.
+## Höhe des Bachbetts – das Wasser folgt dieser Linie. Der Bach fließt nach Süden (+z)
+## und darf nirgends ansteigen: Das Bett ist eine stetig fallende Linie, die dem Gelände
+## so gut wie möglich folgt (Hügel werden durchschnitten, Senken leicht aufgefüllt).
+const BED_STEP := 1.0
+const BED_START := -HALF_SIZE - 6.0
+static var _bed: PackedFloat32Array
+
+
 static func stream_bed_height(z: float) -> float:
-	return _raw_height(stream_x_at(z), z) - 1.1
+	if _bed.is_empty():
+		_build_bed_profile()
+	var f := clampf((z - BED_START) / BED_STEP, 0.0, float(_bed.size() - 1))
+	var i := int(floorf(f))
+	var j := mini(i + 1, _bed.size() - 1)
+	return lerpf(_bed[i], _bed[j], f - float(i))
+
+
+static func _build_bed_profile() -> void:
+	var n := int((HALF_SIZE * 2.0 + 12.0) / BED_STEP) + 1
+	var raw := PackedFloat32Array()
+	raw.resize(n)
+	for i in n:
+		var z := BED_START + i * BED_STEP
+		raw[i] = _raw_height(stream_x_at(z), z) - 1.1
+	# Ausgleich zu einer nie steigenden Linie (Blöcke zusammenfassen, bis alles fällt)
+	var values: Array[float] = []
+	var counts: Array[int] = []
+	for i in n:
+		values.append(raw[i])
+		counts.append(1)
+		while values.size() > 1 and values[-1] > values[-2]:
+			var c := counts[-1] + counts[-2]
+			var v := (values[-1] * counts[-1] + values[-2] * counts[-2]) / c
+			values.pop_back()
+			counts.pop_back()
+			values[-1] = v
+			counts[-1] = c
+	var bed := PackedFloat32Array()
+	for k in values.size():
+		for c in counts[k]:
+			bed.append(values[k])
+	# Mindestgefälle, damit es überall sichtbar fließt
+	for i in range(1, n):
+		bed[i] = minf(bed[i], bed[i - 1] - 0.012)
+	# weich glätten (bleibt dabei fallend)
+	var smooth := PackedFloat32Array()
+	smooth.resize(n)
+	for i in n:
+		var sum := 0.0
+		var cnt := 0
+		for k in range(-4, 5):
+			var q := clampi(i + k, 0, n - 1)
+			sum += bed[q]
+			cnt += 1
+		smooth[i] = sum / cnt
+	_bed = smooth
 
 
 static func height_at(x: float, z: float) -> float:
 	var h := _raw_height(x, z)
 	var sd := stream_distance(x, z)
-	if sd < 5.0:
-		var cut := 1.0 - smoothstep(1.3, 4.0, sd)
-		h = lerpf(h, stream_bed_height(z), cut)
+	if sd < 9.0:
+		var bed := stream_bed_height(z)
+		# Je tiefer sich der Bach einschneiden muss, desto flacher die Böschung
+		var reach := 4.0 + clampf(absf(h - bed) * 0.6, 0.0, 5.0)
+		var cut := 1.0 - smoothstep(1.3, reach, sd)
+		h = lerpf(h, bed, cut)
 	return h
 
 
@@ -76,7 +132,9 @@ static func _raw_height(x: float, z: float) -> float:
 	var h := hills * smoothstep(1.0, 18.0, d)
 	# Talrand: zum Kartenrand hin steigt das Gelände an.
 	var edge := maxf(absf(x), absf(z))
-	h += smoothstep(52.0, 76.0, edge) * 9.0
+	# Im Süden verlässt der Bach das Tal: dort steigt der Rand nicht an.
+	var valley := lerpf(1.0, smoothstep(4.0, 18.0, stream_distance(x, z)), smoothstep(20.0, 50.0, z))
+	h += smoothstep(52.0, 76.0, edge) * 9.0 * valley
 	# Die Straße schneidet sich flacher durchs Gelände.
 	if z > 16.0:
 		var road := 1.0 - smoothstep(2.2, 6.0, road_distance(x, z))

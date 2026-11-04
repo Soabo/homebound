@@ -35,6 +35,9 @@ const SHOTS := [
 	{"name": "21_maisfeld_nacht_monitor", "hour": 23.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 2, "creature_at": Vector3(18.0, 0, 14.0)},
 	{"name": "22_vorrat_symbole", "hour": 21.0, "pos": Vector3(0.7, 0.45, -2.5), "look": Vector3(0.7, 1.35, -4.1), "lights": true},
 	{"name": "23_technik_kanister", "hour": 21.0, "pos": Vector3(3.5, 0.45, -2.6), "look": Vector3(2.975, 0.62, -4.2), "lights": true},
+	{"name": "24_schuppendach", "hour": 15.5, "pos": Vector3(8.6, 0.0, 1.6), "look": Vector3(14.0, 2.0, 6.5)},
+	{"name": "25_bach_verlauf", "hour": 15.0, "pos": Vector3(30.0, 0.0, -14.0), "look": Vector3(36.0, -1.5, 6.0)},
+	{"name": "26_kamera_schuppen", "hour": 15.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 2},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 

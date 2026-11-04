@@ -14,6 +14,8 @@ const ARM_LENGTH := 0.32
 @export var camera_name: String = "CAM"
 @export var look_target: Vector3 = Vector3.ZERO
 @export var wall_normal: Vector3 = Vector3(0, 0, 1)
+## Bildwinkel (senkrecht, Grad) – Weitwinkel für Kameras, die viel zeigen sollen
+@export var fov: float = 72.0
 ## Wo das Trugbild erscheint, das nur die Kamera sieht.
 @export var phantom_spot: Vector3 = Vector3.ZERO
 
