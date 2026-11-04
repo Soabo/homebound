@@ -170,6 +170,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_prompt(true)
 	elif event.is_action_pressed("flashlight"):
 		set_flashlight(not flashlight.visible)
+		PlayerSounds.play(self, "flashlight", -6.0, randf_range(0.95, 1.05))
 
 
 func _building() -> bool:
@@ -207,6 +208,7 @@ func _physics_process(delta: float) -> void:
 	elif Survival.stamina > 30.0:
 		_exhausted = false
 	var sprinting := wants_sprint and not _exhausted and Survival.use_stamina(20.0 * delta)
+	_update_breathing(sprinting)
 	if not sprinting:
 		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
 	var speed := crouch_speed if crouching else (sprint_speed if sprinting else walk_speed)
@@ -267,7 +269,7 @@ func _process(delta: float) -> void:
 		_heart_timer -= delta
 		if _heart_timer <= 0.0:
 			_heart_timer = lerpf(1.1, 0.45, _fear)
-			SoundBank.play_ui(self, "heartbeat", lerpf(-16.0, -2.0, _fear), lerpf(0.9, 1.15, _fear))
+			PlayerSounds.play(self, "heartbeat", lerpf(-14.0, 0.0, _fear), lerpf(0.95, 1.12, _fear))
 	EventBus.fear_changed.emit(_fear)
 
 	var target := camera.global_transform
@@ -284,6 +286,21 @@ func _footstep(speed: float, crouching: bool = false) -> void:
 	# Rennen draußen ist laut (GDD 9.4)
 	if speed > walk_speed + 0.5 and not indoor:
 		EventBus.noise_made.emit(global_position, 16.0)
+
+
+## Außer Atem: nach langem Rennen schweres Atmen, bis die Ausdauer wieder da ist.
+var _out_of_breath: bool = false
+var _breath_player: AudioStreamPlayer = null
+
+
+func _update_breathing(sprinting: bool) -> void:
+	if sprinting and Survival.stamina < 35.0:
+		_out_of_breath = true
+	elif Survival.stamina > 75.0 or GameState.dead:
+		_out_of_breath = false
+	if _out_of_breath and not is_instance_valid(_breath_player):
+		var strength := 1.0 - clampf(Survival.stamina / 75.0, 0.0, 1.0)
+		_breath_player = PlayerSounds.play_phrase(self, "breath", lerpf(-16.0, -5.0, strength), randf_range(3.0, 4.5))
 
 
 func take_damage(amount: float, from: Vector3) -> void:

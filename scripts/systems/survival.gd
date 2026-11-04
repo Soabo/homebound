@@ -77,9 +77,11 @@ func apply(effect: Dictionary) -> void:
 	if effect.has("hunger"):
 		hunger = minf(hunger + float(effect["hunger"]), 100.0)
 		EventBus.notify("Gegessen.", 1.5)
+		PlayerSounds.play_phrase(self, "eat", -6.0, 2.6)
 	if effect.has("thirst"):
 		thirst = minf(thirst + float(effect["thirst"]), 100.0)
 		EventBus.notify("Getrunken.", 1.5)
+		PlayerSounds.play_phrase(self, "drink", -4.0, 2.4, true)
 	changed.emit()
 
 

@@ -71,6 +71,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - Schritte aus echten Aufnahmen: Holzboden, Teppich, Veranda, Gras, Waldboden, Kies (Zufahrt), Erde (Maisfeld),
   Steine (Bachufer) und flaches Wasser (Bach) – jeweils schleichen, gehen und rennen.
   Absprung und Landung klingen je nach Untergrund.
+- Spieler: Essen, Trinken, Herzschlag bei Angst, schweres Atmen nach langem Rennen, Klick der Taschenlampe, Todesschrei.
 - Die Kreatur: Klicken beim Beobachten, verzerrtes Atmen aus der Nähe, Knacken wenn der Kopf herumruckt,
   Schrei, Schmerzlaut an den Spießen, Zischen bei grellem Licht, eigene Schritte.
 

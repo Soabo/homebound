@@ -34,7 +34,8 @@
   Lautstärke je Untergrund/Gangart in `scripts/audio/footsteps.gd`. Kreatur: `assets/audio/creature/<art>_NN.ogg` über `CreatureSounds`
   (`tools/audio/prepare.py oneshot|long`; lange Atmen/Klicken-Aufnahmen werden als Zufallsausschnitte gespielt).
   Designentscheidung Kreaturklang: Mischung aus Insektenklicken und verzerrtem Atmen.
-  Übrige Geräusche noch prozedural (`SoundBank`).
+  Spieler: `assets/audio/player/<drink|eat|die|heartbeat|breath|flashlight>_NN.ogg` über `PlayerSounds` (ohne Raumklang).
+  Übrige Geräusche (Haus, Umgebung, Wetter) noch prozedural (`SoundBank`, `WindAmbience`, `FireCrackle`).
 
 ## Befehle (Cloud-Workspace)
 ```bash

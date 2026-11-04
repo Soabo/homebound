@@ -61,7 +61,7 @@ func kill_player() -> void:
 		return
 	dead = true
 	player_died.emit()
-	SoundBank.play_ui(self, "hurt", 2.0, 0.7)
+	PlayerSounds.play(self, "die", 0.0)
 	await get_tree().create_timer(4.5).timeout
 	restart_day()
 
