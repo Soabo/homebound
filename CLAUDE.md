@@ -6,6 +6,8 @@
 - Kommunikation mit Christian auf Deutsch, ohne Fachjargon.
 - Kommentare im Code auf Deutsch, Bezeichner auf Englisch.
 - Offene Designfragen aus GDD Kap. 21 nicht eigenmächtig festschreiben – nachfragen.
+- Tempo vor Kontrollbildern: Bei kleinen Änderungen (Kamera drehen, Farbe, Lautstärke …) keine Screenshots,
+  nur die schnellen Tests; Christian prüft selbst im Spiel. Screenshots nur bei größeren Umbauten oder auf Wunsch.
 - Nach jedem Update immer die Links ausschreiben (nicht nur „der gewohnte Link“):
   Windows: https://github.com/Soabo/homebound/releases/tag/neueste-version
   Browser: https://soabo.github.io/homebound/
