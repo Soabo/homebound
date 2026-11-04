@@ -219,7 +219,8 @@ static func lathe(parent: Node, profile: PackedVector2Array, pos: Vector3, mat: 
 			var n := [d0 * slope.x + Vector3(0, slope.y, 0), d1 * slope.x + Vector3(0, slope.y, 0)]
 			var uv := [Vector2(float(k) / segments, a.y), Vector2(float(k + 1) / segments, a.y),
 					Vector2(float(k + 1) / segments, b.y), Vector2(float(k) / segments, b.y)]
-			for idx: int in [0, 2, 1, 0, 3, 2]:
+			# Reihenfolge so, dass die Außenseite die Vorderseite ist
+			for idx: int in [0, 1, 2, 0, 2, 3]:
 				st.set_normal(n[0] if idx == 0 or idx == 3 else n[1])
 				st.set_uv(uv[idx])
 				st.add_vertex(q[idx])

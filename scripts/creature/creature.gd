@@ -56,77 +56,7 @@ var _unseen_time: float = 0.0
 
 ## Baut das Modell (auch für Trugbilder auf den Kameras verwendet).
 static func build_model(root: Node3D) -> Dictionary:
-	var skin := BuildKit.color_mat(Color(0.5, 0.53, 0.5), 0.55)
-	var skin_dark := BuildKit.color_mat(Color(0.36, 0.38, 0.36), 0.6)
-	var eye := StandardMaterial3D.new()
-	eye.albedo_color = Color(0.01, 0.01, 0.015)
-	eye.roughness = 0.05
-	eye.metallic_specular = 1.0
-	eye.emission_enabled = true
-	eye.emission = Color(0.25, 0.45, 0.35)
-	eye.emission_energy_multiplier = 0.25
-	var p := {"eye_mat": eye}
-	var hips := Node3D.new()
-	hips.position = Vector3(0, 1.05, 0)
-	root.add_child(hips)
-	p["hips"] = hips
-	BuildKit.sphere(hips, 0.13, Vector3.ZERO, skin_dark, Vector3(1.2, 0.8, 0.9), 10)
-	# Rumpf: schmal, leicht nach vorn gebeugt
-	var torso := Node3D.new()
-	torso.rotation_degrees.x = 8.0
-	hips.add_child(torso)
-	p["torso"] = torso
-	BuildKit.cylinder(torso, 0.1, 0.62, Vector3(0, 0.33, 0), skin, false, Vector3.ZERO, 0.15, 10)
-	BuildKit.sphere(torso, 0.16, Vector3(0, 0.62, 0), skin, Vector3(1.25, 0.55, 0.8), 10)
-	for i in 4:
-		BuildKit.box(torso, Vector3(0.2, 0.012, 0.02), Vector3(0, 0.32 + i * 0.06, 0.1), skin_dark, false)
-	# Hals und Kopf
-	var neck := Node3D.new()
-	neck.position = Vector3(0, 0.68, 0)
-	torso.add_child(neck)
-	p["neck"] = neck
-	BuildKit.cylinder(neck, 0.035, 0.22, Vector3(0, 0.1, 0), skin, false, Vector3.ZERO, 0.03, 8)
-	var head := Node3D.new()
-	head.position = Vector3(0, 0.22, 0.02)
-	neck.add_child(head)
-	p["head"] = head
-	BuildKit.sphere(head, 0.2, Vector3(0, 0.16, 0), skin, Vector3(1.0, 1.15, 1.05), 16)
-	BuildKit.cylinder(head, 0.15, 0.2, Vector3(0, -0.02, 0.02), skin, false, Vector3(8, 0, 0), 0.04, 12)
-	for side: float in [-1.0, 1.0]:
-		var e := BuildKit.sphere(head, 0.075, Vector3(side * 0.085, 0.1, 0.16), eye, Vector3(1.0, 0.55, 0.45), 12)
-		e.rotation_degrees = Vector3(0, side * 15.0, side * -28.0)
-	BuildKit.box(head, Vector3(0.05, 0.006, 0.01), Vector3(0, -0.06, 0.16), skin_dark, false)
-	# Arme: lang, bis zu den Knien
-	for side: float in [-1.0, 1.0]:
-		var sh := Node3D.new()
-		sh.position = Vector3(side * 0.19, 0.6, 0)
-		torso.add_child(sh)
-		p["arm_%d" % int(side)] = sh
-		BuildKit.cylinder(sh, 0.035, 0.42, Vector3(0, -0.21, 0), skin, false, Vector3.ZERO, 0.03, 8)
-		var el := Node3D.new()
-		el.position = Vector3(0, -0.42, 0)
-		sh.add_child(el)
-		p["forearm_%d" % int(side)] = el
-		BuildKit.cylinder(el, 0.028, 0.42, Vector3(0, -0.21, 0), skin, false, Vector3.ZERO, 0.022, 8)
-		for f in 3:
-			var finger := BuildKit.cylinder(el, 0.009, 0.17, Vector3((f - 1) * 0.02, -0.5, 0.01 * f), skin_dark, false, Vector3((f - 1) * 6.0, 0, (f - 1) * 8.0), 0.005, 5)
-			finger.name = "finger"
-	# Beine
-	for side: float in [-1.0, 1.0]:
-		var hip := Node3D.new()
-		hip.position = Vector3(side * 0.09, 0, 0)
-		hips.add_child(hip)
-		p["leg_%d" % int(side)] = hip
-		BuildKit.cylinder(hip, 0.045, 0.5, Vector3(0, -0.25, 0), skin, false, Vector3.ZERO, 0.035, 8)
-		var knee := Node3D.new()
-		knee.position = Vector3(0, -0.5, 0)
-		hip.add_child(knee)
-		p["knee_%d" % int(side)] = knee
-		BuildKit.cylinder(knee, 0.035, 0.52, Vector3(0, -0.26, 0), skin, false, Vector3.ZERO, 0.025, 8)
-		BuildKit.box(knee, Vector3(0.06, 0.03, 0.16), Vector3(0, -0.53, 0.04), skin_dark, false)
-	for vi in root.find_children("*", "GeometryInstance3D", true, false):
-		(vi as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-	return p
+	return CreatureModel.build(root)
 
 
 func _ready() -> void:

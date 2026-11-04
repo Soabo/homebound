@@ -36,6 +36,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"moss": img = _moss()
 		"corn_leaf": img = _corn_leaf()
 		"car_paint": img = _car_paint()
+		"alien_skin": img = _alien_skin()
 		_:
 			img = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.MAGENTA)
@@ -417,6 +418,36 @@ static func _moss() -> Image:
 				c = Color(0.42, 0.5, 0.2)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
+	return img
+
+
+## Haut der Kreatur: fahles Grau mit Flecken, feinen Falten und dunklen Adern.
+static func _alien_skin() -> Image:
+	var img := _img()
+	var r := _rng(66)
+	var n := FastNoiseLite.new()
+	n.seed = 66
+	n.frequency = 0.09
+	for y in SIZE:
+		for x in SIZE:
+			var v := n.get_noise_2d(x, y) * 0.5 + 0.5
+			var c := Color(0.6, 0.63, 0.58).lerp(Color(0.48, 0.5, 0.47), v)
+			# feine Querfalten
+			if (y + int(n.get_noise_2d(x * 2.0, 7.0) * 3.0)) % 9 == 0:
+				c *= 0.88
+			c *= r.randf_range(0.95, 1.04)
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
+	# Adern: verzweigte dunkle Linien
+	for k in 7:
+		var p := Vector2(r.randf_range(0, SIZE), r.randf_range(0, SIZE))
+		var a := r.randf() * TAU
+		for s in 40:
+			a += r.randf_range(-0.45, 0.45)
+			p += Vector2(cos(a), sin(a))
+			var px := posmod(int(p.x), SIZE)
+			var py := posmod(int(p.y), SIZE)
+			var old := img.get_pixel(px, py)
+			img.set_pixel(px, py, old.lerp(Color(0.32, 0.36, 0.42), 0.55))
 	return img
 
 

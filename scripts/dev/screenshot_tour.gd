@@ -38,6 +38,9 @@ const SHOTS := [
 	{"name": "24_schuppendach", "hour": 15.5, "pos": Vector3(8.6, 0.0, 1.6), "look": Vector3(14.0, 2.0, 6.5)},
 	{"name": "25_bach_verlauf", "hour": 15.0, "pos": Vector3(30.0, 0.0, -14.0), "look": Vector3(36.0, -1.5, 6.0)},
 	{"name": "26_kamera_schuppen", "hour": 15.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 2},
+	{"name": "27_kreatur_nah_tag", "hour": 13.0, "pos": Vector3(3.0, 0.0, 9.8), "look": Vector3(3.0, 1.6, 11.6), "creature_at": Vector3(3.0, 0, 11.6)},
+	{"name": "28_kreatur_seite_tag", "hour": 13.0, "pos": Vector3(4.6, 0.0, 10.6), "look": Vector3(3.0, 1.3, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "creature_face": Vector3(-3.0, 0, 13.0)},
+	{"name": "29_kreatur_nacht_taschenlampe", "hour": 23.0, "pos": Vector3(3.0, 0.0, 9.6), "look": Vector3(3.0, 1.7, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "flashlight": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -84,7 +87,7 @@ func _run() -> void:
 			get_tree().current_scene.add_child(creature)
 			creature.global_position = Creature._ground(shot["creature_at"])
 			creature.set_physics_process(false)
-			var face: Vector3 = pos
+			var face: Vector3 = shot.get("creature_face", pos)
 			face.y = creature.global_position.y
 			creature.look_at(face, Vector3.UP)
 			creature.rotate_y(PI)
