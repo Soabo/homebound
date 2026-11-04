@@ -2,6 +2,7 @@
 ## Aufruf: python3 prepare.py oneshot|long ZIELPRAEFIX DATEI...
 ##   oneshot: kurze Laute (Schrei, Schmerz) – Anfang/Ende knapp beschnitten
 ##   long:    Atmen/Klicken – bleibt lang, das Spiel spielt zufällige Ausschnitte daraus
+##   land:    Sprung/Landung – beginnt am lautesten Aufprall (leises Abspringen davor fällt weg)
 import sys, os, subprocess, numpy as np
 from scipy.signal import butter, sosfilt
 sys.path.insert(0, os.path.dirname(__file__)); from analyze import load, SR
@@ -16,13 +17,17 @@ for i, f in enumerate(sorted(files)):
     top = db.max()
     on = np.where(db > top - (40 if mode == "oneshot" else 45))[0]
     a = max(0, on[0]*HOP - int(0.01*SR)); b = min(len(x), (on[-1]+1)*HOP + int(0.05*SR))
+    if mode == "land":
+        k = int(np.argmax(db)); j = k
+        while j > 0 and k - j < int(0.06*SR/HOP) and db[j-1] > top - 25: j -= 1
+        a = max(0, j*HOP - int(0.01*SR))
     y = x[a:b].copy()
     fi, fo = int(0.005*SR), int(min(0.12, len(y)/SR*0.2)*SR)
     y[:fi] *= np.linspace(0, 1, fi); y[-fo:] *= np.linspace(1, 0, fo)**2
     mm = len(y)//HOP
     e = np.sqrt(np.mean(y[:mm*HOP].reshape(mm, HOP)**2, axis=1))
-    ref = e.max() if mode == "oneshot" else np.percentile(e, 95)
-    y *= (0.3 if mode == "oneshot" else 0.22) / (ref + 1e-6)
+    ref = np.percentile(e, 95) if mode == "long" else e.max()
+    y *= {"oneshot": 0.3, "long": 0.22, "land": 0.22}[mode] / (ref + 1e-6)
     pk = np.abs(y).max()
     if pk > 0.97: y *= 0.97 / pk
     out = f"{prefix}_{i+1:02d}.ogg"

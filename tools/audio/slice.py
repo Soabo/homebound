@@ -7,7 +7,8 @@ SRC, OUT = sys.argv[1], sys.argv[2]
 KEEP = int(sys.argv[3]) if len(sys.argv) > 3 else 12
 ## Optional: alle Dateien in eine Gruppe, z. B. "creature/step" -> ZIEL/creature/step_NN.ogg
 FORCED = sys.argv[4].split("/") if len(sys.argv) > 4 else None
-SURF = {"carpet": "carpet", "forest floor": "forest", "grass": "grass", "wooden floor": "wood", "wooden porch": "porch"}
+SURF = {"carpet": "carpet", "forest floor": "forest", "grass": "grass", "wooden floor": "wood", "wooden porch": "porch",
+        "gravel": "gravel", "soil": "soil", "stones": "stone", "flat water": "water"}
 HOP = 240
 hp = butter(4, 70, "highpass", fs=SR, output="sos")
 

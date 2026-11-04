@@ -200,6 +200,7 @@ func _physics_process(delta: float) -> void:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 		if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching:
 			velocity.y = jump_velocity
+			Footsteps.play_jump(get_parent(), global_position)
 	var wants_sprint := not crouching and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
 	if Survival.stamina <= 0.0:
 		_exhausted = true
@@ -216,11 +217,10 @@ func _physics_process(delta: float) -> void:
 	var fall_speed := -velocity.y
 	var was_airborne := not is_on_floor()
 	move_and_slide()
-	# Landung nach Sprung oder Sturz: zwei schnelle, kräftigere Schritte
+	# Landung nach Sprung oder Sturz, je nach Untergrund
 	if was_airborne and is_on_floor() and fall_speed > 3.0:
 		var extra := clampf((fall_speed - 3.0) * 1.5, 0.0, 6.0)
-		Footsteps.play(get_parent(), global_position, "run", 4.0 + extra)
-		get_tree().create_timer(0.07).timeout.connect(_landing_second_step.bind(extra))
+		Footsteps.play_landing(get_parent(), global_position, extra)
 
 	# Kopfwippen beim Gehen
 	var horizontal := Vector2(velocity.x, velocity.z).length()
@@ -284,10 +284,6 @@ func _footstep(speed: float, crouching: bool = false) -> void:
 	# Rennen draußen ist laut (GDD 9.4)
 	if speed > walk_speed + 0.5 and not indoor:
 		EventBus.noise_made.emit(global_position, 16.0)
-
-
-func _landing_second_step(extra: float) -> void:
-	Footsteps.play(get_parent(), global_position, "run", extra)
 
 
 func take_damage(amount: float, from: Vector3) -> void:
