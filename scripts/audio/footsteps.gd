@@ -39,6 +39,8 @@ static func surface_at(p: Vector3) -> String:
 		return "wood"
 	if p.y > 0.08 and PORCH.has_point(Vector2(p.x, p.z)):
 		return "porch"
+	if CornField.is_inside(p.x, p.z):
+		return "forest"  # trockene Erde und raschelndes Laub
 	if YARD.has_point(Vector2(p.x, p.z)):
 		return "grass"
 	return "forest"

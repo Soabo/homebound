@@ -157,11 +157,6 @@ func _build_ground_plants() -> void:
 	var grass_cols: Array[Color] = []
 	var ferns: Array[Transform3D] = []
 	var fern_cols: Array[Color] = []
-	var bush_mesh := SphereMesh.new()
-	bush_mesh.radius = 1.0
-	bush_mesh.height = 2.0
-	bush_mesh.radial_segments = 7
-	bush_mesh.rings = 4
 	var bushes: Array[Transform3D] = []
 	var bush_cols: Array[Color] = []
 	var flower_mesh := SphereMesh.new()
@@ -213,8 +208,8 @@ func _build_ground_plants() -> void:
 			continue
 		var g := Terrain.height_at(x, z)
 		var s := _rng.randf_range(0.5, 1.2)
-		bushes.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 1.3, s * 0.75, s * 1.2)), Vector3(x, g + s * 0.3, z)))
-		bush_cols.append(Color(0.5, 0.75, 0.4).lerp(Color(0.8, 0.95, 0.55), _rng.randf()))
+		bushes.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
+		bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), _rng.randf()))
 
 	# Kleine weiße und gelbe Blüten am Waldrand und am Bach
 	tries = 0
@@ -240,7 +235,14 @@ func _build_ground_plants() -> void:
 	var fern_mat := BuildKit.cutout_mat("fern")
 	_add_multimesh("Grass", cross, grass, grass_cols, grass_mat, false)
 	_add_multimesh("Ferns", cross, ferns, fern_cols, fern_mat, false)
-	_add_multimesh("Bushes", bush_mesh, bushes, bush_cols, _textured("grass_ground", 0.5), true)
+	# Drei Buschformen im Wechsel
+	for v in 3:
+		var tv: Array[Transform3D] = []
+		var cv: Array[Color] = []
+		for i in range(v, bushes.size(), 3):
+			tv.append(bushes[i])
+			cv.append(bush_cols[i])
+		_add_multimesh("Bushes%d" % v, bush_mesh(300 + v * 7), tv, cv, null, true)
 	var flower_mat := StandardMaterial3D.new()
 	flower_mat.vertex_color_use_as_albedo = true
 	flower_mat.roughness = 1.0
@@ -448,11 +450,106 @@ static func _leaf_cluster_mesh() -> ArrayMesh:
 	return st.commit()
 
 
+## Detaillierter Busch (ca. 1,2 m hoch, Fuß bei y = 0): dichter dunkler Kern, Zweige
+## am Boden und viele Blattbüschel, die nach außen zeigen. Oben heller, unten dunkler.
+static func bush_mesh(seed_value: int) -> ArrayMesh:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_value
+	var mesh := ArrayMesh.new()
+	var center := Vector3(0, 0.62, 0)
+	var radii := Vector3(0.72, 0.55, 0.7)
+	# Kern: unregelmäßige Kugel
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var lat := 6
+	var lon := 9
+	var pts: Array = []
+	for i in lat + 1:
+		var row: Array[Vector3] = []
+		var phi := PI * float(i) / lat
+		for j in lon:
+			var theta := TAU * float(j) / lon
+			var d := Vector3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta))
+			var k := r.randf_range(0.82, 1.08) if i > 0 and i < lat else 1.0
+			row.append(center + d * radii * k)
+		pts.append(row)
+	for i in lat:
+		for j in lon:
+			var a: Vector3 = pts[i][j]
+			var b: Vector3 = pts[i][(j + 1) % lon]
+			var c: Vector3 = pts[i + 1][j]
+			var d: Vector3 = pts[i + 1][(j + 1) % lon]
+			for v: Vector3 in [a, d, c, a, b, d]:
+				var n := (v - center).normalized()
+				st.set_color(Color(1, 1, 1) * lerpf(0.35, 0.75, clampf(v.y / 1.1, 0.0, 1.0)))
+				st.set_normal(n)
+				st.set_uv(Vector2(v.x + v.z, v.y))
+				st.add_vertex(v)
+	# Zweige vom Boden in den Busch
+	for k in 6:
+		var a := r.randf() * TAU
+		var top := center + Vector3(cos(a) * 0.45, r.randf_range(-0.1, 0.25), sin(a) * 0.45)
+		var base := Vector3(cos(a) * 0.08, 0.0, sin(a) * 0.08)
+		var dir := (top - base).normalized()
+		var side := dir.cross(Vector3.UP).normalized() * 0.022
+		var side2 := dir.cross(side).normalized() * 0.022
+		for q: Array in [[side, side2], [side2, -side], [-side, -side2], [-side2, side]]:
+			var p0: Vector3 = base + q[0]
+			var p1: Vector3 = base + q[1]
+			var p2: Vector3 = top + q[1] * 0.4
+			var p3: Vector3 = top + q[0] * 0.4
+			var n: Vector3 = ((q[0] + q[1]) as Vector3).normalized()
+			for v: Vector3 in [p0, p2, p1, p0, p3, p2]:
+				st.set_color(Color(0.28, 0.2, 0.14))
+				st.set_normal(n)
+				st.set_uv(Vector2(v.x, v.y))
+				st.add_vertex(v)
+	st.commit(mesh)
+	var core := StandardMaterial3D.new()
+	core.albedo_texture = TextureFactory.get_texture("moss")
+	core.albedo_color = Color(0.75, 0.95, 0.65)
+	core.vertex_color_use_as_albedo = true
+	core.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	core.uv1_scale = Vector3(2.0, 2.0, 2.0)
+	core.roughness = 1.0
+	mesh.surface_set_material(0, core)
+	# Blattbüschel
+	var lt := SurfaceTool.new()
+	lt.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var cards := 38
+	for k in cards:
+		# Punkte auf der Hülle, eher oben und seitlich
+		var phi := acos(clampf(r.randf_range(-0.45, 1.0), -1.0, 1.0))
+		var theta := r.randf() * TAU
+		var d := Vector3(sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta))
+		var c := center + d * radii * r.randf_range(0.85, 1.1)
+		var size := r.randf_range(0.5, 0.72)
+		var normal := (d + Vector3(r.randf_range(-0.4, 0.4), r.randf_range(-0.2, 0.5), r.randf_range(-0.4, 0.4))).normalized()
+		var tangent := normal.cross(Vector3.UP if absf(normal.y) < 0.95 else Vector3.RIGHT).normalized()
+		tangent = tangent.rotated(normal, r.randf() * TAU)
+		var bitan := normal.cross(tangent).normalized()
+		var hs := size * 0.5
+		var quad := [c - tangent * hs - bitan * hs, c + tangent * hs - bitan * hs, c + tangent * hs + bitan * hs, c - tangent * hs + bitan * hs]
+		var uvs := [Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]
+		var shade := lerpf(0.55, 1.1, clampf((c.y - 0.15) / 1.0, 0.0, 1.0)) * r.randf_range(0.85, 1.1)
+		for idx: int in [0, 2, 1, 0, 3, 2]:
+			var v: Vector3 = quad[idx]
+			lt.set_color(Color(1, 1, 1) * shade)
+			lt.set_normal((v - center).normalized().lerp(Vector3.UP, 0.25).normalized())
+			lt.set_uv(uvs[idx])
+			lt.add_vertex(v)
+	lt.commit(mesh)
+	mesh.surface_set_material(1, BuildKit.cutout_mat("leaves"))
+	return mesh
+
+
 ## Keine Pflanzen auf Wegen, im Haus, im Schuppen oder im Wasser.
 static func _blocked_for_plants(x: float, z: float) -> bool:
 	if absf(x) < 7.2 and z > -5.2 and z < 7.8:
 		return true
 	if absf(x - Shed.ORIGIN.x) < 2.6 and absf(z - Shed.ORIGIN.z) < 2.3:
+		return true
+	if CornField.is_inside(x, z):
 		return true
 	if z > 6.5 and Terrain.road_distance(x, z) < 2.2:
 		return true

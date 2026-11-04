@@ -8,7 +8,7 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 | Threat Director | Autoload `ThreatDirector` + `ThreatConfig` (`data/threat/`) | ✅ Bedrohungsstufe, Nacht-Intensität, Ereignisplan, Schlaf-Störungen, Lernspeicher |
 | Alien AI | `Creature` (`scripts/creature/`), Wegpunkt-Ring ums Haus, Zustandsautomat | ✅ erste Kreatur: Sicht/Licht/Gehör, Zugänge angreifen, Verfolgung |
 | Power (GDD 7.4) | Autoload `PowerManager` | ✅ Generator, Benzin, Verbraucher, Ausfall |
-| Überwachung (GDD 7.5) | `Surveillance` + `SecurityCamera` + `MonitorStation` | ✅ 3 Kameras, Störungen, Trugbilder (Sichtebene 2) |
+| Überwachung (GDD 7.5) | `Surveillance` + `SecurityCamera` + `MonitorStation` | ✅ 3 Kameras an Wandhaltern (Hausfront, Garten, Maisfeld), Gehäuse auf Sichtebene 4 (nicht im Kamerabild), Störungen, Trugbilder (Sichtebene 2) |
 | World State Manager | Autoload, Terraforming-Zustand | ⏳ Phase 8 |
 | Base Building Manager | Autoload `Builder` + `BuildController` + `Structure` | ✅ freies Platzieren, Hindernisse, Fallen, Alarm, Licht; Daten in `data/items/buildables.json` |
 | Research Manager | Autoload + Forschungsobjekte als Ressourcen | ⏳ Phase 7 |
@@ -33,6 +33,10 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 Alles in der Gruppe `entry_point` bietet: `outside_point()`, `inside_point()`, `strength()`,
 `is_breached()`, `receive_hit(dmg)`, `entry_name()`. Neue Zugänge (z. B. Kellerluke)
 funktionieren dadurch automatisch mit der Kreaturen-KI.
+
+## Erkennbarkeit
+- `InteractFrame` (HUD): feine Eckklammern um die Kollisionsform des anvisierten, benutzbaren Objekts.
+- `Icons`: Pixel-Symbole als Aufkleber (`Icons.decal`) – fuel, food, water, nails, power; `Icons.food_can` für Dosen.
 
 ## Tests
 - `-- --walk-test`: läuft durch alle Türen und das Tor

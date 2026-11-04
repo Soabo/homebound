@@ -200,6 +200,38 @@ static func sphere(parent: Node, radius: float, pos: Vector3, mat: Material,
 	return mi
 
 
+## Drehkörper aus einem Profil (x = Radius, y = Höhe), z. B. Fässer, Reifen, Kannen.
+static func lathe(parent: Node, profile: PackedVector2Array, pos: Vector3, mat: Material,
+		segments: int = 16, rot_deg: Vector3 = Vector3.ZERO) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in profile.size() - 1:
+		var a := profile[i]
+		var b := profile[i + 1]
+		var slope := Vector2(b.y - a.y, -(b.x - a.x)).normalized()
+		for k in segments:
+			var t0 := TAU * k / segments
+			var t1 := TAU * (k + 1) / segments
+			var d0 := Vector3(cos(t0), 0, sin(t0))
+			var d1 := Vector3(cos(t1), 0, sin(t1))
+			var q := [d0 * a.x + Vector3(0, a.y, 0), d1 * a.x + Vector3(0, a.y, 0),
+					d1 * b.x + Vector3(0, b.y, 0), d0 * b.x + Vector3(0, b.y, 0)]
+			var n := [d0 * slope.x + Vector3(0, slope.y, 0), d1 * slope.x + Vector3(0, slope.y, 0)]
+			var uv := [Vector2(float(k) / segments, a.y), Vector2(float(k + 1) / segments, a.y),
+					Vector2(float(k + 1) / segments, b.y), Vector2(float(k) / segments, b.y)]
+			for idx: int in [0, 2, 1, 0, 3, 2]:
+				st.set_normal(n[0] if idx == 0 or idx == 3 else n[1])
+				st.set_uv(uv[idx])
+				st.add_vertex(q[idx])
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.position = pos
+	mi.rotation_degrees = rot_deg
+	parent.add_child(mi)
+	return mi
+
+
 ## Unsichtbarer Kollisionskörper, z. B. als Rampe unter einer Treppe.
 static func collider_box(parent: Node, size: Vector3, pos: Vector3, rot_deg: Vector3 = Vector3.ZERO) -> StaticBody3D:
 	var body := StaticBody3D.new()

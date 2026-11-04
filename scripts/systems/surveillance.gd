@@ -32,7 +32,8 @@ func _ready() -> void:
 	camera = Camera3D.new()
 	camera.fov = 72.0
 	camera.far = 120.0
-	camera.cull_mask = 0xFFFFF
+	# ohne Kameragehäuse (sonst sieht man die eigene Kamera von innen)
+	camera.cull_mask = 0xFFFFF & ~SecurityCamera.BODY_LAYER
 	viewport.add_child(camera)
 	_env = Environment.new()
 	_env.background_mode = Environment.BG_COLOR

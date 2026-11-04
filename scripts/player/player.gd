@@ -22,6 +22,8 @@ var input_locked: bool = false
 var health: float = 100.0
 const MAX_HEALTH := 100.0
 var current_interactable: Interactable = null
+## Der Kollisionskörper, den das Fadenkreuz gerade trifft
+var current_target_body: CollisionObject3D = null
 
 var _ray: RayCast3D
 var _shape: CollisionShape3D
@@ -313,14 +315,22 @@ func _blocked_above() -> bool:
 
 func _update_interaction() -> void:
 	var found: Interactable = null
+	var body: CollisionObject3D = null
 	if not input_locked and _ray.is_colliding():
-		var node: Node = _ray.get_collider() as Node
+		body = _ray.get_collider() as CollisionObject3D
+		var node: Node = body
 		while node != null and not (node is Interactable):
 			node = node.get_parent()
 		found = node as Interactable
 	if found != current_interactable:
 		current_interactable = found
+	current_target_body = body if found else null
 	_update_prompt(false)
+
+
+## Gibt es gerade etwas Benutzbares im Fadenkreuz? (für den feinen Rahmen im HUD)
+func has_usable_target() -> bool:
+	return current_interactable != null and is_instance_valid(current_target_body) and _last_prompt != "" and not _building()
 
 
 func _update_prompt(force: bool) -> void:

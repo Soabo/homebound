@@ -672,6 +672,10 @@ func _build_storage() -> void:
 		var sy := y + 0.05 + level * (2.05 / 5.0)
 		var x := -0.75
 		while x < 1.7:
+			# Platz für die beschrifteten Kisten (Konserven, Wasser) auf der mittleren Ebene
+			if level == 2 and ((x > -0.12 and x < 0.48) or (x > 0.95 and x < 1.45)):
+				x += 0.05
+				continue
 			var c: Color = colors[_rng.randi() % colors.size()]
 			if _rng.randf() < 0.5:
 				BuildKit.cylinder(self, 0.05, 0.13, Vector3(x, sy + 0.065, -4.12), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
@@ -681,8 +685,26 @@ func _build_storage() -> void:
 				BuildKit.box(self, Vector3(w, _rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
 				x += w + 0.05
 	# Vorräte zum Mitnehmen: Konserven, Wasserflaschen, leere Dosen
-	_pickup("FoodShelf", "food", 6, 1, Vector3(0.2, y + 0.9, -4.12), Vector3(0.6, 0.25, 0.35), BuildKit.tex_mat("metal", 0.2, Color(1.6, 1.3, 0.9), 0.4))
-	_pickup("WaterBottles", "water", 4, 1, Vector3(1.2, y + 0.9, -4.12), Vector3(0.45, 0.3, 0.3), BuildKit.color_mat(Color(0.5, 0.7, 0.8), 0.1))
+	# Konserven in einer Kiste mit "FOOD"-Etikett, Wasserflaschen in einer Kiste mit Tropfen-Symbol
+	var food := _crate_pickup("FoodShelf", "food", 6, 1, Vector3(0.2, y + 0.9, -4.12), Vector3(0.44, 0.08, 0.27), "food", Vector3(0, 0, 1))
+	for i in 6:
+		var c := Node3D.new()
+		food.add_child(c)
+		Icons.food_can(c, Vector3(0.2 - 0.14 + (i % 3) * 0.14, y + 0.915, -4.12 - 0.06 + (i / 3) * 0.12))
+		food.visuals.append(c)
+	var water := _crate_pickup("WaterBottles", "water", 4, 1, Vector3(1.2, y + 0.9, -4.12), Vector3(0.36, 0.08, 0.26), "water", Vector3(0, 0, 1))
+	var bottle_mat := BuildKit.color_mat(Color(0.45, 0.65, 0.8), 0.1)
+	var cap_mat := BuildKit.color_mat(Color(0.15, 0.3, 0.7), 0.5)
+	for i in 4:
+		var b := Node3D.new()
+		water.add_child(b)
+		var bp := Vector3(1.2 - 0.08 + (i % 2) * 0.16, y + 0.915, -4.12 - 0.055 + (i / 2) * 0.11)
+		var bm := BuildKit.lathe(b, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.95, 0.0), Vector2(1.0, 0.05), Vector2(1.0, 0.62),
+				Vector2(0.45, 0.82), Vector2(0.35, 0.9), Vector2(0.0, 0.9)]), bp, bottle_mat, 10)
+		bm.scale = Vector3(0.045, 0.26, 0.045)
+		BuildKit.cylinder(b, 0.018, 0.03, bp + Vector3(0, 0.245, 0), cap_mat, false, Vector3.ZERO, -1.0, 8)
+		BuildKit.cylinder(b, 0.0455, 0.07, bp + Vector3(0, 0.1, 0), BuildKit.color_mat(Color(0.85, 0.9, 0.95), 0.6), false, Vector3.ZERO, -1.0, 10)
+		water.visuals.append(b)
 	_pickup("EmptyCans", "cans", 8, 4, Vector3(1.45, y + 0.8, -1.6), Vector3(0.4, 0.2, 0.4), BuildKit.tex_mat("metal", 0.2, Color(1.5, 1.5, 1.5), 0.4))
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.3), sack, Vector3(1.0, 0.8, 0.8), 10)
@@ -711,6 +733,8 @@ func _build_technical_room() -> void:
 	BuildKit.cylinder(gen, 0.06, 0.04, Vector3(4.4, y + 0.84, -3.82), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
 	BuildKit.cylinder(gen, 0.04, 0.9, Vector3(5.15, y + 0.75, -4.25), frame, false, Vector3.ZERO, -1.0, 6)
 	BuildKit.box_mm(gen, Vector3(4.95, y + 0.2, -3.48), Vector3(5.3, y + 0.5, -3.44), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
+	Icons.decal(gen, "fuel", 0.18, Vector3(4.35, y + 0.72, -3.5), Vector3(0, 0, 1))
+	Icons.decal(gen, "power", 0.12, Vector3(5.125, y + 0.37, -3.44), Vector3(0, 0, 1))
 	# Sicherungskasten mit Kabeln
 	var ex := HALF_X - CLAD
 	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
@@ -735,7 +759,14 @@ func _build_workshop() -> void:
 	bench.anchor = Vector3(5.5, y + 0.92, 1.7)
 	add_child(bench)
 	# Kiste mit Nägeln
-	_pickup("NailBox", "nails", 24, 12, Vector3(5.6, y + 0.92, 3.1), Vector3(0.3, 0.15, 0.25), BuildKit.tex_mat("planks_h", 0.4, Color(0.9, 0.85, 0.8)))
+	var nails := _crate_pickup("NailBox", "nails", 24, 12, Vector3(5.6, y + 0.92, 3.1), Vector3(0.25, 0.14, 0.3), "nails", Vector3(-1, 0, 0))
+	var heap := Node3D.new()
+	nails.add_child(heap)
+	var nail_mat := BuildKit.color_mat(Color(0.45, 0.45, 0.47), 0.5, 0.6)
+	for k in 18:
+		BuildKit.box(heap, Vector3(0.006, 0.006, 0.07), Vector3(5.6 + _rng.randf_range(-0.09, 0.09), y + 1.07 + _rng.randf_range(0.0, 0.015), 3.1 + _rng.randf_range(-0.12, 0.12)),
+				nail_mat, false, Vector3(_rng.randf_range(-20, 20), _rng.randf() * 180.0, 0))
+	nails.visuals.append(heap)
 	# Säge, Hammer, Hobel auf der Werkbank
 	BuildKit.box(self, Vector3(0.12, 0.01, 0.6), Vector3(5.5, y + 0.93, 1.2), BuildKit.tex_mat("metal", 0.3, Color(1.4, 1.4, 1.4), 0.3), false, Vector3(0, 10, 0))
 	BuildKit.box(self, Vector3(0.1, 0.05, 0.15), Vector3(5.5, y + 0.95, 0.85), m_wood, false)
@@ -809,6 +840,34 @@ func _pickup(n: String, item: String, amount: int, per_take: int, at: Vector3, b
 	return p
 
 
+## Kiste mit Etikett als Vorrat zum Mitnehmen. Die Kiste ist das erste sichtbare Teil
+## (verschwindet erst, wenn alles weg ist); der Inhalt wird vom Aufrufer als weitere Teile angehängt.
+func _crate_pickup(n: String, item: String, amount: int, per_take: int, at: Vector3, box_size: Vector3,
+		label_kind: String, facing: Vector3) -> ItemPickup:
+	var p := ItemPickup.new()
+	p.name = n
+	p.item_id = item
+	p.amount = amount
+	p.per_take = per_take
+	p.collider_size = box_size + Vector3(0.1, 0.22, 0.1)
+	p.collider_offset = at + Vector3(0, 0.11, 0)
+	add_child(p)
+	var crate := Node3D.new()
+	p.add_child(crate)
+	var card := BuildKit.tex_mat("fabric", 0.3, Color(1.45, 1.2, 0.85))
+	var hx := box_size.x * 0.5
+	var hz := box_size.z * 0.5
+	BuildKit.box_mm(crate, at + Vector3(-hx, 0, -hz), at + Vector3(hx, 0.012, hz), card, false)
+	for side: float in [-1.0, 1.0]:
+		BuildKit.box_mm(crate, at + Vector3(-hx, 0, side * hz - 0.006), at + Vector3(hx, box_size.y, side * hz + 0.006), card, false)
+		BuildKit.box_mm(crate, at + Vector3(side * hx - 0.006, 0, -hz), at + Vector3(side * hx + 0.006, box_size.y, hz), card, false)
+	var f := facing.normalized()
+	var face := at + Vector3(f.x * (hx + 0.007), box_size.y * 0.5, f.z * (hz + 0.007))
+	Icons.decal(crate, label_kind, minf(maxf(box_size.x, box_size.z) * 0.8, 0.22), face + Vector3(0, 0.02, 0), f)
+	p.visuals.append(crate)
+	return p
+
+
 ## Roter Benzinkanister zum Aufheben (auch vom Schuppen genutzt).
 static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0, node_name: String = "FuelCan") -> ItemPickup:
 	var p := ItemPickup.new()
@@ -821,10 +880,20 @@ static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0, node_name: 
 	p.rotation_degrees.y = rot_y
 	parent.add_child(p)
 	var can := BuildKit.tex_mat("metal", 0.3, Color(1.8, 0.5, 0.35), 0.5)
-	var body := BuildKit.box(p, Vector3(0.35, 0.45, 0.2), Vector3(0, 0.225, 0), can, false)
+	var body := BuildKit.box(p, Vector3(0.35, 0.42, 0.2), Vector3(0, 0.21, 0), can, false)
 	p.visuals.append(body)
-	BuildKit.box(body, Vector3(0.15, 0.05, 0.04), Vector3(0, 0.25, 0), can, false)
-	BuildKit.cylinder(body, 0.025, 0.08, Vector3(0.12, 0.25, 0), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3(0, 0, -30), -1.0, 6)
+	# geprägtes X auf beiden Seiten, Schweißnaht rundum
+	for zs: float in [-1.0, 1.0]:
+		for a: float in [52.0, -52.0]:
+			BuildKit.box(body, Vector3(0.44, 0.022, 0.01), Vector3(0, 0, zs * 0.102), can, false, Vector3(0, 0, a))
+		Icons.decal(body, "fuel", 0.24, Vector3(0, 0.0, zs * 0.108), Vector3(0, 0, zs))
+	BuildKit.box(body, Vector3(0.36, 0.43, 0.012), Vector3(0, 0, 0), can, false)
+	# Dreifach-Griff oben, Ausguss mit Verschluss an der Ecke
+	BuildKit.box(body, Vector3(0.22, 0.03, 0.05), Vector3(-0.03, 0.29, 0), can, false)
+	for x: float in [-0.13, -0.03, 0.07]:
+		BuildKit.box(body, Vector3(0.025, 0.08, 0.04), Vector3(x, 0.25, 0), can, false)
+	BuildKit.cylinder(body, 0.03, 0.06, Vector3(0.13, 0.24, 0), can, false, Vector3(0, 0, -25), -1.0, 8)
+	BuildKit.cylinder(body, 0.034, 0.03, Vector3(0.145, 0.28, 0), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3(0, 0, -25), -1.0, 8)
 	return p
 
 

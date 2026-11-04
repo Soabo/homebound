@@ -43,7 +43,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du rüber und neu starten.
 - **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
 - **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
-- **Kameras:** Am Monitor im Wohnzimmer siehst du Veranda, Garten hinten und Schuppen. Traue nicht allem, was du siehst.
+- **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und das Maisfeld am Schuppen. Traue nicht allem, was du siehst.
 - **Licht:** Die Taschenlampe verrät dich – aber aus der Nähe blendet sie.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.
@@ -59,6 +59,12 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Hunger und Durst** sinken langsam: Konserven im Vorratsraum, trinken an Regentonne, Spüle oder Bach.
   Rennen kostet Ausdauer. Du kannst höchstens 40 kg tragen.
 - Was du gebaut und verbarrikadiert hast, bleibt auch nach einem Tod erhalten (Stand: Tagesbeginn).
+
+## Rund ums Haus
+
+- **Maisfeld** neben dem Schuppen bis an den Zaun – trocken, dicht, mit Vogelscheuche. Man sieht nicht, was darin steht.
+- **Benutzbares erkennen:** Zielst du aus der Nähe auf etwas Benutzbares, erscheint ein feiner Rahmen darum.
+- **Symbole:** Zapfhahn auf Benzinkanistern und am Generator-Tank, „FOOD“ auf Konserven, Wassertropfen auf Wasserflaschen, „NAILS“ auf der Nagelkiste.
 
 ## Sound
 

@@ -24,11 +24,17 @@ const SHOTS := [
 	{"name": "12_kreatur_waldrand", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 5.6), "look": Vector3(-3.5, 1.6, 15.0), "flashlight": true, "creature_at": Vector3(-3.5, 0, 14.0), "lights": true},
 	{"name": "13_monitor_veranda", "hour": 22.6, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "creature_at": Vector3(-4.0, 0, 13.0)},
 	{"name": "14_fenster_kaputt", "hour": 21.5, "pos": Vector3(0.0, 0.45, 2.6), "look": Vector3(0.0, 1.5, 4.5), "lights": true, "break_window": true, "creature_at": Vector3(0.2, 0, 5.4)},
-	{"name": "15_autowrack", "hour": 15.0, "pos": Vector3(0.5, 0.0, 27.5), "look": Vector3(4.6, 0.6, 33.0)},
+	{"name": "15_autowrack", "hour": 15.0, "pos": Vector3(1.6, 0.0, 29.6), "look": Vector3(4.6, 0.6, 33.0)},
 	{"name": "16_werkbank", "hour": 14.0, "pos": Vector3(4.2, 0.45, 1.7), "look": Vector3(5.6, 1.2, 1.7), "menu": "crafting"},
 	{"name": "17_verteidigung_nacht", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 6.0), "look": Vector3(-2.0, 0.6, 14.0), "lights": true, "flashlight": true,
 		"build": [["fence_panel", Vector3(-6.5, 0, 12.5), 0.2], ["spike_barricade", Vector3(-1.0, 0, 12.0), 0.0], ["stone_wall", Vector3(2.5, 0, 13.0), -0.3],
 			["can_alarm", Vector3(-3.0, 0, 15.5), 0.0], ["motion_light", Vector3(1.5, 0, 10.5), 2.6]], "creature_at": Vector3(-1.5, 0, 16.5)},
+	{"name": "18_maisfeld", "hour": 16.0, "pos": Vector3(8.0, 0.0, 5.5), "look": Vector3(17.0, 1.0, 12.5)},
+	{"name": "19_regentonne", "hour": 14.0, "pos": Vector3(8.7, 0.0, -0.9), "look": Vector3(6.9, 0.5, -2.6)},
+	{"name": "20_kamera_hausfront", "hour": 15.0, "pos": Vector3(4.2, 0.0, 9.0), "look": Vector3(5.6, 2.6, 4.9)},
+	{"name": "21_maisfeld_nacht_monitor", "hour": 23.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 2, "creature_at": Vector3(18.0, 0, 14.0)},
+	{"name": "22_vorrat_symbole", "hour": 21.0, "pos": Vector3(0.7, 0.45, -2.5), "look": Vector3(0.7, 1.35, -4.1), "lights": true},
+	{"name": "23_technik_kanister", "hour": 21.0, "pos": Vector3(3.5, 0.45, -2.6), "look": Vector3(2.975, 0.62, -4.2), "lights": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -91,6 +97,8 @@ func _run() -> void:
 			w.receive_hit(999.0)
 		if shot.get("monitor", false):
 			get_tree().call_group("hud", "open_monitor")
+			if shot.has("monitor_cam"):
+				get_tree().call_group("surveillance", "set_active", shot["monitor_cam"])
 		for f in frames:
 			await get_tree().process_frame
 		if shot.get("monitor", false):

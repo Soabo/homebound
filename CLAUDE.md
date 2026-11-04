@@ -10,6 +10,12 @@
   Windows: https://github.com/Soabo/homebound/releases/tag/neueste-version
   Browser: https://soabo.github.io/homebound/
 
+## Offene Fragen Phase 7 (Forschung) – vor Beginn von Christian beantworten lassen
+1. Analysegerät gefunden (z. B. Absturzstelle im Wald) oder aus dem alten Funkgerät umgebaut?
+2. Forschung passiv (Fund einlegen, warten) oder aktive Experimente (Strom, Licht, vergleichen) – Schwerpunkt?
+3. Story: erste Hinweise, was die Wesen wollen, oder bleibt es ganz rätselhaft?
+4. Phase-6-Wahl bestätigen: keine Waffen, Hunger/Durst sanft, freies Bauen.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -47,6 +47,8 @@ func _ready() -> void:
 	_hurt.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(_hurt)
 
+	root.add_child(InteractFrame.new())
+
 	var cross := ColorRect.new()
 	cross.color = Color(1, 1, 1, 0.55)
 	cross.mouse_filter = Control.MOUSE_FILTER_IGNORE

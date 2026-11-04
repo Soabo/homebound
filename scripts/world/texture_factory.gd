@@ -34,6 +34,8 @@ static func get_texture(kind: String) -> Texture2D:
 		"leaves": img = _leaves()
 		"log_end": img = _log_end()
 		"moss": img = _moss()
+		"corn_leaf": img = _corn_leaf()
+		"car_paint": img = _car_paint()
 		_:
 			img = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.MAGENTA)
@@ -415,6 +417,62 @@ static func _moss() -> Image:
 				c = Color(0.42, 0.5, 0.2)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
+	return img
+
+
+## Verblichener türkiser Autolack mit Rostflecken und Laufspuren nach unten.
+static func _car_paint() -> Image:
+	var img := _img()
+	var r := _rng(33)
+	var rust := Image.create(SIZE, SIZE, false, Image.FORMAT_RF)
+	# Rostflecken als Keime, die nach unten "auslaufen"
+	var spots: Array[Vector3] = []
+	for k in 9:
+		spots.append(Vector3(r.randf_range(0, SIZE), r.randf_range(0, SIZE), r.randf_range(3.0, 8.0)))
+	for y in SIZE:
+		for x in SIZE:
+			var v := 0.0
+			for sp in spots:
+				var dx := wrapf(x - sp.x, -SIZE * 0.5, SIZE * 0.5)
+				var dy := wrapf(y - sp.y, -SIZE * 0.5, SIZE * 0.5)
+				var d := Vector2(dx, dy * (0.45 if dy > 0 else 1.0)).length()
+				v = maxf(v, 1.0 - d / sp.z)
+			v += (r.randf() - 0.5) * 0.3
+			var c := Color(0.46, 0.6, 0.6) * r.randf_range(0.92, 1.05)
+			if v > 0.55:
+				c = Color(0.55, 0.3, 0.16) * r.randf_range(0.7, 1.1)
+			elif v > 0.35:
+				c = c.lerp(Color(0.7, 0.5, 0.35), 0.6)
+			if r.randf() < 0.01:
+				c = Color(0.95, 0.95, 0.92)
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
+	return img
+
+
+## Maisblatt: oben die Spitze, Mittelrippe, Längsadern, trockene Ränder und Risse.
+static func _corn_leaf() -> Image:
+	var img := _img()
+	img.fill(Color(0, 0, 0, 0))
+	var r := _rng(21)
+	for y in SIZE:
+		var t := float(y) / SIZE
+		var half := (SIZE * 0.5 - 1.0) * clampf(t * 3.2, 0.08, 1.0)
+		for x in SIZE:
+			var dx := absf(x - SIZE * 0.5 + 0.5)
+			if dx > half:
+				continue
+			# kleine Risse und Fraßlöcher
+			if r.randf() < 0.012 or (dx > half - 2.0 and r.randf() < 0.25):
+				continue
+			var c := Color(0.92, 0.95, 0.85) * r.randf_range(0.9, 1.05)
+			if dx < 1.0:
+				c = Color(1.0, 1.0, 0.9)
+			elif int(dx) % 5 == 0:
+				c = c * 0.82
+			# vertrocknete Ränder
+			if dx > half - 4.0:
+				c = c.lerp(Color(0.75, 0.6, 0.4), 0.6)
+			img.set_pixel(x, y, Color(c.r, c.g, c.b, 1.0))
 	return img
 
 

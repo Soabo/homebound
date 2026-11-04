@@ -96,13 +96,8 @@ func _build_props() -> void:
 				q.position = bed + Vector3(-0.9 + i * 0.45, 0.66, -0.3 + j * 0.6)
 				q.rotation_degrees.y = _rng.randf() * 180.0
 				add_child(q)
-	# Regentonne mit Eisenbändern
-	var barrel := BuildKit.tex_mat("planks_v", 0.5, Color(0.85, 0.8, 0.75))
+	_build_rain_barrel(Vector3(6.9, 0.0, -2.6))
 	var band := BuildKit.tex_mat("metal", 0.3, Color(0.7, 0.7, 0.7), 0.5)
-	BuildKit.cylinder(self, 0.4, 1.0, Vector3(6.9, 0.5, -2.6), barrel, true, Vector3.ZERO, 0.37, 12)
-	for y: float in [0.15, 0.85]:
-		BuildKit.cylinder(self, 0.41, 0.05, Vector3(6.9, y, -2.6), band, false, Vector3.ZERO, -1.0, 12)
-	BuildKit.cylinder(self, 0.36, 0.01, Vector3(6.9, 0.95, -2.6), BuildKit.color_mat(Color(0.05, 0.07, 0.08), 0.05), false, Vector3.ZERO, -1.0, 12)
 	var barrel_water := WaterSource.new()
 	barrel_water.name = "RainBarrel"
 	barrel_water.label = "Regentonne"
@@ -148,6 +143,117 @@ func _build_props() -> void:
 	_garden_tree(Vector3(17.5, 0, 14.0), 0.85)
 
 
+## Regentonne aus Holzdauben mit Eisenreifen, Zapfhahn, Wasser mit Laub,
+## halbem Deckel, Schöpfkelle und Gießkanne daneben.
+func _build_rain_barrel(at: Vector3) -> void:
+	var root := Node3D.new()
+	root.name = "RainBarrelModel"
+	root.position = at
+	add_child(root)
+	var h := 0.98
+	var stone := BuildKit.tex_mat("stone", 0.5)
+	BuildKit.box(root, Vector3(0.95, 0.1, 0.9), Vector3(0, 0.05, 0), stone, true, Vector3(0, 12, 0))
+	var y0 := 0.1
+	# Dauben: einzelne gebogene Bretter mit kleinen Fugen und unterschiedlichem Farbton
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var staves := 18
+	var rows := 6
+	for k in staves:
+		var a0 := TAU * (k + 0.04) / staves
+		var a1 := TAU * (k + 0.96) / staves
+		var shade := _rng.randf_range(0.75, 1.15)
+		for i in rows:
+			var t0 := float(i) / rows
+			var t1 := float(i + 1) / rows
+			var r0 := 0.34 + 0.05 * sin(PI * t0)
+			var r1 := 0.34 + 0.05 * sin(PI * t1)
+			var q := [Vector3(cos(a0) * r0, y0 + t0 * h, sin(a0) * r0), Vector3(cos(a1) * r0, y0 + t0 * h, sin(a1) * r0),
+					Vector3(cos(a1) * r1, y0 + t1 * h, sin(a1) * r1), Vector3(cos(a0) * r1, y0 + t1 * h, sin(a0) * r1)]
+			var n := Vector3(cos((a0 + a1) * 0.5), 0, sin((a0 + a1) * 0.5))
+			# unten feucht und dunkler
+			var c := Color(1, 1, 1) * shade * lerpf(0.6, 1.0, minf(t0 * 3.0, 1.0))
+			for idx: int in [0, 2, 1, 0, 3, 2]:
+				st.set_color(c)
+				st.set_normal(n)
+				st.add_vertex(q[idx])
+	var staves_mi := MeshInstance3D.new()
+	staves_mi.mesh = st.commit()
+	var wood := StandardMaterial3D.new()
+	wood.albedo_texture = TextureFactory.get_texture("planks_v")
+	wood.albedo_color = Color(1.35, 1.15, 0.95)
+	wood.vertex_color_use_as_albedo = true
+	wood.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	wood.uv1_triplanar = true
+	wood.uv1_world_triplanar = true
+	wood.uv1_scale = Vector3(2.0, 2.0, 2.0)
+	wood.cull_mode = BaseMaterial3D.CULL_DISABLED
+	wood.roughness = 0.95
+	staves_mi.material_override = wood
+	root.add_child(staves_mi)
+	# dunkler Innenraum und Boden
+	BuildKit.cylinder(root, 0.33, 0.02, Vector3(0, y0 + 0.02, 0), BuildKit.color_mat(Color(0.12, 0.08, 0.05)), false, Vector3.ZERO, -1.0, 16)
+	# Eisenreifen der Bauchform folgend, mit Nieten
+	var iron := BuildKit.tex_mat("metal", 0.3, Color(1.1, 0.75, 0.55), 0.6)
+	for t: float in [0.08, 0.36, 0.64, 0.92]:
+		var rr := 0.34 + 0.05 * sin(PI * t) + 0.008
+		BuildKit.lathe(root, PackedVector2Array([Vector2(rr, y0 + t * h - 0.025), Vector2(rr + 0.004, y0 + t * h), Vector2(rr, y0 + t * h + 0.025)]),
+				Vector3.ZERO, iron, 20)
+		for k in 6:
+			var a := TAU * k / 6.0 + t
+			BuildKit.sphere(root, 0.009, Vector3(cos(a) * (rr + 0.004), y0 + t * h, sin(a) * (rr + 0.004)), iron, Vector3.ONE, 4)
+	# Wasser mit treibendem Laub
+	var water := StandardMaterial3D.new()
+	water.albedo_texture = TextureFactory.get_texture("water")
+	water.albedo_color = Color(0.25, 0.3, 0.3)
+	water.roughness = 0.05
+	water.metallic = 0.4
+	water.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	BuildKit.cylinder(root, 0.35, 0.01, Vector3(0, y0 + h - 0.12, 0), water, false, Vector3.ZERO, -1.0, 16)
+	var leaf := BuildKit.cutout_mat("leaves", Color(0.9, 0.6, 0.3))
+	for k in 5:
+		var q := MeshInstance3D.new()
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.12, 0.12)
+		qm.material = leaf
+		q.mesh = qm
+		q.position = Vector3(_rng.randf_range(-0.2, 0.2), y0 + h - 0.11, _rng.randf_range(-0.2, 0.2))
+		q.rotation_degrees = Vector3(-90, _rng.randf() * 360.0, 0)
+		root.add_child(q)
+	# halber Deckel aus zwei Brettern, verrutscht
+	var lid := BuildKit.tex_mat("planks_h", 0.4, Color(0.85, 0.8, 0.72))
+	BuildKit.box(root, Vector3(0.75, 0.025, 0.17), Vector3(0.0, y0 + h + 0.015, -0.18), lid, false, Vector3(0, 8, 2))
+	BuildKit.box(root, Vector3(0.65, 0.025, 0.15), Vector3(-0.03, y0 + h + 0.02, -0.02), lid, false, Vector3(0, 11, -2))
+	BuildKit.box(root, Vector3(0.05, 0.03, 0.4), Vector3(0.18, y0 + h + 0.045, -0.1), lid, false, Vector3(0, 10, 0))
+	# Schöpfkelle am Rand
+	var tin := BuildKit.tex_mat("metal", 0.2, Color(1.5, 1.5, 1.45), 0.4)
+	BuildKit.box(root, Vector3(0.02, 0.3, 0.015), Vector3(0.36, y0 + h - 0.05, 0.12), tin, false, Vector3(0, 0, -15))
+	BuildKit.lathe(root, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.05, 0.01), Vector2(0.06, 0.05)]), Vector3(0.43, y0 + h - 0.24, 0.12), tin, 10, Vector3(0, 0, 180))
+	# Zapfhahn unten mit nasser Stelle
+	var brass := BuildKit.color_mat(Color(0.55, 0.42, 0.2), 0.4, 0.7)
+	BuildKit.cylinder(root, 0.02, 0.1, Vector3(0, y0 + 0.14, 0.4), brass, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.box(root, Vector3(0.015, 0.06, 0.015), Vector3(0, y0 + 0.11, 0.44), brass, false)
+	BuildKit.box(root, Vector3(0.06, 0.012, 0.012), Vector3(0, y0 + 0.19, 0.42), brass, false)
+	var wet := BuildKit.color_mat(Color(0.16, 0.14, 0.11), 0.35)
+	BuildKit.cylinder(root, 0.13, 0.004, Vector3(0.02, 0.01, 0.52), wet, false, Vector3.ZERO, -1.0, 10)
+	# Moos am Fuß
+	for k in 7:
+		var a := _rng.randf() * TAU
+		BuildKit.sphere(root, 0.07, Vector3(cos(a) * 0.38, y0 + 0.02, sin(a) * 0.38), BuildKit.tex_mat("moss", 0.3), Vector3(1.2, 0.5, 1.0), 6)
+	# Verzinkte Gießkanne daneben
+	var can := Node3D.new()
+	can.position = Vector3(0.62, 0.0, 0.35)
+	can.rotation_degrees.y = 35.0
+	root.add_child(can)
+	var zinc := BuildKit.tex_mat("metal", 0.25, Color(1.35, 1.4, 1.4), 0.5)
+	BuildKit.lathe(can, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.13, 0.0), Vector2(0.14, 0.02), Vector2(0.13, 0.3), Vector2(0.1, 0.33), Vector2(0.0, 0.34)]), Vector3.ZERO, zinc, 14)
+	BuildKit.cylinder(can, 0.015, 0.4, Vector3(0.22, 0.2, 0), zinc, false, Vector3(0, 0, -55), 0.025, 8)
+	BuildKit.cylinder(can, 0.045, 0.04, Vector3(0.38, 0.32, 0), zinc, false, Vector3(0, 0, -55), 0.05, 10)
+	BuildKit.box(can, Vector3(0.24, 0.02, 0.02), Vector3(-0.02, 0.43, 0), zinc, false)
+	BuildKit.box(can, Vector3(0.02, 0.12, 0.02), Vector3(-0.13, 0.37, 0), zinc, false)
+	BuildKit.box(can, Vector3(0.02, 0.1, 0.02), Vector3(0.09, 0.38, 0), zinc, false)
+
+
 func _garden_tree(pos: Vector3, s: float) -> void:
 	var bark := BuildKit.tex_mat("bark", 1.2)
 	var leaves := BuildKit.tex_mat("grass_ground", 0.6, Color(0.2, 0.28, 0.11))
@@ -166,7 +272,6 @@ func _garden_tree(pos: Vector3, s: float) -> void:
 
 ## Sträucher und Blumen rund um die Hütte und vor der Veranda.
 func _build_planting() -> void:
-	var leaf_mesh := Forest._leaf_cluster_mesh()
 	var shrubs: Array[Transform3D] = []
 	var flowers: Array[Transform3D] = []
 	var flower_cols: Array[Color] = []
@@ -184,9 +289,9 @@ func _build_planting() -> void:
 	for p in spots:
 		if absf(p.x + 7.0) < 0.6 and p.y > 0.9 and p.y < 2.6:
 			continue  # Schornstein
-		var s := _rng.randf_range(0.5, 0.95)
-		shrubs.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s, s, s)),
-				Vector3(p.x + _rng.randf_range(-0.15, 0.15), s * 0.42, p.y + _rng.randf_range(-0.15, 0.15))))
+		var s := _rng.randf_range(0.45, 0.8)
+		shrubs.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s, s * 0.95, s)),
+				Vector3(p.x + _rng.randf_range(-0.15, 0.15), -0.03, p.y + _rng.randf_range(-0.15, 0.15))))
 		for k in 3:
 			flowers.append(Transform3D(Basis().scaled(Vector3(0.04, 0.03, 0.04)),
 					Vector3(p.x + _rng.randf_range(-0.4, 0.4), _rng.randf_range(0.35, 0.7), p.y + _rng.randf_range(-0.3, 0.3))))
@@ -194,8 +299,15 @@ func _build_planting() -> void:
 			flower_cols.append(c[_rng.randi() % c.size()])
 	var cols: Array[Color] = []
 	for i in shrubs.size():
-		cols.append(Color(0.7, 0.9, 0.55) * _rng.randf_range(0.8, 1.1))
-	_multimesh(leaf_mesh, shrubs, cols, BuildKit.cutout_mat("leaves"))
+		cols.append(Color(0.58, 0.72, 0.48) * _rng.randf_range(0.85, 1.1))
+	# Zwei Buschformen im Wechsel (dasselbe Modell wie im Wald)
+	for v in 2:
+		var tv: Array[Transform3D] = []
+		var cv: Array[Color] = []
+		for i in range(v, shrubs.size(), 2):
+			tv.append(shrubs[i])
+			cv.append(cols[i])
+		_multimesh(Forest.bush_mesh(500 + v * 11), tv, cv, null)
 	var sphere := SphereMesh.new()
 	sphere.radius = 1.0
 	sphere.height = 2.0

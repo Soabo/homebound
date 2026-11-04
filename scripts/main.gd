@@ -13,6 +13,7 @@ func _ready() -> void:
 	add_child(Garden.new())
 	add_child(Cabin.new())
 	add_child(Shed.new())
+	add_child(CornField.new())
 	add_child(CarWreck.new())
 	_build_world_limits()
 	_build_cameras()
@@ -40,21 +41,25 @@ func _ready() -> void:
 			add_child(NightTest.new())
 
 
-## Drei Überwachungskameras (GDD 18.2): Veranda/Zufahrt, Garten hinten, Schuppen/Osten.
+## Drei Überwachungskameras (GDD 18.2), jeweils fest an einer Wand montiert:
+## Hausfront mit Veranda und Haustür, Garten hinten, Maisfeld am Schuppen.
 func _build_cameras() -> void:
+	var front_z := Cabin.HALF_Z + Cabin.LOG_R
 	var setups := [
-		["Veranda / Zufahrt", Vector3(1.65, 2.45, 7.25), Vector3(-3.0, 0.8, 18.0), Vector3(-7.0, 0, 16.0)],
-		["Garten hinten", Vector3(-5.6, 2.95, -4.85), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
-		["Schuppen / Osten", Vector3(11.85, 2.25, 4.85), Vector3(18.0, 0.5, -10.0), Vector3(20.0, 0, -12.0)],
+		# Name, Punkt auf der Wand, Wand-Richtung nach außen, Blickziel, Trugbild-Ort
+		["Hausfront / Veranda", Vector3(5.7, Cabin.WALL_TOP - 0.35, front_z), Vector3(0, 0, 1), Vector3(-3.5, 0.5, 9.0), Vector3(-1.5, 0, 10.5)],
+		["Garten hinten", Vector3(-5.0, Cabin.WALL_TOP - 0.35, -front_z), Vector3(0, 0, -1), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
+		["Schuppen / Maisfeld", Vector3(15.7, 2.0, Shed.ORIGIN.z + Shed.HALF.y + 0.05), Vector3(0, 0, 1), Vector3(18.5, 0.7, 16.0), Vector3(18.5, 0, 13.0)],
 	]
 	for i in setups.size():
 		var cam := SecurityCamera.new()
 		cam.name = "Camera%d" % (i + 1)
 		cam.index = i
 		cam.camera_name = setups[i][0]
-		cam.look_target = setups[i][2]
-		cam.phantom_spot = setups[i][3]
 		cam.position = setups[i][1]
+		cam.wall_normal = setups[i][2]
+		cam.look_target = setups[i][3]
+		cam.phantom_spot = setups[i][4]
 		add_child(cam)
 
 
