@@ -523,3 +523,28 @@ func _dread_test() -> void:
 		await get_tree().physics_frame
 	Engine.time_scale = 1.0
 	print("DREAD Erkundung sieht Spieler -> verschwunden statt Jagd: ", not is_instance_valid(c))
+	# Andere Gegner: laufen eine Weile ohne Fehler, Muster wechseln
+	player.global_position = Vector3(-1.0, 0.5, 1.0)
+	for k in 3:
+		var dr := AlienDrone.new()
+		scene.add_child(dr)
+		print("DREAD Drohne %d: %d Wegpunkte, erster Halt %.1f s" % [k, dr._path.size(), dr._hold[0] if not dr._hold.is_empty() else 0.0])
+	var m := Manipulator.new()
+	scene.add_child(m)
+	var m_start := m.global_position
+	WorldState.source_alive = true
+	WorldState.patches.clear()
+	TimeManager.set_time(12, 8.0)
+	for d in range(12, 20):
+		WorldState.spread_day = 0
+		TimeManager.set_time(d, 8.0)
+		WorldState._spread_organism()
+	var pts := []
+	for q: Dictionary in WorldState.patches:
+		pts.append("(%d,%d)" % [int(q["x"]), int(q["z"])])
+	print("DREAD Wucherungen nach 8 Tagen: ", " ".join(pts))
+	Engine.time_scale = 4.0
+	await get_tree().create_timer(60.0).timeout
+	Engine.time_scale = 1.0
+	print("DREAD Manipulator gewandert: %s -> %s" % [m_start.round(), m.global_position.round() if is_instance_valid(m) else "weg"])
+	print("DREAD Drohnen noch unterwegs: ", get_tree().get_nodes_in_group("drone").size())

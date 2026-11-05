@@ -73,26 +73,68 @@ func _on_day_changed(_day: int) -> void:
 	_spread_organism()
 
 
-## Jeden Tag wächst die Wucherung ein Stück weiter Richtung Hütte (ab Stufe 2, solange die Quelle lebt).
+## Die Wucherung wächst unberechenbar (ab Stufe 2, solange die Quelle lebt):
+##  - mal gar nicht, mal ein, mal zwei Stücke pro Tag
+##  - verzweigt sich: wächst von irgendeiner Spitze aus weiter, nicht stur geradeaus
+##  - hat wechselnde Ziele: Hütte, Schuppen, Regentonne, Bach, Maisfeld
+##  - ab Stufe 3 springt sie manchmal (Sporen): eine neue Stelle taucht weit entfernt auf
+const SPREAD_GOALS := [Vector3(6.0, 0, -10.0), Vector3(14.0, 0, 2.0), Vector3(9.0, 0, -2.0), Vector3(33.0, 0, -20.0),
+		Vector3(17.0, 0, 12.0), Vector3(-8.0, 0, -12.0)]
+
+
 func _spread_organism() -> void:
 	if not source_alive or stage() < 2 or spread_day == TimeManager.day:
 		return
 	spread_day = TimeManager.day
-	var count := 1 + (1 if stage() >= 3 else 0)
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var count: int = [0, 1, 1, 2][rng.randi() % 4] + (1 if stage() >= 3 and rng.randf() < 0.5 else 0)
+	var grown := 0
 	for i in count:
-		var n := patches.size()
-		var dir := (SPREAD_TARGET - CAVE)
-		dir.y = 0.0
-		var dist := minf(8.0 + n * PATCH_STEP * 0.6, dir.length() - 4.0)
-		var side := Vector3(-dir.z, 0, dir.x).normalized() * (sin(float(n) * 1.7) * 3.5)
-		var p := CAVE + dir.normalized() * dist + side
-		if _blocked_by_barrier(p):
-			continue
-		patches.append({"id": next_patch_id, "x": p.x, "z": p.z})
-		next_patch_id += 1
-	if count > 0:
-		EventBus.notify("Etwas Graues wuchert vom Bach her durch den Wald …", 4.0)
+		for attempt in 5:
+			var origin := CAVE
+			if not patches.is_empty() and rng.randf() < 0.75:
+				var tip: Dictionary = patches[rng.randi() % patches.size()]
+				origin = Vector3(float(tip["x"]), 0, float(tip["z"]))
+			var goal: Vector3 = SPREAD_GOALS[rng.randi() % SPREAD_GOALS.size()]
+			var dir := goal - origin
+			dir.y = 0.0
+			if dir.length() < 3.0:
+				continue
+			dir = dir.normalized().rotated(Vector3.UP, rng.randf_range(-0.8, 0.8))
+			var p := origin + dir * rng.randf_range(5.0, 9.0)
+			if _patch_ok(p):
+				_add_patch(p)
+				grown += 1
+				break
+	# Sporensprung: plötzlich wächst etwas ganz woanders
+	if stage() >= 3 and rng.randf() < 0.2:
+		for attempt in 5:
+			var a := rng.randf() * TAU
+			var p := Vector3(cos(a), 0, sin(a)) * rng.randf_range(14.0, 34.0)
+			if _patch_ok(p):
+				_add_patch(p)
+				grown += 1
+				break
+	if grown > 0:
+		EventBus.notify("Über Nacht hat sich etwas Graues weiter ausgebreitet …", 4.0)
 	changed.emit()
+
+
+func _patch_ok(p: Vector3) -> bool:
+	if absf(p.x) < 7.5 and absf(p.z) < 6.0:
+		return false  # nicht in der Hütte
+	if Shed.is_inside(p) or Vector2(p.x, p.z).length() > 100.0 or _blocked_by_barrier(p):
+		return false
+	for q: Dictionary in patches:
+		if Vector2(float(q["x"]) - p.x, float(q["z"]) - p.z).length() < 3.0:
+			return false
+	return true
+
+
+func _add_patch(p: Vector3) -> void:
+	patches.append({"id": next_patch_id, "x": p.x, "z": p.z})
+	next_patch_id += 1
 
 
 func _blocked_by_barrier(p: Vector3) -> bool:
