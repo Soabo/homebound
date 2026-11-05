@@ -21,6 +21,7 @@ var _player: Player
 var _model: Node3D
 var _parts: Dictionary
 var _direct_time: float = 0.0
+var _seen_time: float = 0.0
 var _seen_once: bool = false
 var _gone: bool = false
 var _duck: float = -1.0
@@ -142,7 +143,10 @@ func _process(delta: float) -> void:
 				_duck = 0.0
 				SoundBank.play_at(get_parent(), "scratch", global_position + Vector3(0, 1.5, 0), -6.0)
 		"inside":
+			# einen Augenblick wirklich zu sehen – dann der Blitz
 			if look >= LOOK_SEEN:
+				_seen_time += delta
+			if _direct_time > 0.35 or _seen_time > 0.7:
 				_vanish(true)
 		"edge":
 			if _direct_time > 0.4 or dist < 14.0:

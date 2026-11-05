@@ -21,7 +21,7 @@ extends Resource
 ## Ab wann man ins Bett darf (GDD 4.4: ab dem Nachmittag).
 @export_range(0.0, 24.0, 0.25) var sleep_allowed_from_hour: float = 16.0
 ## Bis wann man noch schlafen gehen darf.
-@export_range(0.0, 24.0, 0.25) var sleep_allowed_until_hour: float = 5.0
+@export_range(0.0, 24.0, 0.25) var sleep_allowed_until_hour: float = 6.5
 ## Aufwachzeit in der vereinfachten Prototyp-Version.
 @export_range(0.0, 24.0, 0.25) var wake_up_hour: float = 7.0
 

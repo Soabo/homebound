@@ -13,6 +13,8 @@ extends CharacterBody3D
 const STAND_HEIGHT := 1.75
 const CROUCH_HEIGHT := 1.05
 const EYE_OFFSET := 0.13
+## Langsames Gehen (Alt): Anteil der normalen Gehgeschwindigkeit
+const SLOW_FACTOR := 0.42
 const RADIUS := 0.32
 
 var head: Node3D
@@ -157,7 +159,12 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching:
 			velocity.y = jump_velocity
 			Footsteps.play_jump(get_parent(), global_position)
-	var wants_sprint := not crouching and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
+	# Sicherung gegen „hängende“ Shift-Taste: rennen nur, wenn Shift wirklich gerade gedrückt ist
+	var shift_down := Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_SHIFT)
+	if Input.is_action_pressed("sprint") and not shift_down:
+		Input.action_release("sprint")
+	var slow := not input_locked and Input.is_action_pressed("walk_slow")
+	var wants_sprint := not crouching and not slow and shift_down and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
 	if Survival.stamina <= 0.0:
 		_exhausted = true
 	elif Survival.stamina > 30.0:
@@ -167,6 +174,9 @@ func _physics_process(delta: float) -> void:
 	if not sprinting:
 		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
 	var speed := crouch_speed if crouching else (sprint_speed if sprinting else walk_speed)
+	# Alt gedrückt: langsam und leise gehen
+	if slow and not crouching:
+		speed = walk_speed * SLOW_FACTOR
 	speed *= 1.0 - 0.55 * hazard
 	hazard = move_toward(hazard, 0.0, delta * 3.0)
 	var dir := (transform.basis * Vector3(input.x, 0, input.y)).normalized()

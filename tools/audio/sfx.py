@@ -30,7 +30,7 @@ MAP = [
     ("House running generator*", "generator", "loop", None),
     ("House sound of music box *", "music_box", "one", None),
     ("House surring monitor *", "monitor_hum", "loop", None),
-    ("House switching camera *", "camera_switch", "one", None),
+    ("House switching camera *", "camera_switch", "click", 0.6),  # Hauptgeräusch erst nach 1,4 s – ab dort
     ("House light switch *", "light_switch", "click", None),  # Vorgeräusch weg, ab dem Klick
     ("House Campfire*", "fire", "loop", None),
     ("Ambient cracking branch *", "twig", "one", None),
@@ -97,12 +97,12 @@ def loop(x):
     return body * 0.12 / (np.sqrt(np.mean(e ** 2)) + 1e-6)
 
 
-def click(x):
+def click(x, secs=None):
     # nur der eigentliche Klick: ab dem lautesten Einsatz, kurz
     e = np.sqrt(np.convolve(x ** 2, np.ones(120) / 120, "same"))
     i = int(np.argmax(e > e.max() * 0.3))
     a = max(0, i - int(0.008 * SR))
-    y = x[a:a + int(0.35 * SR)].copy()
+    y = x[a:a + int((secs or 0.35) * SR)].copy()
     fo = int(0.08 * SR)
     y[-fo:] *= np.linspace(1, 0, fo) ** 2
     return y * 0.5 / (np.abs(y).max() + 1e-6)
@@ -125,7 +125,7 @@ for pattern, sid, mode, extra in MAP:
         continue
     for i, f in enumerate(files):
         x = sosfilt(hp, load(f)).astype(np.float32)
-        y = one(x) if mode == "one" else loop(x) if mode == "loop" else click(x) if mode == "click" else clip(x, extra)
+        y = one(x) if mode == "one" else loop(x) if mode == "loop" else click(x, extra) if mode == "click" else clip(x, extra)
         out = os.path.join(OUT, f"{sid}_{i + 1:02d}.ogg")
         write(y, out)
         print(f"{os.path.basename(f)[:44]:44s} -> {sid}_{i + 1:02d}  {len(y) / SR:5.2f}s  {mode}")

@@ -73,6 +73,13 @@ func begin(m: String) -> void:
 	global_position = _ground(_spot + dir * 22.0)
 	_go([_spot], cfg.walk_speed)
 	state = State.ARRIVE
+	# Auf der Jagd bleibt sie nur eine Weile – manchmal die ganze Nacht
+	_leave_at = -1.0
+	if mode == "attack" and _rng.randf() >= cfg.whole_night_chance:
+		_leave_at = TimeManager.get_total_hours() + _rng.randf_range(cfg.hunt_hours.x, cfg.hunt_hours.y)
+
+
+var _leave_at: float = -1.0
 
 
 func leave() -> void:
@@ -104,6 +111,9 @@ func _physics_process(delta: float) -> void:
 	_saw_player = sees
 	_head_track -= delta
 	_check_vanish(delta)
+	if _leave_at > 0.0 and TimeManager.get_total_hours() >= _leave_at and state not in [State.CHASE, State.LEAVE, State.REACH]:
+		_leave_at = -1.0
+		leave()
 	_mind_and_light(delta)
 	var eye := _parts.get("eye_mat") as StandardMaterial3D
 	if eye:

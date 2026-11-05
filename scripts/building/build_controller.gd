@@ -129,7 +129,7 @@ func _check_valid(p: Vector3) -> bool:
 		for r: Rect2 in NO_BUILD:
 			if r.has_point(Vector2(c.x, c.z)):
 				return false
-		if absf(c.x - Shed.ORIGIN.x) < 2.8 and absf(c.z - Shed.ORIGIN.z) < 2.4:
+		if absf(c.x - Shed.ORIGIN.x) < Shed.HALF.x + 0.3 and absf(c.z - Shed.ORIGIN.z) < Shed.HALF.y + 0.3:
 			return false
 	if absf(p.x) > 100.0 or absf(p.z) > 100.0:
 		return false

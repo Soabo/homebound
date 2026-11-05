@@ -7,7 +7,8 @@ var _root: Control
 var _title: Label
 var _list: VBoxContainer
 var _info: Label
-var _mode: String = ""  ## "", "inventory", "crafting"
+var _mode: String = ""  ## "", "inventory", "crafting", "chest"
+var _chest: StorageChest
 var _slots_row: HBoxContainer
 var _slot_boxes: Array[SlotBox] = []
 
@@ -17,10 +18,11 @@ var _slot_boxes: Array[SlotBox] = []
 class SlotBox extends PanelContainer:
 	var index: int = 0
 	var _name_label: Label
+	var _icon_holder: CenterContainer
 
 	func setup(i: int) -> void:
 		index = i
-		custom_minimum_size = Vector2(92, 64)
+		custom_minimum_size = Vector2(92, 92)
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		tooltip_text = "Taste %d – Gegenstand hierher ziehen, Rechtsklick leert den Platz" % (i + 1)
 		var v := VBoxContainer.new()
@@ -31,8 +33,12 @@ class SlotBox extends PanelContainer:
 		num.add_theme_font_size_override("font_size", 14)
 		num.add_theme_color_override("font_color", Color(0.75, 0.7, 0.6))
 		v.add_child(num)
+		_icon_holder = CenterContainer.new()
+		_icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_icon_holder.custom_minimum_size = Vector2(0, 36)
+		v.add_child(_icon_holder)
 		_name_label = Label.new()
-		_name_label.add_theme_font_size_override("font_size", 15)
+		_name_label.add_theme_font_size_override("font_size", 13)
 		_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		v.add_child(_name_label)
@@ -42,6 +48,10 @@ class SlotBox extends PanelContainer:
 		var id: String = Inventory.hotbar[index]
 		var has := id != "" and Inventory.count(id) > 0
 		_name_label.text = Inventory.display_name(id) if has else "Faust"
+		for c in _icon_holder.get_children():
+			c.queue_free()
+		if has:
+			_icon_holder.add_child(ItemIcons.make(id, 34))
 		_name_label.add_theme_color_override("font_color", Color(0.95, 0.9, 0.8) if has else Color(0.5, 0.48, 0.44))
 		var st := StyleBoxFlat.new()
 		var sel := index == Inventory.selected
@@ -194,6 +204,11 @@ func open_inventory() -> void:
 	_open("inventory")
 
 
+func open_chest(chest: StorageChest) -> void:
+	_chest = chest
+	_open("chest")
+
+
 func open_crafting() -> void:
 	_open("crafting")
 
@@ -212,6 +227,8 @@ func _open(m: String) -> void:
 func close() -> void:
 	if _mode == "":
 		return
+	if _mode == "chest" and is_instance_valid(_chest):
+		_chest.closed()
 	_mode = ""
 	_root.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -238,6 +255,8 @@ func _refresh() -> void:
 		c.queue_free()
 	if _mode == "inventory":
 		_fill_inventory()
+	elif _mode == "chest":
+		_fill_chest()
 	else:
 		_fill_crafting()
 
@@ -253,6 +272,7 @@ func _fill_inventory() -> void:
 		var def := DataDB.item(id)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 16)
+		row.add_child(ItemIcons.make(id, 44))
 		var l := ItemDrag.new()
 		l.id = id
 		var hand := Inventory.is_holdable(id)
@@ -279,6 +299,48 @@ func _fill_inventory() -> void:
 		drop.pressed.connect(_on_drop.bind(id))
 		row.add_child(drop)
 		_list.add_child(row)
+
+
+## Truhe: links der Rucksack, rechts die Truhe. „1“ bewegt ein Stück, „Alle“ den ganzen Stapel.
+func _fill_chest() -> void:
+	_title.text = "Truhe"
+	_info.text = "Traglast %.1f / %.0f kg  –  Was in der Truhe liegt, musst du nicht tragen." % [Inventory.total_weight(), Inventory.MAX_WEIGHT]
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 30)
+	cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list.add_child(cols)
+	for side in ["bag", "chest"]:
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_theme_constant_override("separation", 6)
+		cols.add_child(col)
+		col.add_child(_text("Rucksack" if side == "bag" else "Truhe", 24, Color(0.95, 0.85, 0.65)))
+		var src: Dictionary = Inventory.items if side == "bag" else _chest.items
+		if src.is_empty():
+			col.add_child(_text("leer", 18, Color(0.6, 0.58, 0.5)))
+		for id in src.keys():
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 10)
+			row.add_child(ItemIcons.make(id, 36))
+			var l := _text("%s  ×%d" % [Inventory.display_name(id), int(src[id])], 18)
+			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.add_child(l)
+			for amount in [1, 9999]:
+				var b := _button(("1 →" if amount == 1 else "Alle →") if side == "bag" else ("← 1" if amount == 1 else "← Alle"))
+				b.custom_minimum_size = Vector2(80, 34)
+				b.pressed.connect(_chest_move.bind(side, String(id), amount))
+				row.add_child(b)
+			col.add_child(row)
+
+
+func _chest_move(side: String, id: String, amount: int) -> void:
+	if not is_instance_valid(_chest):
+		return
+	var moved := _chest.put(id, amount) if side == "bag" else _chest.take(id, amount)
+	if moved <= 0 and side == "chest":
+		EventBus.notify("Das kannst du nicht mehr tragen.", 2.0)
+	SoundBank.play_ui(self, "pickup" if side == "chest" else "place", -8.0)
+	_refresh()
 
 
 func _fill_crafting() -> void:

@@ -8,6 +8,7 @@ const KEY_ACTIONS := {
 	"move_left": [KEY_A, KEY_LEFT],
 	"move_right": [KEY_D, KEY_RIGHT],
 	"sprint": [KEY_SHIFT],
+	"walk_slow": [KEY_ALT],
 	"crouch": [KEY_C, KEY_CTRL],
 	"jump": [KEY_SPACE],
 	"interact": [KEY_E],

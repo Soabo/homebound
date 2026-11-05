@@ -37,6 +37,11 @@ static func get_default() -> CreatureConfig:
 @export var probe_time: Vector2 = Vector2(7.0, 12.0)
 @export var probe_interval: Vector2 = Vector2(3.0, 5.0)
 
+@export_group("Wie lange sie bleibt")
+## Auf der Jagd bleibt sie so viele Spielstunden (zufällig dazwischen) – nur manchmal die ganze Nacht.
+@export var hunt_hours: Vector2 = Vector2(1.0, 3.0)
+@export var whole_night_chance: float = 0.2
+
 @export_group("Klang")
 ## Wie oft ein Schritt zu hören ist (sonst lautlos) – beim Schleichen und auf der Jagd.
 @export var step_chance: float = 0.25

@@ -684,3 +684,30 @@ func _changes_test() -> void:
 	TimeManager.set_time(1, 22.9)
 	ThreatDirector._check_tired()
 	print("MÜDE geplant für %.2f (Gesamtstunde, 23–25 erwartet)" % ThreatDirector._tired_at)
+	# Truhe
+	var chest := scene.get_node("Cabin/StorageChest") as StorageChest
+	Inventory.add("planks", 6)
+	var before_p := Inventory.count("planks")
+	chest.put("planks", 4)
+	print("TRUHE rein: Rucksack %d -> %d, Truhe %d" % [before_p, Inventory.count("planks"), int(chest.items.get("planks", 0))])
+	var cst := chest.get_state()
+	chest.take("planks", 1)
+	chest.set_state(cst)
+	print("TRUHE Laden: Truhe %d (erwartet 4)" % int(chest.items.get("planks", 0)))
+	chest.take("planks", 9999)
+	print("TRUHE raus: Rucksack %d, Truhe leer %s" % [Inventory.count("planks"), not chest.items.has("planks")])
+	var gm := scene.get_node("GameMenus") as GameMenus
+	gm.open_chest(chest)
+	await get_tree().process_frame
+	print("TRUHE Menü offen: %s" % gm.is_open())
+	gm.close()
+	# Kreatur bleibt nicht immer die ganze Nacht
+	var leaves := 0
+	for i in 20:
+		var cr := Creature.new()
+		scene.add_child(cr)
+		cr.begin("attack")
+		if cr._leave_at > 0.0:
+			leaves += 1
+		cr.queue_free()
+	print("KREATUR geht vor dem Morgen: %d von 20 (erwartet etwa 16)" % leaves)

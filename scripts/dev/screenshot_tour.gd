@@ -56,6 +56,8 @@ const SHOTS := [
 	{"name": "42_tablet", "hour": 21.5, "pos": Vector3(-3.0, 0.45, 0.4), "look": Vector3(-5.0, 0.8, 1.75), "lights": true, "couch": true},
 	{"name": "43_mondnacht", "hour": 4.0, "pos": Vector3(-3.0, 0.0, 12.0), "look": Vector3(-3.0, 1.0, 30.0)},
 	{"name": "44_erste_nachthaelfte", "hour": 23.0, "pos": Vector3(-3.0, 0.0, 12.0), "look": Vector3(-3.0, 1.0, 30.0)},
+	{"name": "45_truhe", "hour": 21.0, "pos": Vector3(2.9, 0.45, 2.3), "look": Vector3(2.78, 0.6, 4.2), "lights": true},
+	{"name": "46_truhe_menue", "hour": 21.0, "pos": Vector3(2.9, 0.45, 2.3), "look": Vector3(2.78, 0.6, 4.2), "lights": true, "chest_menu": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -140,6 +142,12 @@ func _run() -> void:
 			if shot.has("monitor_cam"):
 				get_tree().call_group("surveillance", "set_active", shot["monitor_cam"])
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
+		if shot.get("chest_menu", false):
+			var ch := get_tree().current_scene.get_node("Cabin/StorageChest") as StorageChest
+			for it in [["wood", 8], ["food", 3], ["water", 2], ["axe", 1], ["metal_fragment", 1]]:
+				Inventory.add(it[0], it[1])
+			ch.items = {"planks": 12, "nails": 40, "battery": 1, "glow_fungus": 2}
+			ch.interact(null)
 		if shot.get("couch", false):
 			var couch := get_tree().current_scene.get_node("Cabin/Couch") as Couch
 			couch.interact(get_tree().get_first_node_in_group("player"))

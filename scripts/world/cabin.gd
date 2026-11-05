@@ -923,6 +923,12 @@ func _build_workshop() -> void:
 		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), m_wood_dark, true)
 	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.1), Vector3(5.8, y + 0.24, 3.5), m_wood, false)
 	BuildKit.box_mm(self, Vector3(5.2, y + 0.92, 0.3), Vector3(5.45, y + 1.04, 0.6), m_iron, false, "Vise")
+	# Truhe zum Lagern an der Vorderwand unter der Werkzeugwand
+	var chest := StorageChest.new()
+	chest.name = "StorageChest"
+	chest.position = Vector3(2.78, y, HALF_Z - CLAD - 0.3)
+	chest.rotation_degrees.y = 180.0
+	add_child(chest)
 	# Werkbank zum Herstellen (Crafting)
 	var bench := Workbench.new()
 	bench.name = "WorkbenchStation"
