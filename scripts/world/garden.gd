@@ -111,14 +111,25 @@ func _build_props() -> void:
 	axe.name = "Axe"
 	axe.item_id = "axe"
 	axe.amount = 1
-	axe.collider_size = Vector3(0.5, 0.8, 0.5)
+	axe.collider_size = Vector3(0.8, 0.6, 0.8)
 	axe.collider_offset = Vector3(11.0, 0.8, 10.5)
 	add_child(axe)
+	# Axt steckt mit der Klinge schräg im Hackklotz, der Stiel ragt nach oben
+	# (gleiches Modell wie in der Hand: runder Stiel, Stahlkopf mit Schneide und Nacken)
 	var axe_vis := Node3D.new()
+	axe_vis.position = Vector3(11.0, 0.505 + 0.143 - 0.03, 10.5)
+	axe_vis.rotation_degrees = Vector3(-60, 35, 5)
 	axe.add_child(axe_vis)
 	axe.visuals.append(axe_vis)
-	BuildKit.box(axe_vis, Vector3(0.04, 0.7, 0.04), Vector3(11.05, 0.8, 10.5), m_wood, false, Vector3(0, 0, 25))
-	BuildKit.box(axe_vis, Vector3(0.18, 0.12, 0.03), Vector3(10.95, 0.55, 10.5), band, false, Vector3(0, 0, 25))
+	var handle := BuildKit.tex_mat("planks_v", 0.2, Color(1.1, 0.95, 0.8))
+	var steel := BuildKit.tex_mat("metal", 0.15, Color(1.4, 1.4, 1.42), 0.35)
+	BuildKit.cylinder(axe_vis, 0.017, 0.66, Vector3(0, 0.3, 0), handle, false, Vector3.ZERO, 0.015, 8)
+	BuildKit.box(axe_vis, Vector3(0.034, 0.1, 0.06), Vector3(0, 0, 0), steel, false)
+	BuildKit.box(axe_vis, Vector3(0.016, 0.13, 0.14), Vector3(0, 0, -0.09), steel, false)
+	BuildKit.box(axe_vis, Vector3(0.008, 0.15, 0.02), Vector3(0, 0, -0.165), BuildKit.tex_mat("metal", 0.1, Color(2.0, 2.0, 2.0), 0.2), false)
+	BuildKit.box(axe_vis, Vector3(0.03, 0.05, 0.03), Vector3(0, 0, 0.045), steel, false)
+	# Kerbe und Spalt im Hackklotz unter der Klinge
+	BuildKit.box(self, Vector3(0.02, 0.006, 0.2), Vector3(11.0, 0.507, 10.5), BuildKit.color_mat(Color(0.25, 0.18, 0.11)), false, Vector3(0, 35, 0))
 	for i in 12:
 		BuildKit.box(self, Vector3(0.08, 0.01, 0.04), Vector3(11.0 + _rng.randf_range(-0.8, 0.8), 0.01, 10.5 + _rng.randf_range(-0.8, 0.8)),
 				BuildKit.color_mat(Color(0.62, 0.5, 0.34)), false, Vector3(0, _rng.randf() * 180, 0))
