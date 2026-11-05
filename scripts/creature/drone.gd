@@ -6,10 +6,9 @@ extends Node3D
 ## dann greift die Kreatur an. Störsender lenken sie ab; Stroboskop- und Bewegungsmelder-Licht
 ## bringen sie ins Taumeln (einmal verliert sie dabei ein Teil).
 
-const HEIGHT := 9.0
-const SPEED := 5.0
-const CONE := 5.0     ## Radius des Lichtkegels am Boden
-const PATROL_TIME := 95.0
+## Werte (Muster, Höhen, Reichweiten) in data/creatures/drone.tres
+const HEIGHT := 9.0  ## Bezugshöhe für die Kegelgröße
+var cfg: DroneConfig = DroneConfig.get_default()
 
 var _path: Array[Vector3] = []
 ## Zu jedem Wegpunkt: wie lange dort schweben, wohin leuchten (null = nach unten)
@@ -39,7 +38,7 @@ func _ready() -> void:
 	_build_model()
 	# Anflug aus einer zufälligen Richtung
 	var a := _rng.randf() * TAU
-	global_position = Vector3(cos(a), 0, sin(a)) * 70.0 + Vector3(0, HEIGHT + 8.0, 0)
+	global_position = Vector3(cos(a), 0, sin(a)) * cfg.approach_distance + Vector3(0, HEIGHT + 8.0, 0)
 	_plan()
 	EventBus.noise_made.connect(_on_noise)
 	SoundBank.play_at(get_parent(), "signal", global_position, -6.0, 1.8)
@@ -47,12 +46,28 @@ func _ready() -> void:
 
 ## Ein oder zwei zufällige Flugmuster hintereinander.
 func _plan() -> void:
-	var patterns := ["lanes", "circle", "search", "window"]
-	var first: String = patterns[_rng.randi() % patterns.size()]
+	var names := Array(cfg.patterns)
+	var weights := Array(cfg.pattern_weights)
+	var first := _pick_weighted(names, weights)
 	_add_pattern(first)
-	if _rng.randf() < 0.6:
-		patterns.erase(first)
-		_add_pattern(patterns[_rng.randi() % patterns.size()])
+	if _rng.randf() < cfg.second_pattern_chance and names.size() > 1:
+		var i := names.find(first)
+		names.remove_at(i)
+		if i < weights.size():
+			weights.remove_at(i)
+		_add_pattern(_pick_weighted(names, weights))
+
+
+func _pick_weighted(names: Array, weights: Array) -> String:
+	var total := 0.0
+	for i in names.size():
+		total += float(weights[i]) if i < weights.size() else 1.0
+	var r := _rng.randf() * total
+	for i in names.size():
+		r -= float(weights[i]) if i < weights.size() else 1.0
+		if r <= 0.0:
+			return names[i]
+	return names[names.size() - 1]
 
 
 func _leg(p: Vector3, hold: float = 0.0, aim: Variant = null) -> void:
@@ -62,12 +77,12 @@ func _leg(p: Vector3, hold: float = 0.0, aim: Variant = null) -> void:
 
 
 func _add_pattern(kind: String) -> void:
-	var h := _rng.randf_range(6.5, 11.0)
+	var h := _rng.randf_range(cfg.height_range.x, cfg.height_range.y)
 	match kind:
 		"lanes":
 			# Bahnen, mal längs, mal quer, mal nur ein Teil des Grundstücks
 			var across := _rng.randf() < 0.5
-			var rows := _rng.randi_range(3, 5)
+			var rows := _rng.randi_range(cfg.lanes_rows.x, cfg.lanes_rows.y)
 			var start := _rng.randf_range(-14.0, -6.0)
 			for r in rows:
 				var c := start + r * 7.5
@@ -75,29 +90,29 @@ func _add_pattern(kind: String) -> void:
 				for e: float in ends:
 					_leg(Vector3(c, h, e) if across else Vector3(e, h, c))
 		"circle":
-			var rad := _rng.randf_range(9.0, 18.0)
+			var rad := _rng.randf_range(cfg.circle_radius.x, cfg.circle_radius.y)
 			var dirn := 1.0 if _rng.randf() < 0.5 else -1.0
 			var a0 := _rng.randf() * TAU
-			var n := _rng.randi_range(8, 16)
+			var n := _rng.randi_range(cfg.circle_points.x, cfg.circle_points.y)
 			for k in n:
 				var a := a0 + dirn * TAU * k / 10.0
 				_leg(Vector3(cos(a) * rad, h + sin(k * 0.9) * 1.5, sin(a) * rad))
 		"search":
 			# Wahllos über dem Grundstück, bleibt immer wieder stehen und sucht mit dem Licht
-			for k in _rng.randi_range(4, 7):
-				_leg(Vector3(_rng.randf_range(-18, 20), _rng.randf_range(5.5, 10.0), _rng.randf_range(-14, 16)), _rng.randf_range(2.0, 6.0))
+			for k in _rng.randi_range(cfg.search_points.x, cfg.search_points.y):
+				_leg(Vector3(_rng.randf_range(-18, 20), _rng.randf_range(cfg.height_range.x - 1.0, cfg.height_range.y - 1.0), _rng.randf_range(-14, 16)), _rng.randf_range(cfg.search_hold.x, cfg.search_hold.y))
 		"window":
 			# Schwebt tief vor einem Fenster und leuchtet hinein
 			var wins := get_tree().get_nodes_in_group("entry_point").filter(func(e: Node) -> bool: return e is CabinWindow)
 			wins.shuffle()
-			for w in wins.slice(0, _rng.randi_range(1, 2)):
+			for w in wins.slice(0, _rng.randi_range(cfg.window_count.x, cfg.window_count.y)):
 				var out: Vector3 = w.call("outside_point")
 				var inner: Vector3 = w.call("inside_point")
 				var dir := (out - inner)
 				dir.y = 0.0
-				var hover := out + dir.normalized() * 3.5
-				hover.y = Terrain.height_at(hover.x, hover.z) + 3.2
-				_leg(hover, _rng.randf_range(7.0, 12.0), inner + Vector3(0, -0.2, 0))
+				var hover := out + dir.normalized() * cfg.window_distance
+				hover.y = Terrain.height_at(hover.x, hover.z) + cfg.window_height
+				_leg(hover, _rng.randf_range(cfg.window_hold.x, cfg.window_hold.y), inner + Vector3(0, -0.2, 0))
 
 
 func _build_model() -> void:
@@ -113,7 +128,7 @@ func _build_model() -> void:
 		BuildKit.sphere(_ring, 0.035, Vector3(cos(a) * 0.6, 0.0, sin(a) * 0.6), _blink, Vector3.ONE, 6)
 	_spot = SpotLight3D.new()
 	_spot.position = Vector3(0, -0.2, 0)
-	_spot.spot_angle = rad_to_deg(atan(CONE / HEIGHT))
+	_spot.spot_angle = rad_to_deg(atan(cfg.cone_radius / HEIGHT))
 	_spot.spot_range = HEIGHT + 6.0
 	_spot.light_energy = 7.0
 	_spot.light_color = Color(0.75, 0.95, 1.0)
@@ -134,7 +149,7 @@ func _physics_process(delta: float) -> void:
 	_t += delta
 	_ring.rotation.y += delta * 3.0
 	_blink.emission_energy_multiplier = 4.0 if fmod(_t, 1.0) < 0.12 else 0.2
-	if _t > PATROL_TIME:
+	if _t > cfg.patrol_time:
 		_leave()
 	# Taumeln nach grellem Licht
 	if _stagger > 0.0:
@@ -168,7 +183,7 @@ func _fly(delta: float) -> void:
 		return
 	var target := _path[0]
 	var to := target - global_position
-	var speed := SPEED * (0.4 if _stagger > 0.0 else 1.0) * (1.6 if _leaving else 1.0)
+	var speed := cfg.speed * (0.4 if _stagger > 0.0 else 1.0) * (1.6 if _leaving else 1.0)
 	var step := speed * delta
 	if to.length() <= step:
 		global_position = target
@@ -205,14 +220,14 @@ func _point_spot() -> void:
 
 ## Ein Geräusch in der Nähe: Sie fliegt hin, bleibt stehen und leuchtet die Stelle ab.
 func _on_noise(pos: Vector3, radius: float) -> void:
-	if _leaving or _heard_cooldown > 0.0 or radius < 8.0:
+	if _leaving or _heard_cooldown > 0.0 or radius < cfg.hear_min_radius:
 		return
-	if Vector2(pos.x - global_position.x, pos.z - global_position.z).length() > 32.0:
+	if Vector2(pos.x - global_position.x, pos.z - global_position.z).length() > cfg.hear_distance:
 		return
-	_heard_cooldown = 20.0
+	_heard_cooldown = cfg.hear_cooldown
 	var above := Vector3(pos.x + _rng.randf_range(-2, 2), Terrain.height_at(pos.x, pos.z) + _rng.randf_range(6.0, 8.0), pos.z + _rng.randf_range(-2, 2))
 	_path.insert(0, above)
-	_hold.insert(0, _rng.randf_range(4.0, 7.0))
+	_hold.insert(0, _rng.randf_range(cfg.hear_hold.x, cfg.hear_hold.y))
 	_aims.insert(0, null)
 	_hold_left = 0.0
 
@@ -239,7 +254,7 @@ func _scan() -> void:
 	var aim := _aim_point()
 	if _aim != null:
 		# leuchtet durchs Fenster: wer nah dahinter steht, wird gesehen
-		if p.distance_to(aim) > 2.6:
+		if p.distance_to(aim) > cfg.window_spot_distance:
 			return
 	else:
 		if Cabin.is_inside(p) or Shed.is_inside(p):
@@ -271,7 +286,7 @@ func _scan() -> void:
 func _check_jammer() -> void:
 	for j in get_tree().get_nodes_in_group("jammer"):
 		var n := j as Node3D
-		if Vector2(n.global_position.x - global_position.x, n.global_position.z - global_position.z).length() < 26.0:
+		if Vector2(n.global_position.x - global_position.x, n.global_position.z - global_position.z).length() < cfg.jammer_range:
 			_stagger = 1.5
 			SoundBank.play_at(get_parent(), "static", global_position, -4.0, 1.6)
 			EventBus.notify("Die Drohne flackert, verliert das Signal und dreht ab.", 3.0)
@@ -287,8 +302,8 @@ func _check_lights() -> void:
 		var st := s as Structure
 		if st == null or not st.type in ["strobe_light", "motion_light"] or not st.is_lit():
 			continue
-		if Vector2(st.global_position.x - global_position.x, st.global_position.z - global_position.z).length() < 9.0:
-			_stagger = 2.5
+		if Vector2(st.global_position.x - global_position.x, st.global_position.z - global_position.z).length() < cfg.light_range:
+			_stagger = cfg.stagger_time
 			SoundBank.play_at(get_parent(), "static", global_position, 0.0, 2.0)
 			if not WorldState.drone_part_dropped:
 				WorldState.drone_part_dropped = true

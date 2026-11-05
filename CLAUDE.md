@@ -50,6 +50,12 @@
 - Spielwerte gehören in Datendateien unter `data/` (GDD 17.4): `.tres` für Konfiguration
   (Zeit, Bedrohung), JSON für Inhalte (`data/items/items.json`, `recipes.json`, `buildables.json`).
   JSON wird über `include_filter="*.json"` mit exportiert.
+- Christians Regel: Spielwerte immer gleich beim zuständigen Manager/System ablegen, nicht im Code verstreut.
+  Wann etwas passiert (Spannungsbogen, wie oft die Kreatur/Drohne/Manipulator kommt, Schlafsperre) →
+  Threat Director `data/threat/default_threat.tres` (`ThreatConfig`). Wie sich ein Gegner verhält → Gegner-KI
+  `data/creatures/<art>.tres` (`CreatureConfig`, `DroneConfig`, `ManipulatorConfig`). Talverwandlung und
+  Wachstum des Organismus → World State Manager `data/world/world_state.tres` (`WorldConfig`).
+  Zeit → `data/time/default_time_config.tres`.
 - Persistente Objekte brauchen feste, eindeutige Knotennamen (sonst passt der Spielstand nicht).
 - Designentscheidung Phase 6: Hunger/Durst sanft, freies Bauen. Keine Schusswaffen; Nahkampf mit Faust/Axt
   (Christians Wunsch) verscheucht die Kreatur nur (`Creature.on_melee_hit`), töten geht nicht.

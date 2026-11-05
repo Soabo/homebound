@@ -8,8 +8,8 @@ extends Node3D
 ## Unberechenbar: Er wechselt ungesehen die Stelle, kommt manchmal Stück für Stück näher, schweigt
 ## manchmal lange, und er ahmt Geräusche deines eigenen Hauses nach (Tür, Lichtschalter, Holzhacken …).
 
-const VANISH_DIST := 12.0
-const LURES := ["music_box", "knock", "steps", "breath", "radio", "door_close", "door_open", "light_switch", "chop", "rattle", "clatter"]
+## Werte (Abstände, Zeiten, Lock-Geräusche) in data/creatures/manipulator.tres
+var cfg: ManipulatorConfig = ManipulatorConfig.get_default()
 
 var _t: float = 0.0
 var _lure_timer: float = 4.0
@@ -29,13 +29,13 @@ func _ready() -> void:
 	add_to_group("manipulator")
 	_player = get_tree().get_first_node_in_group("player") as Player
 	_rng.randomize()
-	_lifetime = _rng.randf_range(70.0, 140.0)
-	_approach = _rng.randf() < 0.35
+	_lifetime = _rng.randf_range(cfg.lifetime.x, cfg.lifetime.y)
+	_approach = _rng.randf() < cfg.approach_chance
 	# manchmal steht er erst lange still da, bevor er anfängt
-	_silent_until = _rng.randf_range(25.0, 45.0) if _rng.randf() < 0.3 else 0.0
-	_lure_timer = _rng.randf_range(3.0, 9.0)
-	_move_timer = _rng.randf_range(18.0, 32.0)
-	_place(_rng.randf() * TAU, _rng.randf_range(22.0, 38.0))
+	_silent_until = _rng.randf_range(cfg.silent_start.x, cfg.silent_start.y) if _rng.randf() < cfg.silent_start_chance else 0.0
+	_lure_timer = _rng.randf_range(cfg.first_lure_after.x, cfg.first_lure_after.y)
+	_move_timer = _rng.randf_range(cfg.relocate_interval.x, cfg.relocate_interval.y)
+	_place(_rng.randf() * TAU, _rng.randf_range(cfg.distance.x, cfg.distance.y))
 	_build_model()
 	get_tree().call_group("nature_ambience", "silence_for", _lifetime)
 
@@ -49,7 +49,7 @@ func _place(angle: float, dist: float) -> void:
 func _relocate() -> void:
 	var a := atan2(global_position.z, global_position.x) + _rng.randf_range(0.6, 1.6) * (1.0 if _rng.randf() < 0.5 else -1.0)
 	var d := Vector2(global_position.x, global_position.z).length()
-	d = maxf(d - _rng.randf_range(3.0, 5.0), 17.0) if _approach else _rng.randf_range(22.0, 38.0)
+	d = maxf(d - _rng.randf_range(cfg.approach_step.x, cfg.approach_step.y), cfg.approach_min_distance) if _approach else _rng.randf_range(cfg.distance.x, cfg.distance.y)
 	_place(a, d)
 
 
@@ -87,20 +87,20 @@ func _process(delta: float) -> void:
 	_update_visibility()
 	_move_timer -= delta
 	if _move_timer <= 0.0 and not _model.visible:
-		_move_timer = _rng.randf_range(18.0, 32.0)
+		_move_timer = _rng.randf_range(cfg.relocate_interval.x, cfg.relocate_interval.y)
 		_relocate()
 	_lure_timer -= delta
 	if _lure_timer <= 0.0 and _t > _silent_until:
-		_lure_timer = _rng.randf_range(5.0, 15.0)
+		_lure_timer = _rng.randf_range(cfg.lure_interval.x, cfg.lure_interval.y)
 		_lure()
 		# ab und zu zwei Geräusche kurz hintereinander
-		if _rng.randf() < 0.2:
+		if _rng.randf() < cfg.double_lure_chance:
 			_lure_timer = _rng.randf_range(1.5, 3.0)
 	# zu nah draußen: Falle schnappt zu
 	if _player and not GameState.dead:
 		var p := _player.global_position
 		var outside := not Cabin.is_inside(p) and not Shed.is_inside(p)
-		if outside and p.distance_to(global_position) < VANISH_DIST:
+		if outside and p.distance_to(global_position) < cfg.vanish_distance:
 			_vanish(true)
 
 
@@ -111,17 +111,20 @@ func _update_visibility() -> void:
 	var cam := _player.camera.global_transform
 	var to := (global_position + Vector3(0, 2.0, 0)) - cam.origin
 	var d := to.length()
-	var lit := _player.flashlight.visible and d < 30.0 and (-cam.basis.z).dot(to.normalized()) > 0.93
-	_model.visible = lit or d < 16.0
+	var lit := _player.flashlight.visible and d < cfg.flashlight_distance and (-cam.basis.z).dot(to.normalized()) > 0.93
+	_model.visible = lit or d < cfg.visible_distance
 	_eye.emission_energy_multiplier = 2.5 if lit else 0.6
 
 
 func _lure() -> void:
 	var at := global_position + Vector3(0, 1.5, 0)
 	var scene := get_parent()
-	var kind: String = LURES[_rng.randi() % LURES.size()]
-	if kind == _last_lure:
-		kind = LURES[(LURES.find(kind) + 1 + _rng.randi() % (LURES.size() - 1)) % LURES.size()]
+	var lures := cfg.lures
+	if lures.is_empty():
+		return
+	var kind: String = lures[_rng.randi() % lures.size()]
+	if kind == _last_lure and lures.size() > 1:
+		kind = lures[(lures.find(kind) + 1 + _rng.randi() % (lures.size() - 1)) % lures.size()]
 	_last_lure = kind
 	match kind:
 		"music_box":

@@ -18,6 +18,7 @@ func _ready() -> void:
 func _run() -> void:
 	if _ran:
 		print("Nach Neustart: Tag %d, %s" % [TimeManager.day, TimeManager.get_clock_text()])
+		print("Spannungsbogen nach Neustart: %s, %d Nächte seit Auftritt, %d ruhige übrig" % [ThreatDirector.night_kind, ThreatDirector.nights_since_appearance, ThreatDirector.quiet_left])
 		if mode == "craft":
 			for i in 5:
 				await get_tree().physics_frame

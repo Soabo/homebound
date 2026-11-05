@@ -10,11 +10,8 @@ extends Node3D
 
 enum State { ARRIVE, OBSERVE, PROWL, GO_ENTRY, HIT_ENTRY, REACH, CHASE, RECOIL, LEAVE }
 
-const WALK_SPEED := 1.5
-const PROWL_SPEED := 2.1
-const CHASE_SPEED := 4.4
-const HIT_DAMAGE := 34.0
-const ENTRY_HIT := 14.0
+## Werte (Tempo, Schaden, Entdecken, Klang) in data/creatures/creature.tres
+var cfg: CreatureConfig = CreatureConfig.get_default()
 
 ## Beobachtungsplätze am Waldrand (Blick aufs Haus)
 const OBSERVE_SPOTS := [
@@ -30,7 +27,7 @@ const RING := [
 var mode: String = "observe"
 var state: State = State.ARRIVE
 var _path: Array[Vector3] = []
-var _speed: float = WALK_SPEED
+var _speed: float = cfg.walk_speed
 var _timer: float = 0.0
 var _hit_timer: float = 0.0
 var _step_timer: float = 0.0
@@ -69,12 +66,12 @@ func _ready() -> void:
 ## Wird vom Threat Director aufgerufen.
 func begin(m: String) -> void:
 	mode = m
-	_probes_left = _rng.randi_range(1, 2) if mode == "probe" else 99
+	_probes_left = _rng.randi_range(cfg.probe_entries.x, cfg.probe_entries.y) if mode == "probe" else 99
 	_spot = _pick_observe_spot()
 	# Erscheint tief im Wald und läuft zum Beobachtungsplatz
 	var dir := (_spot * Vector3(1, 0, 1)).normalized()
 	global_position = _ground(_spot + dir * 22.0)
-	_go([_spot], WALK_SPEED)
+	_go([_spot], cfg.walk_speed)
 	state = State.ARRIVE
 
 
@@ -85,7 +82,7 @@ func leave() -> void:
 	var away := (global_position * Vector3(1, 0, 1)).normalized()
 	if away.length() < 0.1:
 		away = Vector3(0, 0, -1)
-	_go(_ring_path_to(_nearest_ring(global_position)) + [_nearest_observe_spot() + away * 25.0], PROWL_SPEED)
+	_go(_ring_path_to(_nearest_ring(global_position)) + [_nearest_observe_spot() + away * 25.0], cfg.prowl_speed)
 
 
 # --- Hauptschleife ------------------------------------------------------
@@ -133,7 +130,7 @@ func _physics_process(delta: float) -> void:
 		_face(_player.global_position)
 		_path.clear()
 		_stare += delta
-		if _stare > 2.2:
+		if _stare > cfg.stare_time:
 			Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0), true)
 			queue_free()
 		return
@@ -144,7 +141,7 @@ func _physics_process(delta: float) -> void:
 				_timer = _rng.randf_range(25.0, 50.0) if mode == "observe" else _rng.randf_range(12.0, 25.0)
 		State.OBSERVE:
 			_face(_player.global_position)
-			if _player_outside() and sees and mode != "observe" and _dist() < 22.0:
+			if _player_outside() and sees and mode != "observe" and _dist() < cfg.spot_distance_observe:
 				_spotted()
 			elif _timer <= 0.0:
 				if mode == "observe":
@@ -152,17 +149,17 @@ func _physics_process(delta: float) -> void:
 				else:
 					_start_prowl()
 		State.PROWL:
-			if _player_outside() and sees and _dist() < 18.0:
+			if _player_outside() and sees and _dist() < cfg.spot_distance_prowl:
 				_spotted()
 			elif not moving:
 				_choose_entry()
 		State.GO_ENTRY:
-			if _player_outside() and sees and _dist() < 14.0:
+			if _player_outside() and sees and _dist() < cfg.spot_distance_entry:
 				_spotted()
 			elif not moving:
 				state = State.HIT_ENTRY
 				_hit_timer = 0.8
-				_timer = _rng.randf_range(7.0, 12.0) if mode == "probe" else 60.0
+				_timer = _rng.randf_range(cfg.probe_time.x, cfg.probe_time.y) if mode == "probe" else 60.0
 				if not is_instance_valid(_target_entry) or _target_entry.call("is_breached"):
 					state = State.REACH
 					_timer = 25.0
@@ -174,7 +171,7 @@ func _physics_process(delta: float) -> void:
 			_hit_timer -= delta
 			if _hit_timer <= 0.0 and mode == "probe":
 				# Erkundung: sie testet, statt einzubrechen – rüttelt an der Klinke, tastet am Fenster
-				_hit_timer = _rng.randf_range(3.0, 5.0)
+				_hit_timer = _rng.randf_range(cfg.probe_interval.x, cfg.probe_interval.y)
 				if _target_entry is Door:
 					_target_entry.call("rattle")
 				else:
@@ -183,7 +180,7 @@ func _physics_process(delta: float) -> void:
 			elif _hit_timer <= 0.0:
 				_hit_timer = _rng.randf_range(1.3, 2.0)
 				_strike()
-				var dmg := ENTRY_HIT
+				var dmg := cfg.entry_hit
 				_target_entry.call("receive_hit", dmg)
 				if _dist() < 10.0:
 					EventBus.screen_shake.emit(0.35)
@@ -224,7 +221,7 @@ func _physics_process(delta: float) -> void:
 			_lose_sight = _lose_sight - delta if not sees else 6.0
 			if _player_outside():
 				_path = [_ground(_player.global_position)]
-				_speed = CHASE_SPEED
+				_speed = cfg.chase_speed
 			if _dist() < 1.5 and _attack_cooldown <= 0.0:
 				_attack()
 			if _lose_sight <= 0.0 or not _player_outside():
@@ -266,7 +263,7 @@ func _start_prowl() -> void:
 	var dirn := 1 if _rng.randf() < 0.5 else -1
 	for i in steps:
 		lap.append(_ground(RING[posmod(start + i * dirn, RING.size())]))
-	_go(lap, PROWL_SPEED)
+	_go(lap, cfg.prowl_speed)
 
 
 static var _sting_at: int = -999999
@@ -311,7 +308,7 @@ func _choose_entry() -> void:
 		route.append(Vector3(-3.0, 0, 8.4))
 		route.append(Vector3(-3.0, 0, 6.2))
 	route.append(goal)
-	_go(route, PROWL_SPEED)
+	_go(route, cfg.prowl_speed)
 	state = State.GO_ENTRY
 
 
@@ -327,7 +324,7 @@ func _attack() -> void:
 	_attack_cooldown = 2.2
 	_strike()
 	CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 3.0, 1.1)
-	_player.take_damage(HIT_DAMAGE, global_position)
+	_player.take_damage(cfg.hit_damage, global_position)
 	EventBus.screen_shake.emit(0.8)
 
 
@@ -394,7 +391,7 @@ func _update_light(delta: float) -> void:
 		_timer = _rng.randf_range(12.0, 22.0)
 		var away := (global_position - _player.global_position)
 		away.y = 0
-		_go([_ground(global_position + away.normalized() * 14.0)], CHASE_SPEED)
+		_go([_ground(global_position + away.normalized() * 14.0)], cfg.chase_speed)
 
 
 ## Ist die Kreatur gerade im Blickfeld des Spielers (und nicht verdeckt)?
@@ -431,7 +428,7 @@ func _on_noise(pos: Vector3, radius: float) -> void:
 	if Cabin.is_inside(goal) or absf(goal.x) < 7.0 and absf(goal.z) < 5.5:
 		_choose_entry()
 	else:
-		_go([goal], PROWL_SPEED)
+		_go([goal], cfg.prowl_speed)
 		state = State.PROWL
 
 
@@ -543,7 +540,7 @@ func _recoil_from(source: Vector3) -> void:
 	away.y = 0.0
 	if away.length() < 0.1:
 		away = global_position * Vector3(1, 0, 1)
-	_go([_ground(global_position + away.normalized() * 10.0)], CHASE_SPEED)
+	_go([_ground(global_position + away.normalized() * 10.0)], cfg.chase_speed)
 
 
 func _face(p: Vector3) -> void:
@@ -610,7 +607,7 @@ func _nearest_observe_spot() -> Vector3:
 # --- Animation und Geräusche -------------------------------------------
 
 func _animate(delta: float, moving: bool) -> void:
-	var speed_factor := _speed / WALK_SPEED if moving else 0.0
+	var speed_factor := _speed / cfg.walk_speed if moving else 0.0
 	if moving:
 		_walk_phase += delta * (2.4 + speed_factor * 1.6)
 	var swing := sin(_walk_phase) * (28.0 if moving else 0.0) * clampf(speed_factor, 0.6, 1.6)
@@ -649,14 +646,14 @@ func _animate(delta: float, moving: bool) -> void:
 
 func _sounds(delta: float, moving: bool) -> void:
 	if moving:
-		_step_timer -= delta * (_speed / WALK_SPEED)
+		_step_timer -= delta * (_speed / cfg.walk_speed)
 		if _step_timer <= 0.0:
 			_step_timer = 0.55
 			# Nur ab und zu ein Schritt, tief und dumpf – meist bewegt sie sich lautlos.
 			# Auf der Jagd hört man sie deutlicher.
-			var chance := 0.8 if state == State.CHASE else 0.25
+			var chance := cfg.step_chance_chase if state == State.CHASE else cfg.step_chance
 			if _rng.randf() < chance:
-				CreatureSounds.play(get_parent(), "step", global_position + Vector3(0, 0.1, 0), -10.0 if _speed <= WALK_SPEED else -4.0, _rng.randf_range(0.72, 0.82), 30.0)
+				CreatureSounds.play(get_parent(), "step", global_position + Vector3(0, 0.1, 0), cfg.step_volume_db if _speed <= cfg.walk_speed else cfg.step_volume_chase_db, _rng.randf_range(cfg.step_pitch.x, cfg.step_pitch.y), 30.0)
 			if _rng.randf() < 0.05:
 				SoundBank.play_at(get_parent(), "twig", global_position, -2.0)
 	# Atmen und Klicken: beim Beobachten eher Klicken, beim Herumschleichen gemischt,
@@ -664,9 +661,9 @@ func _sounds(delta: float, moving: bool) -> void:
 	_breath_timer -= delta
 	if _breath_timer <= 0.0 and _dist() < 22.0 and not is_instance_valid(_voice) and state != State.LEAVE:
 		# Meist Stille. Klicken nur selten und nur, wenn sie nah ist – dann bedeutet es etwas.
-		var close := _dist() < 10.0 or state in [State.REACH, State.CHASE, State.HIT_ENTRY]
-		if not close and _rng.randf() < 0.75:
-			_breath_timer = _rng.randf_range(6.0, 14.0)
+		var close := _dist() < cfg.close_distance or state in [State.REACH, State.CHASE, State.HIT_ENTRY]
+		if not close and _rng.randf() < cfg.far_silence_chance:
+			_breath_timer = _rng.randf_range(cfg.far_silence_pause.x, cfg.far_silence_pause.y)
 			return
 		var kind := "breath"
 		var vol := -6.0

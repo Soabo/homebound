@@ -224,7 +224,7 @@ func _on_sleep_requested(wake_hour: float) -> void:
 	tw.tween_interval(1.6 if disturb < 0.0 else 0.5)
 	tw.tween_callback(func() -> void:
 		if disturb >= 0.0:
-			ThreatDirector.scared_until = TimeManager.get_total_hours() + 1.0
+			ThreatDirector.scared_until = TimeManager.get_total_hours() + ThreatDirector.config.scared_awake_hours
 			show_notification("Du schreckst hoch.  %s" % TimeManager.get_clock_text(), 4.0)
 		else:
 			show_notification("Tag %d  –  %s" % [TimeManager.day, TimeManager.get_clock_text()], 4.0))

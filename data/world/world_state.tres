@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WorldConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/world_config.gd" id="1_world"]
+
+[resource]
+script = ExtResource("1_world")
+level_per_day = 0.13
+structure_off_factor = 0.5
+level_per_analysis = 0.04
+level_per_link = 0.07
+stage_thresholds = PackedFloat32Array(0.2, 0.45, 0.7, 1)
+water_stage = 3
+spread_from_stage = 2
+spread_per_day = PackedInt32Array(0, 1, 1, 2)
+extra_spread_chance = 0.5
+branch_chance = 0.75
+step_length = Vector2(5, 9)
+direction_jitter = 0.8
+spread_goals = PackedVector3Array(6, 0, -10, 14, 0, 2, 9, 0, -2, 33, 0, -20, 17, 0, 12, -8, 0, -12)
+spore_from_stage = 3
+spore_chance = 0.2
+spore_distance = Vector2(14, 34)
+patch_spacing = 3.0
+barrier_range = 15.0

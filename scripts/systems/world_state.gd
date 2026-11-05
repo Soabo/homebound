@@ -10,7 +10,7 @@ extends Node
 signal changed
 signal stage_changed(stage: int)
 
-const STAGE_THRESHOLDS := [0.2, 0.45, 0.7, 1.0]
+const CONFIG_PATH := "res://data/world/world_state.tres"
 const STAGE_MESSAGES := {
 	1: "Heute Morgen ist es seltsam still im Wald. Kaum ein Vogel ist zu hören.",
 	2: "Nebel zieht gegen den Wind durchs Tal. Im Wald wachsen Pflanzen, die du nie gesehen hast.",
@@ -19,8 +19,9 @@ const STAGE_MESSAGES := {
 }
 ## Organismus: wächst von der Höhle am Bach Richtung Hütte
 const CAVE := Vector3(49.0, 0.0, -72.0)
-const SPREAD_TARGET := Vector3(6.0, 0.0, -10.0)
-const PATCH_STEP := 7.0
+
+## Tempo und Wachstum: data/world/world_state.tres
+var config: WorldConfig
 
 var structure_off: bool = false
 var pylons_off: Array = []
@@ -34,27 +35,30 @@ var spread_day: int = 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	config = load(CONFIG_PATH) as WorldConfig
+	if config == null:
+		config = WorldConfig.new()
 	TimeManager.day_changed.connect(_on_day_changed)
 	Research.changed.connect(_check_stage)
 
 
 ## Terraforming-Wert: ~0.13 pro Tag (halb so viel, wenn die Struktur abgeschaltet ist) + Forschung.
 func level() -> float:
-	var days := float(maxi(TimeManager.day - 1, 0)) * 0.13 * (0.5 if structure_off else 1.0)
-	return days + 0.04 * Research.done.size() + 0.07 * Research.links_done.size()
+	var days := float(maxi(TimeManager.day - 1, 0)) * config.level_per_day * (config.structure_off_factor if structure_off else 1.0)
+	return days + config.level_per_analysis * Research.done.size() + config.level_per_link * Research.links_done.size()
 
 
 func stage() -> int:
 	var l := level()
 	var s := 0
-	for t: float in STAGE_THRESHOLDS:
+	for t: float in config.stage_thresholds:
 		if l >= t:
 			s += 1
 	return s
 
 
 func water_contaminated() -> bool:
-	return stage() >= 3
+	return stage() >= config.water_stage
 
 
 func _check_stage() -> void:
@@ -78,40 +82,40 @@ func _on_day_changed(_day: int) -> void:
 ##  - verzweigt sich: wächst von irgendeiner Spitze aus weiter, nicht stur geradeaus
 ##  - hat wechselnde Ziele: Hütte, Schuppen, Regentonne, Bach, Maisfeld
 ##  - ab Stufe 3 springt sie manchmal (Sporen): eine neue Stelle taucht weit entfernt auf
-const SPREAD_GOALS := [Vector3(6.0, 0, -10.0), Vector3(14.0, 0, 2.0), Vector3(9.0, 0, -2.0), Vector3(33.0, 0, -20.0),
-		Vector3(17.0, 0, 12.0), Vector3(-8.0, 0, -12.0)]
 
 
 func _spread_organism() -> void:
-	if not source_alive or stage() < 2 or spread_day == TimeManager.day:
+	if not source_alive or stage() < config.spread_from_stage or spread_day == TimeManager.day:
 		return
 	spread_day = TimeManager.day
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var count: int = [0, 1, 1, 2][rng.randi() % 4] + (1 if stage() >= 3 and rng.randf() < 0.5 else 0)
+	var per_day := config.spread_per_day
+	var count: int = (per_day[rng.randi() % per_day.size()] if not per_day.is_empty() else 1) \
+			+ (1 if stage() >= 3 and rng.randf() < config.extra_spread_chance else 0)
 	var grown := 0
 	for i in count:
 		for attempt in 5:
 			var origin := CAVE
-			if not patches.is_empty() and rng.randf() < 0.75:
+			if not patches.is_empty() and rng.randf() < config.branch_chance:
 				var tip: Dictionary = patches[rng.randi() % patches.size()]
 				origin = Vector3(float(tip["x"]), 0, float(tip["z"]))
-			var goal: Vector3 = SPREAD_GOALS[rng.randi() % SPREAD_GOALS.size()]
+			var goal: Vector3 = config.spread_goals[rng.randi() % config.spread_goals.size()]
 			var dir := goal - origin
 			dir.y = 0.0
 			if dir.length() < 3.0:
 				continue
-			dir = dir.normalized().rotated(Vector3.UP, rng.randf_range(-0.8, 0.8))
-			var p := origin + dir * rng.randf_range(5.0, 9.0)
+			dir = dir.normalized().rotated(Vector3.UP, rng.randf_range(-config.direction_jitter, config.direction_jitter))
+			var p := origin + dir * rng.randf_range(config.step_length.x, config.step_length.y)
 			if _patch_ok(p):
 				_add_patch(p)
 				grown += 1
 				break
 	# Sporensprung: plötzlich wächst etwas ganz woanders
-	if stage() >= 3 and rng.randf() < 0.2:
+	if stage() >= config.spore_from_stage and rng.randf() < config.spore_chance:
 		for attempt in 5:
 			var a := rng.randf() * TAU
-			var p := Vector3(cos(a), 0, sin(a)) * rng.randf_range(14.0, 34.0)
+			var p := Vector3(cos(a), 0, sin(a)) * rng.randf_range(config.spore_distance.x, config.spore_distance.y)
 			if _patch_ok(p):
 				_add_patch(p)
 				grown += 1
@@ -127,7 +131,7 @@ func _patch_ok(p: Vector3) -> bool:
 	if Shed.is_inside(p) or Vector2(p.x, p.z).length() > 100.0 or _blocked_by_barrier(p):
 		return false
 	for q: Dictionary in patches:
-		if Vector2(float(q["x"]) - p.x, float(q["z"]) - p.z).length() < 3.0:
+		if Vector2(float(q["x"]) - p.x, float(q["z"]) - p.z).length() < config.patch_spacing:
 			return false
 	return true
 
@@ -139,7 +143,7 @@ func _add_patch(p: Vector3) -> void:
 
 func _blocked_by_barrier(p: Vector3) -> bool:
 	for b in get_tree().get_nodes_in_group("growth_barrier"):
-		if (b as Node3D).global_position.distance_to(Vector3(p.x, (b as Node3D).global_position.y, p.z)) < 15.0:
+		if (b as Node3D).global_position.distance_to(Vector3(p.x, (b as Node3D).global_position.y, p.z)) < config.barrier_range:
 			return true
 	return false
 

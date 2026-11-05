@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CreatureConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/creature/creature_config.gd" id="1_creature"]
+
+[resource]
+script = ExtResource("1_creature")
+walk_speed = 1.5
+prowl_speed = 2.1
+chase_speed = 4.4
+hit_damage = 34.0
+entry_hit = 14.0
+spot_distance_observe = 22.0
+spot_distance_prowl = 18.0
+spot_distance_entry = 14.0
+stare_time = 2.2
+probe_entries = Vector2i(1, 2)
+probe_time = Vector2(7, 12)
+probe_interval = Vector2(3, 5)
+step_chance = 0.25
+step_chance_chase = 0.8
+step_volume_db = -10.0
+step_volume_chase_db = -4.0
+step_pitch = Vector2(0.72, 0.82)
+far_silence_chance = 0.75
+far_silence_pause = Vector2(6, 14)
+close_distance = 10.0
