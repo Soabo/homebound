@@ -105,12 +105,16 @@ func _make_right(kind: String) -> Node3D:
 	_forearm(m)
 	match kind:
 		"axe":
-			_fist(m, 1.0)
+			# Hand um 90° nach rechts gedreht: Daumen zeigt nach oben, der Stiel läuft senkrecht durch die Faust
+			var grip := Node3D.new()
+			grip.rotation_degrees.z = -90.0
+			m.add_child(grip)
+			_fist(grip, 1.0)
 			var wood := BuildKit.tex_mat("planks_v", 0.2, Color(1.1, 0.95, 0.8))
 			var steel := BuildKit.tex_mat("metal", 0.15, Color(1.4, 1.4, 1.42), 0.35)
 			var axe := Node3D.new()
 			axe.position = Vector3(0, 0.0, -0.035)
-			axe.rotation_degrees = Vector3(-62, 0, 8)
+			axe.rotation_degrees = Vector3(-14, 0, 0)
 			m.add_child(axe)
 			BuildKit.cylinder(axe, 0.017, 0.66, Vector3(0, 0.2, 0), wood, false, Vector3.ZERO, 0.015, 8)
 			BuildKit.box(axe, Vector3(0.034, 0.1, 0.06), Vector3(0, 0.5, 0), steel, false)
@@ -389,7 +393,12 @@ func _pose_right(delta: float) -> void:
 	pos.y -= HIDE_DROP * e
 	rot.x -= 35.0 * e
 	if _right_kind == "axe":
-		pos += Vector3(0.03, -0.03, -0.02)
+		pos = Vector3(0.25, -0.3, -0.36) + Vector3(0, -HIDE_DROP * e, 0)
+		rot.z -= 8.0
+	elif _right_kind == "fist":
+		# Faust in Ruhe nur angedeutet am unteren Bildrand
+		pos = Vector3(0.27, -0.34, -0.3) + Vector3(0, -HIDE_DROP * e, 0)
+		rot.x -= 12.0
 	# Blocken: Faust bzw. Axt quer vors Gesicht
 	if _block_amount > 0.0:
 		var bp := Vector3(0.06, -0.09, -0.3) if _right_kind == "fist" else Vector3(0.02, -0.1, -0.38)
@@ -403,8 +412,9 @@ func _pose_right(delta: float) -> void:
 		match _action:
 			"punch":
 				var f := sin(clampf(p * 2.2, 0.0, 1.0) * PI * 0.5) if p < 0.45 else 1.0 - smoothstep(0.45, 1.0, p)
-				pos += Vector3(-0.07, 0.05, -0.27) * f
-				rot += Vector3(8, 6, -10) * f
+				# aus der tiefen Ruhelage hoch und nach vorne
+				pos += Vector3(-0.1, 0.15, -0.27) * f
+				rot += Vector3(20, 6, -10) * f
 				if p >= 0.4 and not _action_hit_done:
 					_action_hit_done = true
 					_melee_hit("fist")
@@ -412,8 +422,13 @@ func _pose_right(delta: float) -> void:
 				var up := smoothstep(0.0, 0.28, p)
 				var down := smoothstep(0.28, 0.5, p)
 				var back := smoothstep(0.55, 1.0, p)
-				rot.x += (40.0 * up - 115.0 * down) * (1.0 - back)
-				pos += Vector3(-0.06, 0.06 * up - 0.06 * down, -0.12 * down) * (1.0 - back)
+				# Drehung um den Ellbogen (hinter der Hand), damit Unterarm und Ärmel
+				# nie vor die Kamera klappen; Ausholen nach hinten, Schlag nur bis schräg nach vorne
+				var swing := (35.0 * up - 80.0 * down) * (1.0 - back)
+				rot.x += swing
+				var elbow := Vector3(0.0, -0.06, 0.32)
+				pos += elbow - Basis.from_euler(Vector3(deg_to_rad(swing), 0.0, 0.0)) * elbow
+				pos += Vector3(-0.05, 0.04 * up, -0.04 * down) * (1.0 - back)
 				if _action == "swing" and p >= 0.47 and not _action_hit_done:
 					_action_hit_done = true
 					_melee_hit("axe")
