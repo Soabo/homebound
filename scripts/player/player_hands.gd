@@ -61,13 +61,16 @@ func _ready() -> void:
 	_left.name = "Left"
 	add_child(_left)
 	_build_left()
-	# schwaches Streulicht, damit die Hände im Dunkeln erkennbar bleiben
+	# schwaches Streulicht, damit die Hände im Dunkeln erkennbar bleiben – es beleuchtet NUR die Hände
+	# (eigene Sichtebene), sonst würden nahe Gegenstände im Dunkeln hell (Christians Befund)
 	var fill := OmniLight3D.new()
+	fill.light_cull_mask = HANDS_LAYER
 	fill.position = Vector3(0.0, 0.1, -0.2)
 	fill.omni_range = 0.6
 	fill.light_energy = 0.25
 	fill.light_color = Color(1.0, 0.92, 0.8)
 	add_child(fill)
+	_tag_layers(self)
 	Inventory.hotbar_changed.connect(_on_hotbar_changed)
 	Inventory.changed.connect(_on_hotbar_changed)
 	if player:
@@ -98,6 +101,17 @@ func _fist(parent: Node3D, side: float) -> void:
 		BuildKit.box(parent, Vector3(0.019, 0.022, 0.024), Vector3(x, 0.022, -0.078), _skin, false)
 		BuildKit.box(parent, Vector3(0.002, 0.05, 0.002), Vector3(x + 0.01, -0.005, -0.079), dark, false)
 	BuildKit.box(parent, Vector3(0.024, 0.026, 0.062), Vector3(-side * 0.047, -0.012, -0.045), _skin, false, Vector3(0, side * 18.0, 0))
+
+
+## Sichtebene der Hände (zusätzlich zur normalen), nur für das Streulicht der Hände.
+const HANDS_LAYER := 1 << 19
+
+
+func _tag_layers(n: Node) -> void:
+	for g in n.find_children("*", "GeometryInstance3D", true, false):
+		(g as GeometryInstance3D).layers |= HANDS_LAYER
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).layers |= HANDS_LAYER
 
 
 func _make_right(kind: String) -> Node3D:
@@ -410,6 +424,7 @@ func _process(delta: float) -> void:
 			if want != "":
 				_right_model = _make_right(want)
 				_right.add_child(_right_model)
+				_tag_layers(_right_model)
 	elif _right_kind != "":
 		_right_out = move_toward(_right_out, 0.0, delta * SWITCH_SPEED)
 

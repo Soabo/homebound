@@ -17,6 +17,7 @@ func _ready() -> void:
 		# echte Aufnahme vom Lagerfeuer
 		stream = SoundBank.get_sound("fire")
 		volume_db = -6.0
+		_base_db = -6.0
 		unit_size = 2.5
 		max_distance = 16.0
 		play()
@@ -26,10 +27,25 @@ func _ready() -> void:
 	gen.buffer_length = 0.2
 	stream = gen
 	volume_db = -4.0
+	_base_db = -4.0
 	unit_size = 2.5
 	max_distance = 16.0
 	play()
 	_playback = get_stream_playback()
+
+
+var _base_db: float = -6.0
+
+
+## Feuerstärke 0..1: leiser werden bis ganz still (Kaminfeuer brennt herunter).
+func set_strength(s: float) -> void:
+	if s <= 0.001:
+		if playing:
+			stop()
+		return
+	if not playing:
+		play()
+	volume_db = _base_db + linear_to_db(s)
 
 
 func _process(_delta: float) -> void:

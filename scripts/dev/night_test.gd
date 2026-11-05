@@ -365,7 +365,16 @@ func _world_test() -> void:
 		first.axe_hit(player)
 	await get_tree().process_frame
 	print("WORLD Nach 3 Axthieben: %d Wucherungen, Proben %d" % [WorldState.patches.size(), Inventory.count("organism_sample")])
-	var second := layer.get_child(0) as OrganismNode.Patch
+	var second: OrganismNode.Patch = null
+	for c in get_tree().get_nodes_in_group("organism_patch"):
+		if not c.is_queued_for_deletion():
+			second = c
+			break
+	if second == null:
+		WorldState._add_patch(Vector3(10, 0, -20))
+		WorldState.changed.emit()
+		await get_tree().process_frame
+		second = get_tree().get_nodes_in_group("organism_patch")[0]
 	var before := WorldState.patches.size()
 	var barrier := Builder.place("growth_barrier", second.global_position + Vector3(2, 0, 0), 0.0)
 	await get_tree().process_frame
@@ -644,3 +653,34 @@ func _changes_test() -> void:
 	await get_tree().process_frame
 	print("SPRUNG: Tag %d %s, Hunger %.0f, Durst %.0f, Stufe %d, Wucherungen %d, Nacht: %s" % [TimeManager.day, TimeManager.get_clock_text(),
 		Survival.hunger, Survival.thirst, WorldState.stage(), WorldState.patches.size(), ThreatDirector.night_kind])
+	# Couch und Tablet
+	var player2 := get_tree().get_first_node_in_group("player") as Player
+	TimeManager.set_time(1, 21.0)
+	player2.global_position = Vector3(-3.0, 0.5, 0.4)
+	await get_tree().physics_frame
+	var couch := scene.get_node("Cabin/Couch") as Couch
+	print("COUCH Nachrichten an Tag 1: %d, ungelesen %d, Hinweis: %s" % [couch.available().size(), couch.unread_count(), couch.get_prompt(player2)])
+	couch.interact(player2)
+	await get_tree().process_frame
+	var tm := scene.get_node("TabletMenu") as TabletMenu
+	print("COUCH sitzt: %s, Tablet offen: %s, Augenhöhe %.2f, ungelesen jetzt %d" % [couch.sitting, tm.is_open(), player2.head.global_position.y, couch.unread_count()])
+	tm.close()
+	await get_tree().physics_frame
+	print("COUCH aufgestanden: %s, Steuerung frei: %s" % [not couch.sitting, not player2.input_locked])
+	# Kamin
+	var fire := scene.get_node("Cabin/Fireplace") as Fireplace
+	fire.burn_until = TimeManager.get_total_hours() + 3.0
+	await get_tree().process_frame
+	print("KAMIN 3 h Rest: Stärke %.2f" % fire.strength())
+	fire.burn_until = TimeManager.get_total_hours() - 0.1
+	await get_tree().process_frame
+	print("KAMIN aus: Stärke %.2f, Prompt: %s" % [fire.strength(), fire.get_prompt(player2)])
+	Inventory.add("wood", 1)
+	fire.interact(player2)
+	print("KAMIN mit Holz: Stärke %.2f, Holz übrig %d" % [fire.strength(), Inventory.count("wood")])
+	# Müdigkeit
+	ThreatDirector._activity_tonight = false
+	ThreatDirector._tired_night = -1
+	TimeManager.set_time(1, 22.9)
+	ThreatDirector._check_tired()
+	print("MÜDE geplant für %.2f (Gesamtstunde, 23–25 erwartet)" % ThreatDirector._tired_at)

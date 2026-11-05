@@ -25,6 +25,10 @@ extends Resource
 ## Aufwachzeit in der vereinfachten Prototyp-Version.
 @export_range(0.0, 24.0, 0.25) var wake_up_hour: float = 7.0
 
+## Zwischen diesen Uhrzeiten wird der Spieler müde (zufällig, einmal pro Nacht) – wenn bis dahin nichts passiert ist.
+@export_range(0.0, 24.0, 0.25) var tired_from_hour: float = 23.0
+@export_range(0.0, 24.0, 0.25) var tired_until_hour: float = 1.0
+
 @export_group("Test")
 ## Faktor, wenn T gedrückt gehalten wird.
 @export var debug_fast_forward_multiplier: float = 40.0

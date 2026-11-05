@@ -476,6 +476,9 @@ func _build_living_room() -> void:
 	var y := FLOOR_Y
 	BuildKit.box_mm(self, Vector3(-4.6, y, 0.6), Vector3(-2.4, y + 0.015, 2.9), BuildKit.tex_mat("rug", 2.2), false, "Rug")
 	_sofa(Vector3(-2.5, y, 1.75), 90.0)
+	var couch := Couch.new()
+	couch.name = "Couch"
+	add_child(couch)
 	_rocking_chair(Vector3(-4.3, y, 3.45), 140.0)
 	# Couchtisch mit Becher und Buch
 	BuildKit.box_mm(self, Vector3(-4.2, y + 0.38, 1.3), Vector3(-3.5, y + 0.44, 2.2), m_wood, true, "CoffeeTable")

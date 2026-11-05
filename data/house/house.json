@@ -1,0 +1,4 @@
+{
+  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden.",
+  "fireplace": {"burn_hours": 12, "fade_hours": 6, "wood": 1}
+}

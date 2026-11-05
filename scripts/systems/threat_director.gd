@@ -192,8 +192,30 @@ func _add(at: float, type: String) -> void:
 	events.append({"at": at, "type": type, "done": false})
 
 
+## Gegen 23–1 Uhr wird der Spieler müde – wenn bis dahin nichts passiert ist, sagt er es.
+var _tired_night: int = -1
+var _tired_at: float = -1.0
+
+
+func _check_tired() -> void:
+	if not TimeManager.is_night():
+		return
+	var night := current_night()
+	var tc := TimeManager.config
+	if _tired_night != night:
+		_tired_night = night
+		var span := fposmod(tc.tired_until_hour - tc.tired_from_hour, 24.0)
+		_tired_at = float(night - 1) * 24.0 + tc.tired_from_hour + _rng.randf() * span
+	if _tired_at > 0.0 and TimeManager.get_total_hours() >= _tired_at:
+		_tired_at = -1.0
+		if not _activity_tonight and not GameState.dead:
+			var sitting := get_tree().get_nodes_in_group("couch").any(func(c: Node) -> bool: return c.get("sitting"))
+			EventBus.notify("Die Augen fallen dir fast zu. Zeit, ins Bett zu gehen." if sitting else "Du wirst müde. Zeit, ins Bett zu gehen.", 5.0)
+
+
 func _process(delta: float) -> void:
 	_check_forest_stalker(delta)
+	_check_tired()
 	var now := TimeManager.get_total_hours()
 	for e in events:
 		if not e["done"] and now >= e["at"]:
@@ -235,6 +257,7 @@ func _fire(type: String) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if type in ACTIVITY_EVENTS:
 		_activity_tonight = true
+		get_tree().call_group("tablet_menu", "flicker")
 	match type:
 		"twig":
 			SoundBank.play_at(scene, "twig", _random_forest_point(18.0, 30.0), -2.0, _rng.randf_range(0.8, 1.2))

@@ -1,0 +1,29 @@
+{
+  "_info": "Nachrichten auf dem Tablet (Couch). type = mail | news. day = ab diesem Tag lesbar (hour optional: ab dieser Uhrzeit). Texte sind Platzhalter – Namen und Story kann Christian anpassen.",
+  "messages": [
+    {
+      "id": "mail_sister_1",
+      "type": "mail",
+      "day": 1,
+      "from": "Katrin",
+      "subject": "Ein Jahr",
+      "body": "Hey Bruderherz,\n\nich weiß, du willst keine Anrufe. Deshalb schreibe ich.\n\nMorgen ist es ein Jahr. Ich war heute am Grab. Ich habe Lena eine von diesen Glitzerkugeln hingestellt, die sie so mochte, und für Ben ein kleines Feuerwehrauto. Julias Blumen habe ich gegossen. Die Rosen sind dieses Jahr gut gekommen.\n\nMama fragt jeden Sonntag nach dir. Ich sage ihr dann, dass es dir gut geht da draußen. Stimmt das?\n\nDu musst nicht zurückkommen. Aber du musst nicht alles alleine tragen. Es war nicht deine Schuld. Es hat geregnet, der Lastwagen kam rüber, niemand hätte da noch etwas tun können.\n\nMeld dich. Ein Wort reicht.\n\nKatrin"
+    },
+    {
+      "id": "mail_lawyer_1",
+      "type": "mail",
+      "day": 1,
+      "from": "Kanzlei Brandl & Seidl",
+      "subject": "Ihre Angelegenheit – Unfall vom 14. Oktober",
+      "body": "Sehr geehrter Mandant,\n\nwir dürfen Ihnen mitteilen, dass die Versicherung des Speditionsunternehmens die Haftung nun vollständig anerkannt hat. Das Strafverfahren gegen den Fahrer des Lastkraftwagens ist mit Urteil vom 2. Oktober rechtskräftig abgeschlossen.\n\nDie persönlichen Gegenstände Ihrer Frau und Ihrer Kinder, die sich noch im Fahrzeug befanden, liegen weiterhin in unserer Kanzlei zur Abholung bereit. Darunter befindet sich ein eingepacktes Geschenk mit der Aufschrift „Für Papa“.\n\nBitte teilen Sie uns mit, ob wir Ihnen die Gegenstände zusenden sollen. Wir haben verstanden, dass Sie derzeit keine Post erhalten möchten.\n\nUnser aufrichtiges Beileid, weiterhin.\n\nMit freundlichen Grüßen\nDr. M. Seidl"
+    },
+    {
+      "id": "news_lights_1",
+      "type": "news",
+      "day": 1,
+      "from": "Waldkurier – Regionales",
+      "subject": "Rätselhafte Lichter über dem Tal",
+      "body": "Mehrere Anwohner haben in der vergangenen Nacht helle, lautlose Lichter über den Wäldern nördlich der Kreisstraße beobachtet. Ein Jäger berichtet von einem „tiefen Brummen, das man mehr im Bauch als in den Ohren gespürt hat“.\n\nDie Polizei vermutet einen Meteoriten und bittet, mögliche Fundstücke nicht zu berühren, sondern zu melden. Im Laufe der Nacht fiel in zwei Ortschaften kurzzeitig der Strom aus. Der Versorger prüft einen Zusammenhang, hält ihn aber für unwahrscheinlich.\n\nAuffällig: In mehreren Höfen schlugen kurz vor den Sichtungen die Hunde an – und verstummten dann alle gleichzeitig."
+    }
+  ]
+}

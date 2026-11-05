@@ -99,26 +99,31 @@ func _apply(h: float) -> void:
 	sun.light_color = Color(1.0, 0.55, 0.32).lerp(Color(1.0, 0.96, 0.9), smoothstep(2.0, 22.0, alt))
 
 	var night := 1.0 - day
-	moon.visible = night > 0.05
-	moon.light_energy = night * 0.07
+	# Erste Nachthälfte stockfinster; ab etwa 1 Uhr geht der Mond auf und spendet ein ganz schwaches Licht,
+	# gerade genug für grobe Umrisse. Er steigt bis zum Morgen langsam höher.
+	var mh := TimeManager.hour if TimeManager.hour < 12.0 else TimeManager.hour - 24.0
+	var moon_up := smoothstep(0.5, 3.0, mh) * night
+	moon.visible = moon_up > 0.01
+	moon.light_energy = moon_up * 0.11
+	moon.rotation_degrees = Vector3(-lerpf(4.0, 34.0, clampf((mh - 0.5) / 6.0, 0.0, 1.0)), 105.0 + clampf(mh, 0.0, 7.0) * 6.0, 0.0)
 
 	var horizon := NIGHT_HORIZON.lerp(DAY_HORIZON, day).lerp(SUNSET_HORIZON, low_sun * 0.75)
 	sky_mat.sky_top_color = NIGHT_TOP.lerp(DAY_TOP, day)
 	sky_mat.sky_horizon_color = horizon
 	sky_mat.ground_horizon_color = horizon.darkened(0.25)
 	sky_mat.ground_bottom_color = Color(0.03, 0.03, 0.03).lerp(Color(0.15, 0.14, 0.12), day)
-	sky_mat.sky_energy_multiplier = lerpf(0.4, 1.0, day)
+	sky_mat.sky_energy_multiplier = lerpf(lerpf(0.1, 0.3, moon_up), 1.0, day)
 
 	# Ohne Global Illumination würde das Himmelslicht auch drinnen alles
 	# bläulich aufhellen – deshalb in Innenräumen deutlich weniger Umgebungslicht.
 	var target_indoor := 1.0 if _player_indoors() else 0.0
 	_indoor = move_toward(_indoor, target_indoor, get_process_delta_time() * 1.5)
-	env.ambient_light_energy = lerpf(0.04, 0.6, day) * lerpf(1.0, 0.85, _indoor)
+	env.ambient_light_energy = lerpf(lerpf(0.02, 0.05, moon_up), 0.6, day) * lerpf(1.0, 0.85, _indoor)
 	# Grundlicht in der Hütte folgt dem Tageslicht – nachts bleibt es drinnen dunkel.
 	for probe in get_tree().get_nodes_in_group("interior_probe"):
 		(probe as ReflectionProbe).ambient_color_energy = lerpf(0.03, 1.0, day)
 	env.ambient_light_color = Color(0.05, 0.06, 0.09).lerp(Color(0.55, 0.52, 0.46), day)
-	env.background_energy_multiplier = lerpf(0.5, 1.0, day)
+	env.background_energy_multiplier = lerpf(lerpf(0.12, 0.35, moon_up), 1.0, day)
 	env.fog_light_color = Color(0.015, 0.02, 0.03).lerp(Color(0.62, 0.68, 0.74), day).lerp(SUNSET_HORIZON * 0.7, low_sun * 0.4)
 	# Terraforming ab Stufe 2: nachts dichterer Nebel
 	var fog_mult := 1.0 + (0.9 if WorldState.stage() >= 2 else 0.0) * (1.0 - day)

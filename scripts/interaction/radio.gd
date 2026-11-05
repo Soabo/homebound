@@ -158,6 +158,8 @@ func set_on(v: bool, night_event: bool = false) -> void:
 	_dial.emission_energy_multiplier = 2.5 if v else 0.0
 	if v:
 		_player3d.volume_db = -6.0
+		# jedes Mal eine andere Aufnahme (nie zweimal dieselbe hintereinander)
+		_player3d.stream = SoundBank.get_sound("radio")
 		_player3d.play()
 		if night_event:
 			var night: Array = _data.get("night", [])

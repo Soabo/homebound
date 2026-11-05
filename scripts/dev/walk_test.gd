@@ -52,6 +52,23 @@ func _run() -> void:
 ## Läuft das Bachbett von Norden nach Süden entlang und meldet Stellen, an denen man hängen bleibt.
 func _stream_walk(player: Player) -> int:
 	var stuck := 0
+	# Ufer überall über dem Wasser? (Gelände per Strahl von oben gemessen, wie es wirklich gebaut ist)
+	var low := 0
+	var worst := 0.0
+	var ez := -100.0
+	while ez < 100.0:
+		for sgn: float in [-1.0, 1.0]:
+			var ex := Terrain.stream_x_at(ez) + sgn * (Terrain.WATER_HALF_WIDTH + 0.05)
+			var q := PhysicsRayQueryParameters3D.create(Vector3(ex, 60, ez), Vector3(ex, -60, ez))
+			q.collide_with_areas = false
+			var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
+			if not hit.is_empty():
+				var d := (hit["position"] as Vector3).y - (Terrain.stream_bed_height(ez) + Terrain.WATER_LEVEL)
+				if d < 0.0:
+					low += 1
+					worst = minf(worst, d)
+		ez += 0.5
+	print("BACH Uferkante unter Wasser: %d Stellen, schlimmste %.2f m" % [low, worst])
 	for side: float in [0.0, -1.6, 1.6]:
 		var z := -96.0
 		player.global_position = Vector3(Terrain.stream_x_at(z) + side, Terrain.height_at(Terrain.stream_x_at(z) + side, z) + 0.3, z)

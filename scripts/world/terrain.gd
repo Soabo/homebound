@@ -59,6 +59,10 @@ static func stream_distance(x: float, z: float) -> float:
 ## und darf nirgends ansteigen: Das Bett ist eine stetig fallende Linie, die dem Gelände
 ## so gut wie möglich folgt (Hügel werden durchschnitten, Senken leicht aufgefüllt).
 const BED_STEP := 1.0
+## Wasserspiegel über dem Bachbett, halbe Wasserbreite, Uferhöhe über dem Bett
+const WATER_LEVEL := 0.22
+const WATER_HALF_WIDTH := 1.35
+const BANK_HEIGHT := 0.7
 const BED_START := -HALF_SIZE - 6.0
 static var _bed: PackedFloat32Array
 
@@ -122,6 +126,11 @@ static func height_at(x: float, z: float) -> float:
 		var reach := 4.0 + clampf(absf(h - bed) * 0.6, 0.0, 5.0)
 		var cut := 1.0 - smoothstep(1.3, reach, sd)
 		h = lerpf(h, bed, cut)
+		# Klarer Uferrand: Das Ufer liegt immer über dem Wasserspiegel. Wo das Gelände dafür zu tief ist,
+		# entsteht ein flacher Grasdamm, der nach außen wieder ins Gelände ausläuft.
+		var bank := bed + BANK_HEIGHT * smoothstep(0.6, 2.4, sd)
+		if h < bank:
+			h = lerpf(h, bank, 1.0 - smoothstep(2.4, 4.8, sd))
 	return h
 
 
@@ -234,14 +243,14 @@ func _build() -> void:
 func _build_stream() -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var half_w := 1.6
+	var half_w := WATER_HALF_WIDTH
 	var z := -HALF_SIZE
 	var prev_l := Vector3.ZERO
 	var prev_r := Vector3.ZERO
 	var first := true
 	while z <= HALF_SIZE:
 		var cx := stream_x_at(z)
-		var y := stream_bed_height(z) + 0.35
+		var y := stream_bed_height(z) + WATER_LEVEL
 		var l := Vector3(cx - half_w, y, z)
 		var r := Vector3(cx + half_w, y, z)
 		if not first:

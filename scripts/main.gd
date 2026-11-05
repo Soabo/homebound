@@ -36,6 +36,7 @@ func _ready() -> void:
 	add_child(Hud.new())
 	add_child(GameMenus.new())
 	add_child(ResearchMenu.new())
+	add_child(TabletMenu.new())
 	add_child(BuildController.new())
 	add_child(PauseMenu.new())
 

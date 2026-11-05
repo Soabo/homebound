@@ -89,11 +89,15 @@ func _ready() -> void:
 	_prompt.offset_top = 40
 	_prompt.offset_bottom = 120
 
+	# Meldungen: mittig, höchstens ~60 % der Bildbreite, lange Texte brechen um (Radio, Tablet …)
 	_note = _label(root, 26, HORIZONTAL_ALIGNMENT_CENTER)
-	_note.anchor_right = 1.0
-	_note.anchor_top = 0.22
-	_note.anchor_bottom = 0.22
+	_note.anchor_left = 0.2
+	_note.anchor_right = 0.8
+	_note.anchor_top = 0.18
+	_note.anchor_bottom = 0.18
 	_note.offset_bottom = 60
+	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_note.grow_vertical = Control.GROW_DIRECTION_END
 	_note.modulate.a = 0.0
 
 	_help = _label(root, 18, HORIZONTAL_ALIGNMENT_LEFT)
