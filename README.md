@@ -52,6 +52,15 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.
 
+
+## Die Kreatur
+
+- Sie zeigt sich selten. Meist findest du nur Spuren: Abdrücke im Gras bis unter ein Fenster, Kratzer im Holz,
+  Schritte auf dem Dach genau über dir, verstummte Tiere.
+- Etwa jede dritte Nacht taucht sie auf – aber anders, als du denkst: reglos am Waldrand (schau direkt hin, und sie
+  ist weg), als Gesicht am Fenster, nur auf der Kamera. Manchmal steht sie morgens im Haus, wenn du aufwachst.
+- Erst nach einigen Nächten kommt sie ans Haus und prüft Türen und Fenster. Richtig gefährlich wird sie später.
+
 ## Tagsüber vorbereiten (Phase 6)
 
 - **Axt** steckt im Hackklotz beim Schuppen. Sie landet auf einem Schnellplatz; nimm sie mit der Ziffer in die Hand

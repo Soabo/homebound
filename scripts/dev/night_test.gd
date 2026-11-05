@@ -40,6 +40,10 @@ func _run() -> void:
 		await _melee_test()
 		get_tree().quit()
 		return
+	if mode == "dread":
+		await _dread_test()
+		get_tree().quit()
+		return
 	if mode == "world":
 		await _world_test()
 		get_tree().quit()
@@ -98,7 +102,7 @@ func _event_test() -> void:
 	for sw in get_tree().get_nodes_in_group("light_switch"):
 		sw.switch_to(true)
 	var types := ["twig", "steps", "silence", "camera_glitch", "breath_wall", "phantom", "scratch", "roof",
-			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage", "drone", "manipulator"]
+			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage", "drone", "manipulator", "sighting"]
 	for t in types:
 		ThreatDirector._fire(t)
 		await get_tree().create_timer(0.5).timeout
@@ -446,3 +450,76 @@ func _world_test() -> void:
 	WorldState.set_state(ws)
 	print("WORLD Speichern/Laden: Struktur aus %s, Quelle lebt %s, Wucherungen %d" % [WorldState.structure_off, WorldState.source_alive, WorldState.patches.size()])
 	print("WORLD Bauten noch da: ", is_instance_valid(jam), " ", is_instance_valid(barrier))
+
+
+## Spannungsbogen und Auftritte ohne Angriff.
+func _dread_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	ThreatDirector.set_process(false)
+	var kinds := []
+	for d in range(1, 16):
+		ThreatDirector.plan_night(d)
+		kinds.append("%d:%s" % [d, ThreatDirector.night_kind])
+	print("DREAD Nächte: ", " ".join(kinds))
+	TimeManager.set_time(5, 23.0)
+	TimeManager.running = false
+	# Am Waldrand: im Augenwinkel bleibt sie, direkt angeschaut verschwindet sie
+	player.global_position = Vector3(-3.0, 0.1, 10.0)
+	player.rotation.y = 0.0
+	player.head.rotation.x = 0.0
+	await get_tree().physics_frame
+	var a := Apparition.spawn(scene, "edge")
+	for i in 30:
+		await get_tree().physics_frame
+	print("DREAD Waldrand nach 0,5 s (nicht angeschaut) noch da: ", is_instance_valid(a))
+	var to := a.global_position - player.global_position
+	player.rotation.y = atan2(-to.x, -to.z)
+	for i in 60:
+		await get_tree().physics_frame
+	print("DREAD Waldrand angeschaut -> weg: ", not is_instance_valid(a))
+	# Fenster: Spieler im Wohnzimmer
+	player.global_position = Vector3(0.5, 0.5, 2.5)
+	await get_tree().physics_frame
+	var w := Apparition.spawn(scene, "window")
+	print("DREAD Fenster-Gesicht: ", w != null)
+	if w:
+		var tw := w.global_position + Vector3(0, 2.2, 0) - player.camera.global_position
+		player.rotation.y = atan2(-tw.x, -tw.z)
+		for i in 60:
+			await get_tree().physics_frame
+		print("DREAD Fenster angeschaut -> weggeduckt: ", not is_instance_valid(w))
+	# Nach dem Aufwachen im Haus: Spieler im Schlafzimmer
+	player.global_position = Vector3(-3.5, 0.5, -2.8)
+	player.rotation.y = 0.0
+	await get_tree().physics_frame
+	var ins := Apparition.spawn(scene, "inside")
+	print("DREAD Im Haus erschienen: %s, Schlammspuren: %d" % [ins != null, get_tree().get_nodes_in_group("traces").size()])
+	if ins:
+		player.global_position = Vector3(-2.5, 0.5, -1.0)
+		var ti := ins.global_position + Vector3(0, 1.9, 0) - player.camera.global_position
+		player.rotation.y = atan2(-ti.x, -ti.z)
+		player.head.rotation.x = 0.0
+		for i in 30:
+			await get_tree().physics_frame
+		print("DREAD Im Haus angeschaut -> Blitz und weg: ", not is_instance_valid(ins))
+	# Morgenspuren
+	Traces.morning(scene, RandomNumberGenerator.new())
+	print("DREAD Spuren am Morgen: ", get_tree().get_nodes_in_group("traces").size())
+	Traces.clear(scene)
+	# Erkundung: entdeckt den Spieler draußen -> starrt, verschwindet statt anzugreifen
+	player.global_position = Vector3(-3.0, 0.1, 12.0)
+	var c := Creature.new()
+	scene.add_child(c)
+	ThreatDirector.creature = c
+	c.begin("probe")
+	c.global_position = Creature._ground(Vector3(-3.0, 0, 22.0))
+	c.state = Creature.State.OBSERVE
+	c._timer = 30.0
+	Engine.time_scale = 2.0
+	for i in 240:
+		await get_tree().physics_frame
+	Engine.time_scale = 1.0
+	print("DREAD Erkundung sieht Spieler -> verschwunden statt Jagd: ", not is_instance_valid(c))

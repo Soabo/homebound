@@ -69,7 +69,7 @@ func _ready() -> void:
 ## Wird vom Threat Director aufgerufen.
 func begin(m: String) -> void:
 	mode = m
-	_probes_left = 1 if mode == "probe" else 99
+	_probes_left = _rng.randi_range(1, 2) if mode == "probe" else 99
 	_spot = _pick_observe_spot()
 	# Erscheint tief im Wald und läuft zum Beobachtungsplatz
 	var dir := (_spot * Vector3(1, 0, 1)).normalized()
@@ -129,6 +129,14 @@ func _physics_process(delta: float) -> void:
 		return
 	_breaking = null
 
+	if _stare >= 0.0:
+		_face(_player.global_position)
+		_path.clear()
+		_stare += delta
+		if _stare > 2.2:
+			Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0), true)
+			queue_free()
+		return
 	match state:
 		State.ARRIVE:
 			if not moving:
@@ -137,7 +145,7 @@ func _physics_process(delta: float) -> void:
 		State.OBSERVE:
 			_face(_player.global_position)
 			if _player_outside() and sees and mode != "observe" and _dist() < 22.0:
-				_start_chase()
+				_spotted()
 			elif _timer <= 0.0:
 				if mode == "observe":
 					leave()
@@ -145,16 +153,16 @@ func _physics_process(delta: float) -> void:
 					_start_prowl()
 		State.PROWL:
 			if _player_outside() and sees and _dist() < 18.0:
-				_start_chase()
+				_spotted()
 			elif not moving:
 				_choose_entry()
 		State.GO_ENTRY:
 			if _player_outside() and sees and _dist() < 14.0:
-				_start_chase()
+				_spotted()
 			elif not moving:
 				state = State.HIT_ENTRY
 				_hit_timer = 0.8
-				_timer = 4.0 if mode == "probe" else 60.0
+				_timer = _rng.randf_range(7.0, 12.0) if mode == "probe" else 60.0
 				if not is_instance_valid(_target_entry) or _target_entry.call("is_breached"):
 					state = State.REACH
 					_timer = 25.0
@@ -164,15 +172,21 @@ func _physics_process(delta: float) -> void:
 				return
 			_face(_target_entry.call("outside_point") - _forward_of_entry())
 			_hit_timer -= delta
-			if _hit_timer <= 0.0:
+			if _hit_timer <= 0.0 and mode == "probe":
+				# Erkundung: sie testet, statt einzubrechen – rüttelt an der Klinke, tastet am Fenster
+				_hit_timer = _rng.randf_range(3.0, 5.0)
+				if _target_entry is Door:
+					_target_entry.call("rattle")
+				else:
+					SoundBank.play_at(get_parent(), "scratch" if _rng.randf() < 0.5 else "knock", _target_entry.global_position, -2.0)
+					_target_entry.call("add_handprint")
+			elif _hit_timer <= 0.0:
 				_hit_timer = _rng.randf_range(1.3, 2.0)
 				_strike()
-				var dmg := ENTRY_HIT * (0.35 if mode == "probe" else 1.0)
+				var dmg := ENTRY_HIT
 				_target_entry.call("receive_hit", dmg)
 				if _dist() < 10.0:
 					EventBus.screen_shake.emit(0.35)
-				if mode == "probe" and _target_entry is CabinWindow:
-					_target_entry.call("add_handprint")
 			if _target_entry.call("is_breached"):
 				state = State.REACH
 				_timer = 30.0
@@ -227,6 +241,21 @@ func _physics_process(delta: float) -> void:
 		State.LEAVE:
 			if not moving:
 				queue_free()
+
+
+## Sie entdeckt den Spieler draußen. Auf der Jagd: Verfolgung. Bei einer Erkundung: Sie starrt ihn
+## einen Moment an – und ist mit einem Teleporterblitz weg (noch keine direkte Bedrohung).
+var _stare: float = -1.0
+
+
+func _spotted() -> void:
+	if mode == "attack":
+		_start_chase()
+		return
+	if _stare < 0.0:
+		_stare = 0.0
+		_head_track = 4.0
+		CreatureSounds.play(get_parent(), "head_snap", global_position + Vector3(0, 1.9, 0), -1.0)
 
 
 func _start_prowl() -> void:
@@ -623,20 +652,26 @@ func _sounds(delta: float, moving: bool) -> void:
 		_step_timer -= delta * (_speed / WALK_SPEED)
 		if _step_timer <= 0.0:
 			_step_timer = 0.55
-			CreatureSounds.play(get_parent(), "step", global_position + Vector3(0, 0.1, 0), -5.0 if _speed <= WALK_SPEED else -1.0, _rng.randf_range(0.9, 1.05), 40.0)
+			# Nur ab und zu ein Schritt, tief und dumpf – meist bewegt sie sich lautlos.
+			# Auf der Jagd hört man sie deutlicher.
+			var chance := 0.8 if state == State.CHASE else 0.25
+			if _rng.randf() < chance:
+				CreatureSounds.play(get_parent(), "step", global_position + Vector3(0, 0.1, 0), -10.0 if _speed <= WALK_SPEED else -4.0, _rng.randf_range(0.72, 0.82), 30.0)
 			if _rng.randf() < 0.05:
 				SoundBank.play_at(get_parent(), "twig", global_position, -2.0)
 	# Atmen und Klicken: beim Beobachten eher Klicken, beim Herumschleichen gemischt,
 	# ganz nah (am Fenster, auf der Jagd) schweres Atmen
 	_breath_timer -= delta
 	if _breath_timer <= 0.0 and _dist() < 22.0 and not is_instance_valid(_voice) and state != State.LEAVE:
-		var kind := "breath_click"
-		var vol := -4.0
-		if state == State.OBSERVE:
-			kind = "click" if _rng.randf() < 0.7 else "breath_click"
-			vol = -8.0
-		elif state in [State.REACH, State.CHASE, State.HIT_ENTRY] or _dist() < 6.0:
-			kind = "breath" if _rng.randf() < 0.65 else "breath_click"
+		# Meist Stille. Klicken nur selten und nur, wenn sie nah ist – dann bedeutet es etwas.
+		var close := _dist() < 10.0 or state in [State.REACH, State.CHASE, State.HIT_ENTRY]
+		if not close and _rng.randf() < 0.75:
+			_breath_timer = _rng.randf_range(6.0, 14.0)
+			return
+		var kind := "breath"
+		var vol := -6.0
+		if close:
+			kind = "breath" if _rng.randf() < 0.7 else ("click" if _rng.randf() < 0.5 else "breath_click")
 			vol = -2.0
 		var dur := _rng.randf_range(2.5, 5.5)
 		_voice = CreatureSounds.play_phrase(self, kind, global_position + Vector3(0, 1.8, 0), vol, dur)

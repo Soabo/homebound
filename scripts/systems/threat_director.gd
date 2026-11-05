@@ -22,6 +22,18 @@ var creature: Node = null
 ## Lernverhalten (GDD 9.5): wie oft wurde ein Zugang schon blockiert vorgefunden?
 var blocked_memory: Dictionary = {}
 
+## Spannungsbogen (Christians Entscheidung): Die Kreatur zeigt sich selten. Etwa jede dritte Nacht
+## ein echter Auftritt, danach 1–2 ruhige Nächte, dazwischen nur Andeutungen und Spuren.
+## Die ersten Nächte nur Sichtungen; ab Nacht 4 auch Erkundungen am Haus, ab Nacht 6 echte Angriffe.
+## night_kind: quiet | hints | sighting | visit | hunt
+var night_kind: String = "hints"
+var nights_since_appearance: int = 0
+var quiet_left: int = 0
+var _appeared_tonight: bool = false
+var _arc_day: int = -1
+var _forest_day_done: int = -1
+var _forest_check: float = 30.0
+
 var _planned_for_day: int = -1
 var _rng := RandomNumberGenerator.new()
 
@@ -33,6 +45,7 @@ func _ready() -> void:
 		config = ThreatConfig.new()
 	_rng.randomize()
 	TimeManager.phase_changed.connect(_on_phase_changed)
+	EventBus.sleep_finished.connect(_on_woke_up)
 	_plan_if_needed.call_deferred()
 
 
@@ -44,11 +57,17 @@ func reset_for_new_scene() -> void:
 
 
 func _on_phase_changed(is_night: bool) -> void:
-	if not is_night:
-		# Morgengrauen: Kreatur verschwindet, nächste Nacht wird geplant.
-		if is_instance_valid(creature):
-			creature.call("leave")
-		_plan_if_needed()
+	var scene := get_tree().current_scene
+	if is_night:
+		if scene:
+			Traces.clear(scene)
+		return
+	# Morgengrauen: Kreatur verschwindet, Spuren der Nacht bleiben, nächste Nacht wird geplant.
+	if is_instance_valid(creature):
+		creature.call("leave")
+	if scene and night_kind in ["hints", "visit", "hunt"] and _rng.randf() < (0.5 if night_kind == "hints" else 0.85):
+		Traces.morning(scene, _rng)
+	_plan_if_needed()
 
 
 ## Plant die kommende (oder laufende) Nacht, falls noch nicht geschehen.
@@ -64,30 +83,64 @@ func _plan_if_needed() -> void:
 
 func plan_night(night_day: int) -> void:
 	threat_level = config.base_threat + float(night_day - 1) * config.threat_per_day
-	night_intensity = _roll_intensity(night_day)
+	# Nach einem Neustart (Tod) dieselbe Nacht nicht neu würfeln – der Bogen läuft weiter wie geplant
+	if night_day != _arc_day:
+		_arc_day = night_day
+		night_kind = _choose_night_kind(night_day)
+	night_intensity = int({"quiet": 0, "hints": 1, "sighting": 1, "visit": 2, "hunt": 3}[night_kind])
+	_appeared_tonight = false
 	events.clear()
 	var start := float(night_day - 1) * 24.0 + TimeManager.config.night_start_hour
 	var night_len := TimeManager.get_night_length_hours()
-	# Kleine, mehrdeutige Ereignisse in jeder Nacht (GDD 2.3)
-	var n := _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + night_intensity * 2
+	# Kleine, mehrdeutige Ereignisse (GDD 2.3) – in ruhigen Nächten nur ganz wenige
+	var n := 1 if night_kind == "quiet" else _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + mini(night_intensity, 2)
 	var pool := _event_pool(night_intensity)
 	for i in n:
 		_add(start + _rng.randf_range(0.6, night_len - 1.0), pool[_rng.randi() % pool.size()])
-	# Kreatur
-	if night_intensity >= 1:
-		_add(start + _rng.randf_range(1.0, 3.5), "creature")
-	if night_intensity >= 2 and _rng.randf() < config.outage_chance:
-		_add(start + _rng.randf_range(2.5, 6.0), "outage")
-	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht)
+	match night_kind:
+		"sighting":
+			_add(start + _rng.randf_range(1.0, night_len - 2.0), "sighting")
+			if _rng.randf() < 0.4:
+				_add(start + _rng.randf_range(1.0, night_len - 1.0), "phantom")
+		"visit", "hunt":
+			_add(start + _rng.randf_range(1.0, 3.5), "creature")
+			if night_kind == "hunt" and _rng.randf() < config.outage_chance:
+				_add(start + _rng.randf_range(2.5, 6.0), "outage")
+	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht) – nicht in ruhigen Nächten
 	var st := WorldState.stage()
-	if (st >= 1 or night_day >= 3) and _rng.randf() < 0.45 + 0.1 * st:
-		_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
-	if (st >= 1 or night_day >= 4) and night_intensity >= 1 and _rng.randf() < 0.35 + 0.1 * st:
-		_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
+	if night_kind != "quiet":
+		if (st >= 1 or night_day >= 3) and _rng.randf() < 0.35 + 0.1 * st:
+			_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
+		if (st >= 1 or night_day >= 4) and night_kind == "hints" and _rng.randf() < 0.3 + 0.1 * st:
+			_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 	night_planned.emit(night_intensity)
-	print("[ThreatDirector] Nacht %d: Bedrohung %.1f, Intensität %d (%s), %d Ereignisse" %
-			[night_day, threat_level, night_intensity, INTENSITY_NAMES[night_intensity], events.size()])
+	print("[ThreatDirector] Nacht %d: %s, Bedrohung %.1f, %d Ereignisse" % [night_day, night_kind, threat_level, events.size()])
+
+
+## Spannungsbogen: Wann zeigt sie sich, und wie?
+func _choose_night_kind(night_day: int) -> String:
+	if quiet_left > 0:
+		quiet_left -= 1
+		nights_since_appearance += 1
+		return "quiet"
+	var chance: float = [0.0, 0.0, 0.5, 1.0][mini(nights_since_appearance, 3)]
+	if night_day == 1:
+		chance = 0.5  # erste Nacht: vielleicht ein flüchtiger Blick am Waldrand
+	if _rng.randf() >= chance:
+		nights_since_appearance += 1
+		return "hints"
+	nights_since_appearance = 0
+	quiet_left = _rng.randi_range(1, 2)
+	if night_day <= 3:
+		return "sighting"
+	if night_day <= 5:
+		return "visit" if _rng.randf() < 0.5 else "sighting"
+	var hunt := clampf(0.25 + float(night_day - 6) * 0.08, 0.25, 0.6)
+	var r := _rng.randf()
+	if r < hunt:
+		return "hunt"
+	return "visit" if r < hunt + 0.35 else "sighting"
 
 
 ## Welche kleinen Ereignisse in einer Nacht dieser Intensität vorkommen können.
@@ -101,30 +154,12 @@ func _event_pool(intensity: int) -> Array[String]:
 	return pool
 
 
-func _roll_intensity(night_day: int) -> int:
-	# Erste Nacht im Prototyp: die Kreatur zeigt sich und testet das Haus.
-	if night_day == 1:
-		return 2
-	var w := config.intensity_weights.duplicate()
-	var shift := clampf((threat_level - 1.0) * 0.3, 0.0, 2.0)
-	for i in w.size():
-		w[i] = w[i] * (1.0 + shift * float(i))
-	var total := 0.0
-	for x in w:
-		total += x
-	var roll := _rng.randf() * total
-	for i in w.size():
-		roll -= w[i]
-		if roll <= 0.0:
-			return i
-	return w.size() - 1
-
-
 func _add(at: float, type: String) -> void:
 	events.append({"at": at, "type": type, "done": false})
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_check_forest_stalker(delta)
 	var now := TimeManager.get_total_hours()
 	for e in events:
 		if not e["done"] and now >= e["at"]:
@@ -137,7 +172,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "outage", "drone", "manipulator", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -171,7 +206,11 @@ func _fire(type: String) -> void:
 		"scratch":
 			SoundBank.play_at(scene, "scratch", _random_wall_point(), 0.0, _rng.randf_range(0.85, 1.1))
 		"roof":
-			SoundBank.play_at(scene, "roof_steps", Vector3(_rng.randf_range(-5.0, 5.0), Cabin.WALL_TOP + 1.2, _rng.randf_range(-3.0, 3.0)), 0.0)
+			# Schritte auf dem Dach – wenn du drin bist, genau über dir
+			var rp := Vector3(_rng.randf_range(-5.0, 5.0), Cabin.WALL_TOP + 1.2, _rng.randf_range(-3.0, 3.0))
+			if player and Cabin.is_inside(player.global_position):
+				rp = Vector3(player.global_position.x, Cabin.WALL_TOP + 1.2, player.global_position.z)
+			SoundBank.play_at(scene, "roof_steps", rp, 0.0)
 		"flicker":
 			for lamp in get_tree().get_nodes_in_group("lamp"):
 				lamp.call("flicker", _rng.randf_range(1.5, 4.0))
@@ -211,6 +250,8 @@ func _fire(type: String) -> void:
 					SoundBank.play_at(scene, "bang", Vector3(4.6, 1.0, -3.8), -4.0, 0.6)
 		"creature":
 			_spawn_creature(scene)
+		"sighting":
+			_sighting(scene, player)
 		"drone":
 			if get_tree().get_nodes_in_group("drone").is_empty():
 				var d := AlienDrone.new()
@@ -226,6 +267,10 @@ func _fire(type: String) -> void:
 ## Hinterhalt / Alarm (Drohne, Manipulator): Kreatur greift an, nahe einer Stelle.
 func spawn_ambush(at: Vector3) -> void:
 	var scene := get_tree().current_scene
+	# In den ersten Nächten noch keine Jagd: Sie zeigt sich nur – starrend am Waldrand.
+	if TimeManager.day < 6 and not is_instance_valid(creature):
+		Apparition.spawn(scene, "edge")
+		return
 	if is_instance_valid(creature):
 		creature.call("_start_chase")
 		return
@@ -238,6 +283,52 @@ func spawn_ambush(at: Vector3) -> void:
 	c.call("_start_chase")
 
 
+## Ein echter Auftritt ohne Angriff: am Fenster, wenn du drin bist – sonst am Waldrand.
+func _sighting(scene: Node, player: Node3D) -> void:
+	_appeared_tonight = true
+	var inside := player != null and Cabin.is_inside(player.global_position)
+	var a: Apparition = null
+	if inside and _rng.randf() < 0.65:
+		a = Apparition.spawn(scene, "window")
+	if a == null:
+		a = Apparition.spawn(scene, "edge")
+	if a == null:
+		EventBus.camera_phantom.emit(_rng.randi_range(0, 2), _rng.randf_range(5.0, 9.0))
+
+
+## Nach dem Aufstehen steht sie manchmal im Haus (nicht in den ersten Nächten, nie zweimal hintereinander).
+var _last_inside_day: int = -10
+
+
+func _on_woke_up() -> void:
+	var scene := get_tree().current_scene
+	if scene == null or TimeManager.is_night() or TimeManager.day < 3 or TimeManager.day - _last_inside_day < 2:
+		return
+	var chance := 0.45 if night_kind in ["sighting", "visit", "hunt"] else 0.15
+	if _rng.randf() < chance:
+		_last_inside_day = TimeManager.day
+		Apparition.spawn(scene, "inside")
+
+
+## Tagsüber, weit weg vom Haus: ganz selten eine Gestalt zwischen den Bäumen, die dir folgt.
+func _check_forest_stalker(delta: float) -> void:
+	_forest_check -= delta
+	if _forest_check > 0.0:
+		return
+	_forest_check = 30.0
+	if TimeManager.is_night() or TimeManager.day < 2 or _forest_day_done == TimeManager.day:
+		return
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if scene == null or player == null or not get_tree().get_nodes_in_group("apparition").is_empty():
+		return
+	if Vector2(player.global_position.x, player.global_position.z).length() < 40.0:
+		return
+	if _rng.randf() < 0.06:
+		_forest_day_done = TimeManager.day
+		Apparition.spawn(scene, "forest")
+
+
 func _spawn_creature(scene: Node) -> void:
 	if is_instance_valid(creature):
 		return
@@ -245,12 +336,8 @@ func _spawn_creature(scene: Node) -> void:
 	c.name = "Creature"
 	scene.add_child(c)
 	creature = c
-	var mode := "observe"
-	if night_intensity == 2:
-		mode = "probe"
-	elif night_intensity >= 3:
-		mode = "attack"
-	c.call("begin", mode)
+	_appeared_tonight = true
+	c.call("begin", "attack" if night_kind == "hunt" else "probe")
 
 
 func _play_phantom_steps(scene: Node) -> void:
