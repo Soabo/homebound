@@ -13,8 +13,12 @@ extends Interactable
 @export var sound: String = "step_grass"
 
 
+## false = man kann hindurchlaufen (z. B. Trinkstellen im Bach), anvisieren geht trotzdem
+@export var solid: bool = true
+
+
 func _ready() -> void:
-	var body := StaticBody3D.new()
+	var body: CollisionObject3D = StaticBody3D.new() if solid else Area3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = collider_size

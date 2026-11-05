@@ -104,6 +104,17 @@ static func play(parent: Node, pos: Vector3, kind: String, extra_db: float = 0.0
 	return true
 
 
+## Schritt-Klang eines bestimmten Untergrunds (z. B. Axthieb gegen Holz, Kies, Stein).
+static func play_surface(parent: Node, pos: Vector3, surface: String, kind: String = "run", extra_db: float = 0.0) -> bool:
+	var stream := pick(surface, kind)
+	if stream == null and FALLBACK.has(surface):
+		stream = pick(FALLBACK[surface], kind)
+	if stream == null:
+		return false
+	SoundBank.play_stream_at(parent, stream, pos, GAIT_DB[kind] + SURFACE_DB[surface] + extra_db, randf_range(0.94, 1.06))
+	return true
+
+
 ## Landung nach Sprung oder Sturz; ohne eigene Landeaufnahme zwei schnelle Laufschritte.
 static func play_landing(parent: Node, pos: Vector3, extra_db: float) -> void:
 	if not play(parent, pos, "land", extra_db):

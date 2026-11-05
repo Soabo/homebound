@@ -14,6 +14,8 @@ var type: String = ""
 var _rot: float = 0.0
 var _preview: Structure
 var _valid: bool = false
+## Flächen, auf denen nicht gebaut werden kann: Hütte (mit Wandstärke), Veranda, Treppe
+const NO_BUILD := [Rect2(-6.4, -4.9, 12.8, 9.8), Rect2(-5.8, 4.6, 7.2, 2.2), Rect2(-4.2, 6.6, 2.4, 1.0)]
 var _pos: Vector3
 
 
@@ -119,17 +121,21 @@ func _physics_process(_delta: float) -> void:
 
 
 func _check_valid(p: Vector3) -> bool:
-	# Nicht im Haus, auf der Veranda, im Schuppen oder außerhalb der Welt
-	if absf(p.x) < 7.0 and p.z > -5.6 and p.z < 7.9:
-		return false
-	if absf(p.x - Shed.ORIGIN.x) < 2.8 and absf(p.z - Shed.ORIGIN.z) < 2.4:
-		return false
-	if absf(p.x) > 68.0 or absf(p.z) > 68.0:
+	# Nicht im Haus, auf der Veranda/Treppe oder im Schuppen – geprüft wird die ganze Grundfläche des Bauteils
+	var size := _preview.size
+	var ax := Vector3(cos(_rot), 0, -sin(_rot)) * size.x * 0.5
+	var az := Vector3(sin(_rot), 0, cos(_rot)) * maxf(size.z, 0.3) * 0.5
+	for c: Vector3 in [p, p + ax + az, p + ax - az, p - ax + az, p - ax - az, p + ax, p - ax]:
+		for r: Rect2 in NO_BUILD:
+			if r.has_point(Vector2(c.x, c.z)):
+				return false
+		if absf(c.x - Shed.ORIGIN.x) < 2.8 and absf(c.z - Shed.ORIGIN.z) < 2.4:
+			return false
+	if absf(p.x) > 100.0 or absf(p.z) > 100.0:
 		return false
 	if Terrain.stream_distance(p.x, p.z) < 2.0:
 		return false
 	# Nicht zu steil
-	var size := _preview.size
 	var dx := Vector3(cos(_rot), 0, -sin(_rot)) * size.x * 0.5
 	var h1 := Terrain.height_at(p.x + dx.x, p.z + dx.z)
 	var h2 := Terrain.height_at(p.x - dx.x, p.z - dx.z)

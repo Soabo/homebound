@@ -4,7 +4,7 @@ extends CanvasLayer
 ## Verletzungs-Effekt, Monitor-Ansicht (Kameras), Schlaf- und Todesbildschirm.
 
 const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Leertaste  Springen\n" + \
-		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe\n" + \
+		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe        Y / X  Lehnen\n" + \
 		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        Esc  Menü        F1  Hilfe"
 
 var _clock: Label
@@ -224,6 +224,7 @@ func _on_sleep_requested(wake_hour: float) -> void:
 	tw.tween_interval(1.6 if disturb < 0.0 else 0.5)
 	tw.tween_callback(func() -> void:
 		if disturb >= 0.0:
+			ThreatDirector.scared_until = TimeManager.get_total_hours() + 1.0
 			show_notification("Du schreckst hoch.  %s" % TimeManager.get_clock_text(), 4.0)
 		else:
 			show_notification("Tag %d  –  %s" % [TimeManager.day, TimeManager.get_clock_text()], 4.0))
@@ -377,7 +378,7 @@ func _build_monitor(root: Control) -> void:
 	add_child(_static_player)
 	_hum_player = AudioStreamPlayer.new()
 	_hum_player.stream = SoundBank.get_sound("monitor_hum")
-	_hum_player.volume_db = -14.0
+	_hum_player.volume_db = -26.0
 	add_child(_hum_player)
 
 

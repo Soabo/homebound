@@ -167,6 +167,23 @@ func _process(delta: float) -> void:
 			_fire(e["type"])
 
 
+## Nach dem Hochschrecken mindestens eine Spielstunde wach bleiben (Gesamtstunde, bis wann).
+var scared_until: float = -1.0
+
+
+## Warum gerade nicht geschlafen werden kann ("" = Schlafen erlaubt).
+func sleep_blocker() -> String:
+	if TimeManager.get_total_hours() < scared_until:
+		return "Du bist viel zu aufgewühlt, um wieder einzuschlafen."
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if is_instance_valid(creature) and player and (creature as Node3D).global_position.distance_to(player.global_position) < 60.0:
+		return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
+	for g in ["manipulator", "drone", "apparition"]:
+		if not get_tree().get_nodes_in_group(g).is_empty():
+			return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
+	return ""
+
+
 ## Für das Schlafsystem (GDD 4.4): erstes störendes Ereignis zwischen jetzt und Aufwachzeit.
 func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:

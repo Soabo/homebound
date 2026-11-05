@@ -25,6 +25,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Shift | Rennen |
 | Strg / C | Ducken |
 | Leertaste | Springen |
+| Y / X | Nach links / rechts lehnen (um Ecken schauen) |
 | E | Benutzen (Türen, Lichtschalter, Bett) |
 | Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit Axt Holz hacken, Konserve essen, Flasche trinken |
 | Rechtsklick (halten) | Blocken mit Faust oder Axt |

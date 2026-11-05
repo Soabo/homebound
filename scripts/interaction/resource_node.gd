@@ -18,11 +18,13 @@ extends Interactable
 @export var collider_size: Vector3 = Vector3(1, 1, 1)
 
 var _busy: bool = false
+## false = man kann hindurchlaufen (Steinhaufen am Bach), anvisieren geht trotzdem
+var solid: bool = true
 
 
 func _ready() -> void:
 	add_to_group("persistent")
-	var body := StaticBody3D.new()
+	var body: CollisionObject3D = StaticBody3D.new() if solid else Area3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = collider_size
@@ -78,8 +80,10 @@ func interact(player: Node) -> void:
 			# sichtbarer Hieb – der Klang kommt erst, wenn die Axt auftrifft
 			p.hands.tool_swing(step_time * 0.95)
 			await get_tree().create_timer(step_time * 0.48).timeout
-		SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.9, 1.1))
-		EventBus.noise_made.emit(to_global(anchor), 10.0)
+		# mit Werkzeug ein Klang pro Hieb, ohne Werkzeug (Steine, Schrott …) nur einmal
+		if with_tool or i == 0:
+			SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.9, 1.1))
+			EventBus.noise_made.emit(to_global(anchor), 10.0)
 		await get_tree().create_timer(step_time * (0.52 if with_tool else 1.0)).timeout
 	if p and is_instance_valid(p):
 		p.input_locked = false

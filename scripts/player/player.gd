@@ -192,6 +192,7 @@ func _physics_process(delta: float) -> void:
 		if signf(before) != signf(sin(_bob_time)):
 			_footstep(horizontal, crouching)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
+	_update_lean(delta)
 
 	if global_position.y < -30.0:
 		global_position = Vector3(-3.0, 1.0, 11.5)
@@ -205,6 +206,33 @@ func _physics_process(delta: float) -> void:
 			GameState.kill_player()
 	elif Survival.hunger > 30.0 and Survival.thirst > 30.0:
 		health = minf(health + delta * 1.5, MAX_HEALTH)
+
+
+## Um die Ecke lehnen: Y = links, X = rechts. Vor einer Wand lehnt man nur so weit, wie Platz ist.
+var _lean: float = 0.0
+const LEAN_OFFSET := 0.42
+const LEAN_ROLL := 11.0
+
+
+func _update_lean(delta: float) -> void:
+	var want := 0.0
+	if not input_locked and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		if Input.is_key_pressed(KEY_Y):
+			want -= 1.0
+		if Input.is_key_pressed(KEY_X):
+			want += 1.0
+	_lean = move_toward(_lean, want, delta * 4.5)
+	var room := LEAN_OFFSET
+	if absf(_lean) > 0.01:
+		var origin := global_position + Vector3(0, head.position.y, 0)
+		var side := global_transform.basis.x * signf(_lean)
+		var q := PhysicsRayQueryParameters3D.create(origin, origin + side * (LEAN_OFFSET + 0.2))
+		q.exclude = [get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(q)
+		if not hit.is_empty():
+			room = clampf(origin.distance_to(hit["position"]) - 0.2, 0.0, LEAN_OFFSET)
+	head.position.x = _lean * room
+	head.rotation.z = -_lean * deg_to_rad(LEAN_ROLL) * (0.4 + 0.6 * room / LEAN_OFFSET)
 
 
 func _process(delta: float) -> void:

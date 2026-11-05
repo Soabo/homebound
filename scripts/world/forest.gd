@@ -144,7 +144,7 @@ func _build_rocks() -> void:
 				Vector3(x, g + scale.y * 0.25, z)))
 		var mossy := _rng.randf() < 0.6
 		cols.append(Color(0.75, 0.75, 0.72) * _rng.randf_range(0.8, 1.1) if not mossy else Color(0.45, 0.6, 0.32) * _rng.randf_range(0.8, 1.1))
-		if s > 0.7:
+		if s > 0.7 and not near_stream and Terrain.stream_distance(x, z) > 4.5:
 			var cs := CollisionShape3D.new()
 			var shape := SphereShape3D.new()
 			shape.radius = maxf(scale.x, scale.z) * 0.75
@@ -384,6 +384,7 @@ func _build_stream_spots() -> void:
 		pile.sound = "collect_stone"
 		pile.anchor = Vector3(x, g, z)
 		pile.collider_size = Vector3(1.0, 0.5, 1.0)
+		pile.solid = false
 		add_child(pile)
 		for i in 6:
 			BuildKit.sphere(self, _rng.randf_range(0.1, 0.2), Vector3(x + _rng.randf_range(-0.35, 0.35), g + 0.06, z + _rng.randf_range(-0.35, 0.35)),
@@ -396,6 +397,7 @@ func _build_stream_spots() -> void:
 			drink.contaminable = true
 			drink.anchor = Vector3(Terrain.stream_x_at(z), Terrain.stream_bed_height(z) + 0.2, z)
 			drink.collider_size = Vector3(2.4, 0.4, 2.0)
+			drink.solid = false
 			add_child(drink)
 		k += 1
 		z += 13.0

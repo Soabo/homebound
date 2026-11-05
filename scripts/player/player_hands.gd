@@ -262,7 +262,7 @@ func _primary() -> void:
 		"axe":
 			# Über einem umgestürzten Stamm: fällen statt zuschlagen
 			var node := player.current_interactable as ResourceNode
-			if node and node.tool == "axe":
+			if node and node.tool == "axe" and node.amount > 0:
 				node.interact(player)
 				return
 			# Wucherung oder Knoten: weghacken
@@ -316,8 +316,30 @@ func _melee_hit(kind: String) -> void:
 	q.exclude = [player.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if not hit.is_empty():
-		SoundBank.play_at(get_tree().current_scene, "thud", hit["position"], -10.0, randf_range(1.2, 1.5))
+		_impact_sound(hit["collider"] as Node, hit["position"])
 		EventBus.noise_made.emit(hit["position"], 6.0)
+
+
+## Genau ein Klang beim Treffer – je nach Material wie ein Schritt auf Holz, Kies, Stein …; Metall klingt metallisch.
+func _impact_sound(collider: Node, pos: Vector3) -> void:
+	var scene := get_tree().current_scene
+	var n := collider
+	while n and n != scene:
+		var nm := String(n.name)
+		if nm in ["CarWreck", "Generator"] or nm.begins_with("Fuel") or n is AlienStructure or n is CrashSite:
+			SoundBank.play_at(scene, "collect_metal", pos, -2.0)
+			return
+		if n is Terrain:
+			if not Footsteps.play_surface(scene, pos, Footsteps.surface_at(pos), "run", 2.0):
+				SoundBank.play_at(scene, "thud", pos, -10.0)
+			return
+		if nm == "RockColliders" or n is StreamCave:
+			Footsteps.play_surface(scene, pos, "stone", "run", 2.0)
+			return
+		n = n.get_parent()
+	# Hütte, Schuppen, Bäume, Stämme, Bauten: Holz
+	if not Footsteps.play_surface(scene, pos, "wood", "run", 2.0):
+		SoundBank.play_at(scene, "thud", pos, -10.0)
 
 
 ## Schadensminderung beim Blocken (1 = kein Block).

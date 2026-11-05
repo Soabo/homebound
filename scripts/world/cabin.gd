@@ -234,10 +234,27 @@ func _build_porch() -> void:
 	BuildKit.box(self, Vector3(7.2, 0.12, 2.6), Vector3(-2.2, WALL_TOP - 0.52, 5.85), BuildKit.tex_mat("shingles", 1.3), false, Vector3(roof_angle, 0, 0), "PorchRoof")
 	BuildKit.box(self, Vector3(7.0, 0.16, 0.16), Vector3(-2.2, post_top + 0.02, 6.4), m_beam, false)
 	# Sitzbank an der Hauswand
-	BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.42, 4.75), Vector3(0.6, FLOOR_Y + 0.48, 5.15), m_wood, true)
-	for x: float in [-1.35, 0.45]:
-		BuildKit.box_mm(self, Vector3(x - 0.05, FLOOR_Y, 4.8), Vector3(x + 0.05, FLOOR_Y + 0.42, 5.1), m_wood_dark, false)
-	BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.48, 4.72), Vector3(0.6, FLOOR_Y + 0.85, 4.78), m_wood, false)
+	# Sitzfläche aus Latten, vier kräftige Beine mit Querstreben, Rückenlehne und Armlehnen
+	var bz0 := 4.8
+	var bz1 := 5.22
+	for i in 4:
+		var z := bz0 + 0.02 + i * 0.1
+		BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.42, z), Vector3(0.6, FLOOR_Y + 0.465, z + 0.085), m_wood, false)
+	BuildKit.collider_box(self, Vector3(2.1, 0.47, 0.42), Vector3(-0.45, FLOOR_Y + 0.235, (bz0 + bz1) * 0.5))
+	for x: float in [-1.42, 0.52]:
+		for z: float in [bz0 + 0.04, bz1 - 0.04]:
+			BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y, z - 0.04), Vector3(x + 0.04, FLOOR_Y + 0.42, z + 0.04), m_wood_dark, false)
+		BuildKit.box_mm(self, Vector3(x - 0.03, FLOOR_Y + 0.12, bz0), Vector3(x + 0.03, FLOOR_Y + 0.17, bz1), m_wood_dark, false)
+		# Armlehne mit Stütze vorn
+		BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y + 0.465, bz1 - 0.08), Vector3(x + 0.04, FLOOR_Y + 0.68, bz1), m_wood_dark, false)
+		BuildKit.box_mm(self, Vector3(x - 0.05, FLOOR_Y + 0.68, bz0 - 0.04), Vector3(x + 0.05, FLOOR_Y + 0.72, bz1 + 0.02), m_wood, false)
+	BuildKit.box_mm(self, Vector3(-1.38, FLOOR_Y + 0.12, (bz0 + bz1) * 0.5 - 0.025), Vector3(0.48, FLOOR_Y + 0.16, (bz0 + bz1) * 0.5 + 0.025), m_wood_dark, false)
+	# Rückenlehne: zwei Pfosten, drei Latten
+	for x: float in [-1.42, 0.52]:
+		BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y + 0.42, bz0 - 0.02), Vector3(x + 0.04, FLOOR_Y + 0.95, bz0 + 0.05), m_wood_dark, false)
+	for k in 3:
+		var y := FLOOR_Y + 0.56 + k * 0.13
+		BuildKit.box_mm(self, Vector3(-1.4, y, bz0 - 0.01), Vector3(0.5, y + 0.08, bz0 + 0.03), m_wood, false)
 	# Feuerholz auf der Veranda
 	var log_mat := BuildKit.tex_mat("logs", 0.6)
 	for row in 5:
@@ -615,11 +632,12 @@ func _rocking_chair(pos: Vector3, rot_y: float) -> void:
 		BuildKit.box(n, Vector3(0.04, 0.38, 0.04), Vector3(x, 0.25, -0.2), w, false)
 		BuildKit.box(n, Vector3(0.04, 0.38, 0.04), Vector3(x, 0.25, 0.2), w, false)
 		BuildKit.box(n, Vector3(0.05, 0.04, 0.5), Vector3(x, 0.66, -0.02), w, false)
-		BuildKit.box(n, Vector3(0.04, 0.26, 0.04), Vector3(x, 0.55, -0.22), w, false)
+		BuildKit.box(n, Vector3(0.04, 0.26, 0.04), Vector3(x, 0.55, 0.22), w, false)
 	BuildKit.box_mm(n, Vector3(-0.27, 0.42, -0.24), Vector3(0.27, 0.46, 0.24), m_wood, true)
+	# Lehne hinten (gegenüber den vorderen Armlehnstützen), leicht nach hinten geneigt
 	var back := Node3D.new()
-	back.position = Vector3(0, 0.46, 0.24)
-	back.rotation_degrees.x = -12
+	back.position = Vector3(0, 0.46, -0.24)
+	back.rotation_degrees.x = 12
 	n.add_child(back)
 	for i in 5:
 		BuildKit.box(back, Vector3(0.06, 0.7, 0.025), Vector3(-0.2 + i * 0.1, 0.35, 0), m_wood, false)
@@ -734,20 +752,7 @@ func _build_technical_room() -> void:
 	gen.name = "Generator"
 	gen.anchor = Vector3(4.7, y, -3.825)
 	add_child(gen)
-	var red := BuildKit.tex_mat("metal", 0.4, Color(1.9, 0.6, 0.4), 0.55)
-	var frame := BuildKit.tex_mat("metal", 0.4, Color(0.8, 0.8, 0.8), 0.5)
-	BuildKit.box_mm(gen, Vector3(4.0, y + 0.08, -4.2), Vector3(5.4, y + 0.12, -3.45), frame, false)
-	for x: float in [4.02, 5.38]:
-		for z: float in [-4.18, -3.47]:
-			BuildKit.box_mm(gen, Vector3(x - 0.02, y + 0.12, z - 0.02), Vector3(x + 0.02, y + 0.8, z + 0.02), frame, false)
-		BuildKit.cylinder(gen, 0.08, 0.06, Vector3(x, y + 0.08, -3.45), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3(0, 0, 90), -1.0, 8)
-	BuildKit.box_mm(gen, Vector3(4.05, y + 0.62, -4.15), Vector3(5.35, y + 0.82, -3.5), red, false, "Tank")
-	BuildKit.box_mm(gen, Vector3(4.1, y + 0.15, -4.05), Vector3(4.9, y + 0.6, -3.6), frame, false)
-	BuildKit.cylinder(gen, 0.06, 0.04, Vector3(4.4, y + 0.84, -3.82), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
-	BuildKit.cylinder(gen, 0.04, 0.9, Vector3(5.15, y + 0.75, -4.25), frame, false, Vector3.ZERO, -1.0, 6)
-	BuildKit.box_mm(gen, Vector3(4.95, y + 0.2, -3.48), Vector3(5.3, y + 0.5, -3.44), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
-	Icons.decal(gen, "fuel", 0.18, Vector3(4.35, y + 0.72, -3.5), Vector3(0, 0, 1))
-	Icons.decal(gen, "power", 0.12, Vector3(5.125, y + 0.37, -3.44), Vector3(0, 0, 1))
+	_generator_model(gen, y)
 	# Sicherungskasten mit Kabeln
 	var ex := HALF_X - CLAD
 	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
@@ -756,6 +761,147 @@ func _build_technical_room() -> void:
 	# Benzinkanister zum Mitnehmen
 	for i in 2:
 		fuel_can(self, Vector3(2.575 + i * 0.4, y, -4.2), 0.0, "FuelCan_%d" % i)
+
+
+## Tragbarer Stromerzeuger im Rohrrahmen: Motor mit Kühlrippen und Seilzugstarter, Lichtmaschine,
+## Auspufftopf mit Hitzeschutz, roter Tank mit Deckel und Anzeige, Bedienfeld mit Steckdosen.
+func _generator_model(gen: Node3D, y: float) -> void:
+	var red := BuildKit.tex_mat("metal", 0.4, Color(1.9, 0.5, 0.35), 0.45)
+	var red_dark := BuildKit.tex_mat("metal", 0.4, Color(1.3, 0.32, 0.22), 0.5)
+	var tube := BuildKit.tex_mat("metal", 0.3, Color(0.35, 0.35, 0.37), 0.35)
+	var engine := BuildKit.tex_mat("metal", 0.3, Color(0.55, 0.55, 0.56), 0.5)
+	var engine_dark := BuildKit.color_mat(Color(0.12, 0.12, 0.13), 0.6, 0.4)
+	var black := BuildKit.color_mat(Color(0.05, 0.05, 0.05), 0.7)
+	var chrome := BuildKit.color_mat(Color(0.75, 0.75, 0.78), 0.25, 0.9)
+	var x0 := 4.02
+	var x1 := 5.38
+	var z0 := -4.18
+	var z1 := -3.48
+	# Rohrrahmen: vier Pfosten, obere und untere Holme, Gummifüße
+	for x: float in [x0, x1]:
+		for z: float in [z0, z1]:
+			BuildKit.cylinder(gen, 0.022, 0.7, Vector3(x, y + 0.45, z), tube, false, Vector3.ZERO, -1.0, 8)
+			BuildKit.cylinder(gen, 0.04, 0.05, Vector3(x, y + 0.025, z), black, false, Vector3.ZERO, -1.0, 8)
+		for h: float in [0.1, 0.8]:
+			BuildKit.cylinder(gen, 0.022, z1 - z0, Vector3(x, y + h, (z0 + z1) * 0.5), tube, false, Vector3(90, 0, 0), -1.0, 8)
+	for z: float in [z0, z1]:
+		for h: float in [0.1, 0.8]:
+			BuildKit.cylinder(gen, 0.022, x1 - x0, Vector3((x0 + x1) * 0.5, y + h, z), tube, false, Vector3(0, 0, 90), -1.0, 8)
+	BuildKit.box_mm(gen, Vector3(x0 + 0.03, y + 0.1, z0 + 0.03), Vector3(x1 - 0.03, y + 0.13, z1 - 0.03), engine_dark, false)
+	# Motorblock mit schräg stehendem Zylinderkopf und Kühlrippen
+	BuildKit.box_mm(gen, Vector3(4.12, y + 0.13, -4.05), Vector3(4.72, y + 0.42, -3.62), engine, false)
+	var head := Node3D.new()
+	head.position = Vector3(4.3, y + 0.5, -3.84)
+	head.rotation_degrees.z = 25
+	gen.add_child(head)
+	BuildKit.box(head, Vector3(0.2, 0.18, 0.26), Vector3.ZERO, engine, false)
+	for k in 6:
+		BuildKit.box(head, Vector3(0.26, 0.012, 0.32), Vector3(0, -0.07 + k * 0.03, 0), engine, false)
+	BuildKit.cylinder(head, 0.025, 0.06, Vector3(0, 0.12, 0), black, false, Vector3.ZERO, -1.0, 8)  # Zündkerzenstecker
+	# Seilzugstarter vorn, mit T-Griff
+	BuildKit.cylinder(gen, 0.13, 0.06, Vector3(4.42, y + 0.3, -3.59), red_dark, false, Vector3(90, 0, 0), -1.0, 18)
+	BuildKit.cylinder(gen, 0.05, 0.02, Vector3(4.42, y + 0.3, -3.555), black, false, Vector3(90, 0, 0), -1.0, 12)
+	BuildKit.box(gen, Vector3(0.11, 0.025, 0.025), Vector3(4.42, y + 0.3, -3.53), black, false)
+	# Luftfilterkasten seitlich
+	BuildKit.box_mm(gen, Vector3(4.06, y + 0.25, -3.95), Vector3(4.13, y + 0.45, -3.7), black, false)
+	# Lichtmaschine: liegender Zylinder mit Lüftungsschlitzen
+	BuildKit.cylinder(gen, 0.17, 0.46, Vector3(4.97, y + 0.32, -3.85), engine, false, Vector3(0, 0, 90), -1.0, 20)
+	for k in 5:
+		BuildKit.cylinder(gen, 0.172, 0.012, Vector3(4.8 + k * 0.08, y + 0.32, -3.85), engine_dark, false, Vector3(0, 0, 90), -1.0, 20)
+	BuildKit.cylinder(gen, 0.17, 0.03, Vector3(5.21, y + 0.32, -3.85), red_dark, false, Vector3(0, 0, 90), -1.0, 20)
+	# Auspufftopf hinten mit gelochtem Hitzeschutz
+	BuildKit.cylinder(gen, 0.075, 0.42, Vector3(4.45, y + 0.5, -4.1), engine_dark, false, Vector3(0, 0, 90), -1.0, 14)
+	BuildKit.box_mm(gen, Vector3(4.24, y + 0.52, -4.17), Vector3(4.66, y + 0.6, -4.05), chrome, false)
+	for k in 6:
+		BuildKit.box_mm(gen, Vector3(4.27 + k * 0.065, y + 0.6, -4.15), Vector3(4.3 + k * 0.065, y + 0.602, -4.07), black, false)
+	BuildKit.cylinder(gen, 0.02, 0.08, Vector3(4.22, y + 0.5, -4.1), black, false, Vector3(0, 0, 90), -1.0, 8)
+	# Tank: rot, mit abgerundeten Kanten, Tankdeckel und Füllstandsanzeige
+	BuildKit.box_mm(gen, Vector3(4.12, y + 0.62, -4.08), Vector3(5.28, y + 0.79, -3.55), red, false, "Tank")
+	BuildKit.box_mm(gen, Vector3(4.16, y + 0.79, -4.04), Vector3(5.24, y + 0.815, -3.59), red, false)
+	for z: float in [-4.08, -3.55]:
+		BuildKit.cylinder(gen, 0.03, 1.12, Vector3(4.7, y + 0.79, z + (0.03 if z < -4.0 else -0.03)), red, false, Vector3(0, 0, 90), -1.0, 10)
+	BuildKit.box_mm(gen, Vector3(4.12, y + 0.59, -4.08), Vector3(5.28, y + 0.62, -3.55), red_dark, false)
+	BuildKit.cylinder(gen, 0.065, 0.035, Vector3(4.55, y + 0.83, -3.82), black, false, Vector3.ZERO, -1.0, 16)
+	BuildKit.cylinder(gen, 0.07, 0.01, Vector3(4.55, y + 0.815, -3.82), chrome, false, Vector3.ZERO, -1.0, 16)
+	for k in 4:
+		BuildKit.box(gen, Vector3(0.012, 0.02, 0.1), Vector3(4.55, y + 0.86, -3.82), black, false, Vector3(0, k * 45.0, 0))
+	BuildKit.cylinder(gen, 0.045, 0.012, Vector3(4.95, y + 0.82, -3.75), BuildKit.color_mat(Color(0.85, 0.85, 0.8), 0.3), false, Vector3.ZERO, -1.0, 14)
+	BuildKit.box(gen, Vector3(0.006, 0.004, 0.035), Vector3(4.95, y + 0.828, -3.76), black, false, Vector3(0, 30, 0))
+	# Bedienfeld vorn rechts: Steckdosen, Sicherungsschalter, Betriebsstundenzähler
+	BuildKit.box_mm(gen, Vector3(4.82, y + 0.17, -3.53), Vector3(5.34, y + 0.56, -3.49), engine_dark, false)
+	for k in 2:
+		var sx := 4.92 + k * 0.17
+		BuildKit.cylinder(gen, 0.055, 0.02, Vector3(sx, y + 0.27, -3.48), black, false, Vector3(90, 0, 0), -1.0, 16)
+		for hx: float in [-0.018, 0.018]:
+			BuildKit.box(gen, Vector3(0.008, 0.008, 0.01), Vector3(sx + hx, y + 0.27, -3.47), chrome, false)
+	BuildKit.box(gen, Vector3(0.05, 0.03, 0.02), Vector3(4.92, y + 0.44, -3.475), BuildKit.color_mat(Color(0.7, 0.1, 0.08), 0.5), false)
+	BuildKit.box(gen, Vector3(0.08, 0.04, 0.012), Vector3(5.24, y + 0.47, -3.48), BuildKit.color_mat(Color(0.85, 0.85, 0.8), 0.3), false)
+	Icons.decal(gen, "fuel", 0.14, Vector3(4.8, y + 0.7, -3.545), Vector3(0, 0, 1))
+	Icons.decal(gen, "power", 0.1, Vector3(5.1, y + 0.44, -3.485), Vector3(0, 0, 1))
+
+
+## Werkzeugwand: Lochplatte mit Rahmen, daran Hammer, Säge, Schraubenschlüssel, Schraubenzieher, Zange, Seil.
+func _tool_wall(fz: float, y: float) -> void:
+	var board := BuildKit.tex_mat("planks_v", 0.6, Color(1.25, 1.12, 0.95))
+	var frame := m_wood_dark
+	var steel := BuildKit.color_mat(Color(0.62, 0.63, 0.66), 0.35, 0.85)
+	var rust := BuildKit.tex_mat("metal", 0.3, Color(1.1, 0.85, 0.7), 0.6)
+	var handle := BuildKit.tex_mat("logs", 0.3, Color(1.3, 1.1, 0.85))
+	var red := BuildKit.color_mat(Color(0.65, 0.12, 0.08), 0.5)
+	var yellow := BuildKit.color_mat(Color(0.8, 0.62, 0.1), 0.5)
+	var hole := BuildKit.color_mat(Color(0.12, 0.09, 0.07), 0.9)
+	var x0 := 2.15
+	var x1 := 3.4
+	var z := fz - 0.03
+	BuildKit.box_mm(self, Vector3(x0, y + 0.95, z), Vector3(x1, y + 2.05, fz), board, false, "Pegboard")
+	for k in 2:
+		BuildKit.box_mm(self, Vector3(x0 - 0.03, y + 0.93 + k * 1.12, z - 0.01), Vector3(x1 + 0.03, y + 0.97 + k * 1.12, fz), frame, false)
+		BuildKit.box_mm(self, Vector3(x0 - 0.03 + k * (x1 - x0 + 0.02), y + 0.93, z - 0.01), Vector3(x0 + 0.01 + k * (x1 - x0 + 0.02), y + 2.09, fz), frame, false)
+	# Lochraster
+	for ix in 11:
+		for iy in 9:
+			BuildKit.box(self, Vector3(0.012, 0.012, 0.004), Vector3(x0 + 0.08 + ix * 0.11, y + 1.03 + iy * 0.115, z - 0.001), hole, false)
+	var f := z - 0.025  # Ebene der Werkzeuge
+	# Hammer (Kopf oben, Stiel nach unten)
+	BuildKit.box(self, Vector3(0.035, 0.32, 0.03), Vector3(2.3, y + 1.6, f), handle, false)
+	BuildKit.box(self, Vector3(0.13, 0.04, 0.04), Vector3(2.3, y + 1.78, f), steel, false)
+	BuildKit.box(self, Vector3(0.04, 0.035, 0.03), Vector3(2.37, y + 1.8, f), steel, false, Vector3(0, 0, 30))
+	# Fuchsschwanz-Säge: Blatt schmal zulaufend, Griff
+	var saw := Node3D.new()
+	saw.position = Vector3(2.62, y + 1.48, f)
+	saw.rotation_degrees.z = -8
+	add_child(saw)
+	BuildKit.box(saw, Vector3(0.1, 0.42, 0.004), Vector3(0, -0.02, 0), steel, false)
+	BuildKit.box(saw, Vector3(0.06, 0.1, 0.004), Vector3(0.02, -0.26, 0), steel, false)
+	for t in 14:
+		BuildKit.box(saw, Vector3(0.01, 0.012, 0.004), Vector3(-0.055, -0.21 + t * 0.03, 0), steel, false, Vector3(0, 0, 45))
+	BuildKit.box(saw, Vector3(0.11, 0.13, 0.03), Vector3(0, 0.24, 0), handle, false)
+	BuildKit.box(saw, Vector3(0.05, 0.06, 0.035), Vector3(0, 0.25, 0), hole, false)
+	# Schraubenschlüssel in drei Größen
+	for k in 3:
+		var wx := 2.86 + k * 0.07
+		var ln := 0.16 + k * 0.04
+		BuildKit.box(self, Vector3(0.022, ln, 0.01), Vector3(wx, y + 1.72 - ln * 0.5, f), steel, false)
+		BuildKit.box(self, Vector3(0.045, 0.035, 0.01), Vector3(wx, y + 1.73, f), steel, false)
+		BuildKit.box(self, Vector3(0.015, 0.02, 0.012), Vector3(wx, y + 1.745, f), board, false)
+		BuildKit.cylinder(self, 0.02, 0.01, Vector3(wx, y + 1.72 - ln, f), steel, false, Vector3(90, 0, 0), -1.0, 10)
+	# Schraubenzieher mit bunten Griffen
+	for k in 4:
+		var sx := 3.12 + k * 0.06
+		BuildKit.cylinder(self, 0.016, 0.1, Vector3(sx, y + 1.74, f), red if k % 2 == 0 else yellow, false, Vector3.ZERO, 0.013, 8)
+		BuildKit.cylinder(self, 0.004, 0.13 + k * 0.02, Vector3(sx, y + 1.625 - k * 0.01, f), steel, false, Vector3.ZERO, -1.0, 6)
+	# Zange
+	for side: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(0.018, 0.17, 0.012), Vector3(2.92 + side * 0.025, y + 1.24, f), red, false, Vector3(0, 0, side * 6.0))
+		BuildKit.box(self, Vector3(0.015, 0.07, 0.012), Vector3(2.92 + side * 0.006, y + 1.36, f), steel, false, Vector3(0, 0, -side * 4.0))
+	# Seilrolle an einem Haken
+	var rope := BuildKit.tex_mat("fabric", 0.2, Color(1.6, 1.35, 0.9))
+	BuildKit.lathe(self, PackedVector2Array([Vector2(0.09, -0.03), Vector2(0.13, -0.035), Vector2(0.15, 0.0), Vector2(0.13, 0.035), Vector2(0.09, 0.03), Vector2(0.08, 0.0)]),
+			Vector3(3.2, y + 1.25, f - 0.02), rope, 16, Vector3(90, 0, 0))
+	BuildKit.box(self, Vector3(0.012, 0.06, 0.04), Vector3(3.2, y + 1.37, f + 0.01), steel, false)
+	# Werkzeughaken
+	for hx: float in [2.3, 2.62, 2.92, 3.2]:
+		BuildKit.box(self, Vector3(0.01, 0.01, 0.05), Vector3(hx, y + 1.9 if hx < 2.5 else y + 1.71, z - 0.02), rust, false)
 
 
 func _build_workshop() -> void:
@@ -787,13 +933,7 @@ func _build_workshop() -> void:
 	BuildKit.box(self, Vector3(0.1, 0.05, 0.04), Vector3(5.42, y + 0.95, 2.32), m_iron, false, Vector3(0, 40, 0))
 	BuildKit.box(self, Vector3(0.08, 0.08, 0.25), Vector3(5.6, y + 0.96, 2.8), m_wood_dark, false)
 	# Werkzeugwand an der Vorderwand links vom Werkstattfenster (nicht über einer Tür!)
-	var fz := HALF_Z - CLAD - 0.015
-	BuildKit.box_mm(self, Vector3(2.2, y + 1.0, fz - 0.03), Vector3(3.35, y + 2.0, fz), BuildKit.tex_mat("planks_v", 0.6, Color(1.2, 1.1, 0.95)), false, "Pegboard")
-	for i in 4:
-		var x := 2.38 + i * 0.27
-		var h := 0.25 + (i % 3) * 0.1
-		BuildKit.box(self, Vector3(0.04, h, 0.03), Vector3(x, y + 1.6, fz - 0.05), m_wood_dark, false)
-		BuildKit.box(self, Vector3(0.12 if i % 2 == 0 else 0.06, 0.06, 0.03), Vector3(x, y + 1.6 + h * 0.5, fz - 0.05), m_iron, false)
+	_tool_wall(HALF_Z - CLAD - 0.015, y)
 	# Bretterstapel an der Vorderwand (unter dem Fenster), Sägebock davor
 	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
 	var pile := ItemPickup.new()
