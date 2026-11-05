@@ -42,7 +42,7 @@ MAP = [
     ("Ambient wind blowing*", "wind", "loop", None),
     ("Ambient heavy gusts of wind *", "gusts", "loop", None),
     ("Ambient opressive silence *", "silence", "loop", None),
-    ("Build chopping wood *", "chop", "one", None),
+    ("Build chopping wood *", "chop", "clip", 0.45),  # Aufnahme hat 3 Hiebe – nur der erste
     ("Build clattering cans *", "clatter", "one", None),
     ("Build collecting metal *", "collect_metal", "one", None),
     ("Build collecting stone *", "collect_stone", "one", None),
@@ -99,7 +99,7 @@ def loop(x):
 
 def clip(x, secs):
     y = one(x)[:int(secs * SR)].copy()
-    fo = int(0.5 * SR)
+    fo = int(min(0.5, secs * 0.3) * SR)
     y[-fo:] *= np.linspace(1, 0, fo) ** 2
     return y
 

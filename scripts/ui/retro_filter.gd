@@ -1,9 +1,9 @@
 class_name RetroFilter
 extends CanvasLayer
 ## Vollbild-Filter für den Retro-Horror-Look (F2 schaltet ihn zum Vergleich aus).
-## Die Pixelgröße passt sich der Fensterhöhe an: ca. 360 "Retro-Zeilen".
+## Die Pixelgröße passt sich der Fensterhöhe an: ca. 720 "Retro-Zeilen".
 
-const VIRTUAL_HEIGHT := 360.0
+const VIRTUAL_HEIGHT := 720.0  ## halb so grob wie früher (360)
 
 var _rect: ColorRect
 var _mat: ShaderMaterial
@@ -39,7 +39,7 @@ func _apply_render_scale() -> void:
 	var h := float(vp.get_visible_rect().size.y)
 	var scale := 1.0
 	if enabled and h > 0.0:
-		scale = clampf(VIRTUAL_HEIGHT * 2.0 / h, 0.5, 1.0)
+		scale = clampf(VIRTUAL_HEIGHT * 1.5 / h, 0.5, 1.0)
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	vp.scaling_3d_scale = scale
 

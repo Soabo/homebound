@@ -209,13 +209,17 @@ func set_watch(on: bool) -> void:
 	_screen.emission_energy_multiplier = 0.6 if on else 0.0
 
 
+## true, solange mit dem Werkzeug gearbeitet wird (Holz hacken): das Werkzeug bleibt in der Hand.
+var working: bool = false
+
+
 func _building() -> bool:
 	var bc := get_tree().get_first_node_in_group("build_controller") as BuildController
 	return bc != null and bc.active
 
 
 func _wanted_right() -> String:
-	if player and (player.input_locked or GameState.dead):
+	if player and ((player.input_locked and not working) or GameState.dead):
 		return ""
 	var id := Inventory.equipped()
 	var kind := "fist"
@@ -279,8 +283,8 @@ func _primary() -> void:
 
 
 ## Ein einzelner Hieb ohne Treffer-Prüfung (z. B. beim Holzhacken, pro Schlag aufgerufen).
-func tool_swing() -> void:
-	_start_action("chop", 0.45)
+func tool_swing(length: float = 0.55) -> void:
+	_start_action("chop", length)
 
 
 func _start_action(a: String, length: float) -> void:

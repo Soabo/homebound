@@ -26,7 +26,7 @@ func _ready() -> void:
 	_birds = _loop("birds")
 	# Bach und Frösche: ein Klang wandert am Bach entlang mit, immer auf Höhe des Spielers
 	if SoundBank.has_recording("brook"):
-		_brook = _loop3d("brook", 10.0, 70.0)
+		_brook = _loop3d("brook", 6.0, 60.0)
 	if SoundBank.has_recording("frogs"):
 		_frogs = _loop3d("frogs", 8.0, 80.0)
 	# bedrückende Stille: dunkler Klangteppich, wenn etwas Fremdes nah ist oder das Tal sich verändert
@@ -89,7 +89,7 @@ func _process(delta: float) -> void:
 	var st := WorldState.stage()
 	var fauna_db := 0.0 if st == 0 else (-7.0 if st < 3 else -22.0)
 	_crickets.volume_db += fauna_db
-	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 12.0 + indoor_db + fauna_db
+	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 18.0 + indoor_db + fauna_db
 
 	if player:
 		var pz := clampf(player.global_position.z, -100.0, 100.0)
@@ -97,7 +97,7 @@ func _process(delta: float) -> void:
 		var at := Vector3(sx, Terrain.stream_bed_height(pz) + 0.3, pz)
 		if _brook:
 			_brook.global_position = at
-			_brook.volume_db = -6.0 + indoor_db
+			_brook.volume_db = -13.0 + indoor_db
 		if _frogs:
 			_frogs.global_position = at + Vector3(2.0, 0, 6.0)
 			var frog_vol := (1.0 if night else 0.0) * (1.0 - _silence)

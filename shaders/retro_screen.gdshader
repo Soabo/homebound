@@ -4,10 +4,10 @@ shader_type canvas_item;
 
 uniform sampler2D screen_tex : hint_screen_texture, filter_nearest;
 uniform float pixel_size = 3.0;
-uniform float color_levels = 28.0;
-uniform float dither_strength = 0.9;
-uniform float vignette_strength = 0.45;
-uniform float grain_strength = 0.035;
+uniform float color_levels = 56.0;
+uniform float dither_strength = 0.45;
+uniform float vignette_strength = 0.3;
+uniform float grain_strength = 0.018;
 uniform float enabled = 1.0;
 
 const float BAYER[16] = float[16](

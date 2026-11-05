@@ -538,7 +538,7 @@ func _build_kitchen() -> void:
 		drip.name = "TapDrip"
 		drip.stream = SoundBank.get_sound("drip")
 		drip.position = Vector3(-1.45, y + 0.95, z0 + 0.2)
-		drip.volume_db = -14.0
+		drip.volume_db = -22.0
 		drip.unit_size = 1.2
 		drip.max_distance = 8.0
 		drip.autoplay = true

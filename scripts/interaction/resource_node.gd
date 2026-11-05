@@ -68,16 +68,23 @@ func interact(player: Node) -> void:
 	var p := player as Player
 	if p:
 		p.input_locked = true
-	var steps := maxi(1, int(round(action_time / 0.45)))
+	var with_tool := tool != "" and p != null and p.hands != null
+	if with_tool:
+		p.hands.working = true
+	var steps := maxi(1, int(round(action_time / 0.6)))
+	var step_time := action_time / steps
 	for i in steps:
-		# mit Werkzeug in der Hand: sichtbarer Hieb pro Schlag
-		if tool != "" and p and p.hands:
-			p.hands.tool_swing()
-		SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.85, 1.15))
+		if with_tool:
+			# sichtbarer Hieb – der Klang kommt erst, wenn die Axt auftrifft
+			p.hands.tool_swing(step_time * 0.95)
+			await get_tree().create_timer(step_time * 0.48).timeout
+		SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.9, 1.1))
 		EventBus.noise_made.emit(to_global(anchor), 10.0)
-		await get_tree().create_timer(action_time / steps).timeout
+		await get_tree().create_timer(step_time * (0.52 if with_tool else 1.0)).timeout
 	if p and is_instance_valid(p):
 		p.input_locked = false
+		if p.hands:
+			p.hands.working = false
 	_busy = false
 	var take := mini(per_action, amount)
 	var got := Inventory.add(item_id, take)
