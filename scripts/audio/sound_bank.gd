@@ -1,20 +1,72 @@
 class_name SoundBank
 extends RefCounted
-## Erzeugt Geräusche per Code als kurze WAV-Klänge (Platzhalter bis echte Sounds kommen).
-## Jeder Klang wird einmal berechnet und dann wiederverwendet.
+## Geräusche des Spiels. Gibt es zu einer ID echte Aufnahmen (assets/audio/sfx/<id>_NN.ogg,
+## aufbereitet mit tools/audio/sfx.py), wird zufällig eine davon gespielt. Sonst erzeugt der Code
+## einen Ersatzklang (WAV), der einmal berechnet und dann wiederverwendet wird.
 
 const RATE := 22050
+const SFX_DIR := "res://assets/audio/sfx"
+## Klangflächen, die endlos wiederholt werden
+const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", "wind", "gusts", "silence",
+		"drip", "monitor_hum", "fire", "static"]
+## Lautstärke-Ausgleich der Aufnahmen (dB) – feinjustiert nach Gehör
+const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
+		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,
+		"camera_switch": -6.0, "light_switch": -4.0, "clatter": -2.0, "twig": 2.0, "owl": -2.0, "music_box": -2.0,
+		"sting_creature": -4.0, "sting_dawn": -8.0, "sting_dusk": -8.0, "faucet": -6.0, "workbench": -4.0}
 
 static var _cache: Dictionary = {}
+static var _recorded: Dictionary = {}
+static var _last: Dictionary = {}
 
 
-static func get_sound(id: String) -> AudioStreamWAV:
+## Alle Aufnahmen zu einer ID (leer = keine, dann Ersatzklang).
+static func recorded(id: String) -> Array:
+	if _recorded.has(id):
+		return _recorded[id]
+	var list: Array = []
+	for i in range(1, 25):
+		var path := "%s/%s_%02d.ogg" % [SFX_DIR, id, i]
+		if not ResourceLoader.exists(path):
+			break
+		var st := load(path) as AudioStream
+		if id in LOOP_IDS and st is AudioStreamOggVorbis:
+			st = st.duplicate()
+			(st as AudioStreamOggVorbis).loop = true
+		list.append(st)
+	_recorded[id] = list
+	return list
+
+
+static func has_recording(id: String) -> bool:
+	return not recorded(id).is_empty()
+
+
+## Ein Klang zur ID: echte Aufnahme (zufällige Variante, nie zweimal dieselbe hintereinander) oder Ersatzklang.
+static func get_sound(id: String) -> AudioStream:
+	var list := recorded(id)
+	if not list.is_empty():
+		var idx := randi() % list.size()
+		if list.size() > 1 and idx == int(_last.get(id, -1)):
+			idx = (idx + 1 + randi() % (list.size() - 1)) % list.size()
+		_last[id] = idx
+		return list[idx]
+	return get_generated(id)
+
+
+## Immer der per Code erzeugte Klang (z. B. für das Summen der Drohne).
+static func get_generated(id: String) -> AudioStreamWAV:
 	if _cache.has(id):
 		return _cache[id]
 	var s: PackedFloat32Array
 	var loop := false
 	match id:
-		"knock": s = _knock()
+		"knock", "thud": s = _knock()
+		"door_break", "fence_break": s = _bang()
+		"plank_break", "chop": s = _wood_crack()
+		"door_open", "door_close", "door_lock", "light_switch", "menu_click", "camera_switch", "motion_click": s = _click()
+		"place", "workbench", "collect_metal", "collect_stone": s = _hammer()
+		"backpack": s = _click(0.6)
 		"bang": s = _bang()
 		"glass_crack": s = _glass(0.25, 0.4)
 		"glass_break": s = _glass(0.9, 1.0)
@@ -59,8 +111,12 @@ static func get_sound(id: String) -> AudioStreamWAV:
 
 
 ## Spielt einen Klang an einer Position in der Welt ab.
+## Bei echten Aufnahmen wird die Tonhöhe nur leicht verändert (die Werte waren für die Ersatzklänge gedacht).
 static func play_at(parent: Node, id: String, pos: Vector3, volume_db: float = 0.0, pitch: float = 1.0) -> void:
-	play_stream_at(parent, get_sound(id), pos, volume_db, pitch)
+	if has_recording(id):
+		play_stream_at(parent, get_sound(id), pos, volume_db + float(GAIN.get(id, 0.0)), clampf(pitch, 0.9, 1.1))
+	else:
+		play_stream_at(parent, get_sound(id), pos, volume_db, pitch)
 
 
 ## Wie play_at, aber mit einer fertigen Tondatei (z. B. echte Aufnahmen).
@@ -84,6 +140,9 @@ static func play_ui(parent: Node, id: String, volume_db: float = 0.0, pitch: flo
 	p.stream = get_sound(id)
 	p.volume_db = volume_db
 	p.pitch_scale = pitch
+	if has_recording(id):
+		p.volume_db += float(GAIN.get(id, 0.0))
+		p.pitch_scale = clampf(pitch, 0.9, 1.1)
 	parent.add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)

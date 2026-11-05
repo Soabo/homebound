@@ -311,7 +311,7 @@ func _build_forest_details() -> void:
 			wood.tool = "axe"
 			wood.action_label = "Holz hacken"
 			wood.action_time = 1.8
-			wood.sound = "wood_crack"
+			wood.sound = "chop"
 			wood.anchor = p + Vector3(0, 0, 0)
 			wood.collider_size = Vector3(1.2, r * 2.0 + 0.2, 1.2)
 			add_child(wood)
@@ -381,7 +381,7 @@ func _build_stream_spots() -> void:
 		pile.regrow_per_day = 3
 		pile.action_label = "Steine sammeln"
 		pile.action_time = 1.2
-		pile.sound = "step_wood"
+		pile.sound = "collect_stone"
 		pile.anchor = Vector3(x, g, z)
 		pile.collider_size = Vector3(1.0, 0.5, 1.0)
 		add_child(pile)

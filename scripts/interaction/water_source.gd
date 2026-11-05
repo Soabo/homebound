@@ -9,6 +9,8 @@ extends Interactable
 @export var thirst_gain: float = 30.0
 ## Kann durch das Terraforming verunreinigt werden (Bach, Leitungswasser). Regenwasser bleibt sauber.
 @export var contaminable: bool = false
+## Geräusch beim Trinken (Wasserhahn: echtes Rauschen)
+@export var sound: String = "step_grass"
 
 
 func _ready() -> void:
@@ -42,7 +44,14 @@ func interact(player: Node) -> void:
 			p.health = maxf(p.health - 12.0, 1.0)
 			EventBus.player_hurt.emit(12.0)
 		EventBus.notify("Das Wasser schmeckt metallisch und brennt im Hals. Bau dir einen Wasserfilter (Werkbank).", 4.0)
-		SoundBank.play_at(self, "step_grass", to_global(anchor) + Vector3(0, 0.5, 0), -6.0, 1.6)
+		_splash()
 		return
 	Survival.apply({"thirst": thirst_gain})
-	SoundBank.play_at(self, "step_grass", to_global(anchor) + Vector3(0, 0.5, 0), -6.0, 1.6)
+	_splash()
+
+
+func _splash() -> void:
+	if sound == "step_grass":
+		SoundBank.play_at(self, "step_grass", to_global(anchor) + Vector3(0, 0.5, 0), -6.0, 1.6)
+	else:
+		SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.3, 0), 0.0)

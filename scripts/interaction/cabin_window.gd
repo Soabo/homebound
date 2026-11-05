@@ -188,9 +188,9 @@ func receive_hit(damage: float) -> void:
 			SoundBank.play_at(self, "knock", pos, -2.0, 1.3)
 	elif barricade > 0.0:
 		barricade = maxf(barricade - damage, 0.0)
-		SoundBank.play_at(self, "wood_crack", pos, 0.0, randf_range(0.8, 1.1))
+		SoundBank.play_at(self, "plank_break", pos, 0.0)
 		if barricade <= 0.0:
-			SoundBank.play_at(self, "bang", pos, 0.0, 0.8)
+			SoundBank.play_at(self, "fence_break", pos, 2.0)
 	_update_visuals()
 
 

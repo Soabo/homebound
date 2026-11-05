@@ -27,6 +27,7 @@ var _monitor_label: Label
 var _monitor_open: bool = false
 var _monitor_opened_at: int = 0
 var _static_player: AudioStreamPlayer
+var _hum_player: AudioStreamPlayer
 
 # Todesbildschirm
 var _death: Label
@@ -374,6 +375,10 @@ func _build_monitor(root: Control) -> void:
 	_static_player.stream = SoundBank.get_sound("static")
 	_static_player.volume_db = -20.0
 	add_child(_static_player)
+	_hum_player = AudioStreamPlayer.new()
+	_hum_player.stream = SoundBank.get_sound("monitor_hum")
+	_hum_player.volume_db = -14.0
+	add_child(_hum_player)
 
 
 func open_monitor() -> void:
@@ -387,7 +392,9 @@ func open_monitor() -> void:
 	_monitor_root.visible = true
 	_set_player_locked(true)
 	_static_player.play()
-	SoundBank.play_ui(self, "switch", -6.0)
+	if SoundBank.has_recording("monitor_hum"):
+		_hum_player.play()
+	SoundBank.play_ui(self, "camera_switch", -6.0)
 
 
 func close_monitor() -> void:
@@ -399,6 +406,7 @@ func close_monitor() -> void:
 	_monitor_open = false
 	_monitor_root.visible = false
 	_static_player.stop()
+	_hum_player.stop()
 	_set_player_locked(false)
 
 
@@ -415,10 +423,10 @@ func _update_monitor(_delta: float) -> void:
 		return
 	if Input.is_action_just_pressed("move_left"):
 		sv.set_active(sv.active_index - 1)
-		SoundBank.play_ui(self, "switch", -8.0)
+		SoundBank.play_ui(self, "camera_switch", -6.0)
 	elif Input.is_action_just_pressed("move_right"):
 		sv.set_active(sv.active_index + 1)
-		SoundBank.play_ui(self, "switch", -8.0)
+		SoundBank.play_ui(self, "camera_switch", -6.0)
 	elif Input.is_action_just_pressed("interact") and Time.get_ticks_msec() - _monitor_opened_at > 250:
 		close_monitor()
 		return

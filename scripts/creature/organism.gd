@@ -145,7 +145,7 @@ class Patch extends Interactable:
 
 	func axe_hit(_p: Node) -> void:
 		hp -= 1
-		SoundBank.play_at(get_parent(), "wood_crack", global_position + Vector3(0, 0.3, 0), -6.0, 0.6)
+		SoundBank.play_at(get_parent(), "chop", global_position + Vector3(0, 0.3, 0), -4.0)
 		if hp <= 0:
 			if Research.seen.find("organism_sample") < 0 or randf() < 0.3:
 				Inventory.add("organism_sample", 1)

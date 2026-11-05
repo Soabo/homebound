@@ -151,7 +151,14 @@ func _fire(type: String) -> void:
 		"twig":
 			SoundBank.play_at(scene, "twig", _random_forest_point(18.0, 30.0), -2.0, _rng.randf_range(0.8, 1.2))
 		"steps":
-			_play_phantom_steps(scene)
+			# Im Haus: eine Diele knarrt in einem anderen Zimmer. Draußen: Schritte im Wald.
+			if player and Cabin.is_inside(player.global_position) and SoundBank.has_recording("floor_creak") and _rng.randf() < 0.6:
+				var p := Vector3(_rng.randf_range(-5.0, 5.0), 0.6, _rng.randf_range(-3.5, 3.5))
+				if p.distance_to(player.global_position) < 3.0:
+					p = -p
+				SoundBank.play_at(scene, "floor_creak", p, 0.0)
+			else:
+				_play_phantom_steps(scene)
 		"breath_wall":
 			var p := Vector3(_rng.randf_range(-6.5, 6.5), 1.4, -4.9 if _rng.randf() < 0.5 else 4.9)
 			CreatureSounds.play_phrase(scene, "breath", p, -5.0, _rng.randf_range(4.0, 6.0), 14.0)
@@ -196,7 +203,7 @@ func _fire(type: String) -> void:
 			for ph in get_tree().get_nodes_in_group("family_photo"):
 				if ph.rotation_degrees.x > -40.0:
 					ph.rotation_degrees.x = -82.0
-					SoundBank.play_at(scene, "clatter", ph.global_position, -2.0)
+					SoundBank.play_at(scene, "picture_fall", ph.global_position, 0.0)
 		"outage":
 			if PowerManager.has_power():
 				PowerManager.trigger_outage()

@@ -305,14 +305,14 @@ func _melee_hit(kind: String) -> void:
 		var facing := fwd_h.dot(to.normalized()) if d > 0.01 else 1.0
 		if d < float(cfg["reach"]) + 0.4 and (facing > 0.6 or (d < 1.0 and facing > 0.0)):
 			c.on_melee_hit(float(cfg["strength"]), player.global_position)
-			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else "knock", c.global_position + Vector3(0, 1.3, 0), -2.0, 1.3)
+			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else "thud", c.global_position + Vector3(0, 1.3, 0), -2.0, 1.3)
 			EventBus.screen_shake.emit(0.15)
 			return
 	var q := PhysicsRayQueryParameters3D.create(cam.origin, cam.origin + fwd * float(cfg["reach"]))
 	q.exclude = [player.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if not hit.is_empty():
-		SoundBank.play_at(get_tree().current_scene, "knock", hit["position"], -10.0, randf_range(1.2, 1.5))
+		SoundBank.play_at(get_tree().current_scene, "thud", hit["position"], -10.0, randf_range(1.2, 1.5))
 		EventBus.noise_made.emit(hit["position"], 6.0)
 
 

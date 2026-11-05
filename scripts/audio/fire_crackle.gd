@@ -13,6 +13,14 @@ var _prev := 0.0
 
 
 func _ready() -> void:
+	if SoundBank.has_recording("fire"):
+		# echte Aufnahme vom Lagerfeuer
+		stream = SoundBank.get_sound("fire")
+		volume_db = -6.0
+		unit_size = 2.5
+		max_distance = 16.0
+		play()
+		return
 	var gen := AudioStreamGenerator.new()
 	gen.mix_rate = RATE
 	gen.buffer_length = 0.2

@@ -33,6 +33,7 @@ func get_prompt(_player: Node) -> String:
 
 func interact(_player: Node) -> void:
 	switch_to(not is_on)
+	SoundBank.play_at(self, "light_switch", global_position, -2.0)
 
 
 func switch_to(value: bool) -> void:

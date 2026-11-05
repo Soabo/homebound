@@ -109,7 +109,7 @@ func _open(m: String) -> void:
 	var p := get_tree().get_first_node_in_group("player") as Player
 	if p and not was_open:
 		p.input_locked = true
-	SoundBank.play_ui(self, "switch", -8.0, 1.1)
+	SoundBank.play_ui(self, "menu_click", -6.0)
 	_refresh()
 
 
@@ -214,7 +214,7 @@ func _fill_station() -> void:
 func _on_insert(find: String) -> void:
 	_last_result = ""
 	if Research.insert(find):
-		SoundBank.play_ui(self, "switch", -6.0, 0.7)
+		SoundBank.play_ui(self, "menu_click", -4.0)
 
 
 func _on_experiment(eid: String) -> void:

@@ -98,7 +98,7 @@ func secondary_interact(_player: Node) -> void:
 	if not lockable or is_open:
 		return
 	is_locked = not is_locked
-	SoundBank.play_at(self, "switch", global_position + Vector3(width * 0.8, 1.0, 0), -4.0, 0.5)
+	SoundBank.play_at(self, "door_lock", global_position + Vector3(width * 0.8, 1.0, 0), 0.0)
 	EventBus.notify("%s %s." % [door_name, "abgeschlossen" if is_locked else "aufgeschlossen"], 1.5)
 
 
@@ -193,19 +193,21 @@ func receive_hit(damage: float) -> void:
 	var pos := global_position + Vector3(width * 0.5, 1.2, 0)
 	if not is_locked and not is_open:
 		# Unverschlossene Tür: wird aufgestoßen
-		SoundBank.play_at(self, "bang", pos, 0.0, 1.2)
-		set_open(true)
+		SoundBank.play_at(self, "door_break", pos, 2.0)
+		set_open(true, true)
 		return
 	health = maxf(health - damage, 0.0)
 	SoundBank.play_at(self, "knock", pos, 2.0, randf_range(0.85, 1.05))
 	EventBus.noise_made.emit(pos, 20.0)
 	if health <= 0.0:
-		SoundBank.play_at(self, "wood_crack", pos, 4.0, 0.7)
+		SoundBank.play_at(self, "door_break", pos, 4.0)
 		is_locked = false
-		set_open(true)
+		set_open(true, true)
 
 
-func set_open(value: bool) -> void:
+func set_open(value: bool, silent: bool = false) -> void:
+	if not silent and value != is_open and is_inside_tree():
+		SoundBank.play_at(self, "door_open" if value else "door_close", global_position + Vector3(width * 0.5, 1.0, 0), 0.0)
 	is_open = value
 	if _tween:
 		_tween.kill()

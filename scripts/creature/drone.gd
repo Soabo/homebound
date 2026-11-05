@@ -60,7 +60,7 @@ func _build_model() -> void:
 	_spot.shadow_enabled = true
 	add_child(_spot)
 	_hum = AudioStreamPlayer3D.new()
-	_hum.stream = SoundBank.get_sound("generator")
+	_hum.stream = SoundBank.get_generated("generator")
 	_hum.pitch_scale = 2.6
 	_hum.volume_db = -10.0
 	_hum.unit_size = 6.0

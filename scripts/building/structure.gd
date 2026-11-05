@@ -244,7 +244,7 @@ func hurts() -> bool:
 
 func _destroy(loud: bool) -> void:
 	if loud:
-		SoundBank.play_at(get_parent(), "bang", global_position + Vector3(0, 0.5, 0), 2.0, 0.8)
+		SoundBank.play_at(get_parent(), "bang" if type == "stone_wall" else "fence_break", global_position + Vector3(0, 0.5, 0), 2.0)
 	Builder.remove(uid)
 	queue_free()
 
@@ -310,7 +310,8 @@ func _physics_process(delta: float) -> void:
 func _set_light(on: bool) -> void:
 	_light.visible = on
 	_light_mat.emission_energy_multiplier = 5.0 if on else 0.0
-	SoundBank.play_at(get_parent(), "switch", global_position + Vector3(0, 2, 0), -2.0, 0.6)
+	if on:
+		SoundBank.play_at(get_parent(), "motion_click", global_position + Vector3(0, 2, 0), -2.0)
 
 
 func _update_strobe(delta: float) -> void:

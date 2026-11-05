@@ -37,10 +37,10 @@ func _ready() -> void:
 	_build_overgrowth()
 	_build_colliders()
 
-	_node("Scrap", "scrap", 1, 8, 0, "", "Schrott abmontieren", 2.0, "hammer", Vector3(-1.4, 0.95, 0), Vector3(1.8, 0.6, 1.6))
-	_node("Battery", "battery", 1, 1, 0, "", "Batterie ausbauen", 2.4, "hammer", Vector3(1.65, 1.15, 0), Vector3(1.2, 0.35, 1.5))
+	_node("Scrap", "scrap", 1, 8, 0, "", "Schrott abmontieren", 2.0, "collect_metal", Vector3(-1.4, 0.95, 0), Vector3(1.8, 0.6, 1.6))
+	_node("Battery", "battery", 1, 1, 0, "", "Batterie ausbauen", 2.4, "collect_metal", Vector3(1.65, 1.15, 0), Vector3(1.2, 0.35, 1.5))
 	_node("Fuel", "fuel_can", 1, 1, 0, "", "Benzin abzapfen", 2.5, "step_grass", Vector3(-0.95, 0.95, -0.95), Vector3(0.5, 0.5, 0.35))
-	_node("Radio", "electronics", 1, 2, 0, "", "Autoradio ausbauen", 1.8, "hammer", Vector3(0.62, 1.2, 0.3), Vector3(0.4, 0.3, 0.5))
+	_node("Radio", "electronics", 1, 2, 0, "", "Autoradio ausbauen", 1.8, "collect_metal", Vector3(0.62, 1.2, 0.3), Vector3(0.4, 0.3, 0.5))
 	_node("Glovebox", "food", 1, 2, 0, "", "Handschuhfach durchsuchen", 1.0, "switch", Vector3(0.62, 1.2, -0.45), Vector3(0.35, 0.3, 0.4))
 
 

@@ -13,6 +13,9 @@ var _silence: float = 0.0  ## 0 = normal, 1 = völlige Stille
 var _forced_silence_until: float = 0.0
 var _t: float = 0.0
 var _rng := RandomNumberGenerator.new()
+var _brook: AudioStreamPlayer3D
+var _frogs: AudioStreamPlayer3D
+var _dread: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -21,6 +24,15 @@ func _ready() -> void:
 	_rng.randomize()
 	_crickets = _loop("crickets")
 	_birds = _loop("birds")
+	# Bach und Frösche: ein Klang wandert am Bach entlang mit, immer auf Höhe des Spielers
+	if SoundBank.has_recording("brook"):
+		_brook = _loop3d("brook", 10.0, 70.0)
+	if SoundBank.has_recording("frogs"):
+		_frogs = _loop3d("frogs", 8.0, 80.0)
+	# bedrückende Stille: dunkler Klangteppich, wenn etwas Fremdes nah ist oder das Tal sich verändert
+	if SoundBank.has_recording("silence"):
+		_dread = _loop("silence")
+	TimeManager.phase_changed.connect(_on_phase_changed)
 
 
 func _loop(id: String) -> AudioStreamPlayer:
@@ -30,6 +42,22 @@ func _loop(id: String) -> AudioStreamPlayer:
 	add_child(p)
 	p.play()
 	return p
+
+
+func _loop3d(id: String, unit: float, max_d: float) -> AudioStreamPlayer3D:
+	var p := AudioStreamPlayer3D.new()
+	p.stream = SoundBank.get_sound(id)
+	p.unit_size = unit
+	p.max_distance = max_d
+	p.volume_db = -80.0
+	add_child(p)
+	p.play()
+	return p
+
+
+## Dämmerung und Morgengrauen bekommen einen eigenen Klang-Akzent.
+func _on_phase_changed(is_night: bool) -> void:
+	SoundBank.play_ui(self, "sting_dusk" if is_night else "sting_dawn", -6.0)
 
 
 ## Für Ereignisse: Die Tiere verstummen für einige Sekunden.
@@ -62,6 +90,21 @@ func _process(delta: float) -> void:
 	var fauna_db := 0.0 if st == 0 else (-7.0 if st < 3 else -22.0)
 	_crickets.volume_db += fauna_db
 	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 12.0 + indoor_db + fauna_db
+
+	if player:
+		var pz := clampf(player.global_position.z, -100.0, 100.0)
+		var sx := Terrain.stream_x_at(pz)
+		var at := Vector3(sx, Terrain.stream_bed_height(pz) + 0.3, pz)
+		if _brook:
+			_brook.global_position = at
+			_brook.volume_db = -6.0 + indoor_db
+		if _frogs:
+			_frogs.global_position = at + Vector3(2.0, 0, 6.0)
+			var frog_vol := (1.0 if night else 0.0) * (1.0 - _silence)
+			_frogs.volume_db = linear_to_db(maxf(frog_vol, 0.0001)) - 10.0 + indoor_db + fauna_db
+	if _dread:
+		var dread := maxf(_silence, 0.0 if st == 0 else 0.15 + 0.1 * st)
+		_dread.volume_db = linear_to_db(maxf(dread, 0.0001)) - 10.0
 
 	if night and _silence < 0.3:
 		_owl_timer -= delta

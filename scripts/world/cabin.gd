@@ -531,6 +531,18 @@ func _build_kitchen() -> void:
 	tap.name = "KitchenTap"
 	tap.label = "Wasserhahn"
 	tap.contaminable = true
+	tap.sound = "faucet"
+	# der Hahn tropft leise vor sich hin
+	if SoundBank.has_recording("drip"):
+		var drip := AudioStreamPlayer3D.new()
+		drip.name = "TapDrip"
+		drip.stream = SoundBank.get_sound("drip")
+		drip.position = Vector3(-1.45, y + 0.95, z0 + 0.2)
+		drip.volume_db = -14.0
+		drip.unit_size = 1.2
+		drip.max_distance = 8.0
+		drip.autoplay = true
+		add_child(drip)
 	tap.anchor = Vector3(-1.45, y + 0.8, z0 + 0.3)
 	tap.collider_size = Vector3(0.6, 0.4, 0.45)
 	add_child(tap)

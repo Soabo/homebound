@@ -261,7 +261,7 @@ func take_damage(amount: float, from: Vector3) -> void:
 	var f := hands.block_factor(from)
 	if f < 1.0:
 		amount *= f
-		SoundBank.play_ui(self, "knock", -4.0, 0.8)
+		SoundBank.play_ui(self, "thud", -4.0, 0.8)
 	health -= amount
 	EventBus.player_hurt.emit(amount)
 	SoundBank.play_ui(self, "hurt", -2.0, randf_range(0.9, 1.1))

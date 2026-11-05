@@ -240,11 +240,19 @@ func _start_prowl() -> void:
 	_go(lap, PROWL_SPEED)
 
 
+static var _sting_at: int = -999999
+
+
 func _start_chase() -> void:
 	if mode == "observe":
 		return
 	if state != State.CHASE:
 		CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 2.0)
+		# Schreck-Akzent, höchstens alle 45 s
+		var now := Time.get_ticks_msec()
+		if now - _sting_at > 45000:
+			_sting_at = now
+			SoundBank.play_ui(get_parent(), "sting_creature", -2.0)
 	state = State.CHASE
 	_lose_sight = 6.0
 

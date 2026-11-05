@@ -66,7 +66,7 @@ class SlotBox extends PanelContainer:
 			Inventory.swap_slots(int(data["from_slot"]), index)
 		else:
 			Inventory.set_slot(index, String(data["id"]))
-		SoundBank.play_ui(self, "switch", -10.0, 1.2)
+		SoundBank.play_ui(self, "menu_click", -6.0)
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed:
@@ -205,7 +205,7 @@ func _open(m: String) -> void:
 	var p := get_tree().get_first_node_in_group("player") as Player
 	if p:
 		p.input_locked = true
-	SoundBank.play_ui(self, "switch", -8.0, 0.8)
+	SoundBank.play_ui(self, "backpack" if m == "inventory" else "menu_click", -4.0)
 	_refresh()
 
 
@@ -336,7 +336,7 @@ func _on_build(id: String) -> void:
 func _on_craft(r: Dictionary) -> void:
 	var msg := Workbench.craft(r, get_tree())
 	if msg == "":
-		SoundBank.play_ui(self, "hammer", -6.0)
+		SoundBank.play_ui(self, "workbench", -2.0)
 		EventBus.notify("Hergestellt.", 1.5)
 	else:
 		EventBus.notify(msg, 2.5)

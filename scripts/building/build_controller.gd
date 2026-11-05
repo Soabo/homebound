@@ -151,7 +151,7 @@ func _place() -> void:
 		return
 	var build_type: String = DataDB.item(type).get("build", type)
 	Builder.place(build_type, _pos, _rot)
-	SoundBank.play_at(get_tree().current_scene, "hammer", _pos + Vector3(0, 0.5, 0), -2.0)
+	SoundBank.play_at(get_tree().current_scene, "place", _pos + Vector3(0, 0.5, 0), 0.0)
 	EventBus.noise_made.emit(_pos, 14.0)
 	if Inventory.count(type) <= 0:
 		var items := _buildable_items()

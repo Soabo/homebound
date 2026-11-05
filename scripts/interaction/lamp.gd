@@ -99,6 +99,8 @@ func _on_power_changed(_p: bool) -> void:
 func flicker(seconds: float) -> void:
 	if not is_on or light == null:
 		return
+	if light:
+		SoundBank.play_at(self, "light_buzz", light.global_position, -2.0)
 	var end := Time.get_ticks_msec() + int(seconds * 1000.0)
 	while Time.get_ticks_msec() < end and is_inside_tree():
 		light.visible = randf() < 0.55 and PowerManager.has_power()

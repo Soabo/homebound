@@ -17,8 +17,26 @@ var _cutoff := 0.05
 var _t := 0.0
 
 
+var _gusts: AudioStreamPlayer
+var _recorded := false
+
+
 func _ready() -> void:
 	name = "WindAmbience"
+	_noise.frequency = 0.05
+	if SoundBank.has_recording("wind"):
+		# echte Aufnahmen: ruhiger Wind als Grund, Böen kommen und gehen darüber
+		_recorded = true
+		stream = SoundBank.get_sound("wind")
+		volume_db = -16.0
+		play()
+		if SoundBank.has_recording("gusts"):
+			_gusts = AudioStreamPlayer.new()
+			_gusts.stream = SoundBank.get_sound("gusts")
+			_gusts.volume_db = -60.0
+			add_child(_gusts)
+			_gusts.play()
+		return
 	var gen := AudioStreamGenerator.new()
 	gen.mix_rate = RATE
 	gen.buffer_length = 0.25
@@ -30,6 +48,16 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _recorded:
+		_t += delta
+		var g := smoothstep(0.45, 0.9, _noise.get_noise_1d(_t * 4.0) * 0.5 + 0.5)
+		var inside := _player_indoors()
+		var night := 3.0 if TimeManager.is_night() else 0.0
+		var damp := -14.0 if inside else 0.0
+		volume_db = lerpf(volume_db, -17.0 + night + damp, delta)
+		if _gusts:
+			_gusts.volume_db = lerpf(_gusts.volume_db, linear_to_db(maxf(g, 0.0001)) - 14.0 + night + damp, delta * 2.0)
+		return
 	if _playback == null:
 		return
 	_t += delta

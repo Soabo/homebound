@@ -114,6 +114,14 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   Steine (Bachufer) und flaches Wasser (Bach) – jeweils schleichen, gehen und rennen.
   Absprung und Landung klingen je nach Untergrund.
 - Spieler: Essen, Trinken, Herzschlag bei Angst, schweres Atmen nach langem Rennen, Klick der Taschenlampe, Todesschrei.
+- Haus und Umgebung aus echten Aufnahmen: Türen (öffnen, schließen, abschließen, Klinke rüttelt, aufbrechen),
+  Klopfen, Glas, Bretter, knarrende Dielen, Bild fällt von der Wand, Wasserhahn und Tropfen, flackernde Lampe,
+  Lichtschalter, Monitor und Kamerawechsel, Radio, Generator, Spieluhr, Kaminfeuer, Schritte auf dem Dach.
+- Natur: Vögel, Grillen, Frösche am Bach, plätschernder Bach (wandert mit), Wind und Böen, Eulen, knackende Äste,
+  bedrückende Stille, wenn etwas Fremdes nah ist. Eigene Klang-Akzente bei Abenddämmerung, Morgengrauen
+  und wenn die Kreatur dich entdeckt.
+- Bauen und Sammeln: Holz hacken, Steine und Metall sammeln, Aufheben, Abstellen, Werkbank, Dosenalarm,
+  Bewegungsmelder, Zaun bricht. Menü-Klick und Rucksack öffnen.
 - Die Kreatur: Klicken beim Beobachten, verzerrtes Atmen aus der Nähe, Knacken wenn der Kopf herumruckt,
   Schrei, Schmerzlaut an den Spießen, Zischen bei grellem Licht, eigene Schritte.
 

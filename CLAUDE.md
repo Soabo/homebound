@@ -53,7 +53,9 @@
   Designentscheidung Kreaturklang: Mischung aus Insektenklicken und verzerrtem Atmen.
   Störgeräusche (Brummen/Rauschen) entfernt `tools/audio/denoise.py EIN AUS [stärke] [hochpass_hz]`.
   Spieler: `assets/audio/player/<drink|eat|die|heartbeat|breath|flashlight>_NN.ogg` über `PlayerSounds` (ohne Raumklang).
-  Übrige Geräusche (Haus, Umgebung, Wetter) noch prozedural (`SoundBank`, `WindAmbience`, `FireCrackle`).
+  Haus/Umgebung/Bauen/Menü: `tools/audio/sfx.py QUELLORDNER` (Zuordnung Dateiname -> ID in MAP) legt
+  `assets/audio/sfx/<id>_NN.ogg` an. `SoundBank.get_sound(id)` nimmt zuerst diese Aufnahmen (LOOP_IDS werden
+  wiederholt, GAIN = Lautstärke-Ausgleich), sonst den prozeduralen Ersatz (`get_generated`).
 
 ## Befehle (Cloud-Workspace)
 ```bash
