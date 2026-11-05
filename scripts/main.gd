@@ -3,7 +3,7 @@ extends Node3D
 ## Die Welt wird bewusst per Code gebaut, damit alles als Text im Repo liegt.
 
 const PLAYER_SPAWN := Vector3(-3.0, 0.0, 11.5)
-const WORLD_LIMIT := 72.0
+const WORLD_LIMIT := 104.0
 
 
 func _ready() -> void:
@@ -15,6 +15,10 @@ func _ready() -> void:
 	add_child(Shed.new())
 	add_child(CornField.new())
 	add_child(CrashSite.new())
+	add_child(AlienStructure.new())
+	add_child(RangerTower.new())
+	add_child(StreamCave.new())
+	add_child(Terraformer.new())
 	add_child(CarWreck.new())
 	_build_world_limits()
 	_build_cameras()

@@ -20,6 +20,16 @@
   Rezepte mit `requires` = Verknüpfung. Gerät am Funkgerät (`Radio`), Absturzstelle `CrashSite` bei (-42, -30).
 - Phase 6 bestätigt: Hunger/Durst sanft, freies Bauen.
 
+## Entscheidungen Phase 8 (Weltentwicklung)
+- Neue Arten: alle drei – Drohne (scannt nachts), Manipulator (lockt mit Geräuschen hinaus), Organismus (Wucherung, breitet sich aus).
+- Terraforming: erst nur Stimmung, später mit Folgen (Wasser verunreinigt, fremde Pflanzen, Nebel …).
+- Tempo: überlebte Tage + Forschungsfortschritt.
+- Orte: größeres Gebiet, fremde Struktur (Vermessungspunkt), Höhle am Bach, Förster-Hochsitz.
+- Umsetzung: `WorldState` (Wert = Tage + Analysen + Verknüpfungen, Stufen 0–4), `Terraformer` zeigt es an.
+  Drohne `AlienDrone`, Manipulator `Manipulator` (Ereignisse im ThreatDirector, `spawn_ambush`), Organismus
+  `OrganismNode` + `OrganismNode.Patch`. Struktur abschalten: Säulen in Reihenfolge `AlienStructure.ORDER`.
+  Test: `--night-test=world`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
@@ -63,4 +73,5 @@ Export-Vorlagen müssen unter `~/.local/share/godot/export_templates/4.7.2.stabl
 ## Koordinaten
 - Hütte: Mitte bei (0,0,0), 12 x 9 m, Boden auf y = 0.45, Eingang nach +z (Süden).
 - Grundstück/Zaun: x -20..22, z -16..18. Schuppen bei (14, 0, 6.5).
-- Zufahrt läuft vom Tor (x -3, z 18) nach Süden. Spielfeldgrenze ±72 m.
+- Zufahrt läuft vom Tor (x -3, z 18) nach Süden. Spielfeldgrenze ±104 m (Gelände ±112, Wald ±108).
+- Orte: Absturzstelle (-42,-30), fremde Struktur (-78, 40), Höhle am Bach (49, -72), Förster-Hochsitz (12, -80).

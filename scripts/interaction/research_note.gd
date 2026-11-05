@@ -5,6 +5,8 @@ extends Interactable
 
 @export var note_id: String = ""
 @export var anchor: Vector3 = Vector3.ZERO
+## Kein eigener Zettel sichtbar (z. B. wenn eine Karte an der Wand das Modell ist)
+@export var hide_paper: bool = false
 
 
 func _ready() -> void:
@@ -16,6 +18,8 @@ func _ready() -> void:
 	cs.position = anchor + Vector3(0, 0.1, 0)
 	body.add_child(cs)
 	add_child(body)
+	if hide_paper:
+		return
 	var paper := BuildKit.color_mat(Color(0.82, 0.78, 0.66), 0.9)
 	BuildKit.box(self, Vector3(0.21, 0.004, 0.28), anchor + Vector3(0, 0.03, 0), paper, false, Vector3(3, 25, -2))
 	for k in 5:

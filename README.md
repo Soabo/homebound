@@ -81,6 +81,27 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   - **Resonanz-Sensor:** spürt die Kreatur auf über 25 m und meldet die Richtung.
   - **Stroboskop-Leuchte:** flackerndes Licht, das sie viel länger vertreibt als normales Licht.
 
+## Das Tal verändert sich (Phase 8)
+
+- Das Gebiet ist größer geworden (rund 200 × 200 m). Neue Orte:
+  - **Fremde Struktur** weit im Westen: drei Beine, ein schwebender Kristall, drei Säulen. Die Säulen leuchten
+    immer wieder in einer Reihenfolge auf – berühre sie in genau dieser Reihenfolge, dann schaltet sich die Struktur ab
+    (das Tal verändert sich dann nur noch halb so schnell). Falsche Reihenfolge = Stromschlag.
+  - **Förster-Hochsitz** im Norden: Leiter hoch (E), Vorräte, Tagebuch und eine Karte des Försters.
+  - **Höhle am Bach** im Nordosten: ganz hinten pulsiert der **Knoten** des Organismus. Mit der Axt zerschlagen (6 Hiebe).
+- **Terraforming** – je mehr Tage vergehen und je mehr du erforschst, desto weiter geht es:
+  Stille im Wald und Pilzringe → fremde Pflanzen, kahle Bäume, Nebel → **verfärbtes Wasser** (nur noch mit
+  Wasserfilter trinkbar, Werkbank) → schwebende Steine und Adern im Boden.
+- **Neue Arten:**
+  - **Drohne:** fliegt nachts in Bahnen über das Grundstück. Erfasst dich ihr Lichtkegel draußen, kommt die Kreatur.
+    Grelles Licht (Stroboskop) bringt sie ins Taumeln – einmal verliert sie dabei ein Teil.
+  - **Manipulator:** eine große, dünne Gestalt am Waldrand. Sie lockt dich mit Geräuschen hinaus (Spieluhr,
+    Klopfen, Schritte, dein eigenes Atmen). Wer nachsieht, hat die Kreatur im Rücken.
+  - **Organismus:** graue Wucherungen wachsen von der Höhle zur Hütte. Sie bremsen und verletzen dich –
+    mit der Axt weghacken oder den Knoten in der Höhle zerstören.
+- **Neue Baupläne** (über Verknüpfungen im Archiv): **Störsender** (Drohnen drehen ab) und **Myzel-Sperre**
+  (Wucherungen sterben ab und wachsen dort nicht mehr).
+
 ## Rund ums Haus
 
 - **Maisfeld** neben dem Schuppen bis an den Zaun – trocken, dicht, mit Vogelscheuche. Man sieht nicht, was darin steht.

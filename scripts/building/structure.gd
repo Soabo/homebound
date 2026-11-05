@@ -7,6 +7,8 @@ extends Interactable
 ##  - motion_light: Batterielampe, springt bei Bewegung an; Licht scheucht auf
 ##  - resonance_sensor: (Forschung) spürt die Kreatur auf große Entfernung, meldet die Richtung
 ##  - strobe_light: (Forschung) flackert grell im Takt, vertreibt die Kreatur lange
+##  - signal_jammer: (Forschung) stört Drohnen im Umkreis – sie drehen ab
+##  - growth_barrier: (Forschung) Myzel-Sperre: hält Wucherungen fern, lässt nahe absterben
 ## Werte kommen aus data/items/buildables.json.
 
 var uid: int = 0
@@ -42,10 +44,15 @@ func _ready() -> void:
 	if is_obstacle:
 		add_to_group("obstacle")
 	add_to_group("structure")
+	if type == "signal_jammer":
+		add_to_group("jammer")
+	elif type == "growth_barrier":
+		add_to_group("growth_barrier")
+		_wither_patches.call_deferred()
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = size if is_obstacle or type in ["motion_light", "strobe_light", "resonance_sensor"] else Vector3(size.x, 0.3, 0.4)
+	shape.size = size if is_obstacle or type in ["motion_light", "strobe_light", "resonance_sensor", "signal_jammer", "growth_barrier"] else Vector3(size.x, 0.3, 0.4)
 	cs.shape = shape
 	cs.position = Vector3(0, shape.size.y * 0.5, 0)
 	body.add_child(cs)
@@ -137,6 +144,46 @@ func _build_visual() -> void:
 				_strobe.light_color = Color(0.85, 1.0, 1.0)
 				add_child(_strobe)
 
+		"signal_jammer":
+			var metal := BuildKit.tex_mat("metal", 0.3, Color(1.1, 1.1, 1.1), 0.5)
+			var hull := CrashSite.hull_material()
+			BuildKit.box(self, Vector3(0.4, 0.06, 0.4), Vector3(0, 0.03, 0), metal, false)
+			BuildKit.cylinder(self, 0.035, 1.3, Vector3(0, 0.68, 0), metal, false, Vector3.ZERO, -1.0, 6)
+			BuildKit.box(self, Vector3(0.24, 0.18, 0.14), Vector3(0, 0.5, 0.05), BuildKit.color_mat(Color(0.15, 0.16, 0.15), 0.5), false)
+			# Drohnenteil oben als Empfänger, dazu Antennenkreuz
+			BuildKit.lathe(self, PackedVector2Array([Vector2(0.0, -0.04), Vector2(0.18, 0.0), Vector2(0.0, 0.05)]), Vector3(0, 1.38, 0), hull, 12)
+			for k in 4:
+				BuildKit.box(self, Vector3(0.5, 0.01, 0.01), Vector3(0, 1.5 + k * 0.03, 0), metal, false, Vector3(0, k * 45.0, 0))
+			_light_mat = BuildKit.emissive_mat(Color(1.0, 0.3, 0.2), 1.0)
+			BuildKit.sphere(self, 0.025, Vector3(0, 1.6, 0), _light_mat, Vector3.ONE, 6)
+		"growth_barrier":
+			var tin := BuildKit.tex_mat("metal", 0.25, Color(1.3, 1.3, 1.25), 0.4)
+			# Dosenkranz um einen Kern aus fremden Pflanzen, der schwach violett glimmt
+			for k in 6:
+				var a := TAU * k / 6.0
+				BuildKit.cylinder(self, 0.06, 0.16, Vector3(cos(a) * 0.22, 0.08, sin(a) * 0.22), tin, false, Vector3.ZERO, -1.0, 8)
+			BuildKit.box(self, Vector3(0.5, 0.04, 0.5), Vector3(0, 0.02, 0), BuildKit.tex_mat("logs", 0.6), false)
+			_light_mat = BuildKit.emissive_mat(Color(0.8, 0.5, 1.0), 1.0)
+			BuildKit.cylinder(self, 0.05, 0.45, Vector3(0, 0.3, 0), BuildKit.color_mat(Color(0.5, 0.45, 0.55), 0.6), false, Vector3.ZERO, 0.02, 6)
+			BuildKit.sphere(self, 0.07, Vector3(0, 0.55, 0), _light_mat, Vector3.ONE, 8)
+
+
+## Leuchtet das Bauteil gerade (für Drohnen, die von grellem Licht geblendet werden)?
+func is_lit() -> bool:
+	if _strobe:
+		return _strobe.light_energy > 0.0 or _strobe_time > 0.0
+	if _light:
+		return _light.visible
+	return false
+
+
+## Myzel-Sperre: Wucherungen im Umkreis sterben ab.
+func _wither_patches() -> void:
+	for p in get_tree().get_nodes_in_group("organism_patch"):
+		var n := p as Node3D
+		if Vector2(n.global_position.x - global_position.x, n.global_position.z - global_position.z).length() < 6.0:
+			WorldState.remove_patch(int(n.get("patch_id")))
+
 
 ## Bauvorschau einfärben (grün = passt, rot = geht hier nicht).
 func set_preview_valid(valid: bool) -> void:
@@ -207,6 +254,10 @@ func _physics_process(delta: float) -> void:
 		return
 	_t += delta
 	_alarm_cooldown -= delta
+	if _light_mat and type == "signal_jammer":
+		_light_mat.emission_energy_multiplier = 3.0 if fmod(_t, 0.8) < 0.1 else 0.3
+	elif _light_mat and type == "growth_barrier":
+		_light_mat.emission_energy_multiplier = 0.8 + sin(_t * 1.5) * 0.4
 	var c: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if not is_instance_valid(c):
 		if _strobe:

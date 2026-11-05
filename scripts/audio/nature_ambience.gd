@@ -57,7 +57,11 @@ func _process(delta: float) -> void:
 	var cricket_vol := (1.0 if night else (0.4 if dawn_dusk else 0.0)) * (1.0 - _silence)
 	var bird_vol := (0.0 if night else (0.5 if dawn_dusk else 1.0)) * (1.0 - _silence)
 	_crickets.volume_db = linear_to_db(maxf(cricket_vol, 0.0001)) - 8.0 + indoor_db
-	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 12.0 + indoor_db
+	# Terraforming: Tiere verlassen das Tal – erst leiser, ab Stufe 3 fast verstummt
+	var st := WorldState.stage()
+	var fauna_db := 0.0 if st == 0 else (-7.0 if st < 3 else -22.0)
+	_crickets.volume_db += fauna_db
+	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 12.0 + indoor_db + fauna_db
 
 	if night and _silence < 0.3:
 		_owl_timer -= delta

@@ -115,6 +115,92 @@
      "text": "Das Leuchten wird heller und flackert im Takt des Generators."
     }
    ]
+  },
+  "an_organism": {
+   "find": "organism_sample",
+   "name": "Wucherung",
+   "area": "Biologie",
+   "hours": 3.0,
+   "summary": "Ein Geflecht aus grauen Fäden, das sich wie ein Pilz durch den Boden zieht – aber es hat Nerven. Es reagiert auf Schritte.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Mit Licht bestrahlen",
+     "needs": "light",
+     "text": "Die Fäden ziehen sich vom Licht weg und wachsen in die Dunkelheit."
+    },
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Zuckungen – dann sendet die Probe ein schwaches Signal. Sie ist mit etwas verbunden."
+    }
+   ]
+  },
+  "an_drone": {
+   "find": "drone_part",
+   "name": "Drohnenteil",
+   "area": "Raumfahrt und Infrastruktur",
+   "hours": 2.5,
+   "summary": "Eine Linse mit Antriebsring aus demselben Metall wie das Wrack. Sie hat aufgezeichnet – Wärme, Licht, Bewegung.",
+   "experiments": [
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "effect": "noise",
+     "text": "Der Ring summt auf und sucht nach einem Signal. Sie werden über Funk gesteuert."
+    },
+    {
+     "id": "open",
+     "label": "Mit dem fremden Gerät auslesen",
+     "needs": "alien",
+     "text": "Auf der Linse: Bilder deiner Hütte, von oben. Viele Nächte lang."
+    }
+   ]
+  },
+  "an_crystal": {
+   "find": "crystal_shard",
+   "name": "Kristallsplitter",
+   "area": "Energie und Physik",
+   "hours": 3.0,
+   "summary": "Ein Splitter aus dem Kern der Struktur. Er ist kalt, schwer und zieht kleine Metallteile an, obwohl er nicht magnetisch ist.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Durchleuchten",
+     "needs": "light",
+     "text": "Im Inneren laufen Linien nach unten zusammen – wie Wurzeln, die nach etwas tasten."
+    },
+    {
+     "id": "compare",
+     "label": "Mit der Symbolplatte abgleichen",
+     "needs": "alien",
+     "effect": "noise",
+     "text": "Das Gerät zeigt einen Punkt unter dem Dreieck der Vermessung. Er liegt tief im Boden."
+    }
+   ]
+  },
+  "an_plant": {
+   "find": "alien_plant",
+   "name": "Fremdpflanze",
+   "area": "Biologie",
+   "hours": 2.0,
+   "summary": "Eine Pflanze mit perfekt symmetrischen Blättern in Spiralen. Sie wächst nur dort, wo die Struktur summt.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Belichten",
+     "needs": "light",
+     "text": "Sie dreht sich nicht zum Licht, sondern zur Struktur im Westen."
+    },
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Ihr Saft wird bitter und giftig – für die grauen Fäden der Wucherung."
+    }
+   ]
   }
  },
  "links": {
@@ -151,12 +237,58 @@
    ],
    "text": "Die Zeichen auf der Platte sind Orte, keine Wörter. Drei davon liegen in diesem Tal, im Dreieck – und die Hütte steht in seiner Mitte. Sie suchen hier etwas. Aber was?",
    "unlocks": []
+  },
+  "link_drone": {
+   "name": "Fernsteuerung",
+   "area": "Raumfahrt und Infrastruktur",
+   "needs": [
+    "an_drone",
+    "an_metal"
+   ],
+   "text": "Die Drohnen hängen an einem Signal, das durch das fremde Metall läuft. Ein Störsender könnte sie blind machen.",
+   "unlocks": [
+    "signal_jammer"
+   ]
+  },
+  "link_growth": {
+   "name": "Gift gegen das Geflecht",
+   "area": "Biologie",
+   "needs": [
+    "an_organism",
+    "an_plant"
+   ],
+   "text": "Der Saft der Fremdpflanze unter Strom tötet die Fäden der Wucherung. Damit lässt sich eine Sperre bauen, über die sie nicht wächst.",
+   "unlocks": [
+    "growth_barrier"
+   ]
+  },
+  "link_core": {
+   "name": "Was unter dem Tal liegt",
+   "area": "Zusammenhänge",
+   "needs": [
+    "an_crystal",
+    "an_glyph"
+   ],
+   "text": "Die Struktur sendet nach unten, nicht nach oben. Unter dem Dreieck der Vermessungspunkte liegt etwas Großes – und es antwortet. Die Hütte steht genau darüber.",
+   "unlocks": []
   }
  },
  "notes": {
   "ranger_note": {
    "name": "Zerknitterte Notiz",
    "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – R. W., Forstdienst"
+  },
+  "ranger_note2": {
+   "name": "Tagebuch vom Hochsitz",
+   "text": "»Tag 5. Keine Vögel mehr. Die Rehe sind über den Bach nach Osten gezogen und nicht zurückgekommen. Nachts fliegt etwas Leises über den Wald, mit einem Lichtkegel. Es sucht. Ich bleibe tagsüber hier oben, nachts unten im Unterstand.« – R. W."
+  },
+  "ranger_map": {
+   "name": "Karte des Försters",
+   "text": "Auf der Revierkarte sind drei Stellen eingekreist: der Krater im Nordwesten, »die Säulen« weit im Westen und »die alte Höhle« am Bach im Nordosten. Mit Bleistift verbunden zu einem Dreieck. In der Mitte, unterstrichen: die Hütte."
+  },
+  "ranger_note3": {
+   "name": "Letzte Seite",
+   "text": "»Es wächst. Es wächst zur Hütte hin, ganz langsam, jede Nacht ein Stück. Ich habe den Knoten gefunden, tief in der Höhle. Wenn ich ihn zerschlage – « Der Rest ist unleserlich."
   }
  }
 }

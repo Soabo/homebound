@@ -4,7 +4,7 @@ extends Node3D
 ## alte Zufahrtsstraße nach Süden. Die Höhenfunktion ist statisch, damit
 ## Wald, Garten und Spieler-Spawn dieselbe Höhe abfragen können.
 
-const HALF_SIZE := 80.0
+const HALF_SIZE := 112.0
 const CELL := 1.0
 
 ## Grundstück (wie der Zaun im Garten): x -20..22, z -16..18
@@ -125,7 +125,19 @@ static func height_at(x: float, z: float) -> float:
 	return h
 
 
+## Rohhöhe inkl. Höhle: im Bereich der Höhle liegt das Gelände nie über ihrem Boden.
 static func _raw_height(x: float, z: float) -> float:
+	var h := _raw_height_core(x, z)
+	var lx := x - StreamCave.SITE.x
+	var lz := z - StreamCave.SITE.z
+	if lx > -1.5 and lx < 19.0 and absf(lz) < 5.5:
+		var floor_h := StreamCave.floor_height()
+		var w := smoothstep(-1.5, 0.5, lx) * (1.0 - smoothstep(4.0, 5.5, absf(lz)))
+		h = lerpf(h, minf(h, floor_h - 0.05), clampf(w, 0.0, 1.0))
+	return h
+
+
+static func _raw_height_core(x: float, z: float) -> float:
 	_ensure_noise()
 	var d := maxf(yard_distance(x, z), 0.0)
 	var hills := (_noise.get_noise_2d(x, z) * 0.5 + 0.5) * 7.0 + _detail.get_noise_2d(x, z) * 0.35
@@ -133,8 +145,8 @@ static func _raw_height(x: float, z: float) -> float:
 	# Talrand: zum Kartenrand hin steigt das Gelände an.
 	var edge := maxf(absf(x), absf(z))
 	# Im Süden verlässt der Bach das Tal: dort steigt der Rand nicht an.
-	var valley := lerpf(1.0, smoothstep(4.0, 18.0, stream_distance(x, z)), smoothstep(20.0, 50.0, z))
-	h += smoothstep(52.0, 76.0, edge) * 9.0 * valley
+	var valley := lerpf(1.0, smoothstep(4.0, 18.0, stream_distance(x, z)), smoothstep(50.0, 85.0, z))
+	h += smoothstep(86.0, 108.0, edge) * 9.0 * valley
 	# Einschlagkrater der Absturzstelle: Mulde mit aufgeworfenem Rand
 	var cdist := Vector2(x - CrashSite.SITE.x, z - CrashSite.SITE.z).length()
 	if cdist < 12.0:
@@ -268,3 +280,7 @@ func _process(delta: float) -> void:
 	if _water_mat:
 		_flow += delta * 0.25
 		_water_mat.uv1_offset = Vector3(0, -_flow, 0)
+		# Terraforming Stufe 3+: das Wasser verfärbt sich rostig-violett
+		var dirty := WorldState.water_contaminated()
+		var target := Color(0.62, 0.42, 0.55, 0.9) if dirty else Color(0.65, 0.78, 0.72, 0.85)
+		_water_mat.albedo_color = _water_mat.albedo_color.lerp(target, clampf(delta * 0.5, 0.0, 1.0))

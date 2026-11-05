@@ -37,6 +37,8 @@ var _shake: float = 0.0
 var _fear: float = 0.0
 var _heart_timer: float = 0.0
 var _exhausted: bool = false
+## Gefahrenzone (z. B. Wucherung): 1 = stark verlangsamt; wird von außen gesetzt und klingt ab
+var hazard: float = 0.0
 
 
 func _ready() -> void:
@@ -165,6 +167,8 @@ func _physics_process(delta: float) -> void:
 	if not sprinting:
 		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
 	var speed := crouch_speed if crouching else (sprint_speed if sprinting else walk_speed)
+	speed *= 1.0 - 0.55 * hazard
+	hazard = move_toward(hazard, 0.0, delta * 3.0)
 	var dir := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
 	var accel := 10.0 if is_on_floor() else 2.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, clampf(accel * delta, 0.0, 1.0))

@@ -530,6 +530,7 @@ func _build_kitchen() -> void:
 	var tap := WaterSource.new()
 	tap.name = "KitchenTap"
 	tap.label = "Wasserhahn"
+	tap.contaminable = true
 	tap.anchor = Vector3(-1.45, y + 0.8, z0 + 0.3)
 	tap.collider_size = Vector3(0.6, 0.4, 0.45)
 	add_child(tap)

@@ -7,6 +7,8 @@ extends Interactable
 @export var anchor: Vector3 = Vector3.ZERO
 @export var collider_size: Vector3 = Vector3(0.8, 1.0, 0.8)
 @export var thirst_gain: float = 30.0
+## Kann durch das Terraforming verunreinigt werden (Bach, Leitungswasser). Regenwasser bleibt sauber.
+@export var contaminable: bool = false
 
 
 func _ready() -> void:
@@ -20,10 +22,27 @@ func _ready() -> void:
 	add_child(body)
 
 
+func _dirty() -> bool:
+	return contaminable and WorldState.water_contaminated()
+
+
 func get_prompt(_player: Node) -> String:
+	if _dirty():
+		var how := "mit Filter" if Inventory.count("water_filter") > 0 else "VERFÄRBT – ohne Filter gefährlich"
+		return "[E] %s – trinken (%s)  (Durst %d%%)" % [label, how, int(Survival.thirst)]
 	return "[E] %s – trinken  (Durst %d%%)" % [label, int(Survival.thirst)]
 
 
-func interact(_player: Node) -> void:
+func interact(player: Node) -> void:
+	if _dirty() and Inventory.count("water_filter") <= 0:
+		# verunreinigt: löscht nur halb den Durst und schadet
+		Survival.apply({"thirst": thirst_gain * 0.5})
+		var p := player as Player
+		if p:
+			p.health = maxf(p.health - 12.0, 1.0)
+			EventBus.player_hurt.emit(12.0)
+		EventBus.notify("Das Wasser schmeckt metallisch und brennt im Hals. Bau dir einen Wasserfilter (Werkbank).", 4.0)
+		SoundBank.play_at(self, "step_grass", to_global(anchor) + Vector3(0, 0.5, 0), -6.0, 1.6)
+		return
 	Survival.apply({"thirst": thirst_gain})
 	SoundBank.play_at(self, "step_grass", to_global(anchor) + Vector3(0, 0.5, 0), -6.0, 1.6)

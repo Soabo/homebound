@@ -39,6 +39,7 @@ func take_snapshot() -> void:
 		"survival": Survival.get_state(),
 		"builds": Builder.get_state(),
 		"research": Research.get_state(),
+		"world_state": WorldState.get_state(),
 		"world": collect_world(),
 	}
 
@@ -77,6 +78,7 @@ func restart_day() -> void:
 	Survival.set_state(snap.get("survival", {}))
 	Builder.set_state(snap.get("builds", []))
 	Research.set_state(snap.get("research", {}))
+	WorldState.set_state(snap.get("world_state", {}))
 	_pending_world = snap.get("world", {})
 	_snapshot = snap
 	_restoring = false

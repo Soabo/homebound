@@ -42,6 +42,11 @@ const SHOTS := [
 	{"name": "28_kreatur_seite_tag", "hour": 13.0, "pos": Vector3(4.6, 0.0, 10.6), "look": Vector3(3.0, 1.3, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "creature_face": Vector3(-3.0, 0, 13.0)},
 	{"name": "29_kreatur_nacht_taschenlampe", "hour": 23.0, "pos": Vector3(3.0, 0.0, 9.6), "look": Vector3(3.0, 1.7, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "flashlight": true},
 	{"name": "30_absturzstelle", "hour": 16.0, "pos": Vector3(-36.0, 0.0, -24.5), "look": Vector3(-42.0, 0.2, -30.0)},
+	{"name": "31_struktur", "hour": 15.5, "day": 7, "pos": Vector3(-64.0, 0.0, 30.0), "look": Vector3(-78.0, 3.5, 40.0)},
+	{"name": "32_hochsitz", "hour": 15.0, "pos": Vector3(3.0, 0.0, -70.0), "look": Vector3(12.0, 3.0, -80.0)},
+	{"name": "33_hoehle_eingang", "hour": 15.0, "day": 7, "pos": Vector3(38.0, 0.0, -69.0), "look": Vector3(46.0, 0.5, -72.0)},
+	{"name": "34_hoehle_knoten", "hour": 15.0, "cave": true, "pos": Vector3(55.0, 0.0, -72.0), "look": Vector3(61.5, 0.7, -72.0), "flashlight": true},
+	{"name": "35_drohne_nacht", "hour": 23.0, "pos": Vector3(-3.0, 0.0, 26.0), "look": Vector3(-2.0, 7.0, 15.0), "drone_at": Vector3(-2.0, 9.0, 15.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -68,9 +73,14 @@ func _run() -> void:
 	for shot: Dictionary in SHOTS:
 		if not only.is_empty() and not String(shot["name"]).left(2) in only:
 			continue
-		TimeManager.set_time(1, shot["hour"])
+		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
+		WorldState._check_stage()
 		var pos: Vector3 = shot["pos"]
-		if pos.y <= 0.0:
+		if shot.get("cave", false):
+			var fh := StreamCave.floor_height()
+			pos.y = fh + 0.05
+			shot["look"] = (shot["look"] as Vector3) + Vector3(0, fh, 0)
+		elif pos.y <= 0.0:
 			pos.y = Terrain.height_at(pos.x, pos.z)
 		player.global_position = pos
 		player.velocity = Vector3.ZERO
@@ -92,6 +102,12 @@ func _run() -> void:
 			face.y = creature.global_position.y
 			creature.look_at(face, Vector3.UP)
 			creature.rotate_y(PI)
+		var drone: AlienDrone = null
+		if shot.has("drone_at"):
+			drone = AlienDrone.new()
+			get_tree().current_scene.add_child(drone)
+			drone.global_position = shot["drone_at"]
+			drone.set_physics_process(false)
 		var built: Array[Structure] = []
 		for b in shot.get("build", []):
 			built.append(Builder.place(b[0], Creature._ground(b[1]), b[2]))
@@ -116,6 +132,8 @@ func _run() -> void:
 		print("Screenshot: ", path)
 		if creature:
 			creature.queue_free()
+		if drone:
+			drone.queue_free()
 		for b in built:
 			if is_instance_valid(b):
 				Builder.remove(b.uid)

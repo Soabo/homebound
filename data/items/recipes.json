@@ -11,6 +11,9 @@
     {"id": "analyzer_improvised", "name": "Funkgerät zum Analysegerät umbauen", "needs": {"electronics": 2, "battery": 1, "scrap": 2}, "special": "build_analyzer"},
     {"id": "resonance_sensor", "requires": "link_power", "needs": {"scrap": 2, "electronics": 1, "energy_cell": 1}, "gives": {"resonance_sensor": 1}},
     {"id": "strobe_light",     "requires": "link_light", "needs": {"scrap": 2, "battery": 1, "glow_fungus": 2}, "gives": {"strobe_light": 1}},
+    {"id": "water_filter",     "name": "Wasserfilter (Holzkohle und Dosen)", "needs": {"wood": 1, "cans": 2, "scrap": 1}, "gives": {"water_filter": 1}},
+    {"id": "signal_jammer",    "requires": "link_drone",  "needs": {"electronics": 2, "battery": 1, "drone_part": 1}, "gives": {"signal_jammer": 1}},
+    {"id": "growth_barrier",   "requires": "link_growth", "needs": {"scrap": 1, "alien_plant": 2, "cans": 2}, "gives": {"growth_barrier": 1}},
     {"id": "door_upgrade",    "name": "Haustür verstärken", "needs": {"scrap": 3, "planks": 4, "nails": 12}, "special": "door_upgrade"}
   ]
 }

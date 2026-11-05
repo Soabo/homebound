@@ -261,6 +261,13 @@ func _primary() -> void:
 			if node and node.tool == "axe":
 				node.interact(player)
 				return
+			# Wucherung oder Knoten: weghacken
+			var target := player.current_interactable
+			if target and target.has_method("axe_hit"):
+				_start_action("chop", 0.45)
+				_cooldown = 0.55
+				target.call("axe_hit", player)
+				return
 			_start_action("swing", MELEE["axe"]["len"])
 			_cooldown = MELEE["axe"]["cooldown"]
 		"fist":

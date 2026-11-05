@@ -78,6 +78,12 @@ func plan_night(night_day: int) -> void:
 		_add(start + _rng.randf_range(1.0, 3.5), "creature")
 	if night_intensity >= 2 and _rng.randf() < config.outage_chance:
 		_add(start + _rng.randf_range(2.5, 6.0), "outage")
+	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht)
+	var st := WorldState.stage()
+	if (st >= 1 or night_day >= 3) and _rng.randf() < 0.45 + 0.1 * st:
+		_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
+	if (st >= 1 or night_day >= 4) and night_intensity >= 1 and _rng.randf() < 0.35 + 0.1 * st:
+		_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 	night_planned.emit(night_intensity)
 	print("[ThreatDirector] Nacht %d: Bedrohung %.1f, Intensität %d (%s), %d Ereignisse" %
@@ -131,7 +137,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "outage", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "outage", "drone", "manipulator", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -198,6 +204,31 @@ func _fire(type: String) -> void:
 					SoundBank.play_at(scene, "bang", Vector3(4.6, 1.0, -3.8), -4.0, 0.6)
 		"creature":
 			_spawn_creature(scene)
+		"drone":
+			if get_tree().get_nodes_in_group("drone").is_empty():
+				var d := AlienDrone.new()
+				d.name = "Drone"
+				scene.add_child(d)
+		"manipulator":
+			if get_tree().get_nodes_in_group("manipulator").is_empty():
+				var m := Manipulator.new()
+				m.name = "Manipulator"
+				scene.add_child(m)
+
+
+## Hinterhalt / Alarm (Drohne, Manipulator): Kreatur greift an, nahe einer Stelle.
+func spawn_ambush(at: Vector3) -> void:
+	var scene := get_tree().current_scene
+	if is_instance_valid(creature):
+		creature.call("_start_chase")
+		return
+	var c := Creature.new()
+	c.name = "Creature"
+	scene.add_child(c)
+	creature = c
+	c.call("begin", "attack")
+	c.global_position = Creature._ground(at)
+	c.call("_start_chase")
 
 
 func _spawn_creature(scene: Node) -> void:

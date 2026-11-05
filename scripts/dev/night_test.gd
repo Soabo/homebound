@@ -40,6 +40,10 @@ func _run() -> void:
 		await _melee_test()
 		get_tree().quit()
 		return
+	if mode == "world":
+		await _world_test()
+		get_tree().quit()
+		return
 	if mode == "research":
 		await _research_test()
 		get_tree().quit()
@@ -94,7 +98,7 @@ func _event_test() -> void:
 	for sw in get_tree().get_nodes_in_group("light_switch"):
 		sw.switch_to(true)
 	var types := ["twig", "steps", "silence", "camera_glitch", "breath_wall", "phantom", "scratch", "roof",
-			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage"]
+			"flicker", "radio", "signal", "knock_door", "rattle", "music_box", "handprint", "photo", "outage", "drone", "manipulator"]
 	for t in types:
 		ThreatDirector._fire(t)
 		await get_tree().create_timer(0.5).timeout
@@ -314,3 +318,131 @@ func _research_test() -> void:
 	Research.set_state(st)
 	print("RESEARCH Speichern/Laden: Stufe %d, Analysen %d, Verknüpfungen %d" % [Research.tier, Research.done.size(), Research.links_done.size()])
 	print("RESEARCH Bauten da: ", is_instance_valid(strobe), " ", is_instance_valid(sensor))
+
+
+## Phase 8: Weltzustand, Orte, neue Arten.
+func _world_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	ThreatDirector.set_process(false)
+	# Stufen über die Tage
+	for d in [1, 4, 5, 6, 7, 9]:
+		TimeManager.set_time(d, 8.0)
+		WorldState._on_day_changed(d)
+		await get_tree().process_frame
+		print("WORLD Tag %d: Wert %.2f, Stufe %d, Wucherungen %d" % [d, WorldState.level(), WorldState.stage(), WorldState.patches.size()])
+	var plants := scene.get_node_or_null("Terraformer/Plants")
+	print("WORLD Fremdpflanzen: ", plants.get_child_count() if plants else 0, ", Pilzringe: ", scene.has_node("Terraformer/Rings"))
+	# Verunreinigtes Wasser
+	var tap: WaterSource = null
+	for w in scene.find_children("*", "WaterSource", true, false):
+		if (w as WaterSource).contaminable:
+			tap = w
+			break
+	player.health = 100.0
+	tap.interact(player)
+	print("WORLD Wasser ohne Filter: Gesundheit %.0f (erwartet 88)" % player.health)
+	Inventory.add("water_filter", 1)
+	tap.interact(player)
+	print("WORLD Wasser mit Filter: Gesundheit %.0f (erwartet 88)" % player.health)
+	# Wucherungen: weghacken und Sperre
+	await get_tree().process_frame
+	var layer := scene.get_node("Terraformer/Patches")
+	print("WORLD Wucherungs-Knoten in der Welt: ", layer.get_child_count())
+	var first := layer.get_child(0) as OrganismNode.Patch
+	for i in 3:
+		first.axe_hit(player)
+	await get_tree().process_frame
+	print("WORLD Nach 3 Axthieben: %d Wucherungen, Proben %d" % [WorldState.patches.size(), Inventory.count("organism_sample")])
+	var second := layer.get_child(0) as OrganismNode.Patch
+	var before := WorldState.patches.size()
+	var barrier := Builder.place("growth_barrier", second.global_position + Vector3(2, 0, 0), 0.0)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("WORLD Myzel-Sperre: %d -> %d Wucherungen, in Gruppe: %s" % [before, WorldState.patches.size(), barrier.is_in_group("growth_barrier")])
+	print("WORLD Ausbreitung blockiert bei Sperre: ", WorldState._blocked_by_barrier(barrier.global_position + Vector3(5, 0, 0)))
+	# Knoten in der Höhle
+	var src := scene.get_node("StreamCave/OrganismSource") as OrganismNode
+	for i in 6:
+		src.axe_hit(player)
+	print("WORLD Knoten zerschlagen: lebt %s, Proben liegen: %s" % [WorldState.source_alive, src.has_node("OrganismSamples")])
+	# Säulenrätsel
+	var st := scene.get_node("AlienStructure") as AlienStructure
+	player.health = 100.0
+	st.pylon_pressed(AlienStructure.ORDER[1], player)
+	print("WORLD Falsche Säule: Gesundheit %.0f, aus: %s" % [player.health, WorldState.pylons_off])
+	for i in AlienStructure.ORDER:
+		st.pylon_pressed(i, player)
+	await get_tree().process_frame
+	print("WORLD Struktur aus: %s, Kristallsplitter: %s, Wert jetzt %.2f" % [WorldState.structure_off, st.has_node("CrystalShard") or scene.find_child("CrystalShard", true, false) != null, WorldState.level()])
+	# Hochsitz
+	var ladder := scene.get_node("RangerTower/Ladder") as TowerLadder
+	player.global_position = ladder.to_global(ladder.bottom)
+	ladder.interact(player)
+	await get_tree().create_timer(0.8).timeout
+	print("WORLD Leiter hoch: y %.1f" % player.global_position.y)
+	(scene.get_node("RangerTower/TowerDiary") as ResearchNote).interact(player)
+	get_tree().call_group("research_menu", "close")
+	ladder.interact(player)
+	await get_tree().create_timer(0.8).timeout
+	print("WORLD Leiter runter: y %.1f, Notizen %s" % [player.global_position.y, Research.notes])
+	# Drohne: erfasst den Spieler draußen
+	TimeManager.set_time(9, 23.0)
+	TimeManager.running = false
+	Engine.time_scale = 4.0
+	player.global_position = Creature._ground(Vector3(-10, 0, -14)) + Vector3(0, 0.1, 0)
+	var dr := AlienDrone.new()
+	scene.add_child(dr)
+	dr.global_position = Vector3(-10, AlienDrone.HEIGHT, -14)
+	for i in 20:
+		await get_tree().physics_frame
+	print("WORLD Drohne Alarm: %s, Kreatur da: %s" % [dr._alarm_done, is_instance_valid(ThreatDirector.creature)])
+	if is_instance_valid(ThreatDirector.creature):
+		ThreatDirector.creature.queue_free()
+	dr.queue_free()
+	# Drohne + Stroboskop -> Teil fällt ab
+	var strobe := Builder.place("strobe_light", Creature._ground(Vector3(5, 0, -8)), 0.0)
+	strobe._strobe_time = 10.0
+	player.global_position = Vector3(-1.0, 0.5, 1.0)
+	var dr2 := AlienDrone.new()
+	scene.add_child(dr2)
+	dr2.global_position = Vector3(5, AlienDrone.HEIGHT, -8)
+	for i in 5:
+		await get_tree().physics_frame
+	print("WORLD Drohne geblendet: Teil fällt %s, liegt da: %s" % [WorldState.drone_part_dropped, scene.has_node("DronePart")])
+	dr2.queue_free()
+	# Drohne + Störsender -> dreht ab
+	var jam := Builder.place("signal_jammer", Creature._ground(Vector3(-6, 0, 10)), 0.0)
+	var dr3 := AlienDrone.new()
+	scene.add_child(dr3)
+	dr3.global_position = Vector3(-6, AlienDrone.HEIGHT, 4)
+	for i in 3:
+		await get_tree().physics_frame
+	print("WORLD Störsender: Drohne dreht ab %s" % dr3._leaving)
+	dr3.queue_free()
+	# Manipulator: lockt, verschwindet bei Nähe -> Hinterhalt
+	var m := Manipulator.new()
+	scene.add_child(m)
+	await get_tree().create_timer(6.0).timeout
+	print("WORLD Manipulator steht bei %s (Abstand Hütte %.0f m)" % [m.global_position.round(), Vector2(m.global_position.x, m.global_position.z).length()])
+	player.global_position = m.global_position + (Vector3(0, m.global_position.y, 0) - m.global_position).normalized() * 8.0 + Vector3(0, 0.5, 0)
+	for i in 5:
+		await get_tree().physics_frame
+	print("WORLD Manipulator verschwunden: %s, Kreatur greift an: %s" % [m._gone, is_instance_valid(ThreatDirector.creature)])
+	Engine.time_scale = 1.0
+	# Baupläne hinter Verknüpfungen
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] in ["signal_jammer", "growth_barrier"]:
+			print("WORLD Bauplan %s vorher frei: %s" % [r["id"], Research.recipe_unlocked(r)])
+	Research.links_done.append_array(["link_drone", "link_growth"])
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] in ["signal_jammer", "growth_barrier"]:
+			print("WORLD Bauplan %s nachher frei: %s" % [r["id"], Research.recipe_unlocked(r)])
+	# Speichern/Laden
+	var ws := WorldState.get_state()
+	WorldState.set_state({})
+	WorldState.set_state(ws)
+	print("WORLD Speichern/Laden: Struktur aus %s, Quelle lebt %s, Wucherungen %d" % [WorldState.structure_off, WorldState.source_alive, WorldState.patches.size()])
+	print("WORLD Bauten noch da: ", is_instance_valid(jam), " ", is_instance_valid(barrier))

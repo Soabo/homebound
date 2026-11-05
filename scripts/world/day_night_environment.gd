@@ -120,7 +120,9 @@ func _apply(h: float) -> void:
 	env.ambient_light_color = Color(0.05, 0.06, 0.09).lerp(Color(0.55, 0.52, 0.46), day)
 	env.background_energy_multiplier = lerpf(0.5, 1.0, day)
 	env.fog_light_color = Color(0.015, 0.02, 0.03).lerp(Color(0.62, 0.68, 0.74), day).lerp(SUNSET_HORIZON * 0.7, low_sun * 0.4)
-	env.fog_density = lerpf(0.016, 0.004, day)
-	env.volumetric_fog_density = lerpf(0.035, 0.008, day)
+	# Terraforming ab Stufe 2: nachts dichterer Nebel
+	var fog_mult := 1.0 + (0.9 if WorldState.stage() >= 2 else 0.0) * (1.0 - day)
+	env.fog_density = lerpf(0.016, 0.004, day) * fog_mult
+	env.volumetric_fog_density = lerpf(0.035, 0.008, day) * fog_mult
 	env.volumetric_fog_albedo = Color(0.5, 0.55, 0.62).lerp(Color(0.85, 0.87, 0.9), day)
 	env.adjustment_saturation = lerpf(0.65, 1.05, day)

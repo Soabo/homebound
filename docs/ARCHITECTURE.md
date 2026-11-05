@@ -9,7 +9,7 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 | Alien AI | `Creature` (`scripts/creature/`), Wegpunkt-Ring ums Haus, Zustandsautomat | ✅ erste Kreatur: Sicht/Licht/Gehör, Zugänge angreifen, Verfolgung |
 | Power (GDD 7.4) | Autoload `PowerManager` | ✅ Generator, Benzin, Verbraucher, Ausfall |
 | Überwachung (GDD 7.5) | `Surveillance` + `SecurityCamera` + `MonitorStation` | ✅ 3 Kameras an Wandhaltern (Hausfront, Garten, Maisfeld), Gehäuse auf Sichtebene 4 (nicht im Kamerabild), Störungen, Trugbilder (Sichtebene 2) |
-| World State Manager | Autoload, Terraforming-Zustand | ⏳ Phase 8 |
+| World State Manager | Autoload `WorldState` + `Terraformer` (sichtbar machen) | ✅ Terraforming-Stufen aus Tagen + Forschung, verunreinigtes Wasser, Wucherungen des Organismus, fremde Struktur, Drohne (`AlienDrone`), Manipulator |
 | Base Building Manager | Autoload `Builder` + `BuildController` + `Structure` | ✅ freies Platzieren, Hindernisse, Fallen, Alarm, Licht; Daten in `data/items/buildables.json` |
 | Research Manager | Autoload `Research` + `ResearchMenu` (Analyse, Archiv J) + Daten `data/research/research.json` | ✅ Gerätestufen, Analysen mit Experimenten, Verknüpfungen → Baupläne, Notizen, Absturzstelle (`CrashSite`) |
 | Inventory Manager | Autoload `Inventory` + `DataDB` | ✅ Traglast, Essen/Trinken; Daten in `data/items/items.json`, Rezepte in `recipes.json` |
@@ -43,6 +43,7 @@ funktionieren dadurch automatisch mit der Kreaturen-KI.
 - `-- --night-test=attack|probe|observe|attack_locked`: Kreatur-Protokoll
 - `-- --night-test=events`: löst jedes Nacht-Ereignis einmal aus
 - `-- --night-test=research`: Phase 7 komplett – Absturzstelle, Umbau, Analysen, fremdes Gerät, Verknüpfen, Baupläne, Stroboskop
+- `-- --night-test=world`: Phase 8 – Stufen, Wasser/Filter, Wucherungen, Knoten, Säulenrätsel, Hochsitz, Drohne, Manipulator, Baupläne
 - `-- --night-test=melee`: Hände – Faust/Axt gegen Kreatur, Blocken, Schnellplatz-Wechsel, Uhr-Lampe
 - `-- --night-test=craft`: Rezepte, Barrikade, Bauen, Kreatur gegen Hindernisse, Neustart-Persistenz
 - `-- --screenshot-tour=ORDNER [--shots=01,05] [--frames=30]`

@@ -6,7 +6,7 @@ extends Node3D
 
 const SEED := 1337
 const SPACING := 4.0
-const LIMIT := 76.0
+const LIMIT := 108.0
 
 var _rng := RandomNumberGenerator.new()
 
@@ -24,6 +24,8 @@ static func _tree_allowed(x: float, z: float) -> bool:
 	if Terrain.yard_distance(x, z) < 2.5:
 		return false
 	if CrashSite.is_near(x, z, 10.0):
+		return false
+	if AlienStructure.is_near(x, z, 12.0) or RangerTower.is_near(x, z, 5.0) or StreamCave.is_near(x, z, 13.0):
 		return false
 	if z > 14.0 and Terrain.road_distance(x, z) < 3.4:
 		return false
@@ -128,7 +130,7 @@ func _build_rocks() -> void:
 	add_child(body)
 	var placed := 0
 	var tries := 0
-	while placed < 140 and tries < 4000:
+	while placed < 230 and tries < 6000:
 		tries += 1
 		var near_stream := placed < 60
 		var z := _rng.randf_range(-LIMIT, LIMIT)
@@ -188,7 +190,7 @@ func _build_ground_plants() -> void:
 
 	# Farn im Wald und am Bach
 	tries = 0
-	while ferns.size() < 3000 and tries < 40000:
+	while ferns.size() < 4800 and tries < 60000:
 		tries += 1
 		var by_stream := _rng.randf() < 0.3
 		var z := _rng.randf_range(-LIMIT, LIMIT)
@@ -202,7 +204,7 @@ func _build_ground_plants() -> void:
 
 	# Büsche
 	tries = 0
-	while bushes.size() < 260 and tries < 5000:
+	while bushes.size() < 440 and tries < 8000:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT, LIMIT)
 		var z := _rng.randf_range(-LIMIT, LIMIT)
@@ -264,7 +266,7 @@ func _build_forest_details() -> void:
 
 	var spots: Array[Vector3] = []
 	var tries := 0
-	while spots.size() < 70 and tries < 3000:
+	while spots.size() < 120 and tries < 5000:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
 		var z := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
@@ -325,7 +327,7 @@ func _build_forest_details() -> void:
 	var saplings: Array[Transform3D] = []
 	var sap_cols: Array[Color] = []
 	tries = 0
-	while saplings.size() < 600 and tries < 10000:
+	while saplings.size() < 900 and tries < 14000:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT, LIMIT)
 		var z := _rng.randf_range(-LIMIT, LIMIT)
@@ -391,6 +393,7 @@ func _build_stream_spots() -> void:
 			drink.name = "StreamDrink_%d" % k
 			drink.label = "Bach"
 			drink.thirst_gain = 35.0
+			drink.contaminable = true
 			drink.anchor = Vector3(Terrain.stream_x_at(z), Terrain.stream_bed_height(z) + 0.2, z)
 			drink.collider_size = Vector3(2.4, 0.4, 2.0)
 			add_child(drink)
@@ -554,6 +557,8 @@ static func _blocked_for_plants(x: float, z: float) -> bool:
 	if CornField.is_inside(x, z):
 		return true
 	if CrashSite.is_near(x, z, 7.5):
+		return true
+	if AlienStructure.is_near(x, z, 9.0) or RangerTower.is_near(x, z, 3.0) or StreamCave.is_near(x, z, 11.0):
 		return true
 	if z > 6.5 and Terrain.road_distance(x, z) < 2.2:
 		return true
