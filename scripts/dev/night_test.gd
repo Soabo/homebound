@@ -41,6 +41,10 @@ func _run() -> void:
 		await _melee_test()
 		get_tree().quit()
 		return
+	if mode == "changes":
+		await _changes_test()
+		get_tree().quit()
+		return
 	if mode == "dread":
 		await _dread_test()
 		get_tree().quit()
@@ -584,3 +588,59 @@ func _dread_test() -> void:
 	await get_tree().create_timer(0.6).timeout
 	print("DREAD Lampe danach: leuchtet %s" % player.light_shining())
 	k.queue_free()
+
+
+## Veränderungen draußen, Radio-Nachrichten, Test-Sprung zu Tag 10.
+func _changes_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	ThreatDirector.set_process(false)
+	var nc := scene.get_node("NightChanges") as NightChanges
+	for k: String in NightChanges.KINDS:
+		var c := nc._make(k, Vector2i(2, 2))
+		nc.active.append(c)
+		nc._apply(c)
+	await get_tree().process_frame
+	var bench := scene.get_node("Cabin/PorchBench") as Node3D
+	var seg_name := ""
+	for c: Dictionary in nc.active:
+		if c["kind"] == "fence_hole":
+			seg_name = c["seg"]
+	var seg := scene.get_node("Garden/" + seg_name) as Node3D
+	print("CHANGES alle %d Arten angewendet. Bank bei %s, Zaunfeld %s sichtbar %s, Schuppentür offen %s, Vogelscheuche %.0f°" % [
+		nc.active.size(), (bench.global_transform * NightChanges.BENCH_CENTER).round(), seg_name, seg.visible,
+		(scene.get_node("Shed/ShedDoor") as Door).is_open, rad_to_deg((scene.get_node("CornField/Scarecrow") as Node3D).rotation.y)])
+	var st := nc.get_state()
+	TimeManager.set_time(5, 8.0)
+	nc._expire()
+	await get_tree().process_frame
+	print("CHANGES nach Ablauf: aktiv %d, Bank zurück %s, Zaunfeld sichtbar %s, Handtücher %s" % [nc.active.size(),
+		bench.transform.is_equal_approx(Transform3D()), seg.visible,
+		[(scene.get_node("Garden/Towels/Towel_0") as Node3D).visible, (scene.get_node("Garden/Towels/Towel_1") as Node3D).visible, (scene.get_node("Garden/Towels/Towel_2") as Node3D).visible]])
+	nc.set_state(st)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("CHANGES Laden stellt wieder her: aktiv %d, Zaunfeld sichtbar %s" % [nc.active.size(), seg.visible])
+	# Radio
+	TimeManager.set_time(1, 10.0)
+	var radio := scene.get_node("Cabin/Radio") as Radio
+	radio.heard_day = 0
+	print("RADIO neue Nachricht: %s" % radio.has_new_message())
+	radio.set_on(true)
+	print("RADIO an, Nachricht gehört: %s, Text: %s" % [not radio.has_new_message(), radio.message_for_today().left(50)])
+	Engine.time_scale = 8.0
+	await get_tree().create_timer(26.0).timeout
+	Engine.time_scale = 1.0
+	print("RADIO nach ~26 s: an %s" % radio.is_on)
+	for d in [2, 6, 11, 17]:
+		TimeManager.set_time(d, 10.0)
+		print("RADIO Tag %d neu: %s – %s" % [d, radio.has_new_message(), radio.message_for_today().left(60)])
+	# Test-Sprung
+	TimeManager.set_time(3, 10.0)
+	Survival.hunger = 20.0
+	var pm := scene.get_node("PauseMenu") as PauseMenu
+	pm._test_jump_to_day(10)
+	await get_tree().process_frame
+	print("SPRUNG: Tag %d %s, Hunger %.0f, Durst %.0f, Stufe %d, Wucherungen %d, Nacht: %s" % [TimeManager.day, TimeManager.get_clock_text(),
+		Survival.hunger, Survival.thirst, WorldState.stage(), WorldState.patches.size(), ThreatDirector.night_kind])

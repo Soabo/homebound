@@ -65,6 +65,13 @@ extends Resource
 ## Zusätzliche Chance je Terraforming-Stufe (Drohne und Manipulator).
 @export var species_chance_per_stage: float = 0.1
 
+@export_group("Veränderungen draußen nach unruhigen Nächten")
+## Chance am Morgen nach einer Nacht mit Alien-Aktivität, dass sich draußen etwas verändert hat.
+@export var night_change_chance: float = 0.6
+## Wie viele Veränderungen auf einmal, und wie viele Tage sie bleiben.
+@export var night_change_count: Vector2i = Vector2i(1, 2)
+@export var night_change_days: Vector2i = Vector2i(2, 4)
+
 @export_group("Schlaf")
 ## Nach dem Hochschrecken so viele Spielstunden kein Schlaf.
 @export var scared_awake_hours: float = 1.0

@@ -33,6 +33,10 @@ func _ready() -> void:
 
 	var resume := _button(box, "Weiter")
 	resume.pressed.connect(func() -> void: set_paused(false))
+	# TEST – wird später wieder entfernt: zu Tag 10 springen, um die späten Tage anzusehen
+	var jump := _button(box, "TEST: zu Tag 10 springen")
+	jump.modulate = Color(1.0, 0.8, 0.5)
+	jump.pressed.connect(_test_jump_to_day.bind(10))
 	var quit := _button(box, "Spiel beenden")
 	quit.pressed.connect(func() -> void: get_tree().quit())
 
@@ -58,3 +62,31 @@ func set_paused(value: bool) -> void:
 	get_tree().paused = value
 	visible = value
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
+
+
+## TEST: Sprung zu einem späteren Tag (7 Uhr morgens). Spannungsbogen, Talverwandlung und Wucherungen
+## laufen für die übersprungenen Tage mit; Hunger, Durst, Ausdauer und Gesundheit voll.
+## Ressourcen werden nicht mitgenommen/ergänzt. Wird später wieder entfernt.
+func _test_jump_to_day(target: int) -> void:
+	set_paused(false)
+	if TimeManager.day >= target:
+		EventBus.notify("TEST: Du bist schon an Tag %d." % TimeManager.day, 3.0)
+		return
+	for d in range(TimeManager.day, target):
+		ThreatDirector.plan_night(d)  # Bogen der übersprungenen Nächte fortschreiben
+		TimeManager.set_time(d + 1, 8.0)
+		WorldState._on_day_changed(d + 1)
+	TimeManager.set_time(target, TimeManager.config.wake_up_hour)
+	ThreatDirector._planned_for_day = -1
+	ThreatDirector._activity_tonight = true
+	ThreatDirector._on_phase_changed(false)  # Morgen: Spuren, Veränderungen draußen, Nacht planen
+	Survival.hunger = 100.0
+	Survival.thirst = 100.0
+	Survival.stamina = Survival.STAMINA_MAX
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if player:
+		player.health = Player.MAX_HEALTH
+		player.mind = 0.0
+	GameState.take_snapshot()
+	EventBus.notify("TEST: Tag %d, %s. Heute Nacht: %s." % [target, TimeManager.get_clock_text(),
+			{"quiet": "ruhig", "hints": "Andeutungen", "sighting": "Sichtung", "visit": "Erkundung", "hunt": "Angriff"}.get(ThreatDirector.night_kind, "?")], 6.0)

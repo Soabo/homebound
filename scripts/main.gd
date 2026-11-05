@@ -20,6 +20,7 @@ func _ready() -> void:
 	add_child(StreamCave.new())
 	add_child(Terraformer.new())
 	add_child(CarWreck.new())
+	add_child(NightChanges.new())
 	_build_world_limits()
 	_build_cameras()
 	Builder.spawn_all(self)

@@ -31,6 +31,10 @@ var nights_since_appearance: int = 0
 var quiet_left: int = 0
 var _appeared_tonight: bool = false
 var _arc_day: int = -1
+## War in der laufenden Nacht etwas Fremdes los? (für die Veränderungen am Morgen)
+var _activity_tonight: bool = false
+const ACTIVITY_EVENTS := ["creature", "sighting", "drone", "manipulator", "phantom", "signal", "music_box", "knock_door",
+		"rattle", "handprint", "roof", "scratch", "breath_wall", "photo"]
 var _forest_day_done: int = -1
 var _forest_check: float = 30.0
 
@@ -91,6 +95,9 @@ func _on_phase_changed(is_night: bool) -> void:
 	# Morgengrauen: Kreatur verschwindet, Spuren der Nacht bleiben, nächste Nacht wird geplant.
 	if is_instance_valid(creature):
 		creature.call("leave")
+	if scene and _activity_tonight and _rng.randf() < config.night_change_chance:
+		get_tree().call_group("night_changes", "morning", _rng.randi_range(config.night_change_count.x, config.night_change_count.y), config.night_change_days)
+	_activity_tonight = false
 	if scene and night_kind in ["hints", "visit", "hunt"] and _rng.randf() < (config.traces_after_hints if night_kind == "hints" else config.traces_after_visit):
 		Traces.morning(scene, _rng)
 	_plan_if_needed()
@@ -226,6 +233,8 @@ func _fire(type: String) -> void:
 	if scene == null:
 		return
 	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if type in ACTIVITY_EVENTS:
+		_activity_tonight = true
 	match type:
 		"twig":
 			SoundBank.play_at(scene, "twig", _random_forest_point(18.0, 30.0), -2.0, _rng.randf_range(0.8, 1.2))
@@ -261,7 +270,7 @@ func _fire(type: String) -> void:
 		"radio":
 			for r in get_tree().get_nodes_in_group("radio"):
 				if not r.is_on:
-					r.call("set_on", true)
+					r.call("set_on", true, true)
 		"signal":
 			SoundBank.play_at(scene, "signal", _random_forest_point(15.0, 25.0) + Vector3(0, 2, 0), 2.0)
 			for i in 3:

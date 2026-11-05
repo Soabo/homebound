@@ -39,3 +39,6 @@ manipulator_chance = 0.3
 species_chance_per_stage = 0.1
 scared_awake_hours = 1.0
 no_sleep_creature_distance = 60.0
+night_change_chance = 0.6
+night_change_count = Vector2i(1, 2)
+night_change_days = Vector2i(2, 4)

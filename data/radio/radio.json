@@ -1,0 +1,31 @@
+{
+  "_info": "Radio: Einstellungen und Nachrichten. Jeden Tag gibt es eine neue Nachricht (Tag 1, 2, ...); danach die Liste 'later' der Reihe nach. 'crash_hint' ersetzt die Tagesnachricht, solange die Absturzstelle nicht gefunden ist (Tag 1-3). 'night' = Fetzen, wenn sich das Radio nachts von selbst einschaltet.",
+  "play_seconds": 20,
+  "fade_seconds": 4,
+  "crash_hint": "Rauschen, dann Bruchstücke – „…helle Lichter über dem Wald … nordwestlich der alten Forststraße … Rauch …“",
+  "days": {
+    "1": "Regionalfunk: „…in der Nacht Lichterscheinungen über den Wäldern gemeldet. Die Polizei geht von einem Meteoriten aus und bittet, Fundstücke nicht anzufassen …“",
+    "2": "Regionalfunk: „…ein Förster aus dem Tal wird seit drei Tagen vermisst. Sein Wagen stand verlassen an der Forststraße …“",
+    "3": "Wetterbericht, dann ein Störgeräusch: „…in mehreren Ortschaften seit gestern wiederholt Stromausfälle. Der Versorger findet keine Ursache …“",
+    "4": "Regionalfunk: „…Jäger berichten, dass Rehe und Wildschweine das Tal verlassen haben. Ganze Rudel ziehen nach Süden …“",
+    "5": "Eine ruhige Stimme: „…die Landstraße ins Tal ist ab heute gesperrt. Grund: Vermessungsarbeiten. Anwohner werden gebeten, ihre Häuser nicht zu verlassen …“",
+    "6": "Rauschen, dann eine Frauenstimme, sehr leise: „…hört mich jemand? … wir sind oben am Hochsitz … es kommt nachts … es sieht dich an und dann …“ – abgebrochen.",
+    "7": "Regionalfunk: „…das Wasserwirtschaftsamt warnt: Brunnen und Bäche im Tal nicht als Trinkwasser nutzen. Verfärbungen wurden gemeldet …“",
+    "8": "Nur ein Ton: drei kurze Pieptöne, eine Pause, drei lange. Immer wieder. Dazwischen Zahlen in einer Sprache, die du nicht kennst.",
+    "9": "Regionalfunk, stockend: „…offiziell keine Gefahr … Hubschrauber über dem Tal sind Teil einer Übung … bitte bleiben Sie in …“ – dann Stille.",
+    "10": "Eine Stimme, ganz nah, als säße jemand neben dem Radio: „Du bist noch da.“ Danach nur Rauschen."
+  },
+  "later": [
+    "Regionalfunk: „…weitere Vermisstenmeldungen aus dem Tal. Die Behörden äußern sich nicht …“",
+    "Rauschen. Darunter, kaum hörbar, ein gleichmäßiges Klicken, wie von einem Insekt.",
+    "Musik, ein altes Schlagerlied. Es bricht mitten im Refrain ab und beginnt von vorn. Und noch einmal.",
+    "Ein Sender, den es nicht geben dürfte: Dein eigenes Atmen, leicht verzögert.",
+    "Regionalfunk: „…Sperrgebiet erweitert. Wer sich noch im Tal befindet, soll sich sichtbar machen …“",
+    "Morsezeichen. Du kannst sie nicht lesen, aber sie wiederholen sich exakt im Takt deines Herzschlags."
+  ],
+  "night": [
+    "Das Radio springt von selbst an. Rauschen – und ganz kurz deine eigene Stimme.",
+    "Das Radio schaltet sich ein. Nur ein tiefes Brummen, das den Tisch vibrieren lässt.",
+    "Das Radio ist an. Jemand flüstert Zahlen. Bei der Zahl Neun bricht es ab."
+  ]
+}

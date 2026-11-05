@@ -234,27 +234,7 @@ func _build_porch() -> void:
 	BuildKit.box(self, Vector3(7.2, 0.12, 2.6), Vector3(-2.2, WALL_TOP - 0.52, 5.85), BuildKit.tex_mat("shingles", 1.3), false, Vector3(roof_angle, 0, 0), "PorchRoof")
 	BuildKit.box(self, Vector3(7.0, 0.16, 0.16), Vector3(-2.2, post_top + 0.02, 6.4), m_beam, false)
 	# Sitzbank an der Hauswand
-	# Sitzfläche aus Latten, vier kräftige Beine mit Querstreben, Rückenlehne und Armlehnen
-	var bz0 := 4.8
-	var bz1 := 5.22
-	for i in 4:
-		var z := bz0 + 0.02 + i * 0.1
-		BuildKit.box_mm(self, Vector3(-1.5, FLOOR_Y + 0.42, z), Vector3(0.6, FLOOR_Y + 0.465, z + 0.085), m_wood, false)
-	BuildKit.collider_box(self, Vector3(2.1, 0.47, 0.42), Vector3(-0.45, FLOOR_Y + 0.235, (bz0 + bz1) * 0.5))
-	for x: float in [-1.42, 0.52]:
-		for z: float in [bz0 + 0.04, bz1 - 0.04]:
-			BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y, z - 0.04), Vector3(x + 0.04, FLOOR_Y + 0.42, z + 0.04), m_wood_dark, false)
-		BuildKit.box_mm(self, Vector3(x - 0.03, FLOOR_Y + 0.12, bz0), Vector3(x + 0.03, FLOOR_Y + 0.17, bz1), m_wood_dark, false)
-		# Armlehne mit Stütze vorn
-		BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y + 0.465, bz1 - 0.08), Vector3(x + 0.04, FLOOR_Y + 0.68, bz1), m_wood_dark, false)
-		BuildKit.box_mm(self, Vector3(x - 0.05, FLOOR_Y + 0.68, bz0 - 0.04), Vector3(x + 0.05, FLOOR_Y + 0.72, bz1 + 0.02), m_wood, false)
-	BuildKit.box_mm(self, Vector3(-1.38, FLOOR_Y + 0.12, (bz0 + bz1) * 0.5 - 0.025), Vector3(0.48, FLOOR_Y + 0.16, (bz0 + bz1) * 0.5 + 0.025), m_wood_dark, false)
-	# Rückenlehne: zwei Pfosten, drei Latten
-	for x: float in [-1.42, 0.52]:
-		BuildKit.box_mm(self, Vector3(x - 0.04, FLOOR_Y + 0.42, bz0 - 0.02), Vector3(x + 0.04, FLOOR_Y + 0.95, bz0 + 0.05), m_wood_dark, false)
-	for k in 3:
-		var y := FLOOR_Y + 0.56 + k * 0.13
-		BuildKit.box_mm(self, Vector3(-1.4, y, bz0 - 0.01), Vector3(0.5, y + 0.08, bz0 + 0.03), m_wood, false)
+	_porch_bench()
 	# Feuerholz auf der Veranda
 	var log_mat := BuildKit.tex_mat("logs", 0.6)
 	for row in 5:
@@ -262,6 +242,34 @@ func _build_porch() -> void:
 			BuildKit.cylinder(self, 0.09, 0.85, Vector3(-5.3, FLOOR_Y + 0.09 + row * 0.16, 4.95 + i * 0.19 + row * 0.09),
 					log_mat, false, Vector3(0, _rng.randf_range(-6, 6), 90), -1.0, 7)
 	BuildKit.collider_box(self, Vector3(0.9, 0.8, 1.4), Vector3(-5.3, FLOOR_Y + 0.4, 5.5))
+
+
+## Gartenbank auf der Veranda als eigener Knoten (nachts kann sie woanders stehen).
+func _porch_bench() -> void:
+	var bench := Node3D.new()
+	bench.name = "PorchBench"
+	add_child(bench)
+	# Sitzfläche aus Latten, vier kräftige Beine mit Querstreben, Rückenlehne und Armlehnen
+	var bz0 := 4.8
+	var bz1 := 5.22
+	for i in 4:
+		var z := bz0 + 0.02 + i * 0.1
+		BuildKit.box_mm(bench, Vector3(-1.5, FLOOR_Y + 0.42, z), Vector3(0.6, FLOOR_Y + 0.465, z + 0.085), m_wood, false)
+	BuildKit.collider_box(bench, Vector3(2.1, 0.47, 0.42), Vector3(-0.45, FLOOR_Y + 0.235, (bz0 + bz1) * 0.5))
+	for x: float in [-1.42, 0.52]:
+		for z: float in [bz0 + 0.04, bz1 - 0.04]:
+			BuildKit.box_mm(bench, Vector3(x - 0.04, FLOOR_Y, z - 0.04), Vector3(x + 0.04, FLOOR_Y + 0.42, z + 0.04), m_wood_dark, false)
+		BuildKit.box_mm(bench, Vector3(x - 0.03, FLOOR_Y + 0.12, bz0), Vector3(x + 0.03, FLOOR_Y + 0.17, bz1), m_wood_dark, false)
+		# Armlehne mit Stütze vorn
+		BuildKit.box_mm(bench, Vector3(x - 0.04, FLOOR_Y + 0.465, bz1 - 0.08), Vector3(x + 0.04, FLOOR_Y + 0.68, bz1), m_wood_dark, false)
+		BuildKit.box_mm(bench, Vector3(x - 0.05, FLOOR_Y + 0.68, bz0 - 0.04), Vector3(x + 0.05, FLOOR_Y + 0.72, bz1 + 0.02), m_wood, false)
+	BuildKit.box_mm(bench, Vector3(-1.38, FLOOR_Y + 0.12, (bz0 + bz1) * 0.5 - 0.025), Vector3(0.48, FLOOR_Y + 0.16, (bz0 + bz1) * 0.5 + 0.025), m_wood_dark, false)
+	# Rückenlehne: zwei Pfosten, drei Latten
+	for x: float in [-1.42, 0.52]:
+		BuildKit.box_mm(bench, Vector3(x - 0.04, FLOOR_Y + 0.42, bz0 - 0.02), Vector3(x + 0.04, FLOOR_Y + 0.95, bz0 + 0.05), m_wood_dark, false)
+	for k in 3:
+		var y := FLOOR_Y + 0.56 + k * 0.13
+		BuildKit.box_mm(bench, Vector3(-1.4, y, bz0 - 0.01), Vector3(0.5, y + 0.08, bz0 + 0.03), m_wood, false)
 
 
 func _build_openings() -> void:

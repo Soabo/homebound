@@ -6,6 +6,7 @@ extends Node3D
 
 const FENCE_MIN := Vector2(-20.0, -16.0)
 const FENCE_MAX := Vector2(22.0, 18.0)
+var _seg_count: int = 0
 const POST_SPACING := 2.6
 
 var _rng := RandomNumberGenerator.new()
@@ -68,14 +69,22 @@ func _fence_line(a: Vector2, b: Vector2, gap: Vector2) -> void:
 		if has_gap and mid > gap.x and mid < gap.y:
 			continue
 		var length := e - s + 0.25
+		# jedes Zaunfeld ein eigener Knoten (feste Namen: nachts kann ein Loch hineinkommen)
+		var seg := Node3D.new()
+		seg.name = "FenceSeg_%d" % _seg_count
+		seg.add_to_group("fence_segment")
+		seg.set_meta("along_x", along_x)
+		_seg_count += 1
+		add_child(seg)
 		for h: float in [0.5, 0.98]:
 			var y := h + _rng.randf_range(-0.04, 0.04)
 			var pos := Vector3(mid, y, a.y + 0.08) if along_x else Vector3(a.x + 0.08, y, mid)
 			var rot := Vector3(0, 0, 90 + _rng.randf_range(-2, 2)) if along_x else Vector3(90 + _rng.randf_range(-2, 2), 0, 0)
-			BuildKit.cylinder(self, 0.05, length, pos, m_rail, false, rot, -1.0, 6)
+			BuildKit.cylinder(seg, 0.05, length, pos, m_rail, false, rot, -1.0, 6)
 		var col_size := Vector3(e - s, 1.0, 0.15) if along_x else Vector3(0.15, 1.0, e - s)
 		var col_pos := Vector3(mid, 0.5, a.y) if along_x else Vector3(a.x, 0.5, mid)
-		BuildKit.collider_box(self, col_size, col_pos)
+		BuildKit.collider_box(seg, col_size, col_pos)
+		seg.set_meta("center", col_pos)
 
 
 func _build_props() -> void:
@@ -133,14 +142,19 @@ func _build_props() -> void:
 	for i in 12:
 		BuildKit.box(self, Vector3(0.08, 0.01, 0.04), Vector3(11.0 + _rng.randf_range(-0.8, 0.8), 0.01, 10.5 + _rng.randf_range(-0.8, 0.8)),
 				BuildKit.color_mat(Color(0.62, 0.5, 0.34)), false, Vector3(0, _rng.randf() * 180, 0))
-	# Wäscheleine hinter der Hütte
+	# Wäscheleine hinter der Hütte (Handtücher als eigene Knoten – nachts können welche fehlen)
 	var pole := BuildKit.tex_mat("logs", 0.6)
 	BuildKit.cylinder(self, 0.05, 2.1, Vector3(-12.0, 1.05, -9.0), pole, true, Vector3.ZERO, -1.0, 7)
 	BuildKit.cylinder(self, 0.05, 2.1, Vector3(-5.0, 1.05, -9.0), pole, true, Vector3.ZERO, -1.0, 7)
 	BuildKit.box(self, Vector3(7.0, 0.01, 0.01), Vector3(-8.5, 1.95, -9.0), BuildKit.color_mat(Color(0.8, 0.8, 0.78)), false)
-	BuildKit.box(self, Vector3(0.6, 0.8, 0.01), Vector3(-9.5, 1.55, -9.0), BuildKit.tex_mat("fabric", 0.4, Color(1.3, 1.45, 1.6)), false)
-	BuildKit.box(self, Vector3(0.5, 0.6, 0.01), Vector3(-8.2, 1.65, -9.0), BuildKit.tex_mat("fabric", 0.4, Color(1.7, 1.65, 1.5)), false)
-	BuildKit.box(self, Vector3(0.4, 0.5, 0.01), Vector3(-7.2, 1.7, -9.0), BuildKit.tex_mat("fabric_red", 0.4), false)
+	var towels := Node3D.new()
+	towels.name = "Towels"
+	add_child(towels)
+	var t0 := BuildKit.box(towels, Vector3(0.6, 0.8, 0.01), Vector3(-9.5, 1.55, -9.0), BuildKit.tex_mat("fabric", 0.4, Color(1.3, 1.45, 1.6)), false)
+	var t1 := BuildKit.box(towels, Vector3(0.5, 0.6, 0.01), Vector3(-8.2, 1.65, -9.0), BuildKit.tex_mat("fabric", 0.4, Color(1.7, 1.65, 1.5)), false)
+	var t2 := BuildKit.box(towels, Vector3(0.4, 0.5, 0.01), Vector3(-7.2, 1.7, -9.0), BuildKit.tex_mat("fabric_red", 0.4), false)
+	for i in 3:
+		[t0, t1, t2][i].name = "Towel_%d" % i
 	# Picknicktisch
 	BuildKit.box_mm(self, Vector3(-12.0, 0.72, -3.4), Vector3(-10.0, 0.78, -2.6), m_wood, true)
 	BuildKit.box_mm(self, Vector3(-12.0, 0.42, -4.0), Vector3(-10.0, 0.46, -3.7), m_wood, true)
