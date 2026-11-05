@@ -47,7 +47,7 @@ const SHOTS := [
 	{"name": "33_hoehle_eingang", "hour": 15.0, "day": 7, "pos": Vector3(40.5, 0.0, -77.5), "look": Vector3(46.0, 0.5, -72.0)},
 	{"name": "34_hoehle_knoten", "hour": 15.0, "cave": true, "pos": Vector3(55.0, 0.0, -72.0), "look": Vector3(61.5, 0.7, -72.0), "flashlight": true},
 	{"name": "35_drohne_nacht", "hour": 23.0, "pos": Vector3(-3.0, 0.0, 26.0), "look": Vector3(-2.0, 7.0, 15.0), "drone_at": Vector3(-2.0, 9.0, 15.0)},
-	{"name": "36_generator", "hour": 21.0, "pos": Vector3(3.3, 0.45, -2.5), "look": Vector3(4.7, 0.45, -3.8), "lights": true},
+	{"name": "36_generator", "hour": 21.0, "pos": Vector3(4.2, 0.45, -1.8), "look": Vector3(2.5, 0.45, -2.6), "lights": true},
 	{"name": "37_werkzeugwand", "hour": 21.0, "pos": Vector3(2.8, 0.45, 2.7), "look": Vector3(2.8, 1.5, 4.4), "lights": true},
 	{"name": "38_gartenbank", "hour": 14.0, "pos": Vector3(-0.4, 0.0, 8.6), "look": Vector3(-0.45, 0.8, 5.0)},
 	{"name": "39_schaukelstuhl", "hour": 21.0, "pos": Vector3(-2.3, 0.45, 1.6), "look": Vector3(-4.3, 0.7, 3.45), "lights": true},

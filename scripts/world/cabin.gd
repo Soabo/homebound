@@ -488,17 +488,17 @@ func _build_living_room() -> void:
 	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-3.85, y + 0.46, 1.95), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
 	# Bücherregal
 	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
-	# Esstisch – für vier gedeckt, benutzt wird nur ein Platz (GDD 3.1)
-	_table(Vector3(-0.9, y, 2.5), Vector3(0.5, y + 0.76, 3.6))
+	# Esstisch – für vier gedeckt, benutzt wird nur ein Platz (GDD 3.1). Steht vom Fenster weg, damit man hinaussehen kann.
+	_table(Vector3(-0.9, y, 1.5), Vector3(0.5, y + 0.76, 2.6))
 	var plate := BuildKit.color_mat(Color(0.86, 0.82, 0.74), 1.0)
-	for p: Vector3 in [Vector3(-0.55, 0, 2.75), Vector3(0.15, 0, 2.75), Vector3(-0.55, 0, 3.35), Vector3(0.15, 0, 3.35)]:
+	for p: Vector3 in [Vector3(-0.55, 0, 1.75), Vector3(0.15, 0, 1.75), Vector3(-0.55, 0, 2.35), Vector3(0.15, 0, 2.35)]:
 		BuildKit.cylinder(self, 0.13, 0.015, Vector3(p.x, y + 0.775, p.z), plate, false, Vector3.ZERO, -1.0, 12)
 		BuildKit.box(self, Vector3(0.015, 0.005, 0.16), Vector3(p.x + 0.17, y + 0.773, p.z), m_iron, false)
-	BuildKit.cylinder(self, 0.035, 0.18, Vector3(-0.2, y + 0.85, 3.05), BuildKit.color_mat(Color(0.25, 0.35, 0.25, 1), 0.2), false, Vector3.ZERO, 0.02, 8)
-	_chair(Vector3(-0.55, y, 2.15), 0.0)
-	_chair(Vector3(0.15, y, 2.15), 0.0)
-	_chair(Vector3(-0.55, y, 3.95), 180.0)
-	_chair(Vector3(0.15, y, 3.95), 180.0)
+	BuildKit.cylinder(self, 0.035, 0.18, Vector3(-0.2, y + 0.85, 2.05), BuildKit.color_mat(Color(0.25, 0.35, 0.25, 1), 0.2), false, Vector3.ZERO, 0.02, 8)
+	_chair(Vector3(-0.55, y, 1.15), 0.0)
+	_chair(Vector3(0.15, y, 1.15), 0.0)
+	_chair(Vector3(-0.55, y, 2.95), 180.0)
+	_chair(Vector3(0.15, y, 2.95), 180.0)
 	# Kinderzeichnung an der Wand
 	var paper := BuildKit.color_mat(Color(0.92, 0.9, 0.84), 0.9)
 	var dz := -1.0 + INT_T * 0.5 + 0.006
@@ -681,11 +681,11 @@ func _build_bedroom() -> void:
 	add_child(bed)
 	BuildKit.box_mm(self, Vector3(-4.2, y, -2.3), Vector3(-2.6, y + 0.012, -1.3), BuildKit.tex_mat("rug", 1.6), false)
 	# Nachttisch mit Kerze und Familienbild
-	BuildKit.box_mm(self, Vector3(-4.2, y + 0.5, -4.33), Vector3(-3.72, y + 0.55, -3.88), m_wood, true)
-	BuildKit.box_mm(self, Vector3(-4.18, y, -4.31), Vector3(-3.74, y + 0.5, -3.9), m_wood_dark, false)
-	BuildKit.box(self, Vector3(0.012, 0.012, 0.06), Vector3(-3.95, y + 0.4, -3.89), m_iron, false)
-	_photo(Vector3(-4.05, y + 0.55, -4.22), 0.0, 0.18, 0.14)
-	BuildKit.cylinder(self, 0.03, 0.1, Vector3(-3.85, y + 0.6, -4.05), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box_mm(self, Vector3(-4.3, y + 0.5, -4.33), Vector3(-3.92, y + 0.55, -3.88), m_wood, true)
+	BuildKit.box_mm(self, Vector3(-4.28, y, -4.31), Vector3(-3.94, y + 0.5, -3.9), m_wood_dark, false)
+	BuildKit.box(self, Vector3(0.012, 0.012, 0.06), Vector3(-4.11, y + 0.4, -3.89), m_iron, false)
+	_photo(Vector3(-4.2, y + 0.55, -4.22), 0.0, 0.16, 0.13)
+	BuildKit.cylinder(self, 0.03, 0.1, Vector3(-4.0, y + 0.6, -4.05), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
 	# Kleiderschrank mit zwei Türen
 	BuildKit.box_mm(self, Vector3(-2.05, y, -4.33), Vector3(-1.13, y + 2.05, -3.65), m_wall, true, "Wardrobe")
 	BuildKit.box_mm(self, Vector3(-2.06, y + 2.05, -4.35), Vector3(-1.12, y + 2.12, -3.62), m_wood_dark, false)
@@ -764,6 +764,8 @@ func _build_technical_room() -> void:
 	gen.anchor = Vector3(4.7, y, -3.825)
 	add_child(gen)
 	_generator_model(gen, y)
+	# an die Westwand gedreht (Bedienfeld zeigt in den Raum), damit das Fenster frei bleibt
+	gen.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(2.52, 0, -2.62)) * Transform3D(Basis(), -Vector3(4.7, 0, -3.83))
 	# Sicherungskasten mit Kabeln
 	var ex := HALF_X - CLAD
 	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
@@ -918,11 +920,12 @@ func _tool_wall(fz: float, y: float) -> void:
 func _build_workshop() -> void:
 	var y := FLOOR_Y
 	var ex := HALF_X - CLAD
-	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.2), Vector3(ex, y + 0.92, 3.6), BuildKit.tex_mat("floor", 0.8, Color(1.15, 1.1, 1.0)), true, "Workbench")
-	for z: float in [-0.1, 1.7, 3.5]:
+	# Werkbank an der Ostwand, nördlich vom Fenster (das Fenster bleibt frei)
+	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.85), Vector3(ex, y + 0.92, 1.35), BuildKit.tex_mat("floor", 0.8, Color(1.15, 1.1, 1.0)), true, "Workbench")
+	for z: float in [-0.75, 0.25, 1.25]:
 		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), m_wood_dark, true)
-	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.1), Vector3(5.8, y + 0.24, 3.5), m_wood, false)
-	BuildKit.box_mm(self, Vector3(5.2, y + 0.92, 0.3), Vector3(5.45, y + 1.04, 0.6), m_iron, false, "Vise")
+	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.75), Vector3(5.8, y + 0.24, 1.25), m_wood, false)
+	BuildKit.box_mm(self, Vector3(5.2, y + 0.92, -0.65), Vector3(5.45, y + 1.04, -0.35), m_iron, false, "Vise")
 	# Truhe zum Lagern an der Vorderwand unter der Werkzeugwand
 	var chest := StorageChest.new()
 	chest.name = "StorageChest"
@@ -932,26 +935,26 @@ func _build_workshop() -> void:
 	# Werkbank zum Herstellen (Crafting)
 	var bench := Workbench.new()
 	bench.name = "WorkbenchStation"
-	bench.anchor = Vector3(5.5, y + 0.92, 1.7)
+	bench.anchor = Vector3(5.5, y + 0.92, 0.25)
 	add_child(bench)
 	# Kiste mit Nägeln
-	var nails := _crate_pickup("NailBox", "nails", 24, 12, Vector3(5.6, y + 0.92, 3.1), Vector3(0.25, 0.14, 0.3), "nails", Vector3(-1, 0, 0))
+	var nails := _crate_pickup("NailBox", "nails", 24, 12, Vector3(5.6, y + 0.92, 1.05), Vector3(0.25, 0.14, 0.3), "nails", Vector3(-1, 0, 0))
 	var heap := Node3D.new()
 	nails.add_child(heap)
 	var nail_mat := BuildKit.color_mat(Color(0.45, 0.45, 0.47), 0.5, 0.6)
 	for k in 18:
-		BuildKit.box(heap, Vector3(0.006, 0.006, 0.07), Vector3(5.6 + _rng.randf_range(-0.09, 0.09), y + 1.07 + _rng.randf_range(0.0, 0.015), 3.1 + _rng.randf_range(-0.12, 0.12)),
+		BuildKit.box(heap, Vector3(0.006, 0.006, 0.07), Vector3(5.6 + _rng.randf_range(-0.09, 0.09), y + 1.07 + _rng.randf_range(0.0, 0.015), 1.05 + _rng.randf_range(-0.12, 0.12)),
 				nail_mat, false, Vector3(_rng.randf_range(-20, 20), _rng.randf() * 180.0, 0))
 	nails.visuals.append(heap)
 	# Säge, Hammer, Hobel auf der Werkbank
-	BuildKit.box(self, Vector3(0.12, 0.01, 0.6), Vector3(5.5, y + 0.93, 1.2), BuildKit.tex_mat("metal", 0.3, Color(1.4, 1.4, 1.4), 0.3), false, Vector3(0, 10, 0))
-	BuildKit.box(self, Vector3(0.1, 0.05, 0.15), Vector3(5.5, y + 0.95, 0.85), m_wood, false)
-	BuildKit.box(self, Vector3(0.03, 0.03, 0.3), Vector3(5.35, y + 0.94, 2.2), m_wood, false, Vector3(0, 40, 0))
-	BuildKit.box(self, Vector3(0.1, 0.05, 0.04), Vector3(5.42, y + 0.95, 2.32), m_iron, false, Vector3(0, 40, 0))
-	BuildKit.box(self, Vector3(0.08, 0.08, 0.25), Vector3(5.6, y + 0.96, 2.8), m_wood_dark, false)
+	BuildKit.box(self, Vector3(0.12, 0.01, 0.6), Vector3(5.5, y + 0.93, 0.3), BuildKit.tex_mat("metal", 0.3, Color(1.4, 1.4, 1.4), 0.3), false, Vector3(0, 10, 0))
+	BuildKit.box(self, Vector3(0.1, 0.05, 0.15), Vector3(5.3, y + 0.95, 0.72), m_wood, false)
+	BuildKit.box(self, Vector3(0.03, 0.03, 0.3), Vector3(5.35, y + 0.94, -0.15), m_wood, false, Vector3(0, 40, 0))
+	BuildKit.box(self, Vector3(0.1, 0.05, 0.04), Vector3(5.42, y + 0.95, -0.03), m_iron, false, Vector3(0, 40, 0))
+	BuildKit.box(self, Vector3(0.08, 0.08, 0.25), Vector3(5.62, y + 0.96, 0.72), m_wood_dark, false)
 	# Werkzeugwand an der Vorderwand links vom Werkstattfenster (nicht über einer Tür!)
 	_tool_wall(HALF_Z - CLAD - 0.015, y)
-	# Bretterstapel an der Vorderwand (unter dem Fenster), Sägebock davor
+	# Bretterstapel an der Westwand, Sägebock an der Ostwand – die Fenster bleiben frei
 	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
 	var pile := ItemPickup.new()
 	pile.name = "PlankPile"
@@ -959,17 +962,17 @@ func _build_workshop() -> void:
 	pile.amount = 10
 	pile.per_take = 2
 	pile.label = "Bretter"
-	pile.collider_size = Vector3(1.6, 0.4, 0.4)
-	pile.collider_offset = Vector3(4.25, y + 0.2, 4.1)
+	pile.collider_size = Vector3(0.4, 0.4, 1.6)
+	pile.collider_offset = Vector3(2.29, y + 0.2, 3.0)
 	add_child(pile)
 	for i in 5:
-		pile.visuals.append(BuildKit.box_mm(pile, Vector3(3.45, y + i * 0.06, 3.95), Vector3(5.05, y + 0.05 + i * 0.06, 4.25), lumber, false))
-	BuildKit.box_mm(self, Vector3(3.45, y, 3.95), Vector3(5.05, y + 0.05, 4.25), lumber, true)
-	for x: float in [3.3, 4.3]:
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 2.95), m_wood, false, Vector3(18, 0, 0))
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(x, y + 0.36, 3.25), m_wood, false, Vector3(-18, 0, 0))
-	BuildKit.box_mm(self, Vector3(3.1, y + 0.7, 3.03), Vector3(4.5, y + 0.76, 3.17), m_wood, true)
-	BuildKit.box(self, Vector3(1.6, 0.05, 0.22), Vector3(3.8, y + 0.79, 3.1), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
+		pile.visuals.append(BuildKit.box_mm(pile, Vector3(2.13, y + i * 0.06, 2.2), Vector3(2.45, y + 0.05 + i * 0.06, 3.8), lumber, false))
+	BuildKit.box_mm(self, Vector3(2.13, y, 2.2), Vector3(2.45, y + 0.05, 3.8), lumber, true)
+	for z: float in [2.75, 3.4]:
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.2, y + 0.36, z), m_wood, false, Vector3(0, 0, -18))
+		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.5, y + 0.36, z), m_wood, false, Vector3(0, 0, 18))
+	BuildKit.box_mm(self, Vector3(5.28, y + 0.7, 2.6), Vector3(5.42, y + 0.76, 3.55), m_wood, true)
+	BuildKit.box(self, Vector3(0.22, 0.05, 1.2), Vector3(5.35, y + 0.79, 3.07), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
 	# Hackklotz mit Beil in der Ecke neben der Werkbank
 	BuildKit.cylinder(self, 0.22, 0.45, Vector3(5.45, y + 0.225, 3.95), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 12)
 	BuildKit.box(self, Vector3(0.035, 0.5, 0.035), Vector3(5.5, y + 0.65, 3.95), m_wood, false, Vector3(0, 0, 20))

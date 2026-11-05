@@ -43,6 +43,30 @@ func _run() -> void:
 		print("%s: %s (Position %.2f, Ziel %.2f)" % [c["name"], "OK" if ok else "FEHLER", v, target])
 		if not ok:
 			failed += 1
+	# Jedes Fenster erreichbar? Spielerkörper direkt davor darf nirgends anstoßen
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if not w is CabinWindow:
+			continue
+		var inner: Vector3 = w.call("inside_point")
+		var out: Vector3 = w.call("outside_point")
+		var dir := (inner - out)
+		dir.y = 0.0
+		dir = dir.normalized()
+		var wp := (w as Node3D).global_position
+		var stand := Vector3(wp.x, Cabin.FLOOR_Y, wp.z) + dir * 0.6
+		var q := PhysicsShapeQueryParameters3D.new()
+		var cap := CapsuleShape3D.new()
+		cap.radius = 0.32
+		cap.height = 1.6
+		q.shape = cap
+		q.transform = Transform3D(Basis(), stand + Vector3(0, 0.85, 0))
+		q.exclude = [player.get_rid()]
+		var hits := []
+		for r in player.get_world_3d().direct_space_state.intersect_shape(q, 8):
+			hits.append(String((r["collider"] as Node).get_parent().name) + " bei " + str(((r["collider"] as Node3D).global_position).snapped(Vector3(0.1, 0.1, 0.1))))
+		print("FENSTER %s: %s" % [w.name, "frei" if hits.is_empty() else "verstellt von " + ", ".join(hits)])
+		if not hits.is_empty():
+			failed += 1
 	if "--stream" in OS.get_cmdline_user_args():
 		failed += await _stream_walk(player)
 	print("WALK TEST: %d Fehler" % failed)
