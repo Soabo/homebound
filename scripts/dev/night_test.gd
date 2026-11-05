@@ -549,3 +549,38 @@ func _dread_test() -> void:
 	Engine.time_scale = 1.0
 	print("DREAD Manipulator gewandert: %s -> %s" % [m_start.round(), m.global_position.round() if is_instance_valid(m) else "weg"])
 	print("DREAD Drohnen noch unterwegs: ", get_tree().get_nodes_in_group("drone").size())
+	# Ab Nacht 6: Ansehen schadet, Wegsehen klingt ab; Lampe flackert
+	for x in get_tree().get_nodes_in_group("drone") + get_tree().get_nodes_in_group("manipulator"):
+		x.queue_free()
+	TimeManager.set_time(7, 23.0)
+	TimeManager.running = false
+	player.health = 100.0
+	player.global_position = Vector3(-3.0, 0.1, 10.0)
+	player.velocity = Vector3.ZERO
+	var k := Creature.new()
+	scene.add_child(k)
+	ThreatDirector.creature = k
+	k.begin("attack")
+	k.global_position = Creature._ground(Vector3(-3.0, 0, 20.0))
+	player.set_flashlight(true)
+	k.state = Creature.State.LEAVE  # steht still, greift nicht an
+	k._path.clear()
+	k.state = Creature.State.RECOIL
+	k._timer = 999.0
+	var tk := k.global_position + Vector3(0, 1.4, 0) - player.camera.global_position
+	player.rotation.y = atan2(-tk.x, -tk.z)
+	player.head.rotation.x = 0.0
+	for i in 120:
+		await get_tree().physics_frame
+	print("DREAD Nacht 7, 2 s hingesehen: Stärke %.2f, Gesundheit %.0f" % [player.mind, player.health])
+	player.rotation.y += PI
+	for i in 180:
+		await get_tree().physics_frame
+	print("DREAD 3 s weggesehen: Stärke %.2f" % player.mind)
+	player.set_flashlight(true)
+	player.hands.interfere(0.5, 0.6)
+	await get_tree().create_timer(0.7).timeout
+	print("DREAD Lampe gestört: eingeschaltet %s, leuchtet %s" % [player.flashlight.visible, player.light_shining()])
+	await get_tree().create_timer(0.6).timeout
+	print("DREAD Lampe danach: leuchtet %s" % player.light_shining())
+	k.queue_free()

@@ -12,6 +12,7 @@ var enabled: bool = true
 
 func _ready() -> void:
 	name = "RetroFilter"
+	add_to_group("retro_filter")
 	layer = 1
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_mat = ShaderMaterial.new()
@@ -42,6 +43,11 @@ func _apply_render_scale() -> void:
 		scale = clampf(VIRTUAL_HEIGHT * 1.5 / h, 0.5, 1.0)
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
 	vp.scaling_3d_scale = scale
+
+
+## Stärke der Verzerrung durch den Blick der Kreatur (0..1).
+func set_mind(v: float) -> void:
+	_mat.set_shader_parameter("mind", v)
 
 
 func _unhandled_input(event: InputEvent) -> void:

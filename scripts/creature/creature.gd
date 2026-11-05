@@ -104,6 +104,7 @@ func _physics_process(delta: float) -> void:
 	_saw_player = sees
 	_head_track -= delta
 	_check_vanish(delta)
+	_mind_and_light(delta)
 	var eye := _parts.get("eye_mat") as StandardMaterial3D
 	if eye:
 		eye.emission_energy_multiplier = lerpf(eye.emission_energy_multiplier, 3.5 if _lit_time > 0.0 else 0.25, clampf(delta * 6.0, 0.0, 1.0))
@@ -268,6 +269,57 @@ func _start_prowl() -> void:
 
 static var _sting_at: int = -999999
 
+var _interfere_check: float = 1.0
+var _interfere_cooldown: float = 8.0
+
+
+## Schaut der Spieler sie an? (im Blickfeld, freie Sicht – egal ob sie ihn sieht)
+func _player_looks_at_me() -> bool:
+	var cam := _player.camera.global_transform
+	var chest := global_position + Vector3(0, 1.5, 0)
+	var to := chest - cam.origin
+	if (-cam.basis.z).dot(to.normalized()) < cos(deg_to_rad(30.0)):
+		return false
+	var q := PhysicsRayQueryParameters3D.create(cam.origin, chest)
+	q.exclude = [_player.get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return true
+	var n := hit["collider"] as Node
+	while n:
+		if n == self or n is CabinWindow:
+			return true
+		n = n.get_parent()
+	return false
+
+
+## Ab einer bestimmten Nacht: Wer sie ansieht, dem dringt sie ins Hirn (Verzerrung + Schaden).
+## Außerdem stört sie die Uhr-Lampe, wann es ihr passt: wenn sie sich anschleicht, jagt
+## oder angeleuchtet wird.
+func _mind_and_light(delta: float) -> void:
+	if state == State.LEAVE or _player == null:
+		return
+	var night := ThreatDirector.current_night()
+	# Nur wenn man sie auch wirklich sehen kann: nah, angeleuchtet oder bei Tageslicht
+	var visible_now := _dist() < 12.0 or _lit_time > 0.0 or not TimeManager.is_night() \
+			or (_player.light_shining() and _dist() < 24.0) or _player_near_light()
+	if night >= cfg.mind_from_night and _dist() < cfg.mind_distance and visible_now and _player_looks_at_me():
+		_player.mind_gaze()
+	if night < cfg.flicker_from_night or not _player.flashlight.visible:
+		return
+	_interfere_cooldown -= delta
+	_interfere_check -= delta
+	if _interfere_check > 0.0 or _interfere_cooldown > 0.0:
+		return
+	_interfere_check = 1.0
+	if _dist() > cfg.flicker_distance:
+		return
+	var wants := state in [State.ARRIVE, State.PROWL, State.GO_ENTRY, State.CHASE, State.HIT_ENTRY] or _lit_time > 0.0
+	if wants and _rng.randf() < cfg.flicker_chance:
+		_interfere_cooldown = _rng.randf_range(cfg.flicker_cooldown.x, cfg.flicker_cooldown.y)
+		var black := _rng.randf_range(cfg.blackout_time.x, cfg.blackout_time.y) if _rng.randf() < cfg.blackout_chance else 0.0
+		_player.hands.interfere(_rng.randf_range(cfg.flicker_time.x, cfg.flicker_time.y), black)
+
 
 func _start_chase() -> void:
 	if mode == "observe":
@@ -341,7 +393,7 @@ func _player_outside() -> bool:
 ## Sicht: Reichweite hängt davon ab, ob der Spieler Licht macht.
 func _can_see_player() -> bool:
 	var d := _dist()
-	var lit := _player.flashlight.visible or _player_near_light()
+	var lit := _player.light_shining() or _player_near_light()
 	var range_m := 34.0 if lit else 13.0
 	if d > range_m:
 		return false
@@ -363,7 +415,7 @@ func _player_near_light() -> bool:
 
 ## Taschenlampe: trifft der Lichtkegel die Kreatur?
 func _update_light(delta: float) -> void:
-	if not _player.flashlight.visible:
+	if not _player.light_shining():
 		_lit_time = 0.0
 		return
 	var cam := _player.camera.global_transform

@@ -199,6 +199,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 	_update_interaction()
+	_update_mind(delta)
 	var starve := Survival.starvation_damage()
 	if starve > 0.0:
 		health -= starve * delta
@@ -281,6 +282,61 @@ func _update_breathing(sprinting: bool) -> void:
 	if _out_of_breath and not is_instance_valid(_breath_player):
 		var strength := 1.0 - clampf(Survival.stamina / 85.0, 0.0, 1.0)
 		_breath_player = PlayerSounds.play_phrase(self, "breath", lerpf(-26.0, -10.0, strength), randf_range(3.0, 4.5))
+
+
+## --- Blick der Kreatur ins Hirn -------------------------------------------
+## Die Kreatur ruft mind_gaze() in jedem Physik-Schritt, solange der Spieler sie ansieht.
+var mind: float = 0.0
+var _gazed: bool = false
+var _mind_audio: AudioStreamPlayer
+var _mind_shown: float = -1.0
+
+
+func mind_gaze() -> void:
+	_gazed = true
+
+
+func _update_mind(delta: float) -> void:
+	var cfg := CreatureConfig.get_default()
+	if _gazed and not GameState.dead:
+		mind = minf(mind + delta / maxf(cfg.mind_rise_time, 0.1), 1.0)
+	else:
+		mind = maxf(mind - delta / maxf(cfg.mind_fall_time, 0.1), 0.0)
+	_gazed = false
+	if mind > 0.02 and not GameState.dead:
+		health -= cfg.mind_damage_per_second * mind * delta
+		_shake = maxf(_shake, mind * 0.25)
+		if health <= 0.0:
+			input_locked = true
+			set_flashlight(false)
+			GameState.kill_player()
+	# Sichtfeld pumpt leicht mit
+	camera.fov = 75.0 + sin(Time.get_ticks_msec() * 0.007) * 5.0 * mind
+	if absf(mind - _mind_shown) > 0.005:
+		_mind_shown = mind
+		get_tree().call_group("retro_filter", "set_mind", mind)
+	if _mind_audio == null:
+		var st := CreatureSounds.pick("mind")
+		if st == null:
+			return
+		if st is AudioStreamOggVorbis:
+			st = st.duplicate()
+			(st as AudioStreamOggVorbis).loop = true
+		_mind_audio = AudioStreamPlayer.new()
+		_mind_audio.stream = st
+		_mind_audio.volume_db = -60.0
+		add_child(_mind_audio)
+	if mind > 0.01:
+		if not _mind_audio.playing:
+			_mind_audio.play()
+		_mind_audio.volume_db = linear_to_db(clampf(mind * 1.2, 0.001, 1.0)) + 2.0
+	elif _mind_audio.playing:
+		_mind_audio.stop()
+
+
+## Leuchtet die Uhr-Lampe gerade wirklich (nicht nur eingeschaltet, sondern nicht gestört)?
+func light_shining() -> bool:
+	return flashlight.visible and hands.light_shining()
 
 
 func take_damage(amount: float, from: Vector3) -> void:

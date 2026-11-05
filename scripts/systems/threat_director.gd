@@ -49,6 +49,14 @@ func _ready() -> void:
 	_plan_if_needed.call_deferred()
 
 
+## Die Nacht, die gerade läuft (nach Mitternacht zählt noch die Nacht des Vortags).
+func current_night() -> int:
+	var d := TimeManager.day
+	if TimeManager.hour < TimeManager.config.day_start_hour:
+		d -= 1
+	return d
+
+
 ## Spielstand: Spannungsbogen und Lernspeicher (die geplanten Ereignisse werden neu gewürfelt).
 func get_state() -> Dictionary:
 	return {"night_kind": night_kind, "nights_since": nights_since_appearance, "quiet_left": quiet_left,

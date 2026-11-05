@@ -49,3 +49,27 @@ static func get_default() -> CreatureConfig:
 @export var far_silence_pause: Vector2 = Vector2(6.0, 14.0)
 ## Klicken und lautes Atmen erst ab dieser Nähe.
 @export var close_distance: float = 10.0
+
+@export_group("Blick ins Hirn (ab einer bestimmten Nacht)")
+## Ab dieser Nacht verzerrt ihr Anblick die Wahrnehmung und schadet dem Spieler.
+@export var mind_from_night: int = 6
+## So viele Sekunden Hinsehen bis zur vollen Stärke, so viele Sekunden Wegsehen bis es abklingt.
+@export var mind_rise_time: float = 3.5
+@export var mind_fall_time: float = 2.5
+## Schaden pro Sekunde bei voller Stärke (wird mit der Stärke hochgefahren).
+@export var mind_damage_per_second: float = 14.0
+## Nur bis zu dieser Entfernung (m).
+@export var mind_distance: float = 40.0
+
+@export_group("Uhr-Lampe stören")
+## Ab dieser Nacht kann sie die Lampe an der Uhr flackern und kurz ausfallen lassen.
+@export var flicker_from_night: int = 4
+## Nur in dieser Entfernung zum Spieler (m), höchstens so oft.
+@export var flicker_distance: float = 30.0
+@export var flicker_cooldown: Vector2 = Vector2(12.0, 30.0)
+## Chance pro Prüfung (etwa jede Sekunde), wenn sie es gerade will.
+@export var flicker_chance: float = 0.25
+@export var flicker_time: Vector2 = Vector2(1.5, 4.0)
+## Chance, dass die Lampe danach ganz ausgeht, und wie lange.
+@export var blackout_chance: float = 0.5
+@export var blackout_time: Vector2 = Vector2(1.0, 3.5)

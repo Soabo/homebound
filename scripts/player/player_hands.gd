@@ -202,8 +202,41 @@ func _build_left() -> void:
 
 # --- Zustand ------------------------------------------------------------
 
+## Die Kreatur stört die Uhr-Lampe: erst Flackern, dann evtl. kurz ganz aus.
+## Die Lampe bleibt dabei "eingeschaltet" – sie leuchtet nur nicht zuverlässig.
+var _interfere_id: int = 0
+
+
+func interfere(seconds: float, blackout: float) -> void:
+	_interfere_id += 1
+	var id := _interfere_id
+	var end := Time.get_ticks_msec() + int(seconds * 1000.0)
+	while Time.get_ticks_msec() < end and id == _interfere_id and is_inside_tree():
+		_set_glow(randf() < 0.45)
+		await get_tree().create_timer(randf_range(0.03, 0.16)).timeout
+	if blackout > 0.0 and id == _interfere_id and is_inside_tree():
+		_set_glow(false)
+		await get_tree().create_timer(blackout).timeout
+	if id == _interfere_id and is_inside_tree():
+		_set_glow(true)
+
+
+func _set_glow(on: bool) -> void:
+	var lit := on and _watch_on
+	watch_light.light_energy = 4.5 if lit else 0.0
+	_led.emission_energy_multiplier = 6.0 if lit else 0.0
+	_screen.emission_energy_multiplier = 0.6 if lit else (0.08 if _watch_on else 0.0)
+
+
+## Leuchtet die Lampe gerade wirklich?
+func light_shining() -> bool:
+	return _watch_on and watch_light.light_energy > 0.5
+
+
 func set_watch(on: bool) -> void:
 	_watch_on = on
+	_interfere_id += 1
+	watch_light.light_energy = 4.5
 	watch_light.visible = on
 	_led.emission_energy_multiplier = 6.0 if on else 0.0
 	_screen.emission_energy_multiplier = 0.6 if on else 0.0

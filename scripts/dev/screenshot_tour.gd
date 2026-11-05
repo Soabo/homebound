@@ -51,6 +51,7 @@ const SHOTS := [
 	{"name": "37_werkzeugwand", "hour": 21.0, "pos": Vector3(2.8, 0.45, 2.7), "look": Vector3(2.8, 1.5, 4.4), "lights": true},
 	{"name": "38_gartenbank", "hour": 14.0, "pos": Vector3(-0.4, 0.0, 8.6), "look": Vector3(-0.45, 0.8, 5.0)},
 	{"name": "39_schaukelstuhl", "hour": 21.0, "pos": Vector3(-2.3, 0.45, 1.6), "look": Vector3(-4.3, 0.7, 3.45), "lights": true},
+	{"name": "40_blick_ins_hirn", "hour": 22.5, "pos": Vector3(-3.0, 0.45, 5.6), "look": Vector3(-3.5, 1.6, 15.0), "flashlight": true, "creature_at": Vector3(-3.5, 0, 14.0), "lights": true, "mind": 0.8},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -126,6 +127,7 @@ func _run() -> void:
 			get_tree().call_group("hud", "open_monitor")
 			if shot.has("monitor_cam"):
 				get_tree().call_group("surveillance", "set_active", shot["monitor_cam"])
+		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
 		for f in frames:
 			await get_tree().process_frame
 		if shot.get("monitor", false):

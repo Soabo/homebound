@@ -111,7 +111,7 @@ func _update_visibility() -> void:
 	var cam := _player.camera.global_transform
 	var to := (global_position + Vector3(0, 2.0, 0)) - cam.origin
 	var d := to.length()
-	var lit := _player.flashlight.visible and d < cfg.flashlight_distance and (-cam.basis.z).dot(to.normalized()) > 0.93
+	var lit := _player.light_shining() and d < cfg.flashlight_distance and (-cam.basis.z).dot(to.normalized()) > 0.93
 	_model.visible = lit or d < cfg.visible_distance
 	_eye.emission_energy_multiplier = 2.5 if lit else 0.6
 
