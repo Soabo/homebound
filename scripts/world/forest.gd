@@ -23,6 +23,8 @@ func _ready() -> void:
 static func _tree_allowed(x: float, z: float) -> bool:
 	if Terrain.yard_distance(x, z) < 2.5:
 		return false
+	if CrashSite.is_near(x, z, 10.0):
+		return false
 	if z > 14.0 and Terrain.road_distance(x, z) < 3.4:
 		return false
 	if Terrain.stream_distance(x, z) < 3.2:
@@ -550,6 +552,8 @@ static func _blocked_for_plants(x: float, z: float) -> bool:
 	if absf(x - Shed.ORIGIN.x) < 2.6 and absf(z - Shed.ORIGIN.z) < 2.3:
 		return true
 	if CornField.is_inside(x, z):
+		return true
+	if CrashSite.is_near(x, z, 7.5):
 		return true
 	if z > 6.5 and Terrain.road_distance(x, z) < 2.2:
 		return true

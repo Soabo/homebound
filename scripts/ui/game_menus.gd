@@ -284,7 +284,13 @@ func _fill_inventory() -> void:
 func _fill_crafting() -> void:
 	_title.text = "Werkbank"
 	_info.text = "Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT]
+	var locked := 0
 	for r: Dictionary in DataDB.recipes():
+		if not Research.recipe_unlocked(r):
+			locked += 1
+			continue
+		if r.get("special", "") == "build_analyzer" and Research.tier >= 1:
+			continue
 		var gives: Dictionary = r.get("gives", {})
 		var label: String = r.get("name", "")
 		if label == "":
@@ -309,6 +315,8 @@ func _fill_crafting() -> void:
 		b.pressed.connect(_on_craft.bind(r))
 		row.add_child(b)
 		_list.add_child(row)
+	if locked > 0:
+		_list.add_child(_text("%d unbekannte(r) Bauplan/Baupläne – entstehen durch Forschung (Archiv: J)" % locked, 18, Color(0.55, 0.7, 0.8)))
 
 
 func _on_use(id: String) -> void:

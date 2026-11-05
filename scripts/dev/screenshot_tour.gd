@@ -41,6 +41,7 @@ const SHOTS := [
 	{"name": "27_kreatur_nah_tag", "hour": 13.0, "pos": Vector3(3.0, 0.0, 9.8), "look": Vector3(3.0, 1.6, 11.6), "creature_at": Vector3(3.0, 0, 11.6)},
 	{"name": "28_kreatur_seite_tag", "hour": 13.0, "pos": Vector3(4.6, 0.0, 10.6), "look": Vector3(3.0, 1.3, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "creature_face": Vector3(-3.0, 0, 13.0)},
 	{"name": "29_kreatur_nacht_taschenlampe", "hour": 23.0, "pos": Vector3(3.0, 0.0, 9.6), "look": Vector3(3.0, 1.7, 11.6), "creature_at": Vector3(3.0, 0, 11.6), "flashlight": true},
+	{"name": "30_absturzstelle", "hour": 16.0, "pos": Vector3(-36.0, 0.0, -24.5), "look": Vector3(-42.0, 0.2, -30.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 

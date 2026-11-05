@@ -12,11 +12,13 @@
   Windows: https://github.com/Soabo/homebound/releases/tag/neueste-version
   Browser: https://soabo.github.io/homebound/
 
-## Offene Fragen Phase 7 (Forschung) – vor Beginn von Christian beantworten lassen
-1. Analysegerät gefunden (z. B. Absturzstelle im Wald) oder aus dem alten Funkgerät umgebaut?
-2. Forschung passiv (Fund einlegen, warten) oder aktive Experimente (Strom, Licht, vergleichen) – Schwerpunkt?
-3. Story: erste Hinweise, was die Wesen wollen, oder bleibt es ganz rätselhaft?
-4. Phase-6-Wahl bestätigen: Hunger/Durst sanft, freies Bauen (Nahkampf Faust/Axt ist inzwischen gewünscht).
+## Entscheidungen Phase 7 (Forschung)
+- Analysegerät: zuerst improvisiert aus dem alten Funkgerät (Werkbank), später ein fremdes Gerät von der Absturzstelle im Wald.
+- Forschung: Mischung aus passiver Analyse und aktiven Experimenten, Schwerpunkt aktiv.
+- Story: erste Hinweise (man ahnt, dass sie etwas suchen, aber nicht was).
+- Umsetzung: Inhalte in `data/research/research.json` (analyses mit experiments, links mit unlocks, notes);
+  Rezepte mit `requires` = Verknüpfung. Gerät am Funkgerät (`Radio`), Absturzstelle `CrashSite` bei (-42, -30).
+- Phase 6 bestätigt: Hunger/Durst sanft, freies Bauen.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

@@ -28,6 +28,8 @@ func _ready() -> void:
 	body.add_child(cs)
 	add_child(body)
 	_update_visuals()
+	# Erbauer hängen die sichtbaren Teile oft erst nach add_child an
+	_update_visuals.call_deferred()
 	if amount <= 0:
 		body.queue_free()
 

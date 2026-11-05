@@ -33,6 +33,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | F | LED der Smartwatch am linken Arm (Taschenlampe) – auch zusätzlich zu einem Gegenstand rechts |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
+| J | Alien-Archiv: Funde, Analysen, Verknüpfungen, Notizen |
 | Tab / I | Inventar (essen, trinken, bauen, ablegen); oben die Schnellplätze 1–9 – Gegenstände mit ✋ dorthin ziehen |
 | B | Baumodus mit dem Bauhammer in der linken Hand: Bauteil wählen / weiter / beenden (R dreht, E oder Linksklick setzt) |
 | F2 | Retro-Filter ein/aus |
@@ -64,6 +65,21 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Hunger und Durst** sinken langsam: Konserven im Vorratsraum, trinken an Regentonne, Spüle oder Bach.
   Rennen kostet Ausdauer. Du kannst höchstens 40 kg tragen.
 - Was du gebaut und verbarrikadiert hast, bleibt auch nach einem Tod erhalten (Stand: Tagesbeginn).
+
+## Forschung (Phase 7)
+
+- **Absturzstelle** im Wald nordwestlich der Hütte – eine Rauchsäule zeigt tagsüber den Weg, das Radio gibt einen Hinweis.
+  Dort liegen Metallfragmente, eine Energiezelle, eine Symbolplatte, Leuchtpilze, die Notiz eines Försters –
+  und ein **fremdes Analysegerät** (12 kg).
+- **Analysegerät:** An der Werkbank baust du das alte Funkgerät um (2 Elektronik, 1 Batterie, 2 Schrott).
+  Es braucht Strom. Das fremde Gerät stellst du daneben auf – dann arbeitet es doppelt so schnell und ohne Strom.
+- **Analysieren:** Fund einlegen, Zeit vergehen lassen und Experimente machen (unter Strom setzen, mit Licht
+  bestrahlen, mit dem fremden Gerät öffnen/vergleichen). Manche Experimente haben Folgen – Strom flackert, es wird laut.
+- **Gewebeprobe:** Triffst du die Kreatur mit der Axt, bleibt etwas zurück.
+- **Alien-Archiv (J):** sechs Forschungsbereiche, Notizen, offene Fragen. Passende Analysen lassen sich
+  **verknüpfen** – daraus entstehen Erkenntnisse und neue Baupläne:
+  - **Resonanz-Sensor:** spürt die Kreatur auf über 25 m und meldet die Richtung.
+  - **Stroboskop-Leuchte:** flackerndes Licht, das sie viel länger vertreibt als normales Licht.
 
 ## Rund ums Haus
 

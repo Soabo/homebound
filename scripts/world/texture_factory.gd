@@ -37,6 +37,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"corn_leaf": img = _corn_leaf()
 		"car_paint": img = _car_paint()
 		"alien_skin": img = _alien_skin()
+		"glyphs": img = _glyphs()
 		_:
 			img = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.MAGENTA)
@@ -418,6 +419,35 @@ static func _moss() -> Image:
 				c = Color(0.42, 0.5, 0.2)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
+	return img
+
+
+## Fremde Zeichen: Kreise, Bögen und Linien, hell auf dunkel (Symbolplatte, Gerätedisplay).
+static func _glyphs() -> Image:
+	var img := _img()
+	var r := _rng(91)
+	img.fill(Color(0.08, 0.09, 0.1))
+	var lite := Color(0.55, 0.85, 0.9)
+	for k in 6:
+		var c := Vector2(8 + (k % 3) * 24, 14 + (k / 3) * 30)
+		var rad := r.randf_range(4.0, 8.0)
+		for a in 64:
+			if r.randf() < 0.18:
+				continue
+			var t := TAU * a / 64.0
+			_plot(img, c + Vector2(cos(t), sin(t)) * rad, lite)
+		# Speichen und Punkte
+		for s in r.randi_range(1, 3):
+			var t := r.randf() * TAU
+			for q in int(rad) + 4:
+				_plot(img, c + Vector2(cos(t), sin(t)) * q, lite * 0.85)
+		_plot(img, c, lite)
+	# Verbindungslinien
+	for k in 3:
+		var a := Vector2(r.randf_range(4, 60), r.randf_range(4, 60))
+		var b := Vector2(r.randf_range(4, 60), r.randf_range(4, 60))
+		for q in 40:
+			_plot(img, a.lerp(b, q / 40.0), lite * 0.6)
 	return img
 
 

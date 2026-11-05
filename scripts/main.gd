@@ -14,6 +14,7 @@ func _ready() -> void:
 	add_child(Cabin.new())
 	add_child(Shed.new())
 	add_child(CornField.new())
+	add_child(CrashSite.new())
 	add_child(CarWreck.new())
 	_build_world_limits()
 	_build_cameras()
@@ -29,6 +30,7 @@ func _ready() -> void:
 	add_child(RetroFilter.new())
 	add_child(Hud.new())
 	add_child(GameMenus.new())
+	add_child(ResearchMenu.new())
 	add_child(BuildController.new())
 	add_child(PauseMenu.new())
 

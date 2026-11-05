@@ -5,6 +5,8 @@ extends Interactable
 ##  - spike_barricade: Hindernis, verletzt und verscheucht die Kreatur
 ##  - can_alarm: klappert laut, wenn etwas durchläuft (Frühwarnung)
 ##  - motion_light: Batterielampe, springt bei Bewegung an; Licht scheucht auf
+##  - resonance_sensor: (Forschung) spürt die Kreatur auf große Entfernung, meldet die Richtung
+##  - strobe_light: (Forschung) flackert grell im Takt, vertreibt die Kreatur lange
 ## Werte kommen aus data/items/buildables.json.
 
 var uid: int = 0
@@ -20,6 +22,9 @@ var _light: SpotLight3D
 var _light_mat: StandardMaterial3D
 var _light_time: float = 0.0
 var _scared_at: float = -999.0
+var _strobe: OmniLight3D
+var _strobe_time: float = 0.0
+var _sense_cooldown: float = 0.0
 var _t: float = 0.0
 
 
@@ -40,7 +45,7 @@ func _ready() -> void:
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = size if is_obstacle or type == "motion_light" else Vector3(size.x, 0.3, 0.4)
+	shape.size = size if is_obstacle or type in ["motion_light", "strobe_light", "resonance_sensor"] else Vector3(size.x, 0.3, 0.4)
 	cs.shape = shape
 	cs.position = Vector3(0, shape.size.y * 0.5, 0)
 	body.add_child(cs)
@@ -102,6 +107,35 @@ func _build_visual() -> void:
 				_light.shadow_enabled = true
 				_light.visible = false
 				add_child(_light)
+
+
+		"resonance_sensor":
+			var hull := CrashSite.hull_material()
+			var wood := BuildKit.tex_mat("logs", 0.4)
+			BuildKit.cylinder(self, 0.05, 0.9, Vector3(0, 0.45, 0), wood, false, Vector3.ZERO, 0.04, 6)
+			BuildKit.box(self, Vector3(0.22, 0.16, 0.16), Vector3(0, 0.95, 0), BuildKit.tex_mat("metal", 0.3, Color(1.1, 1.1, 1.1), 0.5), false)
+			# Energiezelle oben in einer Fassung, Antennenstäbe aus fremdem Metall
+			_light_mat = BuildKit.emissive_mat(Color(0.4, 0.95, 1.0), 0.6)
+			BuildKit.cylinder(self, 0.04, 0.16, Vector3(0, 1.12, 0), _light_mat, false, Vector3.ZERO, -1.0, 8)
+			for k in 3:
+				var a := TAU * k / 3.0
+				BuildKit.box(self, Vector3(0.012, 0.35, 0.012), Vector3(cos(a) * 0.07, 1.25, sin(a) * 0.07), hull, false, Vector3(sin(a) * 15.0, 0, -cos(a) * 15.0))
+		"strobe_light":
+			var pole := BuildKit.tex_mat("metal", 0.4, Color(0.9, 0.9, 0.9), 0.5)
+			BuildKit.cylinder(self, 0.04, 2.1, Vector3(0, 1.05, 0), pole, false, Vector3.ZERO, -1.0, 6)
+			BuildKit.box(self, Vector3(0.3, 0.2, 0.15), Vector3(0, 0.25, 0), pole, false)
+			# Glaskolben mit Leuchtpilz-Röhre, ringsum strahlend
+			BuildKit.cylinder(self, 0.13, 0.05, Vector3(0, 2.08, 0), pole, false, Vector3.ZERO, -1.0, 10)
+			_light_mat = BuildKit.emissive_mat(Color(0.75, 1.0, 1.0), 0.3)
+			BuildKit.cylinder(self, 0.1, 0.22, Vector3(0, 2.22, 0), _light_mat, false, Vector3.ZERO, -1.0, 10)
+			BuildKit.cylinder(self, 0.12, 0.03, Vector3(0, 2.34, 0), pole, false, Vector3.ZERO, -1.0, 10)
+			if not preview:
+				_strobe = OmniLight3D.new()
+				_strobe.position = Vector3(0, 2.2, 0)
+				_strobe.omni_range = 13.0
+				_strobe.light_energy = 0.0
+				_strobe.light_color = Color(0.85, 1.0, 1.0)
+				add_child(_strobe)
 
 
 ## Bauvorschau einfärben (grün = passt, rot = geht hier nicht).
@@ -175,6 +209,8 @@ func _physics_process(delta: float) -> void:
 	_alarm_cooldown -= delta
 	var c: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if not is_instance_valid(c):
+		if _strobe:
+			_update_strobe(delta)
 		if _light and _light.visible:
 			_light_time -= delta
 			if _light_time <= 0.0:
@@ -188,6 +224,21 @@ func _physics_process(delta: float) -> void:
 				for i in 3:
 					SoundBank.play_at(get_parent(), "clatter", global_position + Vector3(randf_range(-1, 1), 0.3, 0), 6.0, randf_range(0.8, 1.2))
 				EventBus.notify("Dosen klappern – %s!" % _direction_from_player(), 3.0)
+		"resonance_sensor":
+			# Zelle pulsiert schneller, je näher sie ist; meldet sie alle 30 s mit Richtung
+			var near := clampf(1.0 - d / float(DataDB.buildable(type).get("range", 26)), 0.0, 1.0)
+			_light_mat.emission_energy_multiplier = 0.6 + near * (2.5 + sin(_t * (3.0 + near * 18.0)) * 2.0)
+			_sense_cooldown -= delta
+			if near > 0.0 and _sense_cooldown <= 0.0:
+				_sense_cooldown = 30.0
+				SoundBank.play_ui(self, "signal", -6.0, 1.8)
+				EventBus.notify("Resonanz-Sensor schlägt aus – etwas %s des Sensors (%d m)." % [_direction_word(c.global_position), int(d)], 4.0)
+		"strobe_light":
+			if d < float(DataDB.buildable(type).get("range", 11)):
+				_strobe_time = 10.0
+				if _t - _scared_at > 45.0:
+					_scared_at = _t
+					c.call("on_strobe", global_position)
 		"motion_light":
 			if d < 9.0:
 				_light_time = 15.0
@@ -197,6 +248,8 @@ func _physics_process(delta: float) -> void:
 				if d < 7.0 and _t - _scared_at > 60.0:
 					_scared_at = _t
 					c.call("on_bright_light", global_position)
+	if _strobe:
+		_update_strobe(delta)
 	if _light and _light.visible:
 		_light_time -= delta
 		if _light_time <= 0.0:
@@ -207,6 +260,21 @@ func _set_light(on: bool) -> void:
 	_light.visible = on
 	_light_mat.emission_energy_multiplier = 5.0 if on else 0.0
 	SoundBank.play_at(get_parent(), "switch", global_position + Vector3(0, 2, 0), -2.0, 0.6)
+
+
+func _update_strobe(delta: float) -> void:
+	_strobe_time = maxf(_strobe_time - delta, 0.0)
+	var on := _strobe_time > 0.0 and fmod(_t, 0.12) < 0.05
+	_strobe.light_energy = 9.0 if on else 0.0
+	_light_mat.emission_energy_multiplier = 8.0 if on else 0.3
+
+
+## Himmelsrichtung eines Punktes vom Bauteil aus.
+func _direction_word(p: Vector3) -> String:
+	var v := p - global_position
+	var dirs := ["nördlich", "nordöstlich", "östlich", "südöstlich", "südlich", "südwestlich", "westlich", "nordwestlich"]
+	var a := fposmod(atan2(v.x, -v.z), TAU)
+	return dirs[int(round(a / (TAU / 8.0))) % 8]
 
 
 func _direction_from_player() -> String:

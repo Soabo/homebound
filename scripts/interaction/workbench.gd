@@ -28,9 +28,18 @@ func interact(_player: Node) -> void:
 ## Führt ein Rezept aus. Gibt eine Meldung zurück (leer = Erfolg).
 static func craft(recipe: Dictionary, scene_tree: SceneTree) -> String:
 	var needs: Dictionary = recipe.get("needs", {})
+	if not Research.recipe_unlocked(recipe):
+		return "Dafür fehlt dir noch eine Erkenntnis aus der Forschung."
 	if not Inventory.has_all(needs):
 		return "Dir fehlen Materialien."
 	var special: String = recipe.get("special", "")
+	if special == "build_analyzer":
+		if Research.tier >= 1:
+			return "Das Analysegerät ist schon gebaut."
+		Inventory.remove_all(needs)
+		Research.set_tier(1)
+		EventBus.notify("Das alte Funkgerät ist jetzt ein Analysegerät (Schreibtisch im Wohnzimmer).", 4.0)
+		return ""
 	if special == "door_upgrade":
 		var door := scene_tree.current_scene.get_node_or_null("Cabin/FrontDoor") as Door
 		if door == null or door.upgraded:

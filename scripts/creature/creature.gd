@@ -470,6 +470,18 @@ func on_bright_light(source: Vector3) -> void:
 		_recoil_from(source)
 
 
+## Stroboskop (Forschung): flackerndes Licht verkrampft ihr Gewebe – sie flieht deutlich länger.
+func on_strobe(source: Vector3) -> void:
+	if state == State.LEAVE:
+		return
+	CreatureSounds.play(get_parent(), "recoil", global_position + Vector3(0, 1.8, 0), 3.0, 0.9)
+	if mode == "observe":
+		leave()
+		return
+	_recoil_from(source)
+	_timer = _rng.randf_range(25.0, 40.0)
+
+
 ## Faustschlag oder Axthieb des Spielers: tut weh und verscheucht die Kreatur eine Weile.
 ## (Töten kann man sie damit nicht.) strength 0..1 – die Axt wirkt länger als die Faust.
 func on_melee_hit(strength: float, from: Vector3) -> void:
@@ -477,6 +489,9 @@ func on_melee_hit(strength: float, from: Vector3) -> void:
 		return
 	CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 2.0, _rng.randf_range(0.95, 1.1))
 	_head_track = 2.0
+	# Ein Axthieb hinterlässt eine Gewebeprobe für die Forschung
+	if strength >= 1.0:
+		CrashSite.drop_tissue(get_parent(), global_position + Vector3(0.3, 0, 0.3))
 	if mode == "observe":
 		leave()
 		return

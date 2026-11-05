@@ -1,0 +1,162 @@
+{
+ "_info": "Forschung (GDD 12). analyses: je Fund eine Analyse mit Laufzeit (Spielstunden) und Experimenten. needs der Experimente: power = Generator läuft, light = Lampe am Gerät, alien = fremdes Analysegerät eingebaut. effect: drain = zieht Benzin/Strom, noise = laut (lockt nachts an). links: Verknüpfungen zweier Analysen zu einer Erkenntnis, unlocks = Rezepte.",
+ "areas": [
+  "Technologie",
+  "Biologie",
+  "Energie und Physik",
+  "Spezies und Verhalten",
+  "Raumfahrt und Infrastruktur",
+  "Zusammenhänge"
+ ],
+ "analyses": {
+  "an_metal": {
+   "find": "metal_fragment",
+   "name": "Fremdes Metall",
+   "area": "Technologie",
+   "hours": 2.0,
+   "summary": "Eine Legierung, die es auf der Erde nicht gibt: extrem leicht, unzerkratzbar, innen fein strukturiert wie Waben.",
+   "experiments": [
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Das Metall leitet Strom nahezu verlustfrei – und summt dabei leise in einem gleichbleibenden Ton."
+    },
+    {
+     "id": "light",
+     "label": "Mit Licht durchleuchten",
+     "needs": "light",
+     "text": "Unter der Lampe zeichnen sich haarfeine Leiterbahnen ab. Das Fragment war Teil eines Geräts."
+    }
+   ]
+  },
+  "an_cell": {
+   "find": "energy_cell",
+   "name": "Energiezelle",
+   "area": "Energie und Physik",
+   "hours": 3.0,
+   "summary": "Ein Speicher voller Energie in einer Form, die keine Messung erklärt. Er lädt sich langsam von selbst wieder auf.",
+   "experiments": [
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "effect": "drain",
+     "text": "Die Zelle saugt den Strom regelrecht auf – der Generator stottert, das Licht flackert. Sie reagiert auf Energie in der Nähe."
+    },
+    {
+     "id": "open",
+     "label": "Mit dem fremden Gerät öffnen",
+     "needs": "alien",
+     "text": "Im Inneren pulsiert eine Flüssigkeit, alle sieben Sekunden. Derselbe Takt wie das Summen des Metalls."
+    }
+   ]
+  },
+  "an_glyph": {
+   "find": "glyph_plate",
+   "name": "Symbolplatte",
+   "area": "Raumfahrt und Infrastruktur",
+   "hours": 3.0,
+   "summary": "Eine Tafel mit eingeritzten Zeichen in Kreisen und Linien. Es wirkt wie eine Karte, nicht wie Schrift.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Schräg anleuchten",
+     "needs": "light",
+     "text": "Im Streiflicht treten weitere, fast unsichtbare Linien hervor. Einige verbinden sich zu einem Dreieck."
+    },
+    {
+     "id": "compare",
+     "label": "Symbole vergleichen lassen",
+     "needs": "alien",
+     "effect": "noise",
+     "text": "Das fremde Gerät gibt einen hohen Ton von sich und markiert drei Zeichen. Eines davon gleicht den Handabdrücken an deinen Fenstern."
+    }
+   ]
+  },
+  "an_tissue": {
+   "find": "alien_tissue",
+   "name": "Gewebeprobe",
+   "area": "Spezies und Verhalten",
+   "hours": 2.0,
+   "summary": "Graues, faseriges Gewebe, das sich noch Stunden nach dem Treffer bewegt. Kaltblütig, kaum Blut.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Mit flackerndem Licht reizen",
+     "needs": "light",
+     "text": "Bei schnellem Flackern zieht sich das Gewebe ruckartig zusammen. Gleichmäßiges Licht stört es kaum."
+    },
+    {
+     "id": "power",
+     "label": "Schwachen Strom anlegen",
+     "needs": "power",
+     "text": "Keine Reaktion. Strom allein schreckt sie nicht ab."
+    }
+   ]
+  },
+  "an_fungus": {
+   "find": "glow_fungus",
+   "name": "Leuchtpilz",
+   "area": "Biologie",
+   "hours": 2.0,
+   "summary": "Ein Pilz, der nur rund um die Absturzstelle wächst. Er leuchtet aus sich heraus, in einem kalten Blaugrün.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Belichten und abdunkeln",
+     "needs": "light",
+     "text": "Nach dem Belichten leuchtet er minutenlang in schnellem Takt nach – wie ein natürliches Blinklicht."
+    },
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Das Leuchten wird heller und flackert im Takt des Generators."
+    }
+   ]
+  }
+ },
+ "links": {
+  "link_power": {
+   "name": "Gemeinsame Frequenz",
+   "area": "Zusammenhänge",
+   "needs": [
+    "an_metal",
+    "an_cell"
+   ],
+   "text": "Metall und Zelle schwingen im selben Takt. Wo diese Technik in der Nähe ist, verändert sich das Feld – daraus lässt sich ein Sensor bauen, der ihre Nähe spürt.",
+   "unlocks": [
+    "resonance_sensor"
+   ]
+  },
+  "link_light": {
+   "name": "Lichtempfindlichkeit",
+   "area": "Spezies und Verhalten",
+   "needs": [
+    "an_tissue",
+    "an_fungus"
+   ],
+   "text": "Ihr Gewebe verkrampft bei schnell flackerndem Licht. Mit dem Leuchtpilz lässt sich ein Stroboskop bauen, das sie länger vertreibt als jede Lampe.",
+   "unlocks": [
+    "strobe_light"
+   ]
+  },
+  "link_signal": {
+   "name": "Die Vermessung",
+   "area": "Zusammenhänge",
+   "needs": [
+    "an_glyph",
+    "an_cell"
+   ],
+   "text": "Die Zeichen auf der Platte sind Orte, keine Wörter. Drei davon liegen in diesem Tal, im Dreieck – und die Hütte steht in seiner Mitte. Sie suchen hier etwas. Aber was?",
+   "unlocks": []
+  }
+ },
+ "notes": {
+  "ranger_note": {
+   "name": "Zerknitterte Notiz",
+   "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – R. W., Forstdienst"
+  }
+ }
+}

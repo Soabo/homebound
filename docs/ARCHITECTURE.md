@@ -11,7 +11,7 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 | Überwachung (GDD 7.5) | `Surveillance` + `SecurityCamera` + `MonitorStation` | ✅ 3 Kameras an Wandhaltern (Hausfront, Garten, Maisfeld), Gehäuse auf Sichtebene 4 (nicht im Kamerabild), Störungen, Trugbilder (Sichtebene 2) |
 | World State Manager | Autoload, Terraforming-Zustand | ⏳ Phase 8 |
 | Base Building Manager | Autoload `Builder` + `BuildController` + `Structure` | ✅ freies Platzieren, Hindernisse, Fallen, Alarm, Licht; Daten in `data/items/buildables.json` |
-| Research Manager | Autoload + Forschungsobjekte als Ressourcen | ⏳ Phase 7 |
+| Research Manager | Autoload `Research` + `ResearchMenu` (Analyse, Archiv J) + Daten `data/research/research.json` | ✅ Gerätestufen, Analysen mit Experimenten, Verknüpfungen → Baupläne, Notizen, Absturzstelle (`CrashSite`) |
 | Inventory Manager | Autoload `Inventory` + `DataDB` | ✅ Traglast, Essen/Trinken; Daten in `data/items/items.json`, Rezepte in `recipes.json` |
 | Survival (GDD 6.1) | Autoload `Survival` | ✅ Hunger, Durst, Ausdauer |
 | Episode Manager | Autoload | ⏳ Phase 9 |
@@ -42,6 +42,7 @@ funktionieren dadurch automatisch mit der Kreaturen-KI.
 - `-- --walk-test`: läuft durch alle Türen und das Tor
 - `-- --night-test=attack|probe|observe|attack_locked`: Kreatur-Protokoll
 - `-- --night-test=events`: löst jedes Nacht-Ereignis einmal aus
+- `-- --night-test=research`: Phase 7 komplett – Absturzstelle, Umbau, Analysen, fremdes Gerät, Verknüpfen, Baupläne, Stroboskop
 - `-- --night-test=melee`: Hände – Faust/Axt gegen Kreatur, Blocken, Schnellplatz-Wechsel, Uhr-Lampe
 - `-- --night-test=craft`: Rezepte, Barrikade, Bauen, Kreatur gegen Hindernisse, Neustart-Persistenz
 - `-- --screenshot-tour=ORDNER [--shots=01,05] [--frames=30]`

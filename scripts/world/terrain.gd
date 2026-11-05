@@ -135,6 +135,10 @@ static func _raw_height(x: float, z: float) -> float:
 	# Im Süden verlässt der Bach das Tal: dort steigt der Rand nicht an.
 	var valley := lerpf(1.0, smoothstep(4.0, 18.0, stream_distance(x, z)), smoothstep(20.0, 50.0, z))
 	h += smoothstep(52.0, 76.0, edge) * 9.0 * valley
+	# Einschlagkrater der Absturzstelle: Mulde mit aufgeworfenem Rand
+	var cdist := Vector2(x - CrashSite.SITE.x, z - CrashSite.SITE.z).length()
+	if cdist < 12.0:
+		h += -1.0 * (1.0 - smoothstep(0.0, 5.0, cdist)) + 0.45 * exp(-pow(cdist - 5.8, 2.0) / 1.6)
 	# Die Straße schneidet sich flacher durchs Gelände.
 	if z > 16.0:
 		var road := 1.0 - smoothstep(2.2, 6.0, road_distance(x, z))
@@ -173,6 +177,9 @@ func _build() -> void:
 			var sd := stream_distance(x, z)
 			col = col.lerp(Color(0.14, 0.2, 0.08), 1.0 - smoothstep(2.5, 5.0, sd))
 			col = col.lerp(Color(0.22, 0.2, 0.16), 1.0 - smoothstep(1.0, 2.0, sd))
+			# Absturzstelle: verbrannte Erde
+			var cd := Vector2(x - CrashSite.SITE.x, z - CrashSite.SITE.z).length()
+			col = col.lerp(Color(0.03, 0.028, 0.025), 1.0 - smoothstep(4.0, 10.0, cd))
 			st.set_color(col)
 			st.set_uv(Vector2(x, z) * 0.25)
 			st.add_vertex(Vector3(x, h, z))

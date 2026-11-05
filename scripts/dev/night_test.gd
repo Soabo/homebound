@@ -40,6 +40,10 @@ func _run() -> void:
 		await _melee_test()
 		get_tree().quit()
 		return
+	if mode == "research":
+		await _research_test()
+		get_tree().quit()
+		return
 	for i in 10:
 		await get_tree().physics_frame
 	TimeManager.set_time(1, 21.0)
@@ -222,3 +226,91 @@ func _melee_test() -> void:
 	for i in 30:
 		await get_tree().physics_frame
 	print("MELEE Uhr-Lampe an: ", player.flashlight.visible)
+
+
+## Phase 7: Absturzstelle, Analysegerät, Analysen, Experimente, Verknüpfungen, neue Baupläne.
+func _research_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	TimeManager.set_time(1, 10.0)
+	PowerManager.add_fuel(100.0)
+	PowerManager.start_generator()
+	# Absturzstelle: alles einsammeln
+	var site := scene.get_node("CrashSite")
+	for n: String in ["Fragment_0", "Fragment_1", "EnergyCell", "GlyphPlate", "AlienAnalyzer", "GlowFungus_0", "GlowFungus_1"]:
+		var p := site.get_node(n) as ItemPickup
+		while p.amount > 0:
+			Inventory.remove("alien_analyzer", 0)
+			p.interact(player)
+			if p.amount > 0 and Inventory.total_weight() > 30.0:
+				break
+	print("RESEARCH Funde: metal %d, cell %d, plate %d, fungus %d, Gerät %d" % [Inventory.count("metal_fragment"), Inventory.count("energy_cell"),
+		Inventory.count("glyph_plate"), Inventory.count("glow_fungus"), Inventory.count("alien_analyzer")])
+	(site.get_node("RangerNote") as ResearchNote).interact(player)
+	get_tree().call_group("research_menu", "close")
+	print("RESEARCH Notiz im Archiv: ", Research.notes)
+	# Gewebeprobe durch Axthieb
+	CrashSite.drop_tissue(scene, player.global_position + Vector3(1, 0, 0))
+	await get_tree().physics_frame
+	(scene.get_node("TissueSample_d1") as ItemPickup).interact(player)
+	print("RESEARCH Gewebeprobe: ", Inventory.count("alien_tissue"))
+	# Improvisiertes Gerät an der Werkbank
+	Inventory.add("electronics", 2)
+	Inventory.add("battery", 1)
+	Inventory.add("scrap", 2)
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] == "analyzer_improvised":
+			print("RESEARCH Umbau: ", "OK" if Workbench.craft(r, get_tree()) == "" else "FEHLER", " -> Stufe ", Research.tier)
+	# Metall analysieren: Experimente + Zeit
+	print("RESEARCH Einlegen Metall: ", Research.insert("metal_fragment"))
+	print("RESEARCH Experiment Strom: ", Research.run_experiment("power").left(40))
+	print("RESEARCH Experiment Licht: ", Research.run_experiment("light").left(40))
+	TimeManager.set_time(1, 12.5)
+	for i in 5:
+		await get_tree().process_frame
+	print("RESEARCH Metall fertig: ", Research.done.has("an_metal"))
+	# Fremdes Gerät einbauen
+	var radio := scene.get_node("Cabin/Radio") as Radio
+	radio.interact(player)
+	print("RESEARCH Stufe nach Einbau: ", Research.tier)
+	for find: String in ["energy_cell", "alien_tissue", "glow_fungus", "glyph_plate"]:
+		Research.insert(find)
+		var id := Research.slot
+		for exp: Dictionary in Research.analysis(id).get("experiments", []):
+			Research.run_experiment(exp["id"])
+		TimeManager.set_time(1, TimeManager.hour + 2.0)
+		for i in 5:
+			await get_tree().process_frame
+		print("RESEARCH %s fertig: %s" % [id, Research.done.has(id)])
+	for l: String in ["link_power", "link_light", "link_signal"]:
+		print("RESEARCH Verknüpfen %s: %s" % [l, Research.link(l)])
+	# Neue Baupläne
+	Inventory.add("scrap", 4)
+	Inventory.add("electronics", 1)
+	Inventory.add("battery", 1)
+	Inventory.add("energy_cell", 1)
+	Inventory.add("glow_fungus", 2)
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] in ["resonance_sensor", "strobe_light"]:
+			print("RESEARCH Bauplan %s: %s" % [r["id"], Workbench.craft(r, get_tree())])
+	print("RESEARCH Bauteile: Sensor %d, Stroboskop %d" % [Inventory.count("resonance_sensor"), Inventory.count("strobe_light")])
+	# Stroboskop gegen die Kreatur
+	var strobe := Builder.place("strobe_light", Creature._ground(Vector3(8.0, 0, 12.0)), 0.0)
+	var sensor := Builder.place("resonance_sensor", Creature._ground(Vector3(0.0, 0, 12.0)), 0.0)
+	var c := Creature.new()
+	scene.add_child(c)
+	ThreatDirector.creature = c
+	c.begin("attack")
+	c.global_position = Creature._ground(Vector3(8.0, 0, 16.0))
+	c._path.clear()
+	c.state = Creature.State.CHASE
+	for i in 30:
+		await get_tree().physics_frame
+	print("RESEARCH Kreatur am Stroboskop -> ", Creature.State.keys()[c.state])
+	var st := Research.get_state()
+	Research.set_state({})
+	Research.set_state(st)
+	print("RESEARCH Speichern/Laden: Stufe %d, Analysen %d, Verknüpfungen %d" % [Research.tier, Research.done.size(), Research.links_done.size()])
+	print("RESEARCH Bauten da: ", is_instance_valid(strobe), " ", is_instance_valid(sensor))
