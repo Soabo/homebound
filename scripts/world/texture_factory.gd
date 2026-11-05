@@ -20,6 +20,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"bark": img = _bark()
 		"stone": img = _stone(Color(0.46, 0.44, 0.41), 14)
 		"stone_dark": img = _stone(Color(0.3, 0.27, 0.25), 18)
+		"rock": img = _rock()
 		"shingles": img = _shingles()
 		"fabric": img = _fabric(Color(0.42, 0.42, 0.36))
 		"fabric_red": img = _fabric(Color(0.45, 0.14, 0.12))
@@ -417,6 +418,35 @@ static func _moss() -> Image:
 			var c := Color(0.25, 0.36, 0.14) * v
 			if r.randf() < 0.06:
 				c = Color(0.42, 0.5, 0.2)
+			c.a = 1.0
+			img.set_pixel(x, y, c)
+	return img
+
+
+## Natürlicher Fels: fleckig, mit feinen Rissen und etwas Moos (keine Pflastersteine).
+static func _rock() -> Image:
+	var img := _img()
+	var r := _rng(73)
+	var n := FastNoiseLite.new()
+	n.seed = 73
+	n.frequency = 0.07
+	n.fractal_octaves = 4
+	var cracks := FastNoiseLite.new()
+	cracks.seed = 11
+	cracks.noise_type = FastNoiseLite.TYPE_CELLULAR
+	cracks.frequency = 0.05
+	cracks.cellular_return_type = FastNoiseLite.RETURN_DISTANCE2_SUB
+	# nahtlos kachelbar
+	var tone := n.get_seamless_image(SIZE, SIZE)
+	var crack := cracks.get_seamless_image(SIZE, SIZE)
+	for y in SIZE:
+		for x in SIZE:
+			var v := tone.get_pixel(x, y).r
+			var c := Color(0.4, 0.39, 0.36).lerp(Color(0.6, 0.58, 0.54), v) * r.randf_range(0.93, 1.05)
+			if crack.get_pixel(x, y).r < 0.08:
+				c *= 0.55
+			if v < 0.3:
+				c = c.lerp(Color(0.26, 0.33, 0.17), (0.3 - v) * 2.0)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
 	return img

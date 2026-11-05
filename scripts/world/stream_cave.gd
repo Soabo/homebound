@@ -28,8 +28,8 @@ static func is_near(x: float, z: float, radius: float) -> bool:
 func _ready() -> void:
 	name = "StreamCave"
 	position = Vector3(SITE.x, floor_height(), SITE.z)
-	var rock := BuildKit.tex_mat("stone_dark", 0.9, Color(0.75, 0.72, 0.7))
-	var rock_out := BuildKit.tex_mat("stone", 1.2, Color(0.8, 0.8, 0.78))
+	var rock := BuildKit.tex_mat("rock", 2.0, Color(0.6, 0.58, 0.56))
+	var rock_out := BuildKit.tex_mat("rock", 3.0)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 66
 	# Boden, Wände, Decke des Gangs (unregelmäßig aus mehreren Blöcken)
@@ -54,10 +54,17 @@ func _ready() -> void:
 	for side: float in [-1.0, 1.0]:
 		BuildKit.box(self, Vector3(0.7, HEIGHT + 1.2, 1.8), Vector3(LENGTH - 0.1, (HEIGHT + 1.0) * 0.5, side * 2.4), rock, true)
 	# Felshügel außen (deckt alles ab)
+	# Brocken nur außen an den Wänden und auf der Decke, nie in den Gang hinein
 	for k in 9:
-		var mx := -0.5 + k * 2.2
-		var r := rng.randf_range(3.2, 4.4)
-		BuildKit.sphere(self, r, Vector3(mx, r * 0.35, rng.randf_range(-1.0, 1.0)), rock_out, Vector3(1.0, 0.8, 1.35), 10)
+		var mx := 0.8 + k * 2.1
+		var chamber := mx > LENGTH - 0.5
+		var half := (3.6 if chamber else WIDTH * 0.5 + 0.7)
+		var roof := (HEIGHT + 1.6 if chamber else HEIGHT + 0.65)
+		var r := rng.randf_range(2.2, 3.0)
+		for side: float in [-1.0, 1.0]:
+			BuildKit.sphere(self, r, Vector3(mx, r * 0.45, side * (half + r * 0.95)), rock_out, Vector3(1.1, 0.9, 1.0), 10)
+		var rt := rng.randf_range(2.6, 3.4)
+		BuildKit.sphere(self, rt, Vector3(mx, roof + rt * 0.5, rng.randf_range(-0.4, 0.4)), rock_out, Vector3(1.0, 0.5, 1.15), 10)
 	# Eingangsfelsen
 	for side: float in [-1.0, 1.0]:
 		BuildKit.sphere(self, 1.2, Vector3(-0.4, 0.8, side * 2.0), rock_out, Vector3(0.8, 1.4, 0.9), 8)

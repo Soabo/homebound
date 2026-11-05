@@ -44,7 +44,7 @@ const SHOTS := [
 	{"name": "30_absturzstelle", "hour": 16.0, "pos": Vector3(-36.0, 0.0, -24.5), "look": Vector3(-42.0, 0.2, -30.0)},
 	{"name": "31_struktur", "hour": 15.5, "day": 7, "pos": Vector3(-64.0, 0.0, 30.0), "look": Vector3(-78.0, 3.5, 40.0)},
 	{"name": "32_hochsitz", "hour": 15.0, "pos": Vector3(3.0, 0.0, -70.0), "look": Vector3(12.0, 3.0, -80.0)},
-	{"name": "33_hoehle_eingang", "hour": 15.0, "day": 7, "pos": Vector3(38.0, 0.0, -69.0), "look": Vector3(46.0, 0.5, -72.0)},
+	{"name": "33_hoehle_eingang", "hour": 15.0, "day": 7, "pos": Vector3(40.5, 0.0, -77.5), "look": Vector3(46.0, 0.5, -72.0)},
 	{"name": "34_hoehle_knoten", "hour": 15.0, "cave": true, "pos": Vector3(55.0, 0.0, -72.0), "look": Vector3(61.5, 0.7, -72.0), "flashlight": true},
 	{"name": "35_drohne_nacht", "hour": 23.0, "pos": Vector3(-3.0, 0.0, 26.0), "look": Vector3(-2.0, 7.0, 15.0), "drone_at": Vector3(-2.0, 9.0, 15.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
@@ -76,16 +76,16 @@ func _run() -> void:
 		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
 		WorldState._check_stage()
 		var pos: Vector3 = shot["pos"]
+		var look: Vector3 = shot["look"]
 		if shot.get("cave", false):
 			var fh := StreamCave.floor_height()
 			pos.y = fh + 0.05
-			shot["look"] = (shot["look"] as Vector3) + Vector3(0, fh, 0)
+			look.y += fh
 		elif pos.y <= 0.0:
 			pos.y = Terrain.height_at(pos.x, pos.z)
 		player.global_position = pos
 		player.velocity = Vector3.ZERO
 		var eye := pos + Vector3(0, Player.STAND_HEIGHT - Player.EYE_OFFSET, 0)
-		var look: Vector3 = shot["look"]
 		var d := (look - eye).normalized()
 		player.rotation.y = atan2(-d.x, -d.z)
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
