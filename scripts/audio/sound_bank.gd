@@ -13,7 +13,7 @@ const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", 
 const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
 		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,
 		"camera_switch": -12.0, "light_switch": -4.0, "clatter": -2.0, "twig": 2.0, "owl": -2.0, "music_box": -2.0,
-		"sting_creature": -4.0, "sting_dawn": -8.0, "sting_dusk": -8.0, "faucet": -6.0, "workbench": -4.0, "collect_metal": -9.0}
+		"sting_creature": -4.0, "sting_dawn": -8.0, "sting_dusk": -8.0, "faucet": -18.0, "workbench": -4.0, "collect_metal": -9.0}
 
 static var _cache: Dictionary = {}
 static var _recorded: Dictionary = {}

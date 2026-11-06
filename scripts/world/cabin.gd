@@ -829,6 +829,15 @@ func _build_bathroom() -> void:
 	for dz: float in [-0.14, 0.14]:
 		BuildKit.box(self, Vector3(0.02, 0.05, 0.03), Vector3(x1 - 0.51, y + 0.62, sz + dz), iron, false)
 	BuildKit.cylinder(self, 0.015, 0.15, Vector3(x1 - 0.08, y + 0.95, sz), chrome, false, Vector3(0, 0, 70), -1.0, 6)
+	# auch hier kann man trinken (gleiche Leitung wie in der Küche)
+	var bath_tap := WaterSource.new()
+	bath_tap.name = "BathTap"
+	bath_tap.label = "Wasserhahn"
+	bath_tap.contaminable = true
+	bath_tap.sound = "faucet"
+	bath_tap.anchor = Vector3(x1 - 0.25, y + 0.85, sz)
+	bath_tap.collider_size = Vector3(0.45, 0.35, 0.55)
+	add_child(bath_tap)
 	var mirror := BuildKit.color_mat(Color(0.55, 0.6, 0.62), 0.04, 1.0)
 	BuildKit.cylinder(self, 0.3, 0.04, Vector3(x1 - 0.02, y + 1.5, sz), dark_wood, false, Vector3(0, 0, 90), -1.0, 20)
 	BuildKit.cylinder(self, 0.25, 0.01, Vector3(x1 - 0.045, y + 1.5, sz), mirror, false, Vector3(0, 0, 90), -1.0, 20)
