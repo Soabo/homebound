@@ -3,6 +3,7 @@
   "fence_panel":     {"name": "Holzzaun",               "health": 90,  "obstacle": true,  "size": [2.4, 1.2, 0.2]},
   "spike_barricade": {"name": "Spießbarrikade",         "health": 110, "obstacle": true,  "size": [1.8, 1.0, 0.8], "hurts": true},
   "stone_wall":      {"name": "Steinwall",              "health": 220, "obstacle": true,  "size": [1.6, 0.9, 0.6]},
+  "bear_trap":       {"name": "Bärenfalle",             "health": 40,  "obstacle": false, "size": [0.6, 0.15, 0.6], "trap": true, "player_damage": 25, "creature_damage": 30},
   "can_alarm":       {"name": "Dosenalarm",             "health": 30,  "obstacle": false, "size": [3.0, 0.4, 0.2]},
   "motion_light":    {"name": "Bewegungsmelder-Leuchte","health": 40,  "obstacle": false, "size": [0.4, 2.2, 0.4]},
   "resonance_sensor":{"name": "Resonanz-Sensor",        "health": 35,  "obstacle": false, "size": [0.4, 1.3, 0.4], "range": 26},

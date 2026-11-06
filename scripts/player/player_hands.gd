@@ -13,10 +13,12 @@ const LEFT_REST := Vector3(-0.2, -0.2, -0.33)
 const HIDE_DROP := 0.5
 const SWITCH_SPEED := 6.5
 
-## Faust und Axt: Reichweite, Stärke (verscheucht die Kreatur unterschiedlich lange), Abklingzeit
+## Faust, Axt, Blechschere: Reichweite, Stärke (verscheucht die Kreatur unterschiedlich lange), Abklingzeit,
+## Schadensart (blunt = stumpf, chop = Hieb, stab = Stich)
 const MELEE := {
-	"fist": {"reach": 1.5, "strength": 0.4, "cooldown": 0.45, "anim": "punch", "len": 0.34, "block": 0.5},
-	"axe": {"reach": 2.1, "strength": 1.0, "cooldown": 0.8, "anim": "swing", "len": 0.6, "block": 0.3},
+	"fist": {"reach": 1.5, "strength": 0.4, "cooldown": 0.45, "anim": "punch", "len": 0.34, "block": 0.5, "damage": "blunt"},
+	"axe": {"reach": 2.1, "strength": 1.0, "cooldown": 0.8, "anim": "swing", "len": 0.6, "block": 0.3, "damage": "chop"},
+	"tin_snips": {"reach": 1.7, "strength": 0.7, "cooldown": 0.5, "anim": "stab", "len": 0.38, "block": 0.45, "damage": "stab"},
 }
 
 var player: Player
@@ -114,10 +116,36 @@ func _tag_layers(n: Node) -> void:
 		(n as GeometryInstance3D).layers |= HANDS_LAYER
 
 
+## Blechschere: zwei rote Griffe, kurze Stahlschneiden, Niet. Spitze zeigt nach +y.
+static func snips_model(parent: Node) -> Node3D:
+	var v := Node3D.new()
+	parent.add_child(v)
+	var steel := BuildKit.tex_mat("metal", 0.15, Color(1.4, 1.4, 1.42), 0.35)
+	var edge := BuildKit.tex_mat("metal", 0.1, Color(2.0, 2.0, 2.0), 0.2)
+	var grip := BuildKit.color_mat(Color(0.7, 0.1, 0.07), 0.6)
+	for side: float in [-1.0, 1.0]:
+		BuildKit.box(v, Vector3(0.018, 0.13, 0.014), Vector3(side * 0.022, -0.07, 0), grip, false, Vector3(0, 0, side * 7.0))
+		BuildKit.box(v, Vector3(0.012, 0.04, 0.012), Vector3(side * 0.008, 0.0, 0), steel, false, Vector3(0, 0, side * 10.0))
+		BuildKit.box(v, Vector3(0.014, 0.075, 0.005), Vector3(side * 0.004, 0.055, side * 0.003), steel, false, Vector3(0, 0, -side * 3.0))
+		BuildKit.box(v, Vector3(0.003, 0.07, 0.005), Vector3(side * -0.004, 0.057, side * 0.003), edge, false)
+	BuildKit.cylinder(v, 0.008, 0.02, Vector3(0, 0.012, 0), steel, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.box(v, Vector3(0.05, 0.006, 0.006), Vector3(0, -0.035, 0), steel, false)
+	return v
+
+
 func _make_right(kind: String) -> Node3D:
 	var m := Node3D.new()
 	_forearm(m)
 	match kind:
+		"tin_snips":
+			# Faust wie bei der Axt gedreht, Schere ragt nach vorne
+			var grip := Node3D.new()
+			grip.rotation_degrees.z = -90.0
+			m.add_child(grip)
+			_fist(grip, 1.0)
+			var sv := snips_model(m)
+			sv.position = Vector3(0, 0.0, -0.03)
+			sv.rotation_degrees = Vector3(-78, 0, 0)
 		"axe":
 			# Hand um 90° nach rechts gedreht: Daumen zeigt nach oben, der Stiel läuft senkrecht durch die Faust
 			var grip := Node3D.new()
@@ -324,6 +352,14 @@ func _primary() -> void:
 		"fist":
 			_start_action("punch", MELEE["fist"]["len"])
 			_cooldown = MELEE["fist"]["cooldown"]
+		"tin_snips":
+			# Am Autowrack: Blech abschneiden statt zustechen
+			var node := player.current_interactable as ResourceNode
+			if node and node.tool == "tin_snips" and node.amount > 0:
+				node.interact(player)
+				return
+			_start_action("stab", MELEE["tin_snips"]["len"])
+			_cooldown = MELEE["tin_snips"]["cooldown"]
 		"food", "water":
 			_start_action("consume", 1.1)
 			_cooldown = 1.2
@@ -331,7 +367,7 @@ func _primary() -> void:
 
 ## Ein einzelner Hieb ohne Treffer-Prüfung (z. B. beim Holzhacken, pro Schlag aufgerufen).
 func tool_swing(length: float = 0.55) -> void:
-	_start_action("chop", length)
+	_start_action("snip" if _right_kind == "tin_snips" else "chop", length)
 
 
 func _start_action(a: String, length: float) -> void:
@@ -355,8 +391,8 @@ func _melee_hit(kind: String) -> void:
 		var d := to.length()
 		var facing := fwd_h.dot(to.normalized()) if d > 0.01 else 1.0
 		if d < float(cfg["reach"]) + 0.4 and (facing > 0.6 or (d < 1.0 and facing > 0.0)):
-			c.on_melee_hit(float(cfg["strength"]), player.global_position)
-			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else "thud", c.global_position + Vector3(0, 1.3, 0), -2.0, 1.3)
+			c.on_melee_hit(float(cfg["strength"]), player.global_position, String(cfg["damage"]))
+			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else ("scratch" if kind == "tin_snips" else "thud"), c.global_position + Vector3(0, 1.3, 0), -2.0, 1.3)
 			EventBus.screen_shake.emit(0.15)
 			return
 	var q := PhysicsRayQueryParameters3D.create(cam.origin, cam.origin + fwd * float(cfg["reach"]))
@@ -476,6 +512,9 @@ func _pose_right(delta: float) -> void:
 	if _right_kind == "axe":
 		pos = Vector3(0.25, -0.3, -0.36) + Vector3(0, -HIDE_DROP * e, 0)
 		rot.z -= 8.0
+	elif _right_kind == "tin_snips":
+		pos = Vector3(0.24, -0.27, -0.34) + Vector3(0, -HIDE_DROP * e, 0)
+		rot.x -= 4.0
 	elif _right_kind == "fist":
 		# Faust in Ruhe nur angedeutet am unteren Bildrand
 		pos = Vector3(0.27, -0.34, -0.3) + Vector3(0, -HIDE_DROP * e, 0)
@@ -513,6 +552,19 @@ func _pose_right(delta: float) -> void:
 				if _action == "swing" and p >= 0.47 and not _action_hit_done:
 					_action_hit_done = true
 					_melee_hit("axe")
+			"stab":
+				# kurzer Stich nach vorne, Spitze voraus
+				var f := smoothstep(0.0, 0.4, p) * (1.0 - smoothstep(0.5, 1.0, p))
+				pos += Vector3(-0.09, 0.1, -0.3) * f
+				rot += Vector3(12, 4, 0) * f
+				if p >= 0.4 and not _action_hit_done:
+					_action_hit_done = true
+					_melee_hit("tin_snips")
+			"snip":
+				# Schneiden: Hand nach vorne, kurzes Zudrücken
+				var f := smoothstep(0.0, 0.3, p) * (1.0 - smoothstep(0.7, 1.0, p))
+				pos += Vector3(-0.06, 0.05, -0.16) * f
+				rot += Vector3(0, 0, -25.0 * sin(p * TAU * 2.0)) * f
 			"consume":
 				var f := smoothstep(0.0, 0.35, p) * (1.0 - smoothstep(0.75, 1.0, p))
 				pos = pos.lerp(Vector3(0.04, -0.1, -0.2), f)

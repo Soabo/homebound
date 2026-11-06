@@ -102,7 +102,22 @@ func _on_sleep_finished() -> void:
 	input_locked = false
 
 
+## Im Versteck: umsehen ja, gehen nein. hidden_in = das Versteck, in dem man steht (oder null).
+var look_only: bool = false
+var hidden_in: Node = null
+var held_time: float = 0.0  ## Sekunden, die der Spieler festgehalten wird (Bärenfalle)
+
+
+## Versteckt (im Schrank/Spind bei geschlossener Tür)?
+func is_hidden() -> bool:
+	return hidden_in != null and is_instance_valid(hidden_in) and hidden_in.call("hides_player")
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if look_only and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
+		rotate_y(-event.relative.x * mouse_sensitivity)
+		head.rotation.x = clampf(head.rotation.x - event.relative.y * mouse_sensitivity, -1.2, 1.2)
+		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		if input_locked:
 			return
@@ -164,7 +179,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("sprint") and not shift_down:
 		Input.action_release("sprint")
 	var slow := not input_locked and Input.is_action_pressed("walk_slow")
-	var wants_sprint := not crouching and not slow and shift_down and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
+	var wants_sprint := not crouching and not slow and not Inventory.overloaded() and shift_down and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
 	if Survival.stamina <= 0.0:
 		_exhausted = true
 	elif Survival.stamina > 30.0:
@@ -179,6 +194,10 @@ func _physics_process(delta: float) -> void:
 		speed = walk_speed * SLOW_FACTOR
 	speed *= 1.0 - 0.55 * hazard
 	hazard = move_toward(hazard, 0.0, delta * 3.0)
+	# In der Falle: festgehalten, danach humpelt man kurz
+	if held_time > 0.0:
+		held_time -= delta
+		speed = 0.0 if held_time > 0.0 else speed
 	var dir := (transform.basis * Vector3(input.x, 0, input.y)).normalized()
 	var accel := 10.0 if is_on_floor() else 2.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, clampf(accel * delta, 0.0, 1.0))

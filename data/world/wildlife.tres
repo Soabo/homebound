@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WildlifeConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/wildlife_config.gd" id="1_wild"]
+
+[resource]
+script = ExtResource("1_wild")
+spawn_distance = Vector2(22, 42)
+despawn_distance = 75.0
+stage_factor = PackedFloat32Array(1, 0.65, 0.35, 0.12, 0)
+day_spawn_interval = Vector2(14, 35)
+max_ground_animals = 4
+hare_weight = 3.0
+snake_weight = 1.0
+squirrel_weight = 3.0
+ground_birds_weight = 3.0
+shy_distance = 7.0
+butterfly_hours = Vector2(9, 18.5)
+max_butterflies = 6
+max_insect_swarms = 3
+flyover_interval = Vector2(35, 110)
+migration_from_stage = 1
+migration_until_stage = 2
+migration_interval = Vector2(50, 150)
+migration_flock_size = Vector2i(18, 40)
+migration_direction = Vector2(0.7, 0.7)
+night_spawn_interval = Vector2(50, 150)
+max_night_animals = 2
+deer_weight = 2.0
+fox_weight = 2.0
+hedgehog_weight = 2.0
+deer_group = Vector2i(1, 2)
+deer_flee_player = 16.0
+deer_flee_creature = 45.0
+deer_light_tolerance = 1.5

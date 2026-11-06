@@ -9,6 +9,8 @@ const SPACING := 4.0
 const LIMIT := 108.0
 
 var _rng := RandomNumberGenerator.new()
+## Alle Baumstämme (x, Bodenhöhe, z, Stammradius) – z. B. für Eichhörnchen
+static var trees: Array[Vector4] = []
 
 
 func _ready() -> void:
@@ -54,6 +56,7 @@ func _build_trees() -> void:
 	colliders.name = "TreeColliders"
 	add_child(colliders)
 
+	trees.clear()
 	var steps := int(LIMIT * 2.0 / SPACING)
 	for gz in steps + 1:
 		for gx in steps + 1:
@@ -72,6 +75,7 @@ func _build_trees() -> void:
 			trunks.append(Transform3D(Basis.from_euler(Vector3(lean.x, yaw, lean.z)).scaled(Vector3(r, trunk_h, r)),
 					Vector3(x, g + trunk_h * 0.5 - 0.3, z)))
 			trunk_cols.append(bark)
+			trees.append(Vector4(x, g, z, r))
 
 			if conifer:
 				var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), _rng.randf())

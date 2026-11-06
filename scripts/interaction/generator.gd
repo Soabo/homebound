@@ -1,6 +1,6 @@
 class_name Generator
 extends Interactable
-## Benzin-Generator im Technikraum (GDD 7.4).
+## Benzin-Generator im Schuppen (GDD 7.4).
 ## E: starten/abstellen, R: Benzin aus einem Kanister nachfüllen.
 ## Das Modell baut die Hütte; dieser Knoten liefert Interaktion, Brummen und Statuslampe.
 

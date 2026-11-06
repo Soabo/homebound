@@ -299,15 +299,19 @@ func _process(delta: float) -> void:
 
 
 ## Gewebeprobe: fällt, wenn die Kreatur mit der Axt getroffen wird (einmal pro Tag).
+static var _tissue_count: int = 0
 static var _tissue_day: int = -1
 
 
-static func drop_tissue(scene: Node, at: Vector3) -> void:
-	if TimeManager.day == _tissue_day:
+## always = true: ohne Tagesgrenze (z. B. aus der Bärenfalle)
+static func drop_tissue(scene: Node, at: Vector3, always: bool = false) -> void:
+	if TimeManager.day == _tissue_day and not always:
 		return
-	_tissue_day = TimeManager.day
+	if not always:
+		_tissue_day = TimeManager.day
+	_tissue_count += 1
 	var p := ItemPickup.new()
-	p.name = "TissueSample_d%d" % TimeManager.day
+	p.name = "TissueSample_d%d_%d" % [TimeManager.day, _tissue_count]
 	p.item_id = "alien_tissue"
 	p.amount = 1
 	p.collider_size = Vector3(0.5, 0.25, 0.5)

@@ -263,8 +263,9 @@ func _refresh() -> void:
 
 func _fill_inventory() -> void:
 	_title.text = "Inventar"
-	_info.text = "Traglast %.1f / %.0f kg      Hunger %d%%   Durst %d%%   Ausdauer %d%%\nGegenstände für die Hand (✋) auf einen Platz 1–9 ziehen. Leerer Platz = Faust." % [
-		Inventory.total_weight(), Inventory.MAX_WEIGHT, int(Survival.hunger), int(Survival.thirst), int(Survival.stamina)]
+	_info.text = "Traglast %.1f / %.0f kg%s      Hunger %d%%   Durst %d%%   Ausdauer %d%%\nGegenstände für die Hand (✋) auf einen Platz 1–9 ziehen. Leerer Platz = Faust." % [
+		Inventory.total_weight(), Inventory.MAX_WEIGHT, "  – ÜBERLADEN, nur noch gehen" if Inventory.overloaded() else "",
+		int(Survival.hunger), int(Survival.thirst), int(Survival.stamina)]
 	if Inventory.items.is_empty():
 		_list.add_child(_text("Du trägst nichts bei dir."))
 		return

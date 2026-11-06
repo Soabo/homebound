@@ -55,6 +55,6 @@ func get_prompt(_player: Node) -> String:
 
 func interact(_player: Node) -> void:
 	if not PowerManager.has_power():
-		EventBus.notify("Kein Strom. Der Generator ist im Technikraum.", 2.5)
+		EventBus.notify("Kein Strom. Der Generator steht im Schuppen.", 2.5)
 		return
 	get_tree().call_group("hud", "open_monitor")

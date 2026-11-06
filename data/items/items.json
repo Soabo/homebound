@@ -12,10 +12,12 @@
   "food":        {"name": "Konserve",        "weight": 0.5,  "stack": 8,  "category": "Nahrung", "use": {"hunger": 35}, "hand": "food"},
   "water":       {"name": "Wasserflasche",   "weight": 1.0,  "stack": 4,  "category": "Nahrung", "use": {"thirst": 40}, "hand": "water"},
   "axe":         {"name": "Axt",             "weight": 2.0,  "stack": 1,  "category": "Werkzeug", "hand": "axe"},
+  "tin_snips":   {"name": "Blechschere",     "weight": 0.8,  "stack": 1,  "category": "Werkzeug", "hand": "tin_snips"},
   "metal_fragment": {"name": "Fremdes Metallfragment", "weight": 0.8, "stack": 6,  "category": "Fund"},
   "energy_cell":    {"name": "Energiezelle",           "weight": 1.2, "stack": 4,  "category": "Fund"},
   "glyph_plate":    {"name": "Symbolplatte",           "weight": 1.5, "stack": 2,  "category": "Fund"},
   "alien_tissue":   {"name": "Gewebeprobe",            "weight": 0.3, "stack": 4,  "category": "Fund"},
+  "alien_blood":    {"name": "Blutprobe (Stachel)",    "weight": 0.3, "stack": 4,  "category": "Fund"},
   "glow_fungus":    {"name": "Leuchtpilz",             "weight": 0.2, "stack": 6,  "category": "Fund"},
   "alien_analyzer": {"name": "Fremdes Analysegerät",   "weight": 12.0, "stack": 1, "category": "Fund"},
   "organism_sample": {"name": "Wucherungsprobe",        "weight": 0.4, "stack": 6,  "category": "Fund"},
@@ -31,5 +33,6 @@
   "spike_barricade": {"name": "Spießbarrikade",         "weight": 5.0, "stack": 4, "category": "Bauteil", "build": "spike_barricade"},
   "stone_wall":      {"name": "Steinwall",              "weight": 8.0, "stack": 4, "category": "Bauteil", "build": "stone_wall"},
   "can_alarm":       {"name": "Dosenalarm",             "weight": 1.0, "stack": 6, "category": "Bauteil", "build": "can_alarm"},
-  "motion_light":    {"name": "Bewegungsmelder-Leuchte","weight": 3.0, "stack": 4, "category": "Bauteil", "build": "motion_light"}
+  "motion_light":    {"name": "Bewegungsmelder-Leuchte","weight": 3.0, "stack": 4, "category": "Bauteil", "build": "motion_light"},
+  "bear_trap":       {"name": "Bärenfalle",             "weight": 2.5, "stack": 4, "category": "Bauteil", "build": "bear_trap"}
 }

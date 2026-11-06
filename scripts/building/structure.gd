@@ -28,6 +28,11 @@ var _strobe: OmniLight3D
 var _strobe_time: float = 0.0
 var _sense_cooldown: float = 0.0
 var _t: float = 0.0
+var armed: bool = true          ## Bärenfalle gespannt?
+var _player_on_trap: bool = false  ## nach dem Spannen: erst auslösen, wenn der Spieler einmal heruntergetreten ist
+var _jaws: Array[Node3D] = []
+var _bloodied: bool = false     ## Spießbarrikade: grünes Blut an den Spießen
+var _spike_mat: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -49,6 +54,19 @@ func _ready() -> void:
 	elif type == "growth_barrier":
 		add_to_group("growth_barrier")
 		_wither_patches.call_deferred()
+	if type == "bear_trap":
+		armed = bool(Builder.record(uid).get("armed", true))
+		_set_jaws(armed, false)
+		# kein fester Körper – man soll hineintreten können; Bereich nur fürs Anschauen/Interagieren
+		var area := Area3D.new()
+		var acs := CollisionShape3D.new()
+		var ab := BoxShape3D.new()
+		ab.size = Vector3(size.x, 0.2, size.z)
+		acs.shape = ab
+		acs.position = Vector3(0, 0.1, 0)
+		area.add_child(acs)
+		add_child(area)
+		return
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -73,11 +91,14 @@ func _build_visual() -> void:
 			BuildKit.box(self, Vector3(2.5, 0.12, 0.04), Vector3(0, 0.6, 0.1), board, false, Vector3(0, 0, 24))
 		"spike_barricade":
 			var stake := BuildKit.tex_mat("logs", 0.5, Color(1.1, 1.0, 0.9))
+			_spike_mat = stake
 			BuildKit.cylinder(self, 0.08, 1.9, Vector3(0, 0.35, 0), stake, false, Vector3(0, 0, 90), -1.0, 7)
 			for i in 6:
 				var x := -0.75 + i * 0.3
 				for side: float in [-1.0, 1.0]:
 					BuildKit.cylinder(self, 0.05, 1.2, Vector3(x, 0.55, side * 0.18), stake, false, Vector3(side * 50.0, 0, rng.randf_range(-8, 8)), 0.0, 6)
+		"bear_trap":
+			_build_bear_trap()
 		"stone_wall":
 			var stone := BuildKit.tex_mat("stone", 0.6)
 			for row in 3:
@@ -168,6 +189,116 @@ func _build_visual() -> void:
 			BuildKit.sphere(self, 0.07, Vector3(0, 0.55, 0), _light_mat, Vector3.ONE, 8)
 
 
+## Bärenfalle: rostiger Stahlring aus zwei Bügeln mit Zähnen, Trittplatte in der Mitte,
+## Blattfedern links und rechts, Kette mit Erdanker.
+func _build_bear_trap() -> void:
+	var steel := BuildKit.tex_mat("metal", 0.25, Color(0.78, 0.66, 0.55), 0.6)
+	var dark := BuildKit.tex_mat("metal", 0.25, Color(0.45, 0.42, 0.4), 0.5)
+	var r := 0.2
+	# Grundplatte, Trittplatte
+	BuildKit.box(self, Vector3(0.5, 0.015, 0.05), Vector3(0, 0.008, 0), dark, false)
+	BuildKit.cylinder(self, 0.075, 0.012, Vector3(0, 0.03, 0), steel, false, Vector3.ZERO, -1.0, 12)
+	BuildKit.box(self, Vector3(0.03, 0.02, 0.03), Vector3(0, 0.018, 0), dark, false)
+	# Blattfedern: lang gezogene Bügel nach außen
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(0.3, 0.012, 0.035), Vector3(sx * 0.36, 0.018, 0), steel, false, Vector3(0, 0, sx * 4.0))
+		BuildKit.cylinder(self, 0.022, 0.05, Vector3(sx * 0.5, 0.025, 0), dark, false, Vector3(90, 0, 0), -1.0, 8)
+	# zwei Bügel, Gelenk entlang der x-Achse; offen liegen sie flach, zu stehen sie senkrecht
+	for sz: float in [-1.0, 1.0]:
+		var pivot := Node3D.new()
+		pivot.position = Vector3(0, 0.02, 0)
+		add_child(pivot)
+		_jaws.append(pivot)
+		var steps := 7
+		for k in steps:
+			# Halbkreis-Bügel aus kurzen Stücken
+			var a0 := PI * k / steps
+			var a1 := PI * (k + 1) / steps
+			var p0 := Vector3(cos(a0) * r, 0, sz * sin(a0) * r)
+			var p1 := Vector3(cos(a1) * r, 0, sz * sin(a1) * r)
+			var mid := (p0 + p1) * 0.5
+			var seg := BuildKit.box(pivot, Vector3(p0.distance_to(p1) + 0.01, 0.014, 0.014), mid, steel, false)
+			seg.rotation.y = -atan2(p1.z - p0.z, p1.x - p0.x)
+			# Zähne zeigen nach oben (geschlossen: zur Mitte)
+			var tooth := BuildKit.box(pivot, Vector3(0.012, 0.04, 0.008), mid + Vector3(0, 0.022, 0), dark, false)
+			tooth.rotation.y = seg.rotation.y
+	# Kette mit Erdanker
+	for i in 5:
+		BuildKit.box(self, Vector3(0.035, 0.01, 0.018), Vector3(-0.56 - i * 0.04, 0.008, 0.05 + i * 0.02), dark, false, Vector3(0, i * 30.0 + 20.0, 90 if i % 2 == 0 else 0))
+	BuildKit.cylinder(self, 0.012, 0.18, Vector3(-0.78, 0.05, 0.15), dark, false, Vector3(0, 0, 12), 0.005, 6)
+
+
+## Bügel offen (flach) oder zu (senkrecht, Zähne greifen ineinander).
+func _set_jaws(open: bool, animate: bool) -> void:
+	for i in _jaws.size():
+		var sz := -1.0 if i == 0 else 1.0
+		var target := Vector3.ZERO if open else Vector3(sz * deg_to_rad(84.0), 0, 0)
+		if animate:
+			create_tween().tween_property(_jaws[i], "rotation", target, 0.07 if not open else 0.4)
+		else:
+			_jaws[i].rotation = target
+
+
+func _snap(victim: Node3D) -> void:
+	armed = false
+	_set_jaws(false, true)
+	var r := Builder.record(uid)
+	if not r.is_empty():
+		r["armed"] = false
+	SoundBank.play_at(get_parent(), "trap_snap", global_position + Vector3(0, 0.2, 0), 4.0, 1.7)
+	SoundBank.play_at(get_parent(), "clatter", global_position + Vector3(0, 0.1, 0), -2.0, 0.7)
+	EventBus.noise_made.emit(global_position, 20.0)
+	var def := DataDB.buildable(type)
+	if victim is Player:
+		var pl := victim as Player
+		pl.take_damage(float(def.get("player_damage", 25)), pl.global_position + Vector3(0, 0.05, 0))
+		pl.held_time = 1.6
+		EventBus.notify("Autsch – du bist in die Bärenfalle getreten!", 3.0)
+	else:
+		victim.call("on_trap", global_position)
+		# Die Kreatur reißt sich los und beschädigt die Falle dabei
+		receive_hit(float(def.get("creature_damage", 30)) * 0.5)
+
+
+func _rearm() -> void:
+	armed = true
+	var pl := get_tree().get_first_node_in_group("player") as Player
+	_player_on_trap = pl != null and _flat_dist(pl.global_position) < 0.6
+	_set_jaws(true, true)
+	var r := Builder.record(uid)
+	if not r.is_empty():
+		r["armed"] = true
+	SoundBank.play_at(get_parent(), "hammer", global_position + Vector3(0, 0.2, 0), -6.0, 1.4)
+
+
+## Spießbarrikade: Die Kreatur hat sich verletzt – grünes Blut an den Spießen,
+## ein abgebrochener Spieß mit Blut liegt daneben (Blutprobe für die Forschung).
+func bloody() -> void:
+	if _bloodied or _spike_mat == null:
+		return
+	_bloodied = true
+	_spike_mat.albedo_color = Color(0.55, 0.95, 0.45)
+	_spike_mat.emission_enabled = true
+	_spike_mat.emission = Color(0.25, 0.8, 0.2)
+	_spike_mat.emission_energy_multiplier = 0.4
+	var p := ItemPickup.new()
+	p.name = "BloodSpike_%d_%d" % [uid, TimeManager.day]
+	p.item_id = "alien_blood"
+	p.amount = 1
+	p.collider_size = Vector3(0.5, 0.2, 0.3)
+	p.collider_offset = Vector3(0, 0.08, 0)
+	var at := global_position + global_transform.basis.z * 0.9 + global_transform.basis.x * randf_range(-0.5, 0.5)
+	p.position = Creature._ground(at)
+	get_parent().add_child(p)
+	var v := Node3D.new()
+	p.add_child(v)
+	var wood := BuildKit.tex_mat("logs", 0.5, Color(1.1, 1.0, 0.9))
+	var blood := BuildKit.emissive_mat(Color(0.35, 0.9, 0.25), 0.5)
+	BuildKit.cylinder(v, 0.04, 0.45, Vector3(0, 0.04, 0), wood, false, Vector3(0, randf_range(0, 180), 88), 0.0, 6)
+	BuildKit.sphere(v, 0.035, Vector3(0.2, 0.045, 0), blood, Vector3(1.6, 0.6, 1.0), 6)
+	BuildKit.sphere(v, 0.05, Vector3(0.12, 0.005, 0.03), blood, Vector3(1.4, 0.15, 1.0), 6)
+
+
 ## Leuchtet das Bauteil gerade (für Drohnen, die von grellem Licht geblendet werden)?
 func is_lit() -> bool:
 	if _strobe:
@@ -201,7 +332,15 @@ func set_preview_valid(valid: bool) -> void:
 
 func get_prompt(_player: Node) -> String:
 	var def := DataDB.buildable(type)
+	if type == "bear_trap":
+		return "Bärenfalle – gespannt  (%d%%)" % int(health / max_health * 100.0) if armed \
+				else "[E] Bärenfalle spannen  (%d%%)" % int(health / max_health * 100.0)
 	return "%s  (%d%%)" % [def.get("name", type), int(health / max_health * 100.0)]
+
+
+func interact(_player: Node) -> void:
+	if type == "bear_trap" and not armed:
+		_rearm()
 
 
 func get_secondary_prompt(_player: Node) -> String:
@@ -258,6 +397,9 @@ func _physics_process(delta: float) -> void:
 		_light_mat.emission_energy_multiplier = 3.0 if fmod(_t, 0.8) < 0.1 else 0.3
 	elif _light_mat and type == "growth_barrier":
 		_light_mat.emission_energy_multiplier = 0.8 + sin(_t * 1.5) * 0.4
+	if type == "bear_trap":
+		_check_trap()
+		return
 	var c: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
 	if not is_instance_valid(c):
 		if _strobe:
@@ -305,6 +447,26 @@ func _physics_process(delta: float) -> void:
 		_light_time -= delta
 		if _light_time <= 0.0:
 			_set_light(false)
+
+
+## Bärenfalle: tritt jemand auf die Trittplatte?
+func _check_trap() -> void:
+	if not armed:
+		return
+	var pl := get_tree().get_first_node_in_group("player") as Player
+	if pl and not pl.is_hidden() and _flat_dist(pl.global_position) < 0.32 and absf(pl.global_position.y - global_position.y) < 0.6:
+		if not _player_on_trap:
+			_snap(pl)
+			return
+	elif pl and _flat_dist(pl.global_position) > 0.6:
+		_player_on_trap = false
+	var c: Node3D = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
+	if c and _flat_dist(c.global_position) < 0.75 and absf(c.global_position.y - global_position.y) < 1.0:
+		_snap(c)
+
+
+func _flat_dist(p: Vector3) -> float:
+	return Vector2(p.x - global_position.x, p.z - global_position.z).length()
 
 
 func _set_light(on: bool) -> void:

@@ -79,7 +79,7 @@
    "name": "Gewebeprobe",
    "area": "Spezies und Verhalten",
    "hours": 2.0,
-   "summary": "Graues, faseriges Gewebe, das sich noch Stunden nach dem Treffer bewegt. Kaltblütig, kaum Blut.",
+   "summary": "Graues, faseriges Gewebe, das sich noch Stunden nach dem Treffer bewegt. Kaltblütig. Es riecht nach nassem Metall.",
    "experiments": [
     {
      "id": "light",
@@ -92,6 +92,33 @@
      "label": "Schwachen Strom anlegen",
      "needs": "power",
      "text": "Keine Reaktion. Strom allein schreckt sie nicht ab."
+    }
+   ]
+  },
+  "an_blood": {
+   "find": "alien_blood",
+   "name": "Blutprobe (Stachel)",
+   "area": "Biologie",
+   "hours": 2.0,
+   "summary": "Zähes, grünes Blut, eingetrocknet an der Spitze eines Spießes. Unter der Lupe bewegen sich winzige Fäden darin – als würde es noch arbeiten.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Mit Licht bestrahlen",
+     "needs": "light",
+     "text": "Im Licht flockt das Blut aus und wird schwarz. Im Dunkeln bleibt es tagelang flüssig und grün."
+    },
+    {
+     "id": "power",
+     "label": "Schwachen Strom anlegen",
+     "needs": "power",
+     "text": "Die Fäden richten sich alle in eine Richtung aus – wie Eisenspäne an einem Magneten. Sie zeigen nach Nordwesten, zum Krater."
+    },
+    {
+     "id": "alien",
+     "label": "Neben das Metallfragment legen",
+     "needs": "alien",
+     "text": "Das Blut kriecht langsam auf das fremde Metall zu. Körper und Technik scheinen aus demselben Stoff gemacht – oder füreinander."
     }
    ]
   },

@@ -6,6 +6,7 @@
     {"id": "fence_panel",     "needs": {"planks": 3, "nails": 6},                    "gives": {"fence_panel": 1}},
     {"id": "spike_barricade", "needs": {"wood": 3, "nails": 6},                      "gives": {"spike_barricade": 1}},
     {"id": "stone_wall",      "needs": {"stone": 4},                                 "gives": {"stone_wall": 1}},
+    {"id": "bear_trap",       "needs": {"scrap": 2, "nails": 4},                     "gives": {"bear_trap": 1}},
     {"id": "can_alarm",       "needs": {"cans": 4, "scrap": 1},                      "gives": {"can_alarm": 1}},
     {"id": "motion_light",    "needs": {"scrap": 2, "battery": 1, "electronics": 1}, "gives": {"motion_light": 1}},
     {"id": "analyzer_improvised", "name": "Funkgerät zum Analysegerät umbauen", "needs": {"electronics": 2, "battery": 1, "scrap": 2}, "special": "build_analyzer"},

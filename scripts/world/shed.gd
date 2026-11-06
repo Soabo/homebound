@@ -49,6 +49,29 @@ func _ready() -> void:
 	door.rotation_degrees.y = -90.0
 	add_child(door)
 
+	# Stromerzeuger an der Nordwand (Bedienfeld zum Raum). Fällt er aus, muss man nachts hier heraus.
+	var gen := Generator.new()
+	gen.name = "Generator"
+	gen.anchor = Vector3(4.7, 0.03, -3.825)
+	add_child(gen)
+	Cabin.generator_model(gen, 0.03)
+	gen.position = Vector3(-0.92, 0, -1.03) - Vector3(4.7, 0, -3.83)
+	# Kabel vom Generator durch die Wand Richtung Hütte, Sicherungskasten neben der Tür
+	var cable := BuildKit.color_mat(Color(0.08, 0.08, 0.08), 0.6)
+	BuildKit.box_mm(self, Vector3(-1.95, 0.05, -1.25), Vector3(-1.6, 0.08, -1.21), cable, false)
+	BuildKit.box_mm(self, Vector3(-1.98, 0.05, -1.25), Vector3(-1.95, 1.3, -1.21), cable, false)
+	BuildKit.box_mm(self, Vector3(-1.94, 1.2, -1.42), Vector3(-1.82, 1.75, -0.9), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
+	Cabin.fuel_can(self, Vector3(-1.7, 0.03, -0.75), 90.0, "FuelCan_0")
+	Cabin.fuel_can(self, Vector3(1.05, 0.03, -1.2), 0.0, "FuelCan_1")
+	# Spind an der Nordwand – Versteck mit Lüftungslamellen auf Augenhöhe
+	var locker := HideSpot.new()
+	locker.name = "Locker"
+	locker.style = "locker"
+	locker.label = "Spind"
+	locker.size = Vector3(0.62, 1.95, 0.55)
+	locker.hinge_right = true
+	locker.position = Vector3(0.36, 0.03, -1.17)
+	add_child(locker)
 	# Innen: Regal, Kanister, Werkzeug
 	var wood := BuildKit.tex_mat("planks_h", 0.7)
 	for i in 3:

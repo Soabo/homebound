@@ -7,6 +7,25 @@ signal changed
 signal hotbar_changed
 
 const MAX_WEIGHT := 40.0
+var _was_overloaded: bool = false
+
+
+func _ready() -> void:
+	changed.connect(_check_overload)
+
+
+## Mehr als die Traglast im Rucksack: nur noch gehen, kein Rennen.
+func overloaded() -> bool:
+	return total_weight() > MAX_WEIGHT + 0.001
+
+
+func _check_overload() -> void:
+	var o := overloaded()
+	if o and not _was_overloaded:
+		EventBus.notify("Du bist überladen (%.1f / %.0f kg) – du kannst nur noch gehen." % [total_weight(), MAX_WEIGHT], 3.5)
+	elif not o and _was_overloaded:
+		EventBus.notify("Du bist nicht mehr überladen.", 2.0)
+	_was_overloaded = o
 const SLOTS := 9
 
 var items: Dictionary = {}
@@ -89,8 +108,8 @@ func total_weight() -> float:
 func add(id: String, amount: int = 1) -> int:
 	var stack := int(DataDB.item(id).get("stack", 99))
 	var by_stack := stack - count(id)
-	var by_weight := int(floor((MAX_WEIGHT - total_weight()) / maxf(weight_of(id), 0.001) + 0.0001))
-	var added := clampi(mini(amount, mini(by_stack, by_weight)), 0, amount)
+	# Über die Traglast hinaus darf man aufnehmen – dann ist man überladen und kann nur noch gehen.
+	var added := clampi(mini(amount, by_stack), 0, amount)
 	if added > 0:
 		items[id] = count(id) + added
 		changed.emit()

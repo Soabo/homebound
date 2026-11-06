@@ -67,7 +67,7 @@ static func get_generated(id: String) -> AudioStreamWAV:
 		"door_open", "door_close", "door_lock", "light_switch", "menu_click", "camera_switch", "motion_click": s = _click()
 		"place", "workbench", "collect_metal", "collect_stone": s = _hammer()
 		"backpack": s = _click(0.6)
-		"bang": s = _bang()
+		"bang", "trap_snap": s = _bang()
 		"glass_crack": s = _glass(0.25, 0.4)
 		"glass_break": s = _glass(0.9, 1.0)
 		"wood_crack": s = _wood_crack()

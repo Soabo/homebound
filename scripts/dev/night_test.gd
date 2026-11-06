@@ -57,6 +57,10 @@ func _run() -> void:
 		await _research_test()
 		get_tree().quit()
 		return
+	if mode == "gear":
+		await _gear_test()
+		get_tree().quit()
+		return
 	for i in 10:
 		await get_tree().physics_frame
 	TimeManager.set_time(1, 21.0)
@@ -267,7 +271,7 @@ func _research_test() -> void:
 	# Gewebeprobe durch Axthieb
 	CrashSite.drop_tissue(scene, player.global_position + Vector3(1, 0, 0))
 	await get_tree().physics_frame
-	(scene.get_node("TissueSample_d1") as ItemPickup).interact(player)
+	(scene.find_children("TissueSample_d1_*", "ItemPickup", false, false)[0] as ItemPickup).interact(player)
 	print("RESEARCH Gewebeprobe: ", Inventory.count("alien_tissue"))
 	# Improvisiertes Gerät an der Werkbank
 	Inventory.add("electronics", 2)
@@ -711,3 +715,100 @@ func _changes_test() -> void:
 			leaves += 1
 		cr.queue_free()
 	print("KREATUR geht vor dem Morgen: %d von 20 (erwartet etwa 16)" % leaves)
+
+
+## Verstecke, Überladung, Bärenfalle, Blut an der Spießbarrikade, Blechschere, Tiere.
+func _gear_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	# Verstecke
+	for path: String in ["Cabin/Wardrobe", "Shed/Locker"]:
+		var h := scene.get_node_or_null(path) as HideSpot
+		if h == null:
+			print("VERSTECK FEHLT: ", path)
+			continue
+		h.interact(player)
+		await get_tree().create_timer(0.5).timeout
+		h.interact(player)
+		await get_tree().create_timer(0.3).timeout
+		h.set_door(false)  # drinnen: E schließt die Tür
+		await get_tree().create_timer(0.5).timeout
+		print("VERSTECK %s: drin=%s, Tür zu=%s, versteckt=%s" % [path, h.occupied, not h.door_open, player.is_hidden()])
+		h._leave()
+		await get_tree().create_timer(0.3).timeout
+		print("VERSTECK %s verlassen: versteckt=%s" % [path, player.is_hidden()])
+	# Überladung
+	var added := {}
+	for id: String in ["fuel_can", "stone", "wood", "battery", "water", "food", "planks", "scrap"]:
+		added[id] = Inventory.add(id, 12)
+	print("ÜBERLADEN: %s (%.1f kg)" % [Inventory.overloaded(), Inventory.total_weight()])
+	for id: String in added:
+		Inventory.remove(id, int(added[id]))
+	print("NICHT MEHR ÜBERLADEN: %s" % (not Inventory.overloaded()))
+	# Bärenfalle: craften lassen wir weg, direkt aufstellen
+	player.global_position = Creature._ground(Vector3(-10, 0, 14)) + Vector3(0, 0.05, 0)
+	await get_tree().create_timer(0.3).timeout
+	var hp := player.health
+	var trap := Builder.place("bear_trap", Creature._ground(Vector3(-10, 0, 14.0)), 0.0)
+	await get_tree().create_timer(0.3).timeout
+	print("FALLE Spieler: gespannt=%s, Leben %.0f -> %.0f, festgehalten=%.1f s" % [trap.armed, hp, player.health, player.held_time])
+	trap.interact(player)
+	print("FALLE neu gespannt: ", trap.armed)
+	player.global_position = Creature._ground(Vector3(-20, 0, 14)) + Vector3(0, 0.05, 0)
+	TimeManager.set_time(6, 22.0)
+	var c := Creature.new()
+	scene.add_child(c)
+	ThreatDirector.creature = c
+	c.begin("attack")
+	c.global_position = Creature._ground(Vector3(-10, 0, 14.0))
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var tissue := scene.find_children("TissueSample_*", "ItemPickup", false, false).size()
+	print("FALLE Kreatur: gespannt=%s, Gewebeproben am Boden=%d, Zustand=%s" % [trap.armed, tissue, Creature.State.keys()[c.state]])
+	# Spießbarrikade: Kreatur verletzt sich -> Blutprobe
+	var spikes := Builder.place("spike_barricade", Creature._ground(Vector3(-14, 0, 8.0)), 0.0)
+	spikes.bloody()
+	var blood := scene.find_children("BloodSpike_*", "ItemPickup", false, false)
+	print("BLUT an Spießen: %d Blutprobe(n)" % blood.size())
+	if not blood.is_empty():
+		(blood[0] as ItemPickup).interact(player)
+	print("BLUTPROBE im Inventar: %d, Analyse vorhanden: %s" % [Inventory.count("alien_blood"), Research.analysis_for_find("alien_blood")])
+	c.queue_free()
+	ThreatDirector.creature = null
+	# Blechschere: ohne sie kein Schrott vom Wagen
+	var scrap := scene.find_children("Scrap", "ResourceNode", true, false)
+	if not scrap.is_empty():
+		var node := scrap[0] as ResourceNode
+		print("SCHROTT ohne Schere: ", node.get_prompt(player))
+		(scene.get_node("Cabin/TinSnips") as ItemPickup).interact(player)
+		Inventory.select(Inventory.slot_of("tin_snips"))
+		await get_tree().create_timer(0.4).timeout
+		var before := Inventory.count("scrap")
+		node.interact(player)
+		await get_tree().create_timer(node.action_time + 0.8).timeout
+		print("SCHROTT mit Schere: +%d" % (Inventory.count("scrap") - before))
+		player.hands._primary()
+		await get_tree().create_timer(0.6).timeout
+		print("STICH ausgeführt (kein Fehler)")
+	# Tiere: jede Art einmal, kurz laufen lassen
+	var wl := scene.get_node("Wildlife") as Wildlife
+	player.global_position = Creature._ground(Vector3(-30, 0, 30)) + Vector3(0, 0.05, 0)
+	for k: String in ["hare", "snake", "squirrel", "birds", "butterfly", "insects", "flyover", "flock", "deer", "fox", "hedgehog"]:
+		var a := wl.spawn_test(k, Creature._ground(Vector3(-30 + randf_range(-8, 8), 0, 22)))
+		a.lifetime = 999.0
+	await get_tree().create_timer(3.0).timeout
+	var kinds := {}
+	for a in get_tree().get_nodes_in_group("animal"):
+		kinds[(a as Animal).kind] = (a as Animal).global_position
+	print("TIERE nach 3 s: ", kinds.keys())
+	# Spieler läuft auf die Bodentiere zu -> sie fliehen
+	player.global_position = Creature._ground(Vector3(-30, 0, 22)) + Vector3(0, 0.05, 0)
+	await get_tree().create_timer(1.0).timeout
+	var fleeing := 0
+	for a in get_tree().get_nodes_in_group("animal"):
+		if (a as Animal)._state in ["flee", "fly", "curl"]:
+			fleeing += 1
+	print("TIERE fliehen/rollen sich ein: ", fleeing)
+	print("GEAR TEST ENDE")

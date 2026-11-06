@@ -131,6 +131,7 @@ func _physics_process(delta: float) -> void:
 				# Spieße: tut weh – die Kreatur weicht zurück
 				CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 2.0, _rng.randf_range(0.9, 1.05))
 				var spike_pos := _breaking.global_position
+				_breaking.bloody()
 				_breaking.receive_hit(15.0)
 				_breaking = null
 				_recoil_from(spike_pos)
@@ -402,6 +403,8 @@ func _player_outside() -> bool:
 
 ## Sicht: Reichweite hängt davon ab, ob der Spieler Licht macht.
 func _can_see_player() -> bool:
+	if _player.is_hidden():
+		return false
 	var d := _dist()
 	var lit := _player.light_shining() or _player_near_light()
 	var range_m := 34.0 if lit else 13.0
@@ -580,19 +583,35 @@ func on_strobe(source: Vector3) -> void:
 
 ## Faustschlag oder Axthieb des Spielers: tut weh und verscheucht die Kreatur eine Weile.
 ## (Töten kann man sie damit nicht.) strength 0..1 – die Axt wirkt länger als die Faust.
-func on_melee_hit(strength: float, from: Vector3) -> void:
+## damage: "blunt" (Faust), "chop" (Axt, Hieb), "stab" (Blechschere, Stich)
+func on_melee_hit(strength: float, from: Vector3, damage: String = "blunt") -> void:
 	if state == State.LEAVE:
 		return
 	CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 2.0, _rng.randf_range(0.95, 1.1))
 	_head_track = 2.0
 	# Ein Axthieb hinterlässt eine Gewebeprobe für die Forschung
-	if strength >= 1.0:
+	if damage == "chop":
 		CrashSite.drop_tissue(get_parent(), global_position + Vector3(0.3, 0, 0.3))
 	if mode == "observe":
 		leave()
 		return
 	_recoil_from(from)
 	_timer = lerpf(5.0, 14.0, strength)
+
+
+## In eine Bärenfalle getreten: Schmerz, ein Stück Gewebe bleibt in den Zähnen hängen, sie flieht.
+func on_trap(at: Vector3) -> void:
+	CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 4.0, _rng.randf_range(0.85, 1.0))
+	_head_track = 2.0
+	CrashSite.drop_tissue(get_parent(), at + Vector3(0.25, 0, 0.15), true)
+	EventBus.screen_shake.emit(0.05)
+	if state == State.LEAVE:
+		return
+	if mode == "observe":
+		leave()
+		return
+	_recoil_from(at)
+	_timer = _rng.randf_range(12.0, 20.0)
 
 
 func _recoil_from(source: Vector3) -> void:

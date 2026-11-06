@@ -65,6 +65,21 @@
   manchmal, schweigt manchmal lange, ahmt Hausgeräusche nach; Organismus wächst verzweigt mit wechselnden Zielen,
   mal gar nicht, mal in Schüben, ab Stufe 3 Sporensprünge.
 
+## Entscheidungen Verstecke, Fallen, Tiere
+- Esstisch halbiert (2 Stühle). Technikraum ist jetzt Badezimmer (`_build_bathroom`), Generator steht im Schuppen
+  (`Cabin.generator_model`) – bei Stromausfall muss man im Dunkeln raus.
+- Verstecke `HideSpot` (Stil wardrobe = Kleiderschrank Cabin/Wardrobe mit Sehschlitz, locker = Spind Shed/Locker mit Lamellen):
+  Tür geht zur Wand auf; drinnen + Tür zu = versteckt (`Player.is_hidden()`), Kreatur sieht einen dann nicht.
+- Über 40 kg: Aufnehmen/Craften geht weiter, aber nur noch Gehen + Meldung (`Inventory.overloaded()`).
+- Bärenfalle (Schrott 2 + Nägel 4, buildables `bear_trap`): immer gespannt, trifft auch den Spieler (Schaden + kurz
+  festgehalten, `Player.held_time`); Kreatur verliert Gewebe (`Creature.on_trap`). Mit E neu spannen.
+  Spießbarrikade verletzt die Kreatur → grünes Blut, Stachel mit Blut = `alien_blood` (Analyse `an_blood`).
+- Blechschere `tin_snips` (Werkzeugwand, Cabin/TinSnips): rechte Hand, Stich (`MELEE` in PlayerHands), Schrott am Wagen nur damit.
+  Schadensart an `Creature.on_melee_hit(…, damage)`: blunt | chop | stab (nur chop hinterlässt Gewebe).
+- Tiere: `Wildlife` + `Animal`, Werte `data/world/wildlife.tres` (`WildlifeConfig`, gehört zum World State Manager).
+  Weniger Tiere je Terraforming-Stufe, Zugvögel ab Stufe 1 bis 2. Rehe nachts nur Umriss + Augenreflex im Uhrlicht,
+  fliehen vor Kreatur. Test: `--night-test=gear` (Verstecke, Überladung, Fallen, Schere, Tiere).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

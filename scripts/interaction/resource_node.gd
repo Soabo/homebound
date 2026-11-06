@@ -63,9 +63,6 @@ func interact(player: Node) -> void:
 	if tool != "" and Inventory.equipped() != tool:
 		EventBus.notify("Nimm erst %s in die Hand." % Inventory.display_name(tool), 2.5)
 		return
-	if Inventory.total_weight() + Inventory.weight_of(item_id) > Inventory.MAX_WEIGHT:
-		EventBus.notify("Zu schwer – du kannst nicht mehr tragen.", 2.0)
-		return
 	_busy = true
 	var p := player as Player
 	if p:

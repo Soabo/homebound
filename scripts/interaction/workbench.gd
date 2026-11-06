@@ -56,8 +56,6 @@ static func craft(recipe: Dictionary, scene_tree: SceneTree) -> String:
 		weight_after += Inventory.weight_of(id) * int(gives[id])
 		if Inventory.count(id) + int(gives[id]) > int(DataDB.item(id).get("stack", 99)):
 			return "Davon kannst du nicht mehr tragen."
-	if weight_after > Inventory.MAX_WEIGHT:
-		return "Zu schwer – leg erst etwas ab."
 	Inventory.remove_all(needs)
 	for id in gives:
 		Inventory.add(id, int(gives[id]))

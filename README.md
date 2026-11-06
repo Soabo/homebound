@@ -22,15 +22,16 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Taste | Aktion |
 |---|---|
 | W A S D | Gehen |
-| Shift | Rennen |
+| Shift | Rennen (nicht, wenn du überladen bist) |
+| Alt | Langsam und leise gehen |
 | Strg / C | Ducken |
 | Leertaste | Springen |
 | Y / X | Nach links / rechts lehnen (um Ecken schauen) |
-| E | Benutzen (Türen, Lichtschalter, Bett) |
-| Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit Axt Holz hacken, Konserve essen, Flasche trinken |
-| Rechtsklick (halten) | Blocken mit Faust oder Axt |
+| E | Benutzen (Türen, Lichtschalter, Bett); im Schrank/Spind: Tür auf/zu; Bärenfalle neu spannen |
+| Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit der Blechschere zustechen, mit Axt Holz hacken, Konserve essen, Flasche trinken |
+| Rechtsklick (halten) | Blocken mit Faust, Axt oder Blechschere |
 | 1–9 / Mausrad | Schnellplatz wählen (leer = Faust) |
-| R | Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
+| R | Im Schrank/Spind: heraustreten; Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
 | F | LED der Smartwatch am linken Arm (Taschenlampe) – auch zusätzlich zu einem Gegenstand rechts |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
@@ -44,8 +45,10 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 ## So überlebst du die Nacht
 
-- **Strom:** Der Generator im Technikraum braucht Benzin. Kanister liegen im Technikraum und im Schuppen.
-  Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du rüber und neu starten.
+- **Strom:** Der Generator steht im Schuppen und braucht Benzin. Kanister liegen im Schuppen.
+  Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du im Dunkeln raus zum Schuppen.
+- **Verstecken:** Kleiderschrank im Schlafzimmer, Spind im Schuppen. E öffnet die Tür, E noch einmal: hineinstellen,
+  drinnen E: Tür zu. Bei geschlossener Tür bist du versteckt und siehst durch den Schlitz bzw. die Lamellen hinaus.
 - **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
 - **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
 - **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und – vom Schuppen aus im Weitwinkel – den Platz zwischen Maisfeld und Hütte. Traue nicht allem, was du siehst.
@@ -66,14 +69,17 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 - **Axt** steckt im Hackklotz beim Schuppen. Sie landet auf einem Schnellplatz; nimm sie mit der Ziffer in die Hand
   und hacke mit Linksklick **Holz** an umgestürzten Stämmen im Wald.
-- **Faust und Axt** verscheuchen die Kreatur (töten kann man sie nicht). Rechtsklick blockt Schläge von vorne.
-- **Steine** liegen am Bach, **Schrott, Benzin, Batterie, Elektronik** im alten Autowrack an der Zufahrt.
-- **Werkbank** in der Werkstatt: Bretter, Nägel, Holzzaun, Spießbarrikade, Steinwall, Dosenalarm,
+- **Faust, Axt und Blechschere** verscheuchen die Kreatur (töten kann man sie nicht). Die Axt macht Hiebschaden
+  (hinterlässt Gewebe), die Blechschere Stichschaden. Rechtsklick blockt Schläge von vorne.
+- **Blechschere** hängt an der Werkzeugwand in der Werkstatt. Nur mit ihr bekommst du **Schrott** vom Autowrack.
+- **Steine** liegen am Bach, **Benzin, Batterie, Elektronik** ebenfalls im alten Autowrack an der Zufahrt.
+- **Werkbank** in der Werkstatt: Bretter, Nägel, Holzzaun, Spießbarrikade, Bärenfalle, Steinwall, Dosenalarm,
   Bewegungsmelder-Leuchte und eine verstärkte Haustür.
 - **Bauen** (B): freies Platzieren auf dem Grundstück. Die Kreatur muss Zäune und Wälle erst zerlegen,
-  Spieße verletzen sie, der Dosenalarm warnt dich, grelles Licht scheucht sie auf.
+  Spieße verletzen sie (grünes Blut am Spieß = Blutprobe), Bärenfallen schnappen zu – auch bei dir! – und reißen
+  ihr Gewebe heraus. Der Dosenalarm warnt dich, grelles Licht scheucht sie auf.
 - **Hunger und Durst** sinken langsam: Konserven im Vorratsraum, trinken an Regentonne, Spüle oder Bach.
-  Rennen kostet Ausdauer. Du kannst höchstens 40 kg tragen.
+  Rennen kostet Ausdauer. Über 40 kg bist du überladen: du kannst noch alles aufnehmen, aber nur noch gehen.
 - Was du gebaut und verbarrikadiert hast, bleibt auch nach einem Tod erhalten (Stand: Tagesbeginn).
 
 ## Forschung (Phase 7)
@@ -157,7 +163,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 ## Meilenstein 0.1
 
-- Begehbare Blockhütte mit Wohnzimmer (Kamin), Schlafzimmer, Vorratsraum, Technikraum und Werkstatt
+- Begehbare Blockhütte mit Wohnzimmer (Kamin), Schlafzimmer, Vorratsraum, Badezimmer und Werkstatt; Generator im Schuppen
 - Veranda, Garten mit Zaun, Schuppen, Wald mit Hügeln und alter Zufahrtsstraße
 - First-Person-Steuerung, Interaktion, abschließbare Haustür, Lichtschalter je Raum
 - Tag-Nacht-Wechsel (10 Min. Tag / 10 Min. Nacht), Uhr, vereinfachtes Schlafen ab 16 Uhr

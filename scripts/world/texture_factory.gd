@@ -21,6 +21,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"stone": img = _stone(Color(0.46, 0.44, 0.41), 14)
 		"stone_dark": img = _stone(Color(0.3, 0.27, 0.25), 18)
 		"rock": img = _rock()
+		"tiles": img = _tiles()
 		"shingles": img = _shingles()
 		"fabric": img = _fabric(Color(0.42, 0.42, 0.36))
 		"fabric_red": img = _fabric(Color(0.45, 0.14, 0.12))
@@ -144,6 +145,25 @@ static func _bark() -> Image:
 
 
 ## Bruchsteine: Zellen um Zufallspunkte, dunkle Fugen dazwischen.
+## Fliesen: helle Quadrate mit grauen Fugen, leicht fleckig.
+static func _tiles() -> Image:
+	var img := _img()
+	var r := _rng(91)
+	var cell := SIZE / 4
+	for y in SIZE:
+		for x in SIZE:
+			var gx := x % cell
+			var gy := y % cell
+			var tile := Vector2i(x / cell, y / cell)
+			var shade := 0.93 + 0.05 * sin(float(tile.x * 7 + tile.y * 13))
+			var c := Color(0.86, 0.87, 0.85) * shade * r.randf_range(0.97, 1.02)
+			if gx == 0 or gy == 0:
+				c = Color(0.55, 0.55, 0.53)
+			c.a = 1.0
+			img.set_pixel(x, y, c)
+	return img
+
+
 static func _stone(base: Color, count: int) -> Image:
 	var img := _img()
 	var r := _rng(count * 13)

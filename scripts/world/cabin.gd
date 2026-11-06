@@ -4,7 +4,7 @@ extends Node3D
 ##
 ## Raumaufteilung (Draufsicht, Norden oben = -z):
 ##   +-------------+---------+-----------+
-##   | Schlafzimmer| Vorrat  | Technik   |   z -4.5 .. -1
+##   | Schlafzimmer| Vorrat  | Bad       |   z -4.5 .. -1
 ##   +-------------+---------+-----------+
 ##   |  Wohnzimmer + Küche   | Werkstatt |   z -1 .. 4.5
 ##   +----[Tür]--------------+-----------+
@@ -28,7 +28,7 @@ const WINDOW_NAMES := {
 	"WindowLiving": "Wohnzimmerfenster",
 	"WindowWorkshopFront": "Werkstattfenster",
 	"WindowBedroom": "Schlafzimmerfenster",
-	"WindowTechnical": "Technikraumfenster",
+	"WindowTechnical": "Badfenster",
 	"WindowWorkshopEast": "Werkstattfenster Ost",
 }
 
@@ -78,7 +78,7 @@ func _ready() -> void:
 	_build_kitchen()
 	_build_bedroom()
 	_build_storage()
-	_build_technical_room()
+	_build_bathroom()
 	_build_workshop()
 	_build_reflection_probe()
 	# Staub in der Luft (sichtbar im Licht) und Rauch aus dem Schornstein
@@ -432,7 +432,7 @@ func _build_lights() -> void:
 	_switch("porch", "Licht Veranda", Vector3(-4.05, FLOOR_Y + 1.25, inside_front), 180.0, [porch])
 	_switch("bedroom", "Licht Schlafzimmer", Vector3(-1.75, FLOOR_Y + 1.25, hall_back), 180.0, [bedroom])
 	_switch("storage", "Licht Vorratsraum", Vector3(1.3, FLOOR_Y + 1.25, hall_back), 180.0, [storage])
-	_switch("tech", "Licht Technikraum", Vector3(4.75, FLOOR_Y + 1.25, hall_back), 180.0, [tech])
+	_switch("tech", "Licht Bad", Vector3(4.75, FLOOR_Y + 1.25, hall_back), 180.0, [tech])
 	_switch("workshop", "Licht Werkstatt", Vector3(2.0 + INT_T * 0.5 + 0.012, FLOOR_Y + 1.25, 2.35), 90.0, [workshop])
 
 
@@ -488,17 +488,15 @@ func _build_living_room() -> void:
 	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-3.85, y + 0.46, 1.95), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
 	# Bücherregal
 	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
-	# Esstisch – für vier gedeckt, benutzt wird nur ein Platz (GDD 3.1). Steht vom Fenster weg, damit man hinaussehen kann.
-	_table(Vector3(-0.9, y, 1.5), Vector3(0.5, y + 0.76, 2.6))
+	# Esstisch – kleiner Tisch für zwei, gegenüber gedeckt (GDD 3.1). Steht vom Fenster weg, damit man hinaussehen kann.
+	_table(Vector3(-0.55, y, 1.5), Vector3(0.15, y + 0.76, 2.6))
 	var plate := BuildKit.color_mat(Color(0.86, 0.82, 0.74), 1.0)
-	for p: Vector3 in [Vector3(-0.55, 0, 1.75), Vector3(0.15, 0, 1.75), Vector3(-0.55, 0, 2.35), Vector3(0.15, 0, 2.35)]:
+	for p: Vector3 in [Vector3(-0.2, 0, 1.75), Vector3(-0.2, 0, 2.35)]:
 		BuildKit.cylinder(self, 0.13, 0.015, Vector3(p.x, y + 0.775, p.z), plate, false, Vector3.ZERO, -1.0, 12)
 		BuildKit.box(self, Vector3(0.015, 0.005, 0.16), Vector3(p.x + 0.17, y + 0.773, p.z), m_iron, false)
-	BuildKit.cylinder(self, 0.035, 0.18, Vector3(-0.2, y + 0.85, 2.05), BuildKit.color_mat(Color(0.25, 0.35, 0.25, 1), 0.2), false, Vector3.ZERO, 0.02, 8)
-	_chair(Vector3(-0.55, y, 1.15), 0.0)
-	_chair(Vector3(0.15, y, 1.15), 0.0)
-	_chair(Vector3(-0.55, y, 2.95), 180.0)
-	_chair(Vector3(0.15, y, 2.95), 180.0)
+	BuildKit.cylinder(self, 0.035, 0.18, Vector3(0.0, y + 0.85, 2.05), BuildKit.color_mat(Color(0.25, 0.35, 0.25, 1), 0.2), false, Vector3.ZERO, 0.02, 8)
+	_chair(Vector3(-0.2, y, 1.15), 0.0)
+	_chair(Vector3(-0.2, y, 2.95), 180.0)
 	# Kinderzeichnung an der Wand
 	var paper := BuildKit.color_mat(Color(0.92, 0.9, 0.84), 0.9)
 	var dz := -1.0 + INT_T * 0.5 + 0.006
@@ -686,12 +684,15 @@ func _build_bedroom() -> void:
 	BuildKit.box(self, Vector3(0.012, 0.012, 0.06), Vector3(-4.11, y + 0.4, -3.89), m_iron, false)
 	_photo(Vector3(-4.2, y + 0.55, -4.22), 0.0, 0.16, 0.13)
 	BuildKit.cylinder(self, 0.03, 0.1, Vector3(-4.0, y + 0.6, -4.05), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
-	# Kleiderschrank mit zwei Türen
-	BuildKit.box_mm(self, Vector3(-2.05, y, -4.33), Vector3(-1.13, y + 2.05, -3.65), m_wall, true, "Wardrobe")
-	BuildKit.box_mm(self, Vector3(-2.06, y + 2.05, -4.35), Vector3(-1.12, y + 2.12, -3.62), m_wood_dark, false)
-	for x: float in [-1.62, -1.56]:
-		BuildKit.box(self, Vector3(0.02, 0.12, 0.02), Vector3(x, y + 1.1, -3.64), m_iron, false)
-	BuildKit.box_mm(self, Vector3(-1.6, y + 0.05, -3.66), Vector3(-1.58, y + 2.0, -3.645), m_wood_dark, false)
+	# Kleiderschrank – Versteck: Tür geht zur Wand hin auf, Sehschlitz auf Augenhöhe
+	var wardrobe := HideSpot.new()
+	wardrobe.name = "Wardrobe"
+	wardrobe.style = "wardrobe"
+	wardrobe.label = "Kleiderschrank"
+	wardrobe.size = Vector3(1.0, 2.05, 0.7)
+	wardrobe.hinge_right = true
+	wardrobe.position = Vector3(-1.6, y, -3.98)
+	add_child(wardrobe)
 	# Ungeöffnetes Geburtstagsgeschenk (GDD 3.1)
 	BuildKit.box_mm(self, Vector3(-1.62, y, -1.65), Vector3(-1.3, y + 0.28, -1.33), BuildKit.color_mat(Color(0.65, 0.12, 0.14), 0.6), true, "Gift")
 	var ribbon := BuildKit.color_mat(Color(0.95, 0.78, 0.2), 0.4)
@@ -756,29 +757,73 @@ func _build_storage() -> void:
 	BuildKit.box_mm(self, Vector3(1.2, y + 0.45, -1.85), Vector3(1.75, y + 0.8, -1.35), crate, true)
 
 
-func _build_technical_room() -> void:
+## Badezimmer (früher Technikraum; der Generator steht jetzt im Schuppen).
+## Wanne unter dem hohen Fenster, Toilette, Waschbecken mit Spiegelschrank, Handtuchhalter.
+func _build_bathroom() -> void:
 	var y := FLOOR_Y
-	# Generator (GDD 7.4) – die Teile hängen am Generator-Knoten, damit man ihn anvisieren kann
-	var gen := Generator.new()
-	gen.name = "Generator"
-	gen.anchor = Vector3(4.7, y, -3.825)
-	add_child(gen)
-	_generator_model(gen, y)
-	# an die Westwand gedreht (Bedienfeld zeigt in den Raum), damit das Fenster frei bleibt
-	gen.transform = Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(2.52, 0, -2.62)) * Transform3D(Basis(), -Vector3(4.7, 0, -3.83))
-	# Sicherungskasten mit Kabeln
-	var ex := HALF_X - CLAD
-	BuildKit.box_mm(self, Vector3(ex - 0.12, y + 1.2, -3.2), Vector3(ex, y + 1.8, -2.6), BuildKit.tex_mat("metal", 0.3, Color(1.6, 1.6, 1.5)), false, "FuseBox")
-	for i in 3:
-		BuildKit.box_mm(self, Vector3(ex - 0.04, y + 0.2 + i * 0.02, -3.0 + i * 0.12), Vector3(ex - 0.02, y + 1.2, -2.98 + i * 0.12), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false)
-	# Benzinkanister zum Mitnehmen
-	for i in 2:
-		fuel_can(self, Vector3(2.575 + i * 0.4, y, -4.2), 0.0, "FuelCan_%d" % i)
+	var x0 := 2.0 + INT_T * 0.5
+	var x1 := HALF_X - CLAD
+	var z0 := -HALF_Z + CLAD
+	var z1 := -1.0 - INT_T * 0.5
+	var tiles := BuildKit.tex_mat("tiles", 0.6, Color(1.0, 1.0, 1.0), 0.35)
+	var tiles_wall := BuildKit.tex_mat("tiles", 0.5, Color(0.92, 0.97, 1.0), 0.3)
+	var porcelain := BuildKit.color_mat(Color(0.93, 0.93, 0.9), 0.15, 0.05)
+	var chrome := BuildKit.color_mat(Color(0.78, 0.78, 0.8), 0.15, 0.95)
+	# Fliesenboden und halbhohe Fliesen an den Wänden
+	BuildKit.box_mm(self, Vector3(x0, y + 0.001, z0), Vector3(x1, y + 0.012, z1), tiles, false)
+	BuildKit.box_mm(self, Vector3(x0, y, z0), Vector3(x0 + 0.012, y + 1.2, z1), tiles_wall, false)
+	BuildKit.box_mm(self, Vector3(x1 - 0.012, y, z0), Vector3(x1, y + 1.2, z1), tiles_wall, false)
+	BuildKit.box_mm(self, Vector3(x0, y, z0), Vector3(x1, y + 1.2, z0 + 0.012), tiles_wall, false)
+	# Badewanne an der Rückwand (links), mit Armatur
+	var tub := Node3D.new()
+	tub.name = "Bathtub"
+	add_child(tub)
+	BuildKit.box_mm(tub, Vector3(x0, y, z0), Vector3(x0 + 1.7, y + 0.55, z0 + 0.75), porcelain, true)
+	BuildKit.box_mm(tub, Vector3(x0 + 0.08, y + 0.2, z0 + 0.08), Vector3(x0 + 1.62, y + 0.555, z0 + 0.67), BuildKit.color_mat(Color(0.82, 0.83, 0.82), 0.1, 0.05), false)
+	BuildKit.cylinder(tub, 0.02, 0.25, Vector3(x0 + 1.5, y + 0.75, z0 + 0.06), chrome, false, Vector3(90, 0, 0), -1.0, 8)
+	BuildKit.cylinder(tub, 0.02, 0.3, Vector3(x0 + 1.5, y + 0.62, z0 + 0.03), chrome, false, Vector3.ZERO, -1.0, 8)
+	# Duschvorhang an einer Stange
+	BuildKit.cylinder(tub, 0.012, 1.7, Vector3(x0 + 0.85, y + 1.95, z0 + 0.74), chrome, false, Vector3(0, 0, 90), -1.0, 6)
+	var curtain := BuildKit.tex_mat("fabric", 0.3, Color(0.75, 0.85, 0.9))
+	for k in 6:
+		BuildKit.box(tub, Vector3(0.12, 1.3, 0.01), Vector3(x0 + 0.08 + k * 0.1, y + 1.28, z0 + 0.74 + (k % 2) * 0.03), curtain, false, Vector3(0, (k % 2) * 20.0 - 10.0, 0))
+	# Toilette an der Westwand
+	var wc := Node3D.new()
+	wc.name = "Toilet"
+	wc.position = Vector3(x0 + 0.38, y, -2.1)
+	add_child(wc)
+	BuildKit.lathe(wc, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.14, 0.0), Vector2(0.17, 0.25), Vector2(0.21, 0.4), Vector2(0.0, 0.4)]),
+			Vector3(0.05, 0, 0), porcelain, 14)
+	BuildKit.cylinder(wc, 0.21, 0.03, Vector3(0.05, 0.42, 0), BuildKit.color_mat(Color(0.95, 0.95, 0.93), 0.3), false, Vector3.ZERO, -1.0, 16)
+	BuildKit.box_mm(wc, Vector3(-0.36, 0.38, -0.2), Vector3(-0.18, 0.78, 0.2), porcelain, false)
+	BuildKit.box(wc, Vector3(0.06, 0.02, 0.03), Vector3(-0.27, 0.8, 0.08), chrome, false)
+	BuildKit.collider_box(wc, Vector3(0.5, 0.45, 0.45), Vector3(0.0, 0.22, 0))
+	# Klopapierhalter
+	BuildKit.cylinder(self, 0.055, 0.1, Vector3(x0 + 0.05, y + 0.65, -1.65), BuildKit.color_mat(Color(0.97, 0.97, 0.95)), false, Vector3(0, 0, 90), -1.0, 10)
+	# Waschbecken an der Ostwand mit Spiegelschrank
+	var sz := -2.3
+	BuildKit.box_mm(self, Vector3(x1 - 0.5, y + 0.78, sz - 0.3), Vector3(x1, y + 0.86, sz + 0.3), porcelain, true, "Sink")
+	BuildKit.box_mm(self, Vector3(x1 - 0.45, y + 0.8, sz - 0.22), Vector3(x1 - 0.08, y + 0.861, sz + 0.22), BuildKit.color_mat(Color(0.8, 0.81, 0.8), 0.1), false)
+	BuildKit.cylinder(self, 0.04, 0.78, Vector3(x1 - 0.25, y + 0.39, sz), porcelain, false, Vector3.ZERO, 0.06, 10)
+	BuildKit.cylinder(self, 0.015, 0.15, Vector3(x1 - 0.08, y + 0.95, sz), chrome, false, Vector3(0, 0, 70), -1.0, 6)
+	var cab := BuildKit.tex_mat("planks_v", 0.4, Color(1.3, 1.25, 1.15))
+	BuildKit.box_mm(self, Vector3(x1 - 0.14, y + 1.2, sz - 0.3), Vector3(x1, y + 1.85, sz + 0.3), cab, false, "MirrorCabinet")
+	var mirror := BuildKit.color_mat(Color(0.55, 0.6, 0.62), 0.04, 1.0)
+	BuildKit.box_mm(self, Vector3(x1 - 0.145, y + 1.25, sz - 0.26), Vector3(x1 - 0.14, y + 1.8, sz + 0.26), mirror, false, "Mirror")
+	# Zahnputzbecher, Seife
+	BuildKit.cylinder(self, 0.03, 0.09, Vector3(x1 - 0.42, y + 0.905, sz + 0.2), BuildKit.color_mat(Color(0.4, 0.6, 0.75), 0.3), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.box(self, Vector3(0.08, 0.03, 0.05), Vector3(x1 - 0.42, y + 0.875, sz - 0.18), BuildKit.color_mat(Color(0.9, 0.75, 0.55), 0.5), false)
+	# Handtuchhalter mit Handtuch, Badematte
+	BuildKit.cylinder(self, 0.012, 0.6, Vector3(x1 - 0.06, y + 1.1, -3.3), chrome, false, Vector3(90, 0, 0), -1.0, 6)
+	BuildKit.box(self, Vector3(0.03, 0.55, 0.45), Vector3(x1 - 0.075, y + 0.85, -3.3), BuildKit.tex_mat("fabric", 0.3, Color(1.5, 1.2, 1.0)), false)
+	BuildKit.box_mm(self, Vector3(x0 + 0.4, y + 0.012, z0 + 0.8), Vector3(x0 + 1.2, y + 0.022, z0 + 1.3), BuildKit.tex_mat("rug", 0.6, Color(0.6, 0.8, 0.9)), false)
+	# Wäschekorb in der Ecke
+	BuildKit.cylinder(self, 0.2, 0.5, Vector3(x1 - 0.3, y + 0.25, -1.45), BuildKit.tex_mat("logs", 0.25, Color(1.3, 1.15, 0.9)), true, Vector3.ZERO, 0.17, 12)
 
 
 ## Tragbarer Stromerzeuger im Rohrrahmen: Motor mit Kühlrippen und Seilzugstarter, Lichtmaschine,
 ## Auspufftopf mit Hitzeschutz, roter Tank mit Deckel und Anzeige, Bedienfeld mit Steckdosen.
-func _generator_model(gen: Node3D, y: float) -> void:
+static func generator_model(gen: Node3D, y: float) -> void:
 	var red := BuildKit.tex_mat("metal", 0.4, Color(1.9, 0.5, 0.35), 0.45)
 	var red_dark := BuildKit.tex_mat("metal", 0.4, Color(1.3, 0.32, 0.22), 0.5)
 	var tube := BuildKit.tex_mat("metal", 0.3, Color(0.35, 0.35, 0.37), 0.35)
@@ -912,6 +957,19 @@ func _tool_wall(fz: float, y: float) -> void:
 	BuildKit.lathe(self, PackedVector2Array([Vector2(0.09, -0.03), Vector2(0.13, -0.035), Vector2(0.15, 0.0), Vector2(0.13, 0.035), Vector2(0.09, 0.03), Vector2(0.08, 0.0)]),
 			Vector3(3.2, y + 1.25, f - 0.02), rope, 16, Vector3(90, 0, 0))
 	BuildKit.box(self, Vector3(0.012, 0.06, 0.04), Vector3(3.2, y + 1.37, f + 0.01), steel, false)
+	# Blechschere unter dem Hammer – zum Mitnehmen
+	var snips := ItemPickup.new()
+	snips.name = "TinSnips"
+	snips.item_id = "tin_snips"
+	snips.amount = 1
+	snips.collider_size = Vector3(0.16, 0.3, 0.08)
+	snips.collider_offset = Vector3(2.3, y + 1.2, f - 0.03)
+	add_child(snips)
+	var sv := PlayerHands.snips_model(snips)
+	sv.position = Vector3(2.3, y + 1.08, f - 0.01)
+	sv.rotation_degrees = Vector3(0, 0, 180)
+	snips.visuals.append(sv)
+	BuildKit.box(self, Vector3(0.01, 0.01, 0.05), Vector3(2.3, y + 1.36, z - 0.02), rust, false)
 	# Werkzeughaken
 	for hx: float in [2.3, 2.62, 2.92, 3.2]:
 		BuildKit.box(self, Vector3(0.01, 0.01, 0.05), Vector3(hx, y + 1.9 if hx < 2.5 else y + 1.71, z - 0.02), rust, false)
