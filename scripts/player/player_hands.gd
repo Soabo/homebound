@@ -516,9 +516,20 @@ func _update_sway(delta: float) -> void:
 	_sway -= Vector2(dyaw, dpitch) * 0.85
 	var k := 140.0
 	var damping := 13.0
-	_sway_vel += (-_sway * k - _sway_vel * damping) * delta
-	_sway += _sway_vel * delta
-	_sway = _sway.clamp(Vector2(-0.3, -0.25), Vector2(0.3, 0.25))
+	# Feder in kleinen festen Schritten rechnen – bei ruckelnden Bildern (lange Frames) schaukelt sie sich sonst auf
+	var dt := minf(delta, 0.1)
+	var steps := clampi(ceili(dt / 0.004), 1, 25)
+	var h := dt / steps
+	for i in steps:
+		_sway_vel += (-_sway * k - _sway_vel * damping) * h
+		_sway += _sway_vel * h
+	var lim := Vector2(0.3, 0.25)
+	var clamped := _sway.clamp(-lim, lim)
+	if clamped.x != _sway.x:
+		_sway_vel.x = 0.0
+	if clamped.y != _sway.y:
+		_sway_vel.y = 0.0
+	_sway = clamped
 	rotation = Vector3(_sway.y, _sway.x, _sway.x * 0.6)
 	# Wippen beim Gehen
 	var t: float = player._bob_time
