@@ -118,18 +118,41 @@ func _tag_layers(n: Node) -> void:
 
 ## Blechschere: zwei rote Griffe, kurze Stahlschneiden, Niet. Spitze zeigt nach +y.
 static func snips_model(parent: Node) -> Node3D:
+	# Kräftige Hebel-Blechschere: dicke gelb-schwarze Griffe, verschraubte Hebelplatten, breite Stahlbacken.
+	# Drehpunkt im Ursprung, Backen zeigen nach +y, Griffe nach -y.
 	var v := Node3D.new()
 	parent.add_child(v)
-	var steel := BuildKit.tex_mat("metal", 0.15, Color(1.4, 1.4, 1.42), 0.35)
-	var edge := BuildKit.tex_mat("metal", 0.1, Color(2.0, 2.0, 2.0), 0.2)
-	var grip := BuildKit.color_mat(Color(0.7, 0.1, 0.07), 0.6)
+	var steel := BuildKit.tex_mat("metal", 0.15, Color(1.25, 1.25, 1.3), 0.5)
+	var dark := BuildKit.color_mat(Color(0.12, 0.12, 0.13), 0.5, 0.6)
+	var edge := BuildKit.tex_mat("metal", 0.1, Color(2.2, 2.2, 2.2), 0.25)
+	var yellow := BuildKit.color_mat(Color(0.95, 0.72, 0.08), 0.45)
+	var black := BuildKit.color_mat(Color(0.06, 0.06, 0.06), 0.8)
 	for side: float in [-1.0, 1.0]:
-		BuildKit.box(v, Vector3(0.018, 0.13, 0.014), Vector3(side * 0.022, -0.07, 0), grip, false, Vector3(0, 0, side * 7.0))
-		BuildKit.box(v, Vector3(0.012, 0.04, 0.012), Vector3(side * 0.008, 0.0, 0), steel, false, Vector3(0, 0, side * 10.0))
-		BuildKit.box(v, Vector3(0.014, 0.075, 0.005), Vector3(side * 0.004, 0.055, side * 0.003), steel, false, Vector3(0, 0, -side * 3.0))
-		BuildKit.box(v, Vector3(0.003, 0.07, 0.005), Vector3(side * -0.004, 0.057, side * 0.003), edge, false)
-	BuildKit.cylinder(v, 0.008, 0.02, Vector3(0, 0.012, 0), steel, false, Vector3(90, 0, 0), -1.0, 8)
-	BuildKit.box(v, Vector3(0.05, 0.006, 0.006), Vector3(0, -0.035, 0), steel, false)
+		# Griff: gelber Kunststoff, schwarze Gummikappe, leicht gespreizt
+		var h := Node3D.new()
+		h.position = Vector3(side * 0.014, -0.045, 0)
+		h.rotation_degrees.z = side * 8.0
+		v.add_child(h)
+		BuildKit.box(h, Vector3(0.032, 0.17, 0.03), Vector3(side * 0.006, -0.09, 0), yellow, false)
+		BuildKit.box(h, Vector3(0.036, 0.05, 0.034), Vector3(side * 0.007, -0.16, 0), black, false)
+		BuildKit.box(h, Vector3(0.008, 0.12, 0.032), Vector3(-side * 0.012, -0.08, 0), black, false)
+		# Backe: breiter Keil aus Stahl mit blanker Schneide
+		var j := Node3D.new()
+		j.position = Vector3(0, 0.0, side * 0.006)
+		j.rotation_degrees.z = -side * 3.0
+		v.add_child(j)
+		BuildKit.box(j, Vector3(0.042, 0.06, 0.011), Vector3(-side * 0.004, 0.035, 0), steel, false)
+		BuildKit.box(j, Vector3(0.03, 0.06, 0.011), Vector3(-side * 0.002, 0.09, 0), steel, false, Vector3(0, 0, side * 6.0))
+		BuildKit.box(j, Vector3(0.016, 0.03, 0.01), Vector3(0.0, 0.13, 0), steel, false, Vector3(0, 0, side * 14.0))
+		BuildKit.box(j, Vector3(0.004, 0.11, 0.012), Vector3(side * 0.012, 0.08, 0), edge, false)
+	# Hebelplatten vorne und hinten mit zwei dicken Schrauben
+	for pz: float in [-0.019, 0.019]:
+		BuildKit.box(v, Vector3(0.06, 0.07, 0.006), Vector3(0, -0.015, pz), dark, false)
+		for py: float in [0.005, -0.04]:
+			BuildKit.cylinder(v, 0.011, 0.01, Vector3(0, py, pz * 1.25), steel, false, Vector3(90, 0, 0), -1.0, 6)
+	# Feder zwischen den Griffen, Verschlusshaken unten
+	BuildKit.cylinder(v, 0.007, 0.05, Vector3(0, -0.075, 0), steel, false, Vector3(0, 0, 90), -1.0, 6)
+	BuildKit.box(v, Vector3(0.05, 0.008, 0.012), Vector3(0, -0.2, 0), steel, false)
 	return v
 
 
@@ -143,9 +166,10 @@ func _make_right(kind: String) -> Node3D:
 			grip.rotation_degrees.z = -90.0
 			m.add_child(grip)
 			_fist(grip, 1.0)
+			# Griffe stecken in der Faust, die Backen ragen schräg nach vorne oben heraus
 			var sv := snips_model(m)
-			sv.position = Vector3(0, 0.0, -0.03)
-			sv.rotation_degrees = Vector3(-78, 0, 0)
+			sv.position = Vector3(0, 0.1, -0.035)
+			sv.rotation_degrees = Vector3(-25, 0, 0)
 		"axe":
 			# Hand um 90° nach rechts gedreht: Daumen zeigt nach oben, der Stiel läuft senkrecht durch die Faust
 			var grip := Node3D.new()
@@ -513,8 +537,8 @@ func _pose_right(delta: float) -> void:
 		pos = Vector3(0.25, -0.3, -0.36) + Vector3(0, -HIDE_DROP * e, 0)
 		rot.z -= 8.0
 	elif _right_kind == "tin_snips":
-		pos = Vector3(0.24, -0.27, -0.34) + Vector3(0, -HIDE_DROP * e, 0)
-		rot.x -= 4.0
+		pos = Vector3(0.23, -0.28, -0.36) + Vector3(0, -HIDE_DROP * e, 0)
+		rot.z -= 10.0
 	elif _right_kind == "fist":
 		# Faust in Ruhe nur angedeutet am unteren Bildrand
 		pos = Vector3(0.27, -0.34, -0.3) + Vector3(0, -HIDE_DROP * e, 0)

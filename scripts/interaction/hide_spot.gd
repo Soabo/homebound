@@ -118,10 +118,7 @@ func _build_locker() -> void:
 	var dark := BuildKit.color_mat(Color(0.12, 0.13, 0.13), 0.6, 0.5)
 	var steel := BuildKit.color_mat(Color(0.7, 0.7, 0.72), 0.3, 0.9)
 	_shell(paint, dark)
-	BuildKit.box_mm(self, Vector3(-size.x * 0.5 + WALL, size.y - 0.35, -size.z * 0.5 + WALL), Vector3(size.x * 0.5 - WALL, size.y - 0.33, size.z * 0.5 - 0.06), paint, false)
-	# Haken mit alter Arbeitsjacke
-	BuildKit.box(self, Vector3(0.03, 0.03, 0.06), Vector3(0, size.y - 0.45, -size.z * 0.5 + 0.06), steel, false)
-	BuildKit.box(self, Vector3(0.38, 0.7, 0.08), Vector3(0, size.y - 0.85, -size.z * 0.5 + 0.08), BuildKit.tex_mat("fabric", 0.3, Color(0.6, 0.55, 0.3)), false)
+	# innen leer – keine Fächer, damit man aufrecht drinstehen kann
 	var t := 0.025
 	_door = _make_door(t)
 	var sx := 1.0 if hinge_right else -1.0
@@ -184,7 +181,8 @@ func set_door(open: bool) -> void:
 	create_tween().tween_property(_door, "rotation_degrees:y", sx * 100.0 if open else 0.0, 0.45).set_trans(Tween.TRANS_SINE)
 	var id := "door_open" if open else "door_close"
 	if style == "locker":
-		SoundBank.play_at(self, "clatter" if open else "door_close", global_position + Vector3(0, 1.0, size.z * 0.5), -8.0)
+		# Blechtür: metallischer Klang
+		SoundBank.play_at(self, "collect_metal", global_position + Vector3(0, 1.0, size.z * 0.5), -3.0 if open else -1.0, 1.1 if open else 0.95)
 	else:
 		SoundBank.play_at(self, id, global_position + Vector3(0, 1.0, size.z * 0.5), -4.0)
 	EventBus.noise_made.emit(global_position, 4.0)

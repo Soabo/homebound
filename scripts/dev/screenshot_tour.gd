@@ -58,6 +58,8 @@ const SHOTS := [
 	{"name": "44_erste_nachthaelfte", "hour": 23.0, "pos": Vector3(-3.0, 0.0, 12.0), "look": Vector3(-3.0, 1.0, 30.0)},
 	{"name": "45_truhe", "hour": 21.0, "pos": Vector3(2.9, 0.45, 2.3), "look": Vector3(2.78, 0.6, 4.2), "lights": true},
 	{"name": "46_truhe_menue", "hour": 21.0, "pos": Vector3(2.9, 0.45, 2.3), "look": Vector3(2.78, 0.6, 4.2), "lights": true, "chest_menu": true},
+	{"name": "47_blechschere_hand", "hour": 14.0, "pos": Vector3(3.0, 0.45, 0.5), "look": Vector3(3.0, 1.0, -3.0), "lights": true, "equip": "tin_snips"},
+	{"name": "48_bad", "hour": 14.0, "pos": Vector3(5.4, 0.45, -1.4), "look": Vector3(2.4, 0.9, -4.2), "lights": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -82,7 +84,7 @@ func _run() -> void:
 	TimeManager.running = false
 	ThreatDirector.set_process(false)  # keine zufälligen Ereignisse während der Fotos
 	for shot: Dictionary in SHOTS:
-		if not only.is_empty() and not String(shot["name"]).left(2) in only:
+		if not only.is_empty() and not (String(shot["name"]).left(2) in only):
 			continue
 		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
 		WorldState._check_stage()
@@ -101,6 +103,9 @@ func _run() -> void:
 		player.rotation.y = atan2(-d.x, -d.z)
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
 		player.set_flashlight(shot.get("flashlight", false))
+		if shot.has("equip"):
+			Inventory.add(shot["equip"], 1)
+			Inventory.select(Inventory.slot_of(shot["equip"]))
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.switch_to(shot.get("lights", false))
 		var creature: Creature = null
