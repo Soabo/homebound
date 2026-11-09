@@ -80,6 +80,14 @@
   Weniger Tiere je Terraforming-Stufe, Zugvögel ab Stufe 1 bis 2. Rehe nachts nur Umriss + Augenreflex im Uhrlicht,
   fliehen vor Kreatur. Test: `--night-test=gear` (Verstecke, Überladung, Fallen, Schere, Tiere).
 
+## Entscheidungen Kreatur 2.1 (noch gruseliger)
+- Haltung: wechselt zufällig zwischen aufrecht und gebückt auf allen Vieren (schneller, Ellbogen nach hinten),
+  `Creature._update_posture`, Werte `posture_interval`, `crawl_chance(_chase)`, `crawl_speed_factor` in CreatureConfig.
+  Zum Schlagen/Hineingreifen/Anstarren richtet sie sich auf. Sichtprüfungen über `Creature.body_height()`.
+- Lauernde Gestalt nur auf der Kamera: `Surveillance.spawn_lurker` (hockend, `CreatureModel.pose_crouch`, Orte
+  `LURK_SPOTS` je Kamera, Sicht wird geprüft), verschwindet beim Umschalten/Schließen, dreht nach einer Weile
+  den Kopf zur Kamera. Wie oft: ThreatConfig `camera_lurk_*`. Test: `--night-test=lurk`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

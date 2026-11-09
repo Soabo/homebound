@@ -72,6 +72,17 @@ extends Resource
 @export var night_change_count: Vector2i = Vector2i(1, 2)
 @export var night_change_days: Vector2i = Vector2i(2, 4)
 
+@export_group("Lauernde Gestalt auf den Kameras (nur auf dem Bildschirm)")
+## Chance pro Kamerabild (beim Öffnen des Monitors oder Umschalten), dass sie dort hockt und lauert.
+@export var camera_lurk_chance_night: float = 0.12
+@export var camera_lurk_chance_day: float = 0.03
+## Mindestabstand zwischen zwei solchen Erscheinungen (Echtzeit-Sekunden).
+@export var camera_lurk_cooldown: float = 180.0
+## Ab welchem Tag es vorkommen kann.
+@export var camera_lurk_from_day: int = 1
+## Nach so vielen Sekunden Hinsehen dreht sie langsam den Kopf zur Kamera.
+@export var camera_lurk_look_after: Vector2 = Vector2(2.0, 5.0)
+
 @export_group("Schlaf")
 ## Nach dem Hochschrecken so viele Spielstunden kein Schlaf.
 @export var scared_awake_hours: float = 1.0

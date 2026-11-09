@@ -60,6 +60,8 @@ const SHOTS := [
 	{"name": "46_truhe_menue", "hour": 21.0, "pos": Vector3(2.9, 0.45, 2.3), "look": Vector3(2.78, 0.6, 4.2), "lights": true, "chest_menu": true},
 	{"name": "47_blechschere_hand", "hour": 14.0, "pos": Vector3(3.0, 0.45, 0.5), "look": Vector3(3.0, 1.0, -3.0), "lights": true, "equip": "tin_snips"},
 	{"name": "48_bad", "hour": 14.0, "pos": Vector3(5.4, 0.45, -1.4), "look": Vector3(2.4, 0.9, -4.2), "lights": true},
+	{"name": "49_kreatur_vierbeinig", "hour": 13.0, "pos": Vector3(5.2, 0.0, 10.4), "look": Vector3(3.0, 0.8, 11.8), "creature_at": Vector3(3.0, 0, 11.8), "creature_face": Vector3(-3.0, 0, 12.5), "crawl": true},
+	{"name": "50_kamera_lauert", "hour": 23.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 0, "lurk": true, "lurk_spot": 1},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -118,6 +120,11 @@ func _run() -> void:
 			face.y = creature.global_position.y
 			creature.look_at(face, Vector3.UP)
 			creature.rotate_y(PI)
+			if shot.get("crawl", false):
+				creature._crawl_blend = 1.0
+				creature._walk_phase = 1.0
+				for k in 60:
+					creature._animate(0.05, true)
 		var drone: AlienDrone = null
 		if shot.has("drone_at"):
 			drone = AlienDrone.new()
@@ -146,6 +153,8 @@ func _run() -> void:
 			get_tree().call_group("hud", "open_monitor")
 			if shot.has("monitor_cam"):
 				get_tree().call_group("surveillance", "set_active", shot["monitor_cam"])
+			if shot.get("lurk", false):
+				get_tree().call_group("surveillance", "spawn_lurker", int(shot.get("lurk_spot", -1)))
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
 		if shot.get("chest_menu", false):
 			var ch := get_tree().current_scene.get_node("Cabin/StorageChest") as StorageChest
@@ -158,6 +167,10 @@ func _run() -> void:
 			couch.interact(get_tree().get_first_node_in_group("player"))
 		for f in frames:
 			await get_tree().process_frame
+		if shot.get("lurk", false):
+			var sv := get_tree().get_first_node_in_group("surveillance") as Surveillance
+			print("Lauernde Gestalt: ", sv._lurker, " bei ", sv._lurker.global_position if sv._lurker else Vector3.ZERO)
+			sv.viewport.get_texture().get_image().save_png(out_dir.path_join(String(shot["name"]) + "_kamera.png"))
 		if shot.get("monitor", false):
 			(get_tree().get_first_node_in_group("hud") as Hud).close_monitor.call_deferred()
 		var img := get_viewport().get_texture().get_image()

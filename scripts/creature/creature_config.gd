@@ -23,6 +23,17 @@ static func get_default() -> CreatureConfig:
 @export var hit_damage: float = 34.0
 @export var entry_hit: float = 14.0
 
+@export_group("Haltung (aufrecht oder auf allen Vieren)")
+## Wie oft sie neu entscheidet, ob sie aufrecht geht oder gebückt auf allen Vieren läuft (Sekunden).
+@export var posture_interval: Vector2 = Vector2(4.0, 11.0)
+## Wahrscheinlichkeit für allen Vieren – beim Kommen/Gehen/Schleichen bzw. auf der Jagd.
+@export var crawl_chance: float = 0.35
+@export var crawl_chance_chase: float = 0.6
+## Auf allen Vieren ist sie so viel schneller.
+@export var crawl_speed_factor: float = 1.45
+## Wie schnell sie zwischen den Haltungen wechselt (1 / Sekunden).
+@export var posture_blend_speed: float = 1.8
+
 @export_group("Entdecken")
 ## Bemerkt den Spieler draußen bis zu dieser Entfernung (beim Beobachten / Herumschleichen / an einem Zugang).
 @export var spot_distance_observe: float = 22.0

@@ -94,6 +94,20 @@ static func build(root: Node3D) -> Dictionary:
 	return p
 
 
+## Hockend und lauernd: tief in den Knien, Oberkörper vorgebeugt, lange Arme hängen bis zum Boden,
+## Kopf nach vorn gereckt. (Für die Trugbilder auf den Kameras.)
+static func pose_crouch(p: Dictionary) -> void:
+	(p["hips"] as Node3D).position.y = 0.5
+	(p["torso"] as Node3D).rotation_degrees.x = 48.0
+	(p["neck"] as Node3D).rotation_degrees.x = -28.0
+	(p["head"] as Node3D).rotation_degrees = Vector3(-12.0, 0.0, 16.0)
+	for side: int in [-1, 1]:
+		(p["leg_%d" % side] as Node3D).rotation_degrees = Vector3(-82.0, 0.0, side * 14.0)
+		(p["knee_%d" % side] as Node3D).rotation_degrees.x = 132.0
+		(p["arm_%d" % side] as Node3D).rotation_degrees = Vector3(-50.0, 0.0, side * 6.0)
+		(p["forearm_%d" % side] as Node3D).rotation_degrees.x = 18.0
+
+
 # --- Körperteile ------------------------------------------------------
 
 static func _pelvis(hips: Node3D) -> void:

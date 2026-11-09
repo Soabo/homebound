@@ -49,6 +49,9 @@ var _break_timer: float = 0.0
 var _head_track: float = 0.0
 var _seen_by_player: bool = false
 var _unseen_time: float = 0.0
+var _crawl: bool = false           ## gerade gebückt auf allen Vieren
+var _crawl_blend: float = 0.0      ## 0 = aufrecht, 1 = auf allen Vieren (weicher Übergang)
+var _posture_timer: float = 3.0
 
 
 ## Baut das Modell (auch für Trugbilder auf den Kameras verwendet).
@@ -99,6 +102,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_timer -= delta
 	_attack_cooldown -= delta
+	_update_posture(delta)
 	var moving := false if is_instance_valid(_breaking) else _follow_path(delta)
 	_animate(delta, moving)
 	_sounds(delta, moving)
@@ -287,7 +291,7 @@ var _interfere_cooldown: float = 8.0
 ## Schaut der Spieler sie an? (im Blickfeld, freie Sicht – egal ob sie ihn sieht)
 func _player_looks_at_me() -> bool:
 	var cam := _player.camera.global_transform
-	var chest := global_position + Vector3(0, 1.5, 0)
+	var chest := global_position + Vector3(0, body_height(1.5), 0)
 	var to := chest - cam.origin
 	if (-cam.basis.z).dot(to.normalized()) < cos(deg_to_rad(30.0)):
 		return false
@@ -302,6 +306,11 @@ func _player_looks_at_me() -> bool:
 			return true
 		n = n.get_parent()
 	return false
+
+
+## Höhe eines Körperpunkts – auf allen Vieren ist sie nur gut halb so hoch.
+func body_height(upright: float) -> float:
+	return lerpf(upright, upright * 0.55, _crawl_blend)
 
 
 ## Ab einer bestimmten Nacht: Wer sie ansieht, dem dringt sie ins Hirn (Verzerrung + Schaden).
@@ -432,7 +441,7 @@ func _update_light(delta: float) -> void:
 		_lit_time = 0.0
 		return
 	var cam := _player.camera.global_transform
-	var to_me := (global_position + Vector3(0, 1.6, 0)) - cam.origin
+	var to_me := (global_position + Vector3(0, body_height(1.6), 0)) - cam.origin
 	var d := to_me.length()
 	if d > 30.0:
 		_lit_time = 0.0
@@ -462,7 +471,7 @@ func _update_light(delta: float) -> void:
 ## Ist die Kreatur gerade im Blickfeld des Spielers (und nicht verdeckt)?
 func is_in_player_view() -> bool:
 	var cam := _player.camera.global_transform
-	var to_me := (global_position + Vector3(0, 1.4, 0)) - cam.origin
+	var to_me := (global_position + Vector3(0, body_height(1.4), 0)) - cam.origin
 	if to_me.length() > 45.0:
 		return false
 	if (-cam.basis.z).dot(to_me.normalized()) < cos(deg_to_rad(38.0)):
@@ -528,7 +537,7 @@ func _follow_path(delta: float) -> bool:
 	var target := _path[0]
 	var to := target - global_position
 	to.y = 0.0
-	var step := _speed * delta
+	var step := _speed * lerpf(1.0, cfg.crawl_speed_factor, _crawl_blend) * delta
 	if to.length() <= step + 0.05:
 		global_position = target
 		_path.remove_at(0)
@@ -687,30 +696,68 @@ func _nearest_observe_spot() -> Vector3:
 
 # --- Animation und Geräusche -------------------------------------------
 
+## Wechselt ab und zu zwischen aufrechtem Gang und Laufen auf allen Vieren (wie ein Tier).
+## Zum Schlagen gegen Tür/Fenster, Hineingreifen und Angreifen richtet sie sich immer auf.
+func _update_posture(delta: float) -> void:
+	var must_stand := state in [State.HIT_ENTRY, State.REACH] or is_instance_valid(_breaking) or _stare >= 0.0
+	if must_stand:
+		_crawl = false
+	else:
+		_posture_timer -= delta
+		if _posture_timer <= 0.0:
+			_posture_timer = _rng.randf_range(cfg.posture_interval.x, cfg.posture_interval.y)
+			var chance := cfg.crawl_chance_chase if state == State.CHASE else cfg.crawl_chance
+			var was := _crawl
+			_crawl = _rng.randf() < chance
+			if _crawl and not was and _dist() < 25.0:
+				# beim Niedergehen ein trockenes Knacken der Gelenke
+				CreatureSounds.play(get_parent(), "head_snap", global_position + Vector3(0, 1.0, 0), -6.0, _rng.randf_range(0.7, 0.85))
+	_crawl_blend = move_toward(_crawl_blend, 1.0 if _crawl else 0.0, delta * cfg.posture_blend_speed)
+
+
 func _animate(delta: float, moving: bool) -> void:
 	var speed_factor := _speed / cfg.walk_speed if moving else 0.0
+	var c := smoothstep(0.0, 1.0, _crawl_blend)
 	if moving:
-		_walk_phase += delta * (2.4 + speed_factor * 1.6)
+		_walk_phase += delta * (2.4 + speed_factor * 1.6) * lerpf(1.0, 1.35, c)
 	var swing := sin(_walk_phase) * (28.0 if moving else 0.0) * clampf(speed_factor, 0.6, 1.6)
+	var k := clampf(delta * 8.0, 0.0, 1.0)
 	for side: int in [-1, 1]:
 		var leg := _parts.get("leg_%d" % side) as Node3D
 		var knee := _parts.get("knee_%d" % side) as Node3D
 		var arm := _parts.get("arm_%d" % side) as Node3D
 		var fore := _parts.get("forearm_%d" % side) as Node3D
 		if leg:
-			leg.rotation_degrees.x = swing * side
-			knee.rotation_degrees.x = maxf(0.0, -swing * side) * 1.2 + (6.0 if moving else 2.0)
+			# aufrecht: Beine pendeln; auf allen Vieren: Knie vorne angewinkelt, Unterschenkel nach hinten
+			var up_leg := swing * side
+			var up_knee := maxf(0.0, -swing * side) * 1.2 + (6.0 if moving else 2.0)
+			var cr_leg := -50.0 + swing * side * 0.8
+			var cr_knee := 95.0 + maxf(0.0, swing * side) * 0.6
+			leg.rotation_degrees.x = lerpf(up_leg, cr_leg, c)
+			knee.rotation_degrees.x = lerpf(up_knee, cr_knee, c)
 		if arm and not (side == 1 and state == State.HIT_ENTRY):
-			arm.rotation_degrees.x = lerpf(arm.rotation_degrees.x, -swing * side * 0.6 - (25.0 if state == State.CHASE else 4.0), clampf(delta * 8.0, 0.0, 1.0))
-			fore.rotation_degrees.x = -10.0 - (30.0 if state == State.CHASE else 0.0)
+			var up_arm := -swing * side * 0.6 - (25.0 if state == State.CHASE else 4.0)
+			var up_fore := -10.0 - (30.0 if state == State.CHASE else 0.0)
+			# auf allen Vieren: Arme sind Vorderbeine, Ellbogen knicken unnatürlich nach hinten; diagonal zum Bein
+			var cr_arm := -95.0 - swing * side * 0.9
+			var cr_fore := 35.0 + maxf(0.0, -swing * side) * 0.5
+			arm.rotation_degrees.x = lerpf(arm.rotation_degrees.x, lerpf(up_arm, cr_arm, c), k)
+			fore.rotation_degrees.x = lerpf(up_fore, cr_fore, c)
 	var hips := _parts.get("hips") as Node3D
 	if hips:
-		hips.position.y = 1.05 + absf(sin(_walk_phase)) * 0.04
+		hips.position.y = lerpf(1.05, 0.74, c) + absf(sin(_walk_phase)) * lerpf(0.04, 0.03, c)
+	var torso := _parts.get("torso") as Node3D
+	if torso:
+		torso.rotation_degrees.x = lerpf(22.0 if state == State.CHASE else 8.0, 75.0 + sin(_walk_phase * 2.0) * 3.0 * float(moving), c)
+	var neck := _parts.get("neck") as Node3D
+	if neck:
+		# Kopf bleibt nach vorn gerichtet, auch wenn der Rücken waagrecht ist
+		neck.rotation_degrees.x = lerpf(14.0, -58.0, c)
 	var head := _parts.get("head") as Node3D
 	if head:
 		# Unheimliches, langsames Neigen des Kopfes beim Stillstehen
 		var t := Time.get_ticks_msec() / 1000.0
-		head.rotation_degrees.z = (sin(t * 0.4) * 18.0) if not moving else sin(_walk_phase * 0.5) * 4.0
+		head.rotation_degrees.z = (sin(t * 0.4) * 18.0) if not moving else sin(_walk_phase * 0.5) * lerpf(4.0, 9.0, c)
 		head.rotation_degrees.x = -8.0 if state == State.OBSERVE else 0.0
 		if _head_track > 0.0 and _player:
 			# Kopf blickt direkt in die Kamera des Spielers
@@ -720,9 +767,6 @@ func _animate(delta: float, moving: bool) -> void:
 			head.rotation_degrees.z *= 0.2
 		else:
 			head.rotation_degrees.y = lerpf(head.rotation_degrees.y, 0.0, clampf(delta * 2.0, 0.0, 1.0))
-	var torso := _parts.get("torso") as Node3D
-	if torso:
-		torso.rotation_degrees.x = 22.0 if state == State.CHASE else 8.0
 
 
 func _sounds(delta: float, moving: bool) -> void:

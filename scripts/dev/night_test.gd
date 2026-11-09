@@ -57,6 +57,10 @@ func _run() -> void:
 		await _research_test()
 		get_tree().quit()
 		return
+	if mode == "lurk":
+		await _lurk_test()
+		get_tree().quit()
+		return
 	if mode == "gear":
 		await _gear_test()
 		get_tree().quit()
@@ -812,3 +816,54 @@ func _gear_test() -> void:
 			fleeing += 1
 	print("TIERE fliehen/rollen sich ein: ", fleeing)
 	print("GEAR TEST ENDE")
+
+
+## Lauernde Gestalt auf den Kameras + Kreatur auf allen Vieren.
+func _lurk_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var sv := get_tree().get_first_node_in_group("surveillance") as Surveillance
+	sv.viewing = true
+	await get_tree().process_frame
+	for i in sv.cameras.size():
+		sv.set_active(i)
+		for k in Surveillance.LURK_SPOTS[i].size():
+			var okk := sv.spawn_lurker(k)
+			var lp := sv._lurker.global_position if sv._lurker else Vector3.ZERO
+			var sp := sv.camera.unproject_position(lp + Vector3(0, 0.8, 0)) if sv._lurker else Vector2.ZERO
+			print("  Kamera %d Ort %d: %s  Bildpunkt %s" % [i, k, okk, sp])
+			sv._remove_lurker()
+			sv._last_lurk = -1e9
+		var ok := sv.spawn_lurker()
+		print("LAUERN Kamera %d (%s): %s %s" % [i, sv.active_name(), ok, sv._lurker.global_position if sv._lurker else ""])
+		await get_tree().create_timer(0.3).timeout
+	sv.set_active(0)
+	sv._last_lurk = -1e9
+	TimeManager.set_time(1, 23.0)
+	get_tree().call_group("hud", "open_monitor")
+	get_tree().call_group("surveillance", "set_active", 0)
+	get_tree().call_group("surveillance", "spawn_lurker", 1)
+	for f in 20:
+		await get_tree().process_frame
+	print("LAUERN nach 20 Bildern noch da: %s, Strom %s, Ebenen %s, Kameramaske %s" % [sv._lurker != null and is_instance_valid(sv._lurker), PowerManager.has_power(),
+			(sv._lurker.find_children("*", "VisualInstance3D", true, false)[0] as VisualInstance3D).layers if sv._lurker else -1, sv.camera.cull_mask])
+	(get_tree().get_first_node_in_group("hud") as Hud).close_monitor()
+	sv.set_active(0)
+	print("LAUERN nach Umschalten weg: ", sv._lurker == null or not is_instance_valid(sv._lurker))
+	sv.viewing = false
+	TimeManager.set_time(7, 22.0)
+	var scene := get_tree().current_scene
+	var c := Creature.new()
+	scene.add_child(c)
+	c.global_position = Creature._ground(Vector3(-30, 0, 20))
+	c.begin("prowl")
+	c._crawl = true
+	c._posture_timer = 99.0
+	var p0 := c.global_position
+	await get_tree().create_timer(3.0).timeout
+	var hips := c._parts["hips"] as Node3D
+	print("VIERBEINIG: Mischung %.2f, Hüfthöhe %.2f, Weg in 3 s: %.1f m" % [c._crawl_blend, hips.position.y, c.global_position.distance_to(p0)])
+	c._crawl = false
+	await get_tree().create_timer(1.5).timeout
+	print("AUFRECHT: Mischung %.2f, Hüfthöhe %.2f" % [c._crawl_blend, hips.position.y])
+	print("LURK TEST ENDE")
