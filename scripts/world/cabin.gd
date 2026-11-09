@@ -182,6 +182,11 @@ func _build_radio_corner(y: float) -> void:
 	BuildKit.box(radio_node, Vector3(0.35, 0.19, 0.23), Vector3(0, 0.095, 0), case_mat, false)
 	BuildKit.box_mm(radio_node, Vector3(-0.185, 0.04, -0.075), Vector3(-0.175, 0.16, 0.025), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
 	BuildKit.cylinder(radio_node, 0.005, 0.35, Vector3(0.125, 0.34, 0.065), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
+	# Große Tankanzeige für den Generator im Schuppen, über dem Funktisch
+	var gauge := FuelGauge.new()
+	gauge.name = "FuelGauge"
+	gauge.position = Vector3(2.8, y + 1.6, wz + 0.002)
+	add_child(gauge)
 	# ein paar Werkstattsachen: Lötkolben, Kabelrolle, Notizblock
 	BuildKit.cylinder(self, 0.06, 0.05, Vector3(x1 - 0.35, y + 0.785, zf - 0.14), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false, Vector3.ZERO, -1.0, 10)
 	BuildKit.box(self, Vector3(0.15, 0.01, 0.2), Vector3(x0 + 0.62, y + 0.765, zf - 0.13), BuildKit.color_mat(Color(0.9, 0.88, 0.8)), false, Vector3(0, 12, 0))
@@ -284,6 +289,16 @@ func _porch_bench() -> void:
 		var z := bz0 + 0.02 + i * 0.1
 		BuildKit.box_mm(bench, Vector3(-1.5, FLOOR_Y + 0.42, z), Vector3(0.6, FLOOR_Y + 0.465, z + 0.085), m_wood, false)
 	BuildKit.collider_box(bench, Vector3(2.1, 0.47, 0.42), Vector3(-0.45, FLOOR_Y + 0.235, (bz0 + bz1) * 0.5))
+	# Hinsetzen: Blick vom Haus weg in den Garten (wandert mit, wenn die Bank nachts versetzt wird)
+	var seat := Seat.new()
+	seat.name = "Seat"
+	seat.label = "Bank"
+	seat.spot = Vector3(-0.45, FLOOR_Y, bz1 + 0.12)
+	seat.facing = Vector3(0, 0, 1)
+	seat.eye = 1.12
+	seat.area_size = Vector3(2.0, 0.5, 0.45)
+	seat.area_offset = Vector3(-0.45, FLOOR_Y + 0.5, (bz0 + bz1) * 0.5)
+	bench.add_child(seat)
 	for x: float in [-1.42, 0.52]:
 		for z: float in [bz0 + 0.04, bz1 - 0.04]:
 			BuildKit.box_mm(bench, Vector3(x - 0.04, FLOOR_Y, z - 0.04), Vector3(x + 0.04, FLOOR_Y + 0.42, z + 0.04), m_wood_dark, false)
@@ -418,9 +433,10 @@ func _build_fireplace() -> void:
 	BuildKit.cylinder(self, 0.012, 0.75, Vector3(-4.75, y + 0.38, 2.85), m_iron, false, Vector3.ZERO, -1.0, 4)
 	for i in 3:
 		BuildKit.cylinder(self, 0.008, 0.6, Vector3(-4.75 + (i - 1) * 0.04, y + 0.35, 2.9), m_iron, false, Vector3((i - 1) * 6.0, 0, (i - 1) * 6.0), -1.0, 4)
-	BuildKit.cylinder(self, 0.25, 0.3, Vector3(-4.75, y + 0.15, 0.55), BuildKit.tex_mat("planks_v", 0.4, Color(0.8, 0.7, 0.6)), true, Vector3.ZERO, 0.22, 10)
-	for i in 4:
-		BuildKit.cylinder(self, 0.06, 0.5, Vector3(-4.75 + (i % 2) * 0.1 - 0.05, y + 0.34 + (i / 2) * 0.1, 0.55), BuildKit.tex_mat("logs", 0.5), false, Vector3(90, 30 * i, 0), -1.0, 6)
+	var basket := WoodBasket.new()
+	basket.name = "WoodBasket"
+	basket.position = Vector3(-4.75, y, 0.55)
+	add_child(basket)
 	# Auf dem Sims: Familienfoto (GDD 3.1), Krug, Kerzen
 	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12).add_to_group("family_photo")
 	BuildKit.cylinder(self, 0.08, 0.2, Vector3(-5.3, y + 1.52, 1.35), BuildKit.color_mat(Color(0.5, 0.22, 0.12), 0.7), false, Vector3.ZERO, 0.05, 10)

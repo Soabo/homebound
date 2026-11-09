@@ -37,6 +37,9 @@ var _hammer: Node3D
 var _left_out: float = 1.0
 var _led: StandardMaterial3D
 var _screen: StandardMaterial3D
+var _screen_light: OmniLight3D
+## Licht-Modus der Uhr: false = LED nach vorn, true = Display leuchtet weiß (schwaches Umgebungslicht)
+var screen_mode: bool = false
 var _watch_on: bool = false
 
 var _action: String = ""
@@ -252,6 +255,15 @@ func _build_left() -> void:
 	watch_light.light_volumetric_fog_energy = 1.2
 	watch_light.visible = false
 	watch.add_child(watch_light)
+	# Display-Modus: weißes Uhr-Display als schwaches Umgebungslicht (F gedrückt halten)
+	_screen_light = OmniLight3D.new()
+	_screen_light.position = Vector3(0, 0.05, 0)
+	_screen_light.light_color = Color(0.92, 0.95, 1.0)
+	_screen_light.light_energy = 0.0
+	_screen_light.omni_range = 4.5
+	_screen_light.omni_attenuation = 1.6
+	_screen_light.shadow_enabled = false
+	watch.add_child(_screen_light)
 	# Bauhammer
 	_hammer = Node3D.new()
 	_hammer.position = Vector3(0, 0.0, -0.035)
@@ -290,6 +302,15 @@ func interfere(seconds: float, blackout: float) -> void:
 
 func _set_glow(on: bool) -> void:
 	var lit := on and _watch_on
+	if screen_mode:
+		watch_light.light_energy = 0.0
+		_led.emission_energy_multiplier = 0.0
+		_screen_light.light_energy = 0.55 if lit else 0.0
+		_screen.emission = Color(1.0, 1.0, 1.0)
+		_screen.emission_energy_multiplier = 3.0 if lit else (0.1 if _watch_on else 0.0)
+		return
+	_screen_light.light_energy = 0.0
+	_screen.emission = Color(0.4, 0.7, 0.9)
 	watch_light.light_energy = 4.5 if lit else 0.0
 	_led.emission_energy_multiplier = 6.0 if lit else 0.0
 	_screen.emission_energy_multiplier = 0.6 if lit else (0.08 if _watch_on else 0.0)
@@ -303,10 +324,15 @@ func light_shining() -> bool:
 func set_watch(on: bool) -> void:
 	_watch_on = on
 	_interfere_id += 1
-	watch_light.light_energy = 4.5
 	watch_light.visible = on
-	_led.emission_energy_multiplier = 6.0 if on else 0.0
-	_screen.emission_energy_multiplier = 0.6 if on else 0.0
+	_set_glow(true)
+
+
+## Zwischen LED und weißem Display umschalten (nur bei eingeschalteter Uhr).
+func toggle_screen_mode() -> void:
+	screen_mode = not screen_mode
+	_interfere_id += 1
+	_set_glow(true)
 
 
 ## true, solange mit dem Werkzeug gearbeitet wird (Holz hacken): das Werkzeug bleibt in der Hand.
@@ -431,23 +457,31 @@ func _melee_hit(kind: String) -> void:
 ## Genau ein Klang beim Treffer – je nach Material wie ein Schritt auf Holz, Kies, Stein …; Metall klingt metallisch.
 func _impact_sound(collider: Node, pos: Vector3) -> void:
 	var scene := get_tree().current_scene
+	var to_cam := (get_parent() as Node3D).global_position - pos
+	var fx_dir := to_cam.normalized() + Vector3(0, 0.5, 0)
+	var strong := _right_kind in ["axe", "tin_snips"]
 	var n := collider
 	while n and n != scene:
 		var nm := String(n.name)
 		if nm in ["CarWreck", "Generator"] or nm.begins_with("Fuel") or n is AlienStructure or n is CrashSite:
 			SoundBank.play_at(scene, "collect_metal", pos, -2.0)
+			if strong:
+				Fx.burst(scene, pos, "metal", fx_dir)
 			return
 		if n is Terrain:
 			if not Footsteps.play_surface(scene, pos, Footsteps.surface_at(pos), "run", 2.0):
 				SoundBank.play_at(scene, "thud", pos, -10.0)
+			Fx.burst(scene, pos, "dirt", fx_dir, 0.8)
 			return
 		if nm == "RockColliders" or n is StreamCave:
 			Footsteps.play_surface(scene, pos, "stone", "run", 2.0)
+			Fx.burst(scene, pos, "stone", fx_dir, 0.8 if strong else 0.4)
 			return
 		n = n.get_parent()
 	# Hütte, Schuppen, Bäume, Stämme, Bauten: Holz
 	if not Footsteps.play_surface(scene, pos, "wood", "run", 2.0):
 		SoundBank.play_at(scene, "thud", pos, -10.0)
+	Fx.burst(scene, pos, "wood" if strong else "dust", fx_dir, 0.8 if strong else 0.5)
 
 
 ## Schadensminderung beim Blocken (1 = kein Block).

@@ -41,6 +41,14 @@ func _ready() -> void:
 	BuildKit.box(_tablet, Vector3(0.17, 0.012, 0.25), Vector3.ZERO, BuildKit.color_mat(Color(0.08, 0.08, 0.09), 0.3, 0.4), false)
 	_screen = BuildKit.emissive_mat(Color(0.35, 0.55, 0.8), 0.0)
 	BuildKit.box(_tablet, Vector3(0.15, 0.002, 0.22), Vector3(0, 0.007, 0), _screen, false)
+	# auch das Tablet selbst lässt sich anklicken
+	var ta := Area3D.new()
+	var tcs := CollisionShape3D.new()
+	var tsh := BoxShape3D.new()
+	tsh.size = Vector3(0.3, 0.12, 0.36)
+	tcs.shape = tsh
+	ta.add_child(tcs)
+	_tablet.add_child(ta)
 	GameState.restore(self)
 
 
@@ -95,15 +103,21 @@ func interact(p: Node) -> void:
 	_player.velocity = Vector3.ZERO
 	_player.input_locked = true
 	_player.set_physics_process(false)
-	_player.global_position = to_global(SEAT)
-	_player.rotation.y = PI * 0.5  # Blick zum Kamin
-	_player.head.position.y = SIT_EYE
-	_player.head.rotation.x = -0.3
-	_player.camera.fov = 75.0
-	_tablet.visible = false
 	EventBus.interaction_prompt_changed.emit("")
-	SoundBank.play_at(self, "floor_creak", to_global(SEAT) + Vector3(0, 0.4, 0), -10.0)
-	get_tree().call_group("tablet_menu", "open", self)
+	# Hinsetzen: zur Couch drehen, absinken, Blick senkt sich aufs Tablet
+	var pl := _player
+	var target_yaw := pl.rotation.y + wrapf(PI * 0.5 - pl.rotation.y, -PI, PI)
+	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(pl, "global_position", to_global(SEAT), 0.8)
+	tw.tween_property(pl, "rotation:y", target_yaw, 0.6)
+	tw.tween_property(pl.head, "position:y", SIT_EYE, 0.8).set_ease(Tween.EASE_OUT)
+	tw.tween_property(pl.head, "rotation:x", -0.3, 0.9)
+	tw.tween_property(pl.camera, "fov", 75.0, 0.8)
+	tw.chain().tween_callback(func() -> void:
+		_tablet.visible = false
+		get_tree().call_group("tablet_menu", "open", self))
+	# Polster: dumpfes Einsinken (bis eine eigene Aufnahme kommt: weiches Rascheln)
+	SoundBank.play_at(self, "backpack", to_global(SEAT) + Vector3(0, 0.4, 0), -10.0, 0.8)
 
 
 ## Vom Tablet aus aufgerufen ([E]).
@@ -111,12 +125,16 @@ func stand_up() -> void:
 	if not sitting or _player == null:
 		return
 	sitting = false
-	_player.global_position = _stand_pos
-	_player.rotation.y = _stand_rot
-	_player.head.rotation.x = 0.0
-	_player.set_physics_process(true)
-	_player.input_locked = false
 	_tablet.visible = true
+	# Aufstehen: hochdrücken, zurück an den Platz vor der Couch
+	var p := _player
+	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(p, "global_position", _stand_pos, 0.7)
+	tw.tween_property(p.head, "rotation:x", 0.0, 0.6)
+	tw.tween_property(p.head, "position:y", Player.STAND_HEIGHT - Player.EYE_OFFSET, 0.6)
+	tw.chain().tween_callback(func() -> void:
+		p.set_physics_process(true)
+		p.input_locked = false)
 
 
 func _process(_delta: float) -> void:

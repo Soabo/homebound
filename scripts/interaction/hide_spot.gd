@@ -148,30 +148,28 @@ func _build_locker() -> void:
 
 # --- Bedienung ----------------------------------------------------------
 
+## Bedienung: E öffnet/schließt die Tür (draußen wie drinnen), R geht hinein bzw. wieder hinaus.
 func get_prompt(_p: Node) -> String:
 	if occupied:
 		return ""
-	if not door_open:
-		return "%s  [E] Tür öffnen" % label
-	return "%s  [E] Hineinstellen" % label
+	return "%s  [E] Tür %s" % [label, "schließen" if door_open else "öffnen"]
 
 
 func get_secondary_prompt(_p: Node) -> String:
-	return "[R] Tür schließen" if door_open and not occupied else ""
+	return "" if occupied else "[R] Hineinstellen"
 
 
-func interact(p: Node) -> void:
+func interact(_p: Node) -> void:
+	if not occupied:
+		set_door(not door_open)
+
+
+func secondary_interact(p: Node) -> void:
 	if occupied:
 		return
 	if not door_open:
 		set_door(true)
-	else:
-		_enter(p as Player)
-
-
-func secondary_interact(_p: Node) -> void:
-	if not occupied and door_open:
-		set_door(false)
+	_enter(p as Player)
 
 
 func set_door(open: bool) -> void:
@@ -205,26 +203,38 @@ func _enter(p: Player) -> void:
 	p.set_physics_process(false)
 	p.look_only = true
 	p.input_locked = true
-	p.global_position = to_global(Vector3(0, 0.07, -size.z * 0.5 + 0.32))
-	# Blick zur Tür hinaus
-	var fwd := global_transform.basis.z
-	p.rotation.y = atan2(fwd.x, fwd.z) + PI
-	p.head.position.y = EYE - 0.07 + 0.07
-	p.head.rotation.x = 0.0
+	# Uhrlicht geht aus – im Versteck verrät es einen sonst
+	if p.flashlight.visible:
+		p.set_flashlight(false)
+		PlayerSounds.play(p, "flashlight", -10.0, 0.9)
 	p.hidden_in = self
-	EventBus.interaction_prompt_changed.emit("[E] Tür schließen    [R] Heraustreten")
+	# Hineinsteigen: Körper gleitet in den Schrank und dreht sich zur Tür, Kopf duckt kurz unter der Oberkante
+	var fwd := global_transform.basis.z
+	var target_yaw := atan2(fwd.x, fwd.z) + PI
+	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(p, "global_position", to_global(Vector3(0, 0.07, -size.z * 0.5 + 0.32)), 0.7)
+	tw.tween_property(p, "rotation:y", p.rotation.y + wrapf(target_yaw - p.rotation.y, -PI, PI), 0.7)
+	tw.tween_property(p.head, "rotation:x", 0.0, 0.6)
+	var head_tw := create_tween().set_trans(Tween.TRANS_SINE)
+	head_tw.tween_property(p.head, "position:y", EYE - 0.2, 0.35)
+	head_tw.tween_property(p.head, "position:y", EYE, 0.35)
+	EventBus.interaction_prompt_changed.emit("[E] Tür %s    [R] Heraustreten" % ("schließen" if door_open else "öffnen"))
 
 
 func _leave() -> void:
 	if _player == null:
 		return
 	occupied = false
-	_player.hidden_in = null
-	_player.look_only = false
-	_player.input_locked = false
-	_player.global_position = to_global(Vector3(0, 0.07, size.z * 0.5 + 0.55))
-	_player.set_physics_process(true)
+	var p := _player
 	_player = null
+	p.hidden_in = null
+	# Heraustreten: kurz ducken, nach vorn hinaus, dann wieder normal steuerbar
+	var tw := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(p, "global_position", to_global(Vector3(0, 0.07, size.z * 0.5 + 0.55)), 0.55)
+	tw.tween_callback(func() -> void:
+		p.look_only = false
+		p.input_locked = false
+		p.set_physics_process(true))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -232,7 +242,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact") and not event.is_echo():
 		set_door(not door_open)
-		EventBus.interaction_prompt_changed.emit("[E] Tür öffnen" if not door_open else "[E] Tür schließen    [R] Heraustreten")
+		EventBus.interaction_prompt_changed.emit("[E] Tür %s    [R] Heraustreten" % ("schließen" if door_open else "öffnen"))
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact_secondary") and not event.is_echo():
 		if not door_open:

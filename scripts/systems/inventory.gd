@@ -22,7 +22,7 @@ func overloaded() -> bool:
 func _check_overload() -> void:
 	var o := overloaded()
 	if o and not _was_overloaded:
-		EventBus.notify("Du bist überladen (%.1f / %.0f kg) – du kannst nur noch gehen." % [total_weight(), MAX_WEIGHT], 3.5)
+		EventBus.notify("Überladen! (%.1f / %.0f kg) – du kannst nur noch langsam gehen." % [total_weight(), MAX_WEIGHT], 4.0)
 	elif not o and _was_overloaded:
 		EventBus.notify("Du bist nicht mehr überladen.", 2.0)
 	_was_overloaded = o

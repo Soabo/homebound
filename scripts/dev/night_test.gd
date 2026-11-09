@@ -57,6 +57,10 @@ func _run() -> void:
 		await _research_test()
 		get_tree().quit()
 		return
+	if mode == "extras":
+		await _extras_test()
+		get_tree().quit()
+		return
 	if mode == "tablet":
 		await _tablet_test()
 		get_tree().quit()
@@ -739,15 +743,16 @@ func _gear_test() -> void:
 		if h == null:
 			print("VERSTECK FEHLT: ", path)
 			continue
-		h.interact(player)
+		player.set_flashlight(true)
+		h.interact(player)  # E: Tür auf
 		await get_tree().create_timer(0.5).timeout
-		h.interact(player)
-		await get_tree().create_timer(0.3).timeout
+		h.secondary_interact(player)  # R: hinein
+		await get_tree().create_timer(0.9).timeout
 		h.set_door(false)  # drinnen: E schließt die Tür
 		await get_tree().create_timer(0.5).timeout
-		print("VERSTECK %s: drin=%s, Tür zu=%s, versteckt=%s" % [path, h.occupied, not h.door_open, player.is_hidden()])
+		print("VERSTECK %s: drin=%s, Tür zu=%s, versteckt=%s, Licht aus=%s" % [path, h.occupied, not h.door_open, player.is_hidden(), not player.flashlight.visible])
 		h._leave()
-		await get_tree().create_timer(0.3).timeout
+		await get_tree().create_timer(0.8).timeout
 		print("VERSTECK %s verlassen: versteckt=%s" % [path, player.is_hidden()])
 	# Überladung
 	var added := {}
@@ -892,7 +897,7 @@ func _tablet_test() -> void:
 	var couch := get_tree().current_scene.get_node("Cabin/Couch") as Couch
 	var player := get_tree().get_first_node_in_group("player") as Player
 	couch.interact(player)
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(1.3).timeout
 	var tm := get_tree().get_first_node_in_group("tablet_menu") as TabletMenu
 	for t: String in ["archive", "notes", "inbox"]:
 		tm._set_tab(t)
@@ -906,3 +911,70 @@ func _tablet_test() -> void:
 	print("TABLET Speichern/Laden gesendet: ", Research.sent.size())
 	tm.close()
 	print("TABLET TEST ENDE")
+
+
+## Holzkorb, Tankanzeige, Hochsitz-Leiter, Bank, Monitorstuhl, Uhr-Display, Fensterzacken, Partikel.
+func _extras_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var basket := scene.get_node("Cabin/WoodBasket") as WoodBasket
+	var w0 := Inventory.count("wood")
+	basket.interact(player)
+	print("HOLZKORB genommen: Korb %d, Holz %d -> %d" % [basket.count, w0, Inventory.count("wood")])
+	Inventory.add("wood", 5)
+	for i in 6:
+		basket.secondary_interact(player)
+	print("HOLZKORB gefüllt: %d (max 4)" % basket.count)
+	var gauge := scene.get_node("Cabin/FuelGauge") as FuelGauge
+	await get_tree().process_frame
+	print("TANK: ", gauge.get_prompt(player), "  Zeiger %.0f°" % gauge._needle.rotation_degrees.z)
+	# Uhr: Licht an, F halten -> Display-Modus
+	player.set_flashlight(true)
+	player.hands.toggle_screen_mode()
+	print("UHR Display-Modus: %s, LED leuchtet: %s, Umgebungslicht %.2f" % [player.hands.screen_mode, player.light_shining(), player.hands._screen_light.light_energy])
+	player.hands.toggle_screen_mode()
+	player.set_flashlight(false)
+	# Bank
+	var seat := scene.get_node("Cabin/PorchBench/Seat") as Seat
+	player.global_position = Vector3(-0.45, Cabin.FLOOR_Y + 0.05, 6.0)
+	await get_tree().create_timer(0.3).timeout
+	seat.interact(player)
+	await get_tree().create_timer(1.0).timeout
+	print("BANK sitzt: Augen %.2f, gesperrt %s, umschauen %s" % [player.head.position.y, player.input_locked, player.look_only])
+	var ev := InputEventAction.new()
+	ev.action = "interact"
+	ev.pressed = true
+	seat._unhandled_input(ev)
+	await get_tree().create_timer(0.9).timeout
+	print("BANK aufgestanden: gesperrt %s" % player.input_locked)
+	# Monitor
+	var station := scene.get_node("Cabin/MonitorStation") as MonitorStation
+	station.interact(player)
+	await get_tree().create_timer(1.0).timeout
+	var sv := get_tree().get_first_node_in_group("surveillance") as Surveillance
+	print("MONITOR sitzt: Augen %.2f, Bild offen %s" % [player.head.position.y, sv.viewing])
+	(get_tree().get_first_node_in_group("hud") as Hud).close_monitor()
+	await get_tree().create_timer(0.9).timeout
+	print("MONITOR aufgestanden: gesperrt %s, Bewegung %s" % [player.input_locked, player.is_physics_processing()])
+	# Hochsitz
+	var tower := scene.get_node("RangerTower") as Node3D
+	var ladder := tower.get_node("Ladder") as TowerLadder
+	player.global_position = ladder.to_global(ladder.bottom) + Vector3(0, 0.1, 0)
+	await get_tree().create_timer(0.3).timeout
+	ladder.interact(player)
+	await get_tree().create_timer(5.0).timeout
+	print("HOCHSITZ oben: %.1f m über Boden (Plattform %.1f), gesperrt %s" % [player.global_position.y - tower.global_position.y, RangerTower.DECK, player.input_locked])
+	# springen: Dach muss halten
+	player.velocity.y = 8.0
+	var top_y := player.global_position.y
+	for i in 40:
+		await get_tree().physics_frame
+		top_y = maxf(top_y, player.global_position.y)
+	print("HOCHSITZ Sprung: höchster Punkt %.2f m über Plattform (Dach ca. 1,9 m)" % (top_y - tower.global_position.y - RangerTower.DECK))
+	# Fenster zerbrechen
+	var win := scene.get_node("Cabin/WindowBedroom") as CabinWindow
+	win.receive_hit(9999.0)
+	print("FENSTER zerbrochen: Zacken sichtbar %s, Glas weg %s" % [win._jagged.visible, not win._glass.visible])
+	print("EXTRAS TEST ENDE")

@@ -81,6 +81,15 @@ func interact(player: Node) -> void:
 		if with_tool or i == 0:
 			SoundBank.play_at(self, sound, to_global(anchor) + Vector3(0, 0.5, 0), -4.0, randf_range(0.9, 1.1))
 			EventBus.noise_made.emit(to_global(anchor), 10.0)
+			# Späne, Splitter, Funken an der Stelle, auf die man schaut
+			var hit := to_global(anchor) + Vector3(0, 0.5, 0)
+			var nrm := Vector3.UP
+			if p and p.has_method("aim_point"):
+				var ap: Dictionary = p.aim_point()
+				if not ap.is_empty():
+					hit = ap["position"]
+					nrm = ap["normal"]
+			Fx.burst(get_tree().current_scene, hit, Fx.kind_for_item(item_id), nrm + Vector3(0, 0.6, 0), 1.0 if with_tool else 0.7)
 		await get_tree().create_timer(step_time * (0.52 if with_tool else 1.0)).timeout
 	if p and is_instance_valid(p):
 		p.input_locked = false

@@ -13,6 +13,7 @@ var _note: Label
 var _help: Label
 var _title: Label
 var _inv: Label
+var _weight: Label
 var _fade: ColorRect
 var _hurt: ColorRect
 var _note_time: float = 0.0
@@ -81,6 +82,16 @@ func _ready() -> void:
 	_inv.offset_right = -32
 	_inv.offset_top = -60
 	_inv.offset_bottom = -24
+	# Traglast: getragen / Maximum, bei Überladung rot mit „ÜBERLADEN“
+	_weight = _label(root, 20, HORIZONTAL_ALIGNMENT_RIGHT)
+	_weight.anchor_left = 1.0
+	_weight.anchor_right = 1.0
+	_weight.anchor_top = 1.0
+	_weight.anchor_bottom = 1.0
+	_weight.offset_left = -600
+	_weight.offset_right = -32
+	_weight.offset_top = -92
+	_weight.offset_bottom = -60
 
 	_prompt = _label(root, 24, HORIZONTAL_ALIGNMENT_CENTER)
 	_prompt.anchor_right = 1.0
@@ -165,6 +176,7 @@ func _on_prompt(text: String) -> void:
 
 func _process(delta: float) -> void:
 	_clock.text = "Tag %d    %s" % [TimeManager.day, TimeManager.get_clock_text()]
+	_update_weight()
 	if _note_time > 0.0:
 		_note_time -= delta
 		_note.modulate.a = clampf(_note_time / 0.6, 0.0, 1.0)
@@ -193,6 +205,18 @@ func show_notification(text: String, duration: float = 3.0) -> void:
 func _fade_help(show: bool) -> void:
 	_help_time = 0.0
 	create_tween().tween_property(_help, "modulate:a", 0.85 if show else 0.0, 0.5)
+
+
+func _update_weight() -> void:
+	var w := Inventory.total_weight()
+	if Inventory.overloaded():
+		_weight.text = "ÜBERLADEN   %.1f / %.0f kg" % [w, Inventory.MAX_WEIGHT]
+		var pulse := 0.6 + 0.4 * absf(sin(Time.get_ticks_msec() / 300.0))
+		_weight.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3, pulse))
+	else:
+		_weight.text = "Traglast  %.1f / %.0f kg" % [w, Inventory.MAX_WEIGHT]
+		var near := w > Inventory.MAX_WEIGHT * 0.85
+		_weight.add_theme_color_override("font_color", Color(1.0, 0.8, 0.45) if near else Color(0.85, 0.85, 0.8, 0.85))
 
 
 func _update_inventory() -> void:
@@ -413,13 +437,16 @@ func close_monitor() -> void:
 	_static_player.stop()
 	_hum_player.stop()
 	_set_player_locked(false)
+	get_tree().call_group("monitor_station", "on_monitor_closed")
 
 
 func _set_player_locked(v: bool) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	if player:
 		player.input_locked = v
-		player.set_physics_process(true)
+		# beim Öffnen sitzt der Spieler (Bewegung ruht) – erst beim Schließen wieder freigeben
+		if not v:
+			player.set_physics_process(true)
 
 
 func _update_monitor(_delta: float) -> void:

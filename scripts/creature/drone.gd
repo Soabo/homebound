@@ -275,7 +275,7 @@ func _scan() -> void:
 	_alarm_done = true
 	_spot.light_color = Color(1.0, 0.25, 0.2)
 	SoundBank.play_at(get_parent(), "signal", global_position, 6.0, 2.2)
-	EventBus.notify("Der Lichtkegel bleibt auf dir stehen – die Drohne hat dich erfasst!" if _aim == null else "Das Licht durchs Fenster bleibt auf dir stehen – die Drohne hat dich gesehen!", 3.5)
+	EventBus.notify("Der Lichtkegel bleibt auf dir stehen – du wurdest gesehen!" if _aim == null else "Das Licht durchs Fenster bleibt auf dir stehen – du wurdest gesehen!", 3.5)
 	EventBus.noise_made.emit(p, 80.0)
 	var away := (p - Vector3(0, p.y, 0)).normalized() if Vector2(p.x, p.z).length() > 1.0 else Vector3(0, 0, 1)
 	ThreatDirector.spawn_ambush(p + away * 26.0)
@@ -289,7 +289,7 @@ func _check_jammer() -> void:
 		if Vector2(n.global_position.x - global_position.x, n.global_position.z - global_position.z).length() < cfg.jammer_range:
 			_stagger = 1.5
 			SoundBank.play_at(get_parent(), "static", global_position, -4.0, 1.6)
-			EventBus.notify("Die Drohne flackert, verliert das Signal und dreht ab.", 3.0)
+			EventBus.notify("Das Licht über dir flackert, wird schwächer und zieht ab.", 3.0)
 			_leave()
 			return
 
@@ -327,7 +327,7 @@ func _drop_part() -> void:
 	BuildKit.sphere(v, 0.08, Vector3(0, 0.08, 0), CrashSite.hull_material(), Vector3.ONE, 8)
 	p.visuals.append(v)
 	SoundBank.play_at(get_parent(), "clatter", g, 0.0, 1.4)
-	EventBus.notify("Etwas ist von der Drohne abgefallen …", 3.0)
+	EventBus.notify("Etwas ist von dem fliegenden Licht abgefallen …", 3.0)
 
 
 func _glitch_cameras(delta: float) -> void:

@@ -8,11 +8,16 @@ extends Interactable
 @export var screen_size: Vector2 = Vector2(0.45, 0.3)
 
 var _screen: MeshInstance3D
+## Füße auf dem Stuhl vor dem Monitor (Hüttenkoordinaten), Blick zum Bildschirm (+x)
+const CHAIR_FEET := Vector3(0.92, Cabin.FLOOR_Y, 3.62)
+var _seated: bool = false
+var _back: Vector3
 var _mat: ShaderMaterial
 var _black: StandardMaterial3D
 
 
 func _ready() -> void:
+	add_to_group("monitor_station")
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
@@ -57,4 +62,24 @@ func interact(_player: Node) -> void:
 	if not PowerManager.has_power():
 		EventBus.notify("Kein Strom. Der Generator steht im Schuppen.", 2.5)
 		return
-	get_tree().call_group("hud", "open_monitor")
+	# Auf den Stuhl vor dem Monitor setzen, dann erst das Bild öffnen
+	var p := _player as Player
+	if p == null or _seated:
+		get_tree().call_group("hud", "open_monitor")
+		return
+	_seated = true
+	_back = p.global_position
+	var tw := Seat.sit_down(self, p, CHAIR_FEET, Vector3(1, 0, 0), 1.15, false)
+	tw.chain().tween_callback(func() -> void: get_tree().call_group("hud", "open_monitor"))
+
+
+## Vom HUD beim Schließen des Monitors: wieder aufstehen.
+func on_monitor_closed() -> void:
+	if not _seated:
+		return
+	_seated = false
+	var p := get_tree().get_first_node_in_group("player") as Player
+	if p:
+		p.input_locked = true
+		p.set_physics_process(false)
+		Seat.stand_up(self, p, _back)

@@ -92,7 +92,7 @@ func secondary_interact(_player: Node) -> void:
 			EventBus.notify("Du brauchst 2 Bretter und 4 Nägel. Beides gibt es in der Werkstatt.", 3.0)
 			return
 		health = minf(health + max_health * 0.6, max_health)
-		SoundBank.play_at(self, "hammer", global_position + Vector3(width * 0.5, 1.0, 0), -2.0)
+		SoundBank.hammer_series(self, global_position + Vector3(width * 0.5, 1.0, 0), 4)
 		EventBus.noise_made.emit(global_position, 12.0)
 		if is_open:
 			set_open(false)

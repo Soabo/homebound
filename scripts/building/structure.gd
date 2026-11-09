@@ -247,6 +247,7 @@ func _snap(victim: Node3D) -> void:
 		r["armed"] = false
 	SoundBank.play_at(get_parent(), "trap_snap", global_position + Vector3(0, 0.2, 0), 4.0, 1.7)
 	SoundBank.play_at(get_parent(), "clatter", global_position + Vector3(0, 0.1, 0), -2.0, 0.7)
+	Fx.burst(get_parent(), global_position + Vector3(0, 0.12, 0), "dirt", Vector3.UP, 0.8)
 	EventBus.noise_made.emit(global_position, 20.0)
 	var def := DataDB.buildable(type)
 	if victim is Player:
@@ -384,6 +385,8 @@ func hurts() -> bool:
 func _destroy(loud: bool) -> void:
 	if loud:
 		SoundBank.play_at(get_parent(), "bang" if type == "stone_wall" else "fence_break", global_position + Vector3(0, 0.5, 0), 2.0)
+		var kind := "stone" if type == "stone_wall" else ("metal" if type in ["bear_trap", "can_alarm"] else "wood")
+		Fx.burst(get_parent(), global_position + Vector3(0, 0.5, 0), kind, Vector3.UP, 1.6)
 	Builder.remove(uid)
 	queue_free()
 

@@ -110,6 +110,7 @@ func _build_props() -> void:
 	var barrel_water := WaterSource.new()
 	barrel_water.name = "RainBarrel"
 	barrel_water.label = "Regentonne"
+	barrel_water.contaminable = true  # wird mit Bach und Leitung zusammen vergiftet
 	barrel_water.anchor = Vector3(6.9, 0.0, -2.6)
 	barrel_water.collider_size = Vector3(0.9, 1.05, 0.9)
 	add_child(barrel_water)

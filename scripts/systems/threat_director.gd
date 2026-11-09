@@ -257,7 +257,9 @@ func _fire(type: String) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if type in ACTIVITY_EVENTS:
 		_activity_tonight = true
-		get_tree().call_group("tablet_menu", "flicker")
+		# Tablet flackert nur nachts – ein Hinweis, dass draußen etwas ist
+		if TimeManager.is_night():
+			get_tree().call_group("tablet_menu", "flicker")
 	match type:
 		"twig":
 			SoundBank.play_at(scene, "twig", _random_forest_point(18.0, 30.0), -2.0, _rng.randf_range(0.8, 1.2))

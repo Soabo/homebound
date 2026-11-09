@@ -105,6 +105,10 @@ func _on_sleep_finished() -> void:
 ## Im Versteck: umsehen ja, gehen nein. hidden_in = das Versteck, in dem man steht (oder null).
 var look_only: bool = false
 var hidden_in: Node = null
+var _f_down: bool = false
+var _f_held: float = 0.0
+var _f_used: bool = false
+const LIGHT_MODE_HOLD := 0.5  ## Sekunden F halten, um den Licht-Modus zu wechseln
 var held_time: float = 0.0  ## Sekunden, die der Spieler festgehalten wird (Bärenfalle)
 
 
@@ -142,9 +146,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if current_interactable:
 			current_interactable.secondary_interact(self)
 			_update_prompt(true)
-	elif event.is_action_pressed("flashlight"):
-		set_flashlight(not flashlight.visible)
-		PlayerSounds.play(self, "flashlight", -6.0, randf_range(0.95, 1.05))
+	elif event.is_action_pressed("flashlight") and not event.is_echo():
+		# kurz drücken = an/aus (beim Loslassen), gedrückt halten = Licht-Modus wechseln (siehe _process)
+		_f_held = 0.0
+		_f_down = true
+		_f_used = false
+	elif event.is_action_released("flashlight") and _f_down:
+		_f_down = false
+		if not _f_used and hidden_in == null:
+			set_flashlight(not flashlight.visible)
+			PlayerSounds.play(self, "flashlight", -6.0, randf_range(0.95, 1.05))
 
 
 func _building() -> bool:
@@ -153,10 +164,28 @@ func _building() -> bool:
 
 
 func set_flashlight(on: bool) -> void:
+	if on and hidden_in != null:
+		return  # im Schrank geht kein Licht an
 	hands.set_watch(on)
 
 
+## F gedrückt halten: zwischen LED und weißem Display umschalten (nur wenn die Uhr leuchtet).
+func _update_light_hold(delta: float) -> void:
+	if not _f_down or _f_used:
+		return
+	if not Input.is_action_pressed("flashlight"):
+		_f_down = false
+		return
+	_f_held += delta
+	if _f_held >= LIGHT_MODE_HOLD and flashlight.visible and hidden_in == null:
+		_f_used = true
+		hands.toggle_screen_mode()
+		PlayerSounds.play(self, "flashlight", -10.0, 1.3)
+		EventBus.notify("Uhr: Display-Licht" if hands.screen_mode else "Uhr: LED-Lampe", 1.5)
+
+
 func _physics_process(delta: float) -> void:
+	_update_light_hold(delta)
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 
@@ -408,6 +437,13 @@ func _update_interaction() -> void:
 		current_interactable = found
 	current_target_body = body if found else null
 	_update_prompt(false)
+
+
+## Wohin schaut der Spieler gerade? {"position", "normal"} oder leer.
+func aim_point() -> Dictionary:
+	if _ray and _ray.is_colliding():
+		return {"position": _ray.get_collision_point(), "normal": _ray.get_collision_normal()}
+	return {}
 
 
 ## Gibt es gerade etwas Benutzbares im Fadenkreuz? (für den feinen Rahmen im HUD)

@@ -66,6 +66,9 @@ const SHOTS := [
 	{"name": "52_bad_dusche", "hour": 14.0, "pos": Vector3(4.6, 0.45, -1.6), "look": Vector3(2.4, 1.0, -4.0), "lights": true},
 	{"name": "53_pickup_heck", "hour": 14.0, "pos": Vector3(1.0, 0.0, 37.0), "look": Vector3(3.0, 0.6, 34.4)},
 	{"name": "54_picknick", "hour": 14.0, "pos": Vector3(-8.6, 0.0, -0.6), "look": Vector3(-11.0, 0.4, -3.0)},
+	{"name": "55_hochsitz", "hour": 13.0, "pos": Vector3(18.29, 0.0, -73.92), "look": Vector3(12.0, 3.5, -80.0)},
+	{"name": "57_hochsitz_oben", "hour": 13.0, "pos": Vector3(12.26, 4.3, -79.03), "look": Vector3(11.64, 4.8, -81.35), "tower": true},
+	{"name": "56_tankanzeige", "hour": 14.0, "pos": Vector3(3.3, 0.45, 0.9), "look": Vector3(2.8, 1.95, -0.92), "lights": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -96,7 +99,11 @@ func _run() -> void:
 		WorldState._check_stage()
 		var pos: Vector3 = shot["pos"]
 		var look: Vector3 = shot["look"]
-		if shot.get("cave", false):
+		if shot.get("tower", false):
+			var th := Terrain.height_at(RangerTower.SITE.x, RangerTower.SITE.z)
+			pos.y += th
+			look.y += th
+		elif shot.get("cave", false):
 			var fh := StreamCave.floor_height()
 			pos.y = fh + 0.05
 			look.y += fh

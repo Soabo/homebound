@@ -23,6 +23,8 @@ const DATA_PATH := "res://data/radio/radio.json"
 var _data: Dictionary = {}
 var heard_day: int = 0
 var _led: StandardMaterial3D
+var _led_light: OmniLight3D
+var _was_new: bool = false
 var _play_id: int = 0
 
 
@@ -41,6 +43,12 @@ func _ready() -> void:
 	# kleine grüne Leuchte: neue Nachricht
 	_led = BuildKit.emissive_mat(Color(0.3, 1.0, 0.35), 0.0)
 	BuildKit.sphere(self, 0.012, anchor + Vector3(-0.18, 0.17, 0.02), _led, Vector3.ONE, 8)
+	_led_light = OmniLight3D.new()
+	_led_light.light_color = Color(0.35, 1.0, 0.4)
+	_led_light.omni_range = 0.9
+	_led_light.light_energy = 0.0
+	_led_light.position = anchor + Vector3(-0.22, 0.17, 0.02)
+	add_child(_led_light)
 	_dial = BuildKit.emissive_mat(Color(1.0, 0.7, 0.3), 0.0)
 	BuildKit.box(self, Vector3(0.012, 0.05, 0.1), anchor + Vector3(-0.18, 0.11, -0.03), _dial, false)
 	_player3d = AudioStreamPlayer3D.new()
@@ -123,8 +131,24 @@ func _update_tier() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	# grüne Leuchte blinkt sanft, solange eine Nachricht ungehört ist
-	_led.emission_energy_multiplier = (2.0 + sin(_t * 3.0) * 1.5) if has_new_message() else 0.0
+	# Neue Nachricht: grüne Leuchte blitzt zweimal kurz, dann Pause; dazwischen glimmt sie nach.
+	# Ein schwacher grüner Schein fällt auf Tisch und Wand, die Skala pulsiert leise mit.
+	if has_new_message():
+		var ph := fmod(_t, 1.8)
+		var flash := 1.0 if (ph < 0.12 or (ph > 0.3 and ph < 0.42)) else 0.0
+		var after := maxf(0.0, 1.0 - (ph - 0.42) / 0.8) * 0.35 if ph > 0.42 else 0.0
+		var glow := maxf(flash, after)
+		_led.emission_energy_multiplier = 0.3 + glow * 7.0
+		_led_light.light_energy = glow * 0.35
+		if not _player3d.playing:
+			_dial.emission_energy_multiplier = 0.25 + (sin(_t * 2.2) * 0.5 + 0.5) * 0.6
+		_was_new = true
+	else:
+		_led.emission_energy_multiplier = 0.0
+		_led_light.light_energy = 0.0
+		if _was_new and not _player3d.playing:
+			_dial.emission_energy_multiplier = 0.0
+		_was_new = false
 	if _meter_needle:
 		var active := Research.slot != "" and Research.has_power_for_analysis()
 		_meter_needle.rotation.z = (sin(_t * 7.0) * 0.25 + 0.3) if active else -0.6

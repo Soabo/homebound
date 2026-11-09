@@ -20,6 +20,7 @@ var _glass: MeshInstance3D
 var _glass_body: StaticBody3D
 var _cracks: Node3D
 var _shards: Node3D
+var _jagged: MeshInstance3D  ## Glaszacken, die nach dem Zerbrechen im Rahmen stecken bleiben
 var _boards: Array[MeshInstance3D] = []
 var _board_body: StaticBody3D
 var _handprints: int = 0
@@ -63,6 +64,8 @@ func _ready() -> void:
 		line.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_cracks.visible = false
 
+	_jagged = _build_jagged(rng, f)
+	_jagged.visible = false
 	# Scherben auf der Fensterbank
 	_shards = Node3D.new()
 	add_child(_shards)
@@ -143,7 +146,7 @@ func secondary_interact(_player: Node) -> void:
 		EventBus.notify("Du brauchst %d Bretter und %d Nägel. Beides gibt es in der Werkstatt." % [need, need * 2], 3.0)
 		return
 	barricade = max_barricade if need == 2 else minf(barricade + max_barricade * 0.5, max_barricade)
-	SoundBank.play_at(self, "hammer", global_position + Vector3(0, height * 0.5, 0), -2.0)
+	SoundBank.hammer_series(self, global_position + Vector3(0, height * 0.5, 0), 4 if need == 2 else 3)
 	EventBus.noise_made.emit(global_position, 12.0)
 	_update_visuals()
 
@@ -180,7 +183,12 @@ func receive_hit(damage: float) -> void:
 		var before := health
 		health = maxf(health - damage, 0.0)
 		if health <= 0.0:
-			SoundBank.play_at(self, "glass_break", pos, 2.0)
+			SoundBank.play_at(self, "glass_break", pos, 6.0)
+			Fx.burst(get_tree().current_scene, pos, "glass", -global_transform.basis.z, 1.5)
+			# Scherben rieseln nach
+			get_tree().create_timer(0.35).timeout.connect(func() -> void:
+				if is_inside_tree():
+					SoundBank.play_at(self, "glass_crack", pos + Vector3(0, -0.4, 0), -4.0, 1.4))
 			EventBus.noise_made.emit(pos, 25.0)
 		elif before >= max_health:
 			SoundBank.play_at(self, "glass_crack", pos, 0.0)
@@ -189,13 +197,58 @@ func receive_hit(damage: float) -> void:
 	elif barricade > 0.0:
 		barricade = maxf(barricade - damage, 0.0)
 		SoundBank.play_at(self, "plank_break", pos, 0.0)
+		Fx.burst(get_tree().current_scene, pos, "wood", -global_transform.basis.z)
 		if barricade <= 0.0:
 			SoundBank.play_at(self, "fence_break", pos, 2.0)
 	_update_visuals()
 
 
+## Spitze Glasreste an den Rändern jeder der vier Scheiben (Dreiecke, Basis am Rahmen, Spitze nach innen).
+func _build_jagged(rng: RandomNumberGenerator, f: float) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half_w := width * 0.5 - f
+	var bar := 0.0175
+	var panes := [
+		[Vector2(-half_w, f), Vector2(-bar, height * 0.5 - bar)], [Vector2(bar, f), Vector2(half_w, height * 0.5 - bar)],
+		[Vector2(-half_w, height * 0.5 + bar), Vector2(-bar, height - f)], [Vector2(bar, height * 0.5 + bar), Vector2(half_w, height - f)]]
+	for pane: Array in panes:
+		var lo: Vector2 = pane[0]
+		var hi: Vector2 = pane[1]
+		var corners := [lo, Vector2(hi.x, lo.y), hi, Vector2(lo.x, hi.y)]
+		var center := (lo + hi) * 0.5
+		for e in 4:
+			var a: Vector2 = corners[e]
+			var b: Vector2 = corners[(e + 1) % 4]
+			var t := 0.0
+			while t < 0.98:
+				var t2 := minf(t + rng.randf_range(0.18, 0.4), 1.0)
+				var p0 := a.lerp(b, t)
+				var p1 := a.lerp(b, t2)
+				var mid := p0.lerp(p1, rng.randf_range(0.3, 0.7))
+				var tip := mid + (center - mid).normalized() * rng.randf_range(0.03, 0.16)
+				if rng.randf() < 0.8:
+					for v: Vector2 in [p0, p1, tip]:
+						st.set_normal(Vector3(0, 0, 1))
+						st.add_vertex(Vector3(v.x, v.y, 0.0))
+				t = t2
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var m := StandardMaterial3D.new()
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.7, 0.8, 0.85, 0.35)
+	m.roughness = 0.1
+	m.metallic_specular = 0.5
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+	return mi
+
+
 func _update_visuals() -> void:
 	_glass.visible = health > 0.0
+	_jagged.visible = health <= 0.0
 	_set_body(_glass_body, health > 0.0)
 	_cracks.visible = health > 0.0 and health < max_health
 	_shards.visible = health <= 0.0

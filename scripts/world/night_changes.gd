@@ -143,8 +143,14 @@ func _apply(c: Dictionary) -> void:
 			var bench := scene.get_node_or_null("Cabin/PorchBench") as Node3D
 			if bench:
 				var p := Vector3(float(c["x"]), 0, float(c["z"]))
-				p.y = Terrain.height_at(p.x, p.z)
-				bench.transform = Transform3D(Basis(Vector3.UP, float(c["yaw"])), p) * Transform3D(Basis(), -BENCH_CENTER)
+				# auf den höchsten Punkt unter den vier Beinen stellen – sonst versinken sie am Hang im Boden
+				var basis := Basis(Vector3.UP, float(c["yaw"]))
+				var h := -INF
+				for off: Vector3 in [Vector3(-0.97, 0, -0.2), Vector3(0.97, 0, -0.2), Vector3(-0.97, 0, 0.2), Vector3(0.97, 0, 0.2)]:
+					var q := p + basis * off
+					h = maxf(h, Terrain.height_at(q.x, q.z))
+				p.y = h
+				bench.transform = Transform3D(basis, p) * Transform3D(Basis(), -BENCH_CENTER)
 		"fence_hole":
 			var seg := scene.get_node_or_null("Garden/" + String(c["seg"])) as Node3D
 			if seg:

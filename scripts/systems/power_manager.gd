@@ -51,6 +51,11 @@ func set_consumer(id: String, active: bool) -> void:
 		_consumers.erase(id)
 
 
+## Wie viele Spielstunden das Benzin beim jetzigen Verbrauch noch reicht.
+func hours_left() -> float:
+	return fuel / (BASE_USE + _consumers.size() * USE_PER_CONSUMER)
+
+
 func start_generator() -> bool:
 	if fuel <= 0.0:
 		EventBus.notify("Kein Benzin im Tank.", 2.5)

@@ -22,25 +22,33 @@ func _ready() -> void:
 	# Pfosten leicht schräg nach innen, mit Querstreben
 	for sx: float in [-1.0, 1.0]:
 		for sz: float in [-1.0, 1.0]:
-			BuildKit.cylinder(self, 0.12, DECK + 2.5, Vector3(sx * 1.35, (DECK + 2.5) * 0.5 - 0.3, sz * 1.35), logs, true, Vector3(sz * -3.0, 0, sx * 3.0), 0.1, 8)
+			# vorne kürzer, hinten länger: Pfosten enden genau unter dem schrägen Dach
+			var ph := DECK + (2.15 if sz > 0.0 else 2.6)
+			BuildKit.cylinder(self, 0.12, ph, Vector3(sx * 1.35, ph * 0.5 - 0.3, sz * 1.35), logs, true, Vector3(sz * -3.0, 0, sx * 3.0), 0.1, 8)
 	for h: float in [1.4, 2.9]:
 		for side: float in [-1.0, 1.0]:
 			BuildKit.cylinder(self, 0.06, 2.8, Vector3(side * 1.3, h, 0), logs, false, Vector3(35, 0, 0), -1.0, 6)
 			BuildKit.cylinder(self, 0.06, 2.8, Vector3(0, h, side * 1.3), logs, false, Vector3(0, 0, 35), -1.0, 6)
 	# Plattform
 	BuildKit.box(self, Vector3(3.0, 0.12, 3.0), Vector3(0, DECK, 0), planks, true)
-	# Geländer (vorne offen für die Leiter)
-	for i in 4:
-		var a := PI * 0.5 * i
-		var dir := Vector3(sin(a), 0, cos(a))
-		var right := Vector3(dir.z, 0, -dir.x)
-		if i == 0:
-			for s: float in [-1.0, 1.0]:
-				BuildKit.box(self, Vector3(0.9, 0.08, 0.05), dir * 1.45 + right * s * 1.0 + Vector3(0, DECK + 0.95, 0), planks, false, Vector3(0, rad_to_deg(a) + 90.0, 0))
-			continue
-		BuildKit.box(self, Vector3(3.0, 0.9, 0.04), dir * 1.48 + Vector3(0, DECK + 0.5, 0), boards, true, Vector3(0, rad_to_deg(a) + 90.0, 0))
-	# Pultdach
-	BuildKit.box(self, Vector3(3.6, 0.08, 3.6), Vector3(0, DECK + 2.25, 0), BuildKit.tex_mat("shingles", 1.0), false, Vector3(10, 0, 0))
+	# Brüstung aus Brettern an drei Seiten, vorne (+z, Leiter) offen mit zwei kurzen Handläufen.
+	# Bretter laufen jeweils entlang ihrer Seite; Ecken überlappen nicht.
+	var wall_h := 0.95
+	# Rückwand bis unters Dach (dort hängt die Revierkarte), Seiten nur brusthoch
+	var back_h := 2.3
+	BuildKit.box(self, Vector3(2.9, back_h, 0.04), Vector3(0, DECK + 0.06 + back_h * 0.5, -1.47), boards, true)
+	for side: Array in [[Vector3(1.47, 0, 0), 90.0], [Vector3(-1.47, 0, 0), 90.0]]:
+		var at: Vector3 = side[0]
+		BuildKit.box(self, Vector3(2.9, wall_h, 0.04), at + Vector3(0, DECK + 0.06 + wall_h * 0.5, 0), boards, true, Vector3(0, side[1], 0))
+		# Handlauf oben
+		BuildKit.box(self, Vector3(3.0, 0.06, 0.1), at + Vector3(0, DECK + 0.06 + wall_h + 0.03, 0), planks, false, Vector3(0, side[1], 0))
+	for s: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(0.95, 0.06, 0.08), Vector3(s * 1.0, DECK + 0.98, 1.47), planks, true)
+		BuildKit.box(self, Vector3(0.06, 0.9, 0.06), Vector3(s * 0.52, DECK + 0.51, 1.47), logs, false)
+	# Dach: Pultdach auf vier Stützen, fest (man kann nicht hindurchspringen)
+	var roof_y := DECK + 2.25
+	BuildKit.box(self, Vector3(3.6, 0.08, 3.6), Vector3(0, roof_y, 0), BuildKit.tex_mat("shingles", 1.0), true, Vector3(10, 0, 0))
+	BuildKit.box(self, Vector3(3.0, 0.1, 3.0), Vector3(0, roof_y - 0.12, 0), planks, true, Vector3(10, 0, 0))
 	# Leiter auf der Vorderseite (+z)
 	for s: float in [-1.0, 1.0]:
 		BuildKit.box(self, Vector3(0.07, DECK + 1.0, 0.07), Vector3(s * 0.3, (DECK + 1.0) * 0.5, 1.62), logs, false)

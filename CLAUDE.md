@@ -95,6 +95,14 @@
   Verknüpfen geht erst, wenn die Analysen gesendet sind. Test: `--night-test=tablet`.
 - Bewegte Teile (Werkzeuge in der Hand, Türen, Schranktüren) mit `BuildKit.localize_materials` (Textur am Objekt).
 - Hände/Werkzeuge ziehen sich vor Wänden zurück (`PlayerHands._avoid_walls`).
+- Holzkorb `WoodBasket` (Cabin/WoodBasket, 1 Holz Start, max 4, E nehmen/R hineinlegen). Tankanzeige `FuelGauge`
+  (Cabin/FuelGauge über dem Funktisch, `PowerManager.hours_left`). Traglast-Anzeige im HUD (`Hud._update_weight`).
+- Verstecke: E Tür auf/zu, R hinein/hinaus; Uhrlicht geht aus und bleibt drinnen aus.
+- Uhr: F kurz = an/aus, F halten (`Player.LIGHT_MODE_HOLD`) = LED ↔ weißes Display (`PlayerHands.screen_mode`, schwaches Umgebungslicht).
+- Hinsetzen mit Kamerabewegung: `Seat` (Verandabank, wandert mit), Couch, Monitorstuhl (`MonitorStation`), Leiter klettern
+  (`TowerLadder`), Verstecke. Partikel `Fx.burst` (Holz, Stein, Funken, Erde, Glas, Staub).
+- Tablet flackert nur nachts bei Alien-Aktivität. Fenster: Glaszacken bleiben im Rahmen, Hammerserie beim Verbarrikadieren.
+- Hochsitz: Rückwand bis unters Dach, Dach fest, Notizen ohne festen Körper. Test: `--night-test=extras`.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

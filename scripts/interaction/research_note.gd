@@ -10,7 +10,8 @@ extends Interactable
 
 
 func _ready() -> void:
-	var body := StaticBody3D.new()
+	# nur zum Anvisieren (kein fester Körper – man soll darüber laufen können)
+	var body := Area3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(0.5, 0.3, 0.5)

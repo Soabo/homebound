@@ -119,6 +119,21 @@ static func play_at(parent: Node, id: String, pos: Vector3, volume_db: float = 0
 		play_stream_at(parent, get_sound(id), pos, volume_db, pitch)
 
 
+## Mehrere Hammerschläge hintereinander (Bretter annageln), leicht unregelmäßig.
+static func hammer_series(parent: Node, pos: Vector3, hits: int = 4) -> void:
+	var t := 0.0
+	for i in hits:
+		var pitch := randf_range(0.9, 1.12)
+		var vol := -2.0 + randf_range(-2.0, 1.0)
+		if i == 0:
+			play_at(parent, "hammer", pos, vol, pitch)
+		else:
+			parent.get_tree().create_timer(t).timeout.connect(func() -> void:
+				if is_instance_valid(parent) and parent.is_inside_tree():
+					play_at(parent, "hammer", pos, vol, pitch))
+		t += randf_range(0.28, 0.45)
+
+
 ## Wie play_at, aber mit einer fertigen Tondatei (z. B. echte Aufnahmen).
 static func play_stream_at(parent: Node, stream: AudioStream, pos: Vector3, volume_db: float = 0.0, pitch: float = 1.0) -> void:
 	var p := AudioStreamPlayer3D.new()

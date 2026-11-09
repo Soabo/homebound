@@ -46,8 +46,11 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 - **Strom:** Der Generator steht im Schuppen und braucht Benzin. Kanister liegen im Schuppen.
   Ohne Strom gibt es kein Licht und keine Kameras. Manchmal fällt der Strom nachts aus – dann musst du im Dunkeln raus zum Schuppen.
-- **Verstecken:** Kleiderschrank im Schlafzimmer, Spind im Schuppen. E öffnet die Tür, E noch einmal: hineinstellen,
-  drinnen E: Tür zu. Bei geschlossener Tür bist du versteckt und siehst durch den Schlitz bzw. die Lamellen hinaus.
+- **Verstecken:** Kleiderschrank im Schlafzimmer, Spind im Schuppen. E öffnet und schließt die Tür, R geht hinein
+  und wieder hinaus. Bei geschlossener Tür bist du versteckt und siehst durch den Schlitz bzw. die Lamellen hinaus.
+  Das Uhrlicht geht dabei aus und lässt sich drinnen nicht einschalten.
+- **Holzkorb** vor dem Kamin: E nimmt Holz heraus, R legt Holz hinein (bis zu 4).
+- **Tankanzeige** in der Werkstatt zeigt, wie viel Benzin noch im Generator im Schuppen ist.
 - **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
 - **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
 - **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und – vom Schuppen aus im Weitwinkel – den Platz zwischen Maisfeld und Hütte. Traue nicht allem, was du siehst.
