@@ -21,6 +21,8 @@ var _tween: Tween
 
 func _ready() -> void:
 	_build()
+	# Türblatt dreht sich: Holzmaserung am Türblatt festmachen
+	BuildKit.localize_materials.call_deferred(_hinge)
 
 
 func _build() -> void:

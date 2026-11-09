@@ -62,6 +62,10 @@ const SHOTS := [
 	{"name": "48_bad", "hour": 14.0, "pos": Vector3(5.4, 0.45, -1.4), "look": Vector3(2.4, 0.9, -4.2), "lights": true},
 	{"name": "49_kreatur_vierbeinig", "hour": 13.0, "pos": Vector3(5.2, 0.0, 10.4), "look": Vector3(3.0, 0.8, 11.8), "creature_at": Vector3(3.0, 0, 11.8), "creature_face": Vector3(-3.0, 0, 12.5), "crawl": true},
 	{"name": "50_kamera_lauert", "hour": 23.0, "pos": Vector3(0.9, 0.45, 3.6), "look": Vector3(1.4, 1.4, 3.6), "monitor": true, "monitor_cam": 0, "lurk": true, "lurk_spot": 1},
+	{"name": "51_funkecke_werkstatt", "hour": 14.0, "pos": Vector3(3.6, 0.45, 1.6), "look": Vector3(2.6, 1.1, -0.9), "lights": true},
+	{"name": "52_bad_dusche", "hour": 14.0, "pos": Vector3(4.6, 0.45, -1.6), "look": Vector3(2.4, 1.0, -4.0), "lights": true},
+	{"name": "53_pickup_heck", "hour": 14.0, "pos": Vector3(1.0, 0.0, 37.0), "look": Vector3(3.0, 0.6, 34.4)},
+	{"name": "54_picknick", "hour": 14.0, "pos": Vector3(-8.6, 0.0, -0.6), "look": Vector3(-11.0, 0.4, -3.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 

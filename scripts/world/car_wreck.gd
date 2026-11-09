@@ -198,25 +198,41 @@ func _build_bed() -> void:
 	for z: float in [-0.6, -0.3, 0.0, 0.3, 0.6]:
 		BuildKit.box(self, Vector3(1.95, 0.03, 0.06), Vector3(-1.4, 0.735, z), paint, false)
 	for side: float in [-1.0, 1.0]:
-		BuildKit.box_mm(self, Vector3(-2.4, 0.62, side * 0.86), Vector3(-0.4, 1.12, side * 0.9), paint, false)
+		# Seitenwand mit Ausschnitt über dem Rad (sonst steckt der Reifen im Blech)
+		var z0 := minf(side * 0.86, side * 0.9)
+		var z1 := maxf(side * 0.86, side * 0.9)
+		BuildKit.box_mm(self, Vector3(-2.4, 0.62, z0), Vector3(-1.98, 1.12, z1), paint, false)
+		BuildKit.box_mm(self, Vector3(-1.02, 0.62, z0), Vector3(-0.4, 1.12, z1), paint, false)
+		BuildKit.box_mm(self, Vector3(-1.98, 0.88, z0), Vector3(-1.02, 1.12, z1), paint, false)
 		BuildKit.box_mm(self, Vector3(-2.42, 1.1, side * 0.83), Vector3(-0.38, 1.15, side * 0.93), rust, false)
 		BuildKit.box_mm(self, Vector3(-2.0, 0.72, side * 0.62), Vector3(-1.0, 0.95, side * 0.86), rust, false)
 		_wheel_arch(Vector3(-1.5, WHEEL_R, side * 0.9), side)
 		for x: float in [-2.25, -1.4, -0.55]:
 			BuildKit.box(self, Vector3(0.08, 0.06, 0.06), Vector3(x, 1.13, side * 0.88), dark, false)
 		# Rücklicht (eins zerbrochen)
-		var tl := BuildKit.color_mat(Color(0.5, 0.05, 0.03), 0.3) if side > 0 else dark
-		BuildKit.box(self, Vector3(0.04, 0.16, 0.1), Vector3(-2.42, 0.95, side * 0.8), tl, false)
+		# sitzt am Ende der Seitenwand; das zerbrochene hat nur noch Scherbenreste im Rahmen
+		BuildKit.box(self, Vector3(0.03, 0.18, 0.08), Vector3(-2.415, 0.9, side * 0.88), dark, false)
+		if side > 0:
+			BuildKit.box(self, Vector3(0.02, 0.14, 0.06), Vector3(-2.435, 0.9, side * 0.88), BuildKit.color_mat(Color(0.5, 0.05, 0.03), 0.3), false)
+		else:
+			BuildKit.box(self, Vector3(0.02, 0.05, 0.06), Vector3(-2.435, 0.85, side * 0.88), BuildKit.color_mat(Color(0.45, 0.05, 0.03), 0.3), false, Vector3(0, 0, 25))
 	BuildKit.box_mm(self, Vector3(-0.42, 0.72, -0.86), Vector3(-0.38, 1.12, 0.86), paint, false)
 	var gate := Node3D.new()
 	gate.position = Vector3(-2.4, 0.7, 0)
-	gate.rotation_degrees.z = -95.0
+	gate.rotation_degrees.z = 95.0  # Heckklappe hängt offen nach hinten
 	add_child(gate)
 	BuildKit.box_mm(gate, Vector3(-0.04, 0.0, -0.84), Vector3(0.0, 0.45, 0.84), paint, false)
 	BuildKit.box(gate, Vector3(0.01, 0.12, 0.5), Vector3(-0.045, 0.25, 0), BuildKit.color_mat(Color(0.75, 0.75, 0.7)), false)
+	# Haltekette von der Bordwand-Oberkante bis zum Ende der Klappe
+	var gate_end := Vector3(-2.4 - 0.45 * sin(deg_to_rad(95.0)), 0.7 + 0.45 * cos(deg_to_rad(95.0)), 0)
 	for side: float in [-1.0, 1.0]:
-		for k in 4:
-			BuildKit.box(self, Vector3(0.03, 0.06, 0.02), Vector3(-2.43 - k * 0.05, 1.05 - k * 0.09, side * 0.84), rust, false, Vector3(0, 0, 30))
+		var a := Vector3(-2.41, 1.08, side * 0.84)
+		var b := Vector3(gate_end.x + 0.02, gate_end.y + 0.01, side * 0.84)
+		var ang := rad_to_deg(atan2(b.y - a.y, b.x - a.x))
+		for k in 8:
+			var t := (k + 0.5) / 8.0
+			var p := a.lerp(b, t) + Vector3(0, -sin(t * PI) * 0.04, 0)
+			BuildKit.box(self, Vector3(0.05, 0.015, 0.012), p, rust, false, Vector3(90.0 * (k % 2), 0, ang))
 	# Altreifen, Kanister, Holzbretter und Laub in der Ladefläche
 	_tire(Vector3(-1.9, 0.86, 0.35), Vector3(90, 0, 15), 0.3, 0.12)
 	BuildKit.box(self, Vector3(1.3, 0.03, 0.15), Vector3(-1.2, 0.78, -0.55), BuildKit.tex_mat("planks_h", 0.5, Color(0.7, 0.65, 0.6)), false, Vector3(0, 8, 3))

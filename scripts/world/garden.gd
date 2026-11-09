@@ -115,7 +115,8 @@ func _build_props() -> void:
 	add_child(barrel_water)
 	# Hackklotz mit Axt neben dem Schuppen, Späne
 	BuildKit.cylinder(self, 0.32, 0.5, Vector3(11.0, 0.25, 10.5), BuildKit.tex_mat("bark", 0.6), true, Vector3.ZERO, -1.0, 10)
-	BuildKit.cylinder(self, 0.3, 0.01, Vector3(11.0, 0.505, 10.5), BuildKit.color_mat(Color(0.6, 0.48, 0.32)), false, Vector3.ZERO, -1.0, 10)
+	var block_top := BuildKit.cylinder(self, 0.16, 0.01, Vector3(11.0, 0.505, 10.5), BuildKit.log_end_mat(), false, Vector3.ZERO, -1.0, 10)
+	block_top.scale = Vector3(0.3 / 0.16, 1.0, 0.3 / 0.16)
 	var axe := ItemPickup.new()
 	axe.name = "Axe"
 	axe.item_id = "axe"
@@ -138,7 +139,8 @@ func _build_props() -> void:
 	BuildKit.box(axe_vis, Vector3(0.008, 0.15, 0.02), Vector3(0, 0, -0.165), BuildKit.tex_mat("metal", 0.1, Color(2.0, 2.0, 2.0), 0.2), false)
 	BuildKit.box(axe_vis, Vector3(0.03, 0.05, 0.03), Vector3(0, 0, 0.045), steel, false)
 	# Kerbe und Spalt im Hackklotz unter der Klinge
-	BuildKit.box(self, Vector3(0.02, 0.006, 0.2), Vector3(11.0, 0.507, 10.5), BuildKit.color_mat(Color(0.25, 0.18, 0.11)), false, Vector3(0, 35, 0))
+	# liegt knapp über der Schnittfläche (nicht in derselben Ebene – sonst flimmert es)
+	BuildKit.box(self, Vector3(0.02, 0.004, 0.2), Vector3(11.0, 0.5125, 10.5), BuildKit.color_mat(Color(0.2, 0.14, 0.09)), false, Vector3(0, 35, 0))
 	for i in 12:
 		BuildKit.box(self, Vector3(0.08, 0.01, 0.04), Vector3(11.0 + _rng.randf_range(-0.8, 0.8), 0.01, 10.5 + _rng.randf_range(-0.8, 0.8)),
 				BuildKit.color_mat(Color(0.62, 0.5, 0.34)), false, Vector3(0, _rng.randf() * 180, 0))
@@ -155,13 +157,21 @@ func _build_props() -> void:
 	var t2 := BuildKit.box(towels, Vector3(0.4, 0.5, 0.01), Vector3(-7.2, 1.7, -9.0), BuildKit.tex_mat("fabric_red", 0.4), false)
 	for i in 3:
 		[t0, t1, t2][i].name = "Towel_%d" % i
-	# Picknicktisch
-	BuildKit.box_mm(self, Vector3(-12.0, 0.72, -3.4), Vector3(-10.0, 0.78, -2.6), m_wood, true)
-	BuildKit.box_mm(self, Vector3(-12.0, 0.42, -4.0), Vector3(-10.0, 0.46, -3.7), m_wood, true)
-	BuildKit.box_mm(self, Vector3(-12.0, 0.42, -2.3), Vector3(-10.0, 0.46, -2.0), m_wood, true)
+	# Picknicktisch: Platte auf zwei X-Böcken, zwei Sitzbänke mit eigenen Beinen – alles steht auf dem Boden
+	var g := Terrain.height_at(-11.0, -3.0)
+	BuildKit.box_mm(self, Vector3(-12.0, g + 0.72, -3.4), Vector3(-10.0, g + 0.78, -2.6), m_wood, true)
+	for bz: Array in [[-4.0, -3.7], [-2.3, -2.0]]:
+		BuildKit.box_mm(self, Vector3(-12.0, g + 0.42, bz[0]), Vector3(-10.0, g + 0.46, bz[1]), m_wood, true)
+		var cz: float = (bz[0] + bz[1]) * 0.5
+		for x: float in [-11.75, -10.25]:
+			# zwei schräge Beine je Bankende, unten gespreizt
+			for sx: float in [-1.0, 1.0]:
+				BuildKit.box(self, Vector3(0.06, 0.5, 0.07), Vector3(x + sx * 0.06, g + 0.2, cz), m_wood, false, Vector3(0, 0, -sx * 12.0))
 	for x: float in [-11.8, -10.2]:
-		BuildKit.box(self, Vector3(0.08, 0.85, 0.08), Vector3(x, 0.38, -3.0), m_wood, false, Vector3(30, 0, 0))
-		BuildKit.box(self, Vector3(0.08, 0.85, 0.08), Vector3(x, 0.38, -3.0), m_wood, false, Vector3(-30, 0, 0))
+		for a: float in [30.0, -30.0]:
+			BuildKit.box(self, Vector3(0.08, 0.9, 0.08), Vector3(x, g + 0.36, -3.0), m_wood, false, Vector3(a, 0, 0))
+		# Querstrebe unter der Platte
+		BuildKit.box(self, Vector3(0.08, 0.06, 0.78), Vector3(x, g + 0.68, -3.0), m_wood, false)
 	_build_planting()
 	# Zwei alte Laubbäume auf dem Grundstück
 	_garden_tree(Vector3(-16.0, 0, -12.0), 1.0)

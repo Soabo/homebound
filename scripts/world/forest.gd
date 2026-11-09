@@ -284,8 +284,10 @@ func _build_forest_details() -> void:
 			# Baumstumpf
 			var r := _rng.randf_range(0.25, 0.45)
 			var h := _rng.randf_range(0.3, 0.7)
-			BuildKit.cylinder(self, r, h, p + Vector3(0, h * 0.5 - 0.05, 0), bark, false, Vector3(_rng.randf_range(-4, 4), 0, 0), r * 0.92, 10)
-			BuildKit.cylinder(self, r * 0.9, 0.01, p + Vector3(0, h - 0.04, 0), ends, false, Vector3.ZERO, -1.0, 10)
+			var stump := BuildKit.cylinder(self, r, h, p + Vector3(0, h * 0.5 - 0.05, 0), bark, false, Vector3(_rng.randf_range(-4, 4), 0, 0), r * 0.92, 10)
+			# Schnittfläche: sitzt am (leicht schiefen) Stumpf, Jahresringe auf die Stumpfgröße skaliert
+			var cut := BuildKit.cylinder(stump, 0.16, 0.01, Vector3(0, h * 0.5 + 0.003, 0), ends, false, Vector3.ZERO, -1.0, 10)
+			cut.scale = Vector3(r * 0.9 / 0.16, 1.0, r * 0.9 / 0.16)
 			_add_col_cylinder(body, r, h, p + Vector3(0, h * 0.5, 0))
 		else:
 			# Umgestürzter, moosiger Stamm

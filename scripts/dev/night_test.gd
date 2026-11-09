@@ -57,6 +57,10 @@ func _run() -> void:
 		await _research_test()
 		get_tree().quit()
 		return
+	if mode == "tablet":
+		await _tablet_test()
+		get_tree().quit()
+		return
 	if mode == "lurk":
 		await _lurk_test()
 		get_tree().quit()
@@ -305,6 +309,8 @@ func _research_test() -> void:
 		for i in 5:
 			await get_tree().process_frame
 		print("RESEARCH %s fertig: %s" % [id, Research.done.has(id)])
+	print("RESEARCH vor dem Senden verknüpfbar: ", Research.can_link("link_power"))
+	print("RESEARCH ans Tablet gesendet: ", Research.send_results())
 	for l: String in ["link_power", "link_light", "link_signal"]:
 		print("RESEARCH Verknüpfen %s: %s" % [l, Research.link(l)])
 	# Neue Baupläne
@@ -867,3 +873,36 @@ func _lurk_test() -> void:
 	await get_tree().create_timer(1.5).timeout
 	print("AUFRECHT: Mischung %.2f, Hüfthöhe %.2f" % [c._crawl_blend, hips.position.y])
 	print("LURK TEST ENDE")
+
+
+## Ergebnisse vom Analysegerät ans Tablet senden, Reiter durchschalten.
+func _tablet_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	Research.tier = 1
+	Inventory.add("alien_tissue", 1)
+	Research.insert("alien_tissue")
+	var id := Research.slot
+	for exp: Dictionary in Research.analysis(id).get("experiments", []):
+		if Research.experiment_blocker(exp) == "":
+			Research.run_experiment(String(exp["id"]))
+	print("TABLET ungesendet: %d" % Research.unsent_results().size())
+	var n := Research.send_results()
+	print("TABLET gesendet: %d, neu auf dem Tablet: %d, offen: %d" % [n, Research.tablet_new, Research.unsent_results().size()])
+	var couch := get_tree().current_scene.get_node("Cabin/Couch") as Couch
+	var player := get_tree().get_first_node_in_group("player") as Player
+	couch.interact(player)
+	await get_tree().create_timer(0.5).timeout
+	var tm := get_tree().get_first_node_in_group("tablet_menu") as TabletMenu
+	for t: String in ["archive", "notes", "inbox"]:
+		tm._set_tab(t)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var cnt := tm._wide.get_child_count() if t != "inbox" else tm._list.get_child_count()
+		print("TABLET Reiter %s: %d Einträge, Titel %s" % [t, cnt, tm._title.text])
+	print("TABLET neu nach Ansehen: ", Research.tablet_new)
+	var st := Research.get_state()
+	Research.set_state(st)
+	print("TABLET Speichern/Laden gesendet: ", Research.sent.size())
+	tm.close()
+	print("TABLET TEST ENDE")

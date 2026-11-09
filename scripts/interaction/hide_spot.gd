@@ -31,6 +31,7 @@ func _ready() -> void:
 			_build_locker()
 		_:
 			_build_wardrobe()
+	BuildKit.localize_materials.call_deferred(self)
 	# zum Anvisieren: die ganze Front
 	var area := Area3D.new()
 	var cs := CollisionShape3D.new()

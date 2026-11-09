@@ -19,7 +19,6 @@ const KEY_ACTIONS := {
 	"toggle_retro": [KEY_F2],
 	"inventory": [KEY_TAB, KEY_I],
 	"build": [KEY_B],
-	"archive": [KEY_J],
 	"toggle_fullscreen": [KEY_F11],
 	"debug_time_fast": [KEY_T],
 }

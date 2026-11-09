@@ -160,15 +160,43 @@ func _build_shell() -> void:
 	BuildKit.box_mm(self, Vector3(-ix + 0.015, FLOOR_Y, -iz), Vector3(-ix + 0.04, FLOOR_Y + 0.1, iz), skirting, false)
 
 
+## Radio und Analysegerät: auf einem alten Tisch in der Werkstatt an der Nordwand
+## (zwischen Wohnzimmertür und Badtür), weg vom Überwachungsmonitor.
+func _build_radio_corner(y: float) -> void:
+	var wz := -1.0 + INT_T * 0.5
+	var x0 := 2.0 + INT_T * 0.5 + 0.03
+	var x1 := 3.42
+	var zf := wz + 0.66
+	BuildKit.box_mm(self, Vector3(x0, y + 0.72, wz + 0.005), Vector3(x1, y + 0.76, zf), m_wood, true, "RadioTable")
+	for lx: float in [x0 + 0.05, x1 - 0.05]:
+		for lz: float in [wz + 0.05, zf - 0.05]:
+			BuildKit.box(self, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), m_wood_dark, false)
+	BuildKit.box_mm(self, Vector3(x0 + 0.05, y + 0.15, wz + 0.03), Vector3(x1 - 0.05, y + 0.18, zf - 0.03), m_wood_dark, false)
+	# Radio steht hinten links, Vorderseite zum Raum (+z); alles Weitere relativ zum Radio
+	var radio_node := Radio.new()
+	radio_node.name = "Radio"
+	radio_node.position = Vector3(x0 + 0.25, y + 0.76, wz + 0.2)
+	radio_node.rotation_degrees.y = 90.0
+	add_child(radio_node)
+	var case_mat := BuildKit.color_mat(Color(0.25, 0.17, 0.12), 0.5)
+	BuildKit.box(radio_node, Vector3(0.35, 0.19, 0.23), Vector3(0, 0.095, 0), case_mat, false)
+	BuildKit.box_mm(radio_node, Vector3(-0.185, 0.04, -0.075), Vector3(-0.175, 0.16, 0.025), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
+	BuildKit.cylinder(radio_node, 0.005, 0.35, Vector3(0.125, 0.34, 0.065), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
+	# ein paar Werkstattsachen: Lötkolben, Kabelrolle, Notizblock
+	BuildKit.cylinder(self, 0.06, 0.05, Vector3(x1 - 0.35, y + 0.785, zf - 0.14), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.box(self, Vector3(0.15, 0.01, 0.2), Vector3(x0 + 0.62, y + 0.765, zf - 0.13), BuildKit.color_mat(Color(0.9, 0.88, 0.8)), false, Vector3(0, 12, 0))
+
+
 func _door_trim(pos: Vector3, rot_y: float, w: float, h: float, wall_t: float) -> void:
 	var n := Node3D.new()
 	n.position = pos
 	n.rotation_degrees.y = rot_y
 	add_child(n)
 	var d := wall_t + 0.04
-	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(-w * 0.5 - 0.04, h * 0.5 + 0.04, 0), m_wood_dark, false)
-	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(w * 0.5 + 0.04, h * 0.5 + 0.04, 0), m_wood_dark, false)
-	BuildKit.box(n, Vector3(w + 0.16, 0.1, d), Vector3(0, h + 0.05, 0), m_wood_dark, false)
+	# Zarge ragt 1 cm in die Öffnung, damit ihre Innenfläche nicht genau auf der Wandfläche liegt (Flimmern)
+	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(-w * 0.5 - 0.03, h * 0.5 + 0.04, 0), m_wood_dark, false)
+	BuildKit.box(n, Vector3(0.08, h + 0.08, d), Vector3(w * 0.5 + 0.03, h * 0.5 + 0.04, 0), m_wood_dark, false)
+	BuildKit.box(n, Vector3(w + 0.16, 0.1, d), Vector3(0, h + 0.04, 0), m_wood_dark, false)
 
 
 func _build_roof() -> void:
@@ -505,20 +533,13 @@ func _build_living_room() -> void:
 	BuildKit.box_mm(self, Vector3(1.75, y + 0.8, 3.38), Vector3(1.92, y + 1.12, 3.87), plastic, false)
 	BuildKit.box_mm(self, Vector3(1.39, y + 0.82, 3.37), Vector3(1.4, y + 1.12, 3.88), BuildKit.color_mat(Color(0.05, 0.07, 0.06), 0.1), false)
 	BuildKit.box_mm(self, Vector3(1.35, y + 0.76, 3.98), Vector3(1.7, y + 0.78, 4.2), BuildKit.color_mat(Color(0.2, 0.2, 0.2)), false)
-	var radio := BuildKit.color_mat(Color(0.25, 0.17, 0.12), 0.5)
-	BuildKit.box_mm(self, Vector3(1.5, y + 0.76, 3.02), Vector3(1.85, y + 0.95, 3.25), radio, false, "RadioBody")
-	var radio_node := Radio.new()
-	radio_node.name = "Radio"
-	radio_node.anchor = Vector3(1.675, y + 0.76, 3.135)
-	add_child(radio_node)
-	BuildKit.box_mm(self, Vector3(1.49, y + 0.8, 3.06), Vector3(1.5, y + 0.92, 3.16), BuildKit.color_mat(Color(0.6, 0.55, 0.4)), false)
-	BuildKit.cylinder(self, 0.005, 0.35, Vector3(1.8, y + 1.1, 3.2), m_iron, false, Vector3(15, 0, -20), -1.0, 4)
 	_chair(Vector3(0.85, y, 3.6), 90.0)
 	var station := MonitorStation.new()
 	station.name = "MonitorStation"
 	station.screen_center = Vector3(1.385, y + 0.97, 3.625)
 	station.screen_size = Vector2(0.48, 0.32)
 	add_child(station)
+	_build_radio_corner(y)
 	# Wanduhr
 	var clock := Node3D.new()
 	clock.position = Vector3(-1.4, y + 2.1, HALF_Z - CLAD - 0.03)
@@ -764,14 +785,16 @@ func _build_bathroom() -> void:
 	var chrome := BuildKit.color_mat(Color(0.72, 0.5, 0.3), 0.3, 0.9)  # Messing/Kupfer statt Chrom
 	var iron := BuildKit.color_mat(Color(0.15, 0.14, 0.13), 0.6, 0.6)
 	# rustikal: Holzvertäfelung halbhoch mit Abschlussleiste, Holzboden bleibt
-	# Vertäfelung ein paar Zentimeter vor der Wand, damit sich die Holzflächen nicht überlagern
-	var pt := 0.045
-	for wall: Array in [[Vector3(x0, y, z0), Vector3(x0 + pt, y + 1.1, z1)], [Vector3(x1 - pt, y, z0), Vector3(x1, y + 1.1, z1)],
-			[Vector3(x0, y, z0), Vector3(x1, y + 1.1, z0 + pt)]]:
+	# Vertäfelung ein paar Zentimeter vor der Wand, aber nicht hinter der Dusche (dort ist Stein);
+	# Leiste dünner als die Steinwand, damit sich keine Flächen überlagern
+	var pt := 0.04
+	var sw0 := 0.95
+	for wall: Array in [[Vector3(x0, y, z0 + sw0), Vector3(x0 + pt, y + 1.1, z1)], [Vector3(x1 - pt, y, z0), Vector3(x1, y + 1.1, z1)],
+			[Vector3(x0 + sw0, y, z0), Vector3(x1, y + 1.1, z0 + pt)]]:
 		BuildKit.box_mm(self, wall[0], wall[1], wood, false)
-	BuildKit.box_mm(self, Vector3(x0, y + 1.1, z0), Vector3(x0 + pt + 0.025, y + 1.14, z1), dark_wood, false)
-	BuildKit.box_mm(self, Vector3(x1 - pt - 0.025, y + 1.1, z0), Vector3(x1, y + 1.14, z1), dark_wood, false)
-	BuildKit.box_mm(self, Vector3(x0, y + 1.1, z0), Vector3(x1, y + 1.14, z0 + pt + 0.025), dark_wood, false)
+	BuildKit.box_mm(self, Vector3(x0, y + 1.1, z0 + sw0), Vector3(x0 + pt + 0.02, y + 1.14, z1), dark_wood, false)
+	BuildKit.box_mm(self, Vector3(x1 - pt - 0.02, y + 1.1, z0), Vector3(x1, y + 1.14, z1), dark_wood, false)
+	BuildKit.box_mm(self, Vector3(x0 + sw0, y + 1.1, z0), Vector3(x1, y + 1.14, z0 + pt + 0.02), dark_wood, false)
 	# Dusche in der Ecke hinten links: Natursteinwände, Holzrost, Kupferrohr mit großem Brausekopf
 	var shower := Node3D.new()
 	shower.name = "Shower"

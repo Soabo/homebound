@@ -97,6 +97,26 @@ static func tex_mat(kind: String, repeat_m: float = 1.0, tint: Color = Color.WHI
 	return m
 
 
+## Für bewegte Dinge (Werkzeuge in der Hand, Türen): Texturen am Objekt festmachen statt an der Welt.
+## Sonst „wandert“ die Holz-/Metallstruktur über das Objekt, wenn es sich bewegt.
+static func localize_materials(n: Node) -> void:
+	var list: Array = n.find_children("*", "MeshInstance3D", true, false)
+	if n is MeshInstance3D:
+		list.append(n)
+	for mi: MeshInstance3D in list:
+		var m := mi.material_override as StandardMaterial3D
+		if m == null and mi.mesh and mi.mesh.get_surface_count() > 0:
+			m = mi.get_active_material(0) as StandardMaterial3D
+		if m == null or not m.uv1_world_triplanar:
+			continue
+		var key := "local_%d" % m.get_instance_id()
+		if not _materials.has(key):
+			var l := m.duplicate() as StandardMaterial3D
+			l.uv1_world_triplanar = false
+			_materials[key] = l
+		mi.material_override = _materials[key]
+
+
 ## Jahresringe: Textur über normale UVs (Deckfläche des Zylinders).
 static func log_end_mat() -> StandardMaterial3D:
 	var key := "log_end"

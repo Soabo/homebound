@@ -1,6 +1,9 @@
 class_name TabletMenu
 extends CanvasLayer
-## Das Tablet, solange man auf der Couch sitzt: Posteingang (Mails und Nachrichten) links, Text rechts.
+## Das Tablet, solange man auf der Couch sitzt. Reiter:
+##  Posteingang  – Mails und Nachrichten (links Liste, rechts Text)
+##  Alien-Archiv – vom Analysegerät gesendete Ergebnisse, Verknüpfungen
+##  Notizen      – gefundene Notizen
 ## Die Zeit läuft weiter. [E] legt das Tablet weg und man steht auf.
 
 var _couch: Couch
@@ -14,6 +17,12 @@ var _hint: Label
 var _current: String = ""
 var _flicker: float = 0.0
 var _screen_bg: ColorRect
+var _tab: String = "inbox"
+var _tabs: Dictionary = {}       ## Reiter-ID -> Button
+var _title: Label
+var _split: HBoxContainer
+var _wide_scroll: ScrollContainer
+var _wide: VBoxContainer
 
 
 func _ready() -> void:
@@ -61,16 +70,41 @@ func _ready() -> void:
 	# Statusleiste
 	var bar := HBoxContainer.new()
 	v.add_child(bar)
-	var title := _label("Posteingang", 18, Color(0.75, 0.8, 0.88))
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.add_child(title)
+	_title = _label("Posteingang", 18, Color(0.75, 0.8, 0.88))
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.add_child(_title)
 	_clock = _label("", 18, Color(0.75, 0.8, 0.88))
 	bar.add_child(_clock)
 
+	# Reiter
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 8)
+	v.add_child(tabs)
+	for t: Array in [["inbox", "Posteingang"], ["archive", "Alien-Archiv"], ["notes", "Notizen"]]:
+		var tb := Button.new()
+		tb.text = t[1]
+		tb.toggle_mode = true
+		tb.custom_minimum_size = Vector2(170, 36)
+		tb.add_theme_font_size_override("font_size", 16)
+		tb.pressed.connect(_set_tab.bind(t[0]))
+		tabs.add_child(tb)
+		_tabs[t[0]] = tb
+
 	var split := HBoxContainer.new()
+	_split = split
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split.add_theme_constant_override("separation", 14)
 	v.add_child(split)
+	# breite Seite für Archiv und Notizen
+	_wide_scroll = ScrollContainer.new()
+	_wide_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_wide_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_wide_scroll.visible = false
+	v.add_child(_wide_scroll)
+	_wide = VBoxContainer.new()
+	_wide.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_wide.add_theme_constant_override("separation", 6)
+	_wide_scroll.add_child(_wide)
 
 	var ls := ScrollContainer.new()
 	ls.custom_minimum_size = Vector2(300, 0)
@@ -101,6 +135,9 @@ func _ready() -> void:
 
 	_hint = _label("Klicke eine Nachricht an.     [E] Tablet weglegen und aufstehen", 16, Color(0.55, 0.6, 0.68))
 	v.add_child(_hint)
+	Research.changed.connect(func() -> void:
+		if _root.visible:
+			_refresh())
 
 
 func _label(t: String, size: int, col: Color) -> Label:
@@ -116,6 +153,7 @@ func open(couch: Couch) -> void:
 	_root.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_current = ""
+	_tab = "inbox"
 	_refresh()
 	var av := couch.available()
 	for m: Dictionary in av:
@@ -137,7 +175,34 @@ func is_open() -> bool:
 	return _root.visible
 
 
+func _set_tab(t: String) -> void:
+	_tab = t
+	SoundBank.play_ui(self, "menu_click", -10.0)
+	_refresh()
+
+
 func _refresh() -> void:
+	for id: String in _tabs:
+		(_tabs[id] as Button).button_pressed = id == _tab
+	var nb := _tabs["archive"] as Button
+	nb.text = "Alien-Archiv" + ("  ● %d neu" % Research.tablet_new if Research.tablet_new > 0 and _tab != "archive" else "")
+	_split.visible = _tab == "inbox"
+	_wide_scroll.visible = _tab != "inbox"
+	if _tab != "inbox":
+		for c in _wide.get_children():
+			c.queue_free()
+		if _tab == "archive":
+			_title.text = "Alien-Archiv"
+			_hint.text = "Ergebnisse kommen vom Analysegerät in der Werkstatt.     [E] Tablet weglegen und aufstehen"
+			ResearchMenu.fill_archive(_wide)
+			Research.mark_tablet_seen.call_deferred()
+		else:
+			_title.text = "Notizen"
+			_hint.text = "[E] Tablet weglegen und aufstehen"
+			ResearchMenu.fill_notes(_wide)
+		return
+	_title.text = "Posteingang"
+	_hint.text = "Klicke eine Nachricht an.     [E] Tablet weglegen und aufstehen"
 	for c in _list.get_children():
 		c.queue_free()
 	for m: Dictionary in _couch.available():

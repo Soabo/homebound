@@ -1,6 +1,7 @@
 class_name ResearchMenu
 extends CanvasLayer
-## Analysegerät, Alien-Archiv (J) und Notizen (GDD 12.4–12.6).
+## Analysegerät und gefundene Notizen (GDD 12.4–12.6). Archiv und Notizen stehen auf dem Tablet (Couch);
+## die Archiv-Inhalte baut fill_archive()/fill_notes(), damit das Tablet sie anzeigen kann.
 ## Die Welt läuft weiter, während man forscht.
 
 var _root: Control
@@ -58,7 +59,7 @@ func _ready() -> void:
 	_list.add_theme_constant_override("separation", 8)
 	scroll.add_child(_list)
 	var hint := Label.new()
-	hint.text = "J  Archiv     Esc  schließen"
+	hint.text = "Esc  schließen"
 	hint.add_theme_font_size_override("font_size", 15)
 	hint.add_theme_color_override("font_color", Color(0.5, 0.6, 0.6))
 	v.add_child(hint)
@@ -66,13 +67,7 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("archive"):
-		if _mode == "archive":
-			close()
-		elif _mode != "" or _player_free():
-			_open("archive")
-		get_viewport().set_input_as_handled()
-	elif _mode != "" and (event.is_action_pressed("pause_menu") or event.is_action_pressed("inventory")):
+	if _mode != "" and (event.is_action_pressed("pause_menu") or event.is_action_pressed("inventory")):
 		close()
 		get_viewport().set_input_as_handled()
 
@@ -86,10 +81,6 @@ func _player_free() -> bool:
 func open_station() -> void:
 	_last_result = ""
 	_open("station")
-
-
-func open_archive() -> void:
-	_open("archive")
 
 
 func open_note(id: String) -> void:
@@ -139,7 +130,6 @@ func _refresh() -> void:
 		c.queue_free()
 	match _mode:
 		"station": _fill_station()
-		"archive": _fill_archive()
 		"note": _fill_note()
 
 
@@ -168,7 +158,8 @@ func _fill_station() -> void:
 			row.add_theme_constant_override("separation", 12)
 			var eid: String = exp.get("id", "")
 			if Research.experiment_done(id, eid):
-				var l := _text("✓ %s – %s" % [exp.get("label", eid), exp.get("text", "")], 17, Color(0.6, 0.9, 0.7))
+				var where := "auf dem Tablet" if Research.is_sent("%s/%s" % [id, eid]) else "Ergebnis liegt vor"
+				var l := _text("✓ %s – %s" % [exp.get("label", eid), where], 17, Color(0.6, 0.9, 0.7))
 				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				row.add_child(l)
 			else:
@@ -184,7 +175,7 @@ func _fill_station() -> void:
 					row.add_child(b)
 			_list.add_child(row)
 		if _last_result != "":
-			_list.add_child(_text("Befund: " + _last_result, 19, Color(1.0, 0.9, 0.6)))
+			_list.add_child(_text(_last_result, 18, Color(1.0, 0.9, 0.6)))
 		var out := _button("Herausnehmen")
 		out.pressed.connect(func() -> void: Research.take_out())
 		_list.add_child(out)
@@ -206,9 +197,19 @@ func _fill_station() -> void:
 			_list.add_child(row)
 		if not any:
 			_list.add_child(_text("Du hast keine unerforschten Funde dabei. Draußen im Wald soll etwas abgestürzt sein …", 18, Color(0.6, 0.7, 0.7)))
-	var arch := _button("Archiv öffnen (J)")
-	arch.pressed.connect(func() -> void: _open("archive"))
-	_list.add_child(arch)
+	# Ergebnisse werden nicht hier gelesen, sondern aufs Tablet geschickt
+	var unsent := Research.unsent_results().size()
+	if unsent > 0:
+		var send := _button("Ergebnisse ans Tablet senden (%d)" % unsent)
+		send.custom_minimum_size = Vector2(320, 42)
+		send.pressed.connect(func() -> void:
+			if Research.send_results() > 0:
+				_last_result = "Gesendet. Nachlesen auf dem Tablet (Couch) im Alien-Archiv."
+				SoundBank.play_ui(self, "signal", -10.0, 1.8)
+			_refresh())
+		_list.add_child(send)
+	else:
+		_list.add_child(_text("Alle Ergebnisse sind auf dem Tablet.", 16, Color(0.55, 0.7, 0.7)))
 
 
 func _on_insert(find: String) -> void:
@@ -220,48 +221,56 @@ func _on_insert(find: String) -> void:
 func _on_experiment(eid: String) -> void:
 	var r := Research.run_experiment(eid)
 	if r != "":
-		_last_result = r
+		_last_result = "Experiment durchgeführt – das Ergebnis kann ans Tablet gesendet werden."
 		SoundBank.play_ui(self, "signal", -10.0, 1.6)
 	_refresh()
 
 
 # --- Archiv -------------------------------------------------------------
 
-func _fill_archive() -> void:
-	_title.text = "Alien-Archiv"
+## Alien-Archiv (für das Tablet): nur Ergebnisse, die vom Analysegerät gesendet wurden.
+static func fill_archive(list: VBoxContainer) -> void:
 	var total := (Research.data().get("analyses", {}) as Dictionary).size()
-	_info.text = "Analysen %d / %d     Erkenntnisse %d / %d     Gerät: %s" % [Research.done.size(), total,
-		Research.links_done.size(), (Research.data().get("links", {}) as Dictionary).size(), Research.device_name()]
+	var sent_done := Research.done.filter(func(id: String) -> bool: return Research.is_sent(id)).size()
+	list.add_child(_text("Analysen %d / %d     Erkenntnisse %d / %d     Gerät: %s" % [sent_done, total,
+		Research.links_done.size(), (Research.data().get("links", {}) as Dictionary).size(), Research.device_name()], 16, Color(0.6, 0.7, 0.75)))
 	var analyses: Dictionary = Research.data().get("analyses", {})
 	for area: String in Research.data().get("areas", []):
-		_list.add_child(_text(area, 22, Color(0.7, 0.95, 1.0)))
+		list.add_child(_text(area, 22, Color(0.7, 0.95, 1.0)))
 		var any := false
 		for id in analyses:
 			var a: Dictionary = analyses[id]
 			if a.get("area", "") != area:
 				continue
 			var find: String = a.get("find", "")
-			if Research.done.has(id):
+			var sent_exp: Array = []
+			for exp: Dictionary in a.get("experiments", []):
+				if Research.is_sent("%s/%s" % [id, exp.get("id", "")]):
+					sent_exp.append(exp)
+			if Research.done.has(id) and Research.is_sent(id):
 				any = true
-				_list.add_child(_text("✓ %s – %s" % [a.get("name", id), a.get("summary", "")], 17, Color(0.85, 0.95, 0.9)))
-				for exp: Dictionary in a.get("experiments", []):
-					_list.add_child(_text("     · %s" % exp.get("text", ""), 15, Color(0.6, 0.75, 0.75)))
-			elif Research.slot == id:
+				list.add_child(_text("✓ %s – %s" % [a.get("name", id), a.get("summary", "")], 17, Color(0.85, 0.95, 0.9)))
+			elif Research.slot == id or not sent_exp.is_empty() or Research.done.has(id):
 				any = true
-				_list.add_child(_text("◐ %s – wird untersucht (%d %%)" % [a.get("name", id), int(Research.progress_of(id) * 100.0)], 17, Color(0.8, 0.85, 0.7)))
-			elif Research.seen.has(find):
+				var state := "Analyse fertig – Ergebnis noch am Analysegerät" if Research.done.has(id) else "wird untersucht (%d %%)" % int(Research.progress_of(id) * 100.0)
+				list.add_child(_text("◐ %s – %s" % [a.get("name", id), state], 17, Color(0.8, 0.85, 0.7)))
+			for exp: Dictionary in sent_exp:
+				list.add_child(_text("     · %s: %s" % [exp.get("label", ""), exp.get("text", "")], 15, Color(0.6, 0.75, 0.75)))
+			if Research.done.has(id) or Research.slot == id or not sent_exp.is_empty():
+				continue
+			if Research.seen.has(find):
 				any = true
 				var pr := Research.progress_of(id)
-				_list.add_child(_text("○ Fund: %s – noch nicht untersucht%s" % [Inventory.display_name(find), (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
+				list.add_child(_text("○ Fund: %s – noch nicht untersucht%s" % [Inventory.display_name(find), (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
 		if not any:
-			_list.add_child(_text("   – noch nichts –", 15, Color(0.45, 0.5, 0.5)))
+			list.add_child(_text("   – noch nichts –", 15, Color(0.45, 0.5, 0.5)))
 	# Verknüpfungen und Hypothesen
-	_list.add_child(_text("Verknüpfungen und Hypothesen", 22, Color(1.0, 0.85, 0.55)))
+	list.add_child(_text("Verknüpfungen und Hypothesen", 22, Color(1.0, 0.85, 0.55)))
 	var links: Dictionary = Research.data().get("links", {})
 	for lid in links:
 		var l: Dictionary = links[lid]
 		if Research.links_done.has(lid):
-			_list.add_child(_text("◆ %s – %s" % [l.get("name", lid), l.get("text", "")], 17, Color(1.0, 0.92, 0.75)))
+			list.add_child(_text("◆ %s – %s" % [l.get("name", lid), l.get("text", "")], 17, Color(1.0, 0.92, 0.75)))
 		elif Research.can_link(lid):
 			var row := HBoxContainer.new()
 			var names: PackedStringArray = []
@@ -273,31 +282,36 @@ func _fill_archive() -> void:
 			var b := _button("Verknüpfen")
 			b.pressed.connect(func() -> void: Research.link(lid))
 			row.add_child(b)
-			_list.add_child(row)
+			list.add_child(row)
 		else:
 			var parts: PackedStringArray = []
 			for n: String in l.get("needs", []):
 				var a := Research.analysis(n)
-				parts.append(String(a.get("name", "?")) if Research.done.has(n) else "???")
-			_list.add_child(_text("? Offene Frage – braucht: %s" % ", ".join(parts), 16, Color(0.6, 0.6, 0.55)))
-	# Notizen
-	if not Research.notes.is_empty():
-		_list.add_child(_text("Notizen", 22, Color(0.85, 0.8, 0.65)))
-		for nid: String in Research.notes:
-			var n: Dictionary = Research.data().get("notes", {}).get(nid, {})
-			_list.add_child(_text("%s: %s" % [n.get("name", nid), n.get("text", "")], 16, Color(0.85, 0.82, 0.72)))
+				parts.append(String(a.get("name", "?")) if Research.done.has(n) and Research.is_sent(n) else "???")
+			list.add_child(_text("? Offene Frage – braucht: %s" % ", ".join(parts), 16, Color(0.6, 0.6, 0.55)))
+
+
+## Gefundene Notizen (für das Tablet).
+static func fill_notes(list: VBoxContainer) -> void:
+	if Research.notes.is_empty():
+		list.add_child(_text("Noch keine Notizen gefunden.", 17, Color(0.6, 0.6, 0.65)))
+		return
+	for nid: String in Research.notes:
+		var n: Dictionary = Research.data().get("notes", {}).get(nid, {})
+		list.add_child(_text(String(n.get("name", nid)), 21, Color(0.95, 0.88, 0.7)))
+		list.add_child(_text(String(n.get("text", "")), 17, Color(0.85, 0.82, 0.72)))
 
 
 func _fill_note() -> void:
 	var n: Dictionary = Research.data().get("notes", {}).get(_note, {})
 	_title.text = String(n.get("name", "Notiz"))
-	_info.text = "Ins Archiv übernommen."
+	_info.text = "Auf dem Tablet unter „Notizen“ abgelegt."
 	_list.add_child(_text(String(n.get("text", "")), 22, Color(0.92, 0.88, 0.76)))
 
 
 # --- Bausteine ----------------------------------------------------------
 
-func _text(t: String, size: int = 19, color: Color = Color(0.88, 0.9, 0.88)) -> Label:
+static func _text(t: String, size: int = 19, color: Color = Color(0.88, 0.9, 0.88)) -> Label:
 	var l := Label.new()
 	l.text = t
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -307,7 +321,7 @@ func _text(t: String, size: int = 19, color: Color = Color(0.88, 0.9, 0.88)) -> 
 	return l
 
 
-func _button(t: String) -> Button:
+static func _button(t: String) -> Button:
 	var b := Button.new()
 	b.text = t
 	b.custom_minimum_size = Vector2(150, 38)
@@ -315,7 +329,7 @@ func _button(t: String) -> Button:
 	return b
 
 
-func _bar(v: float) -> ProgressBar:
+static func _bar(v: float) -> ProgressBar:
 	var p := ProgressBar.new()
 	p.min_value = 0.0
 	p.max_value = 1.0

@@ -129,10 +129,16 @@ func _apply(c: Dictionary) -> void:
 		"towel_extra":
 			var v := _holder(kind)
 			var cloth := BuildKit.tex_mat("fabric", 0.4, Color(0.55, 0.5, 0.42))
-			var t := BuildKit.box(v, Vector3(0.55, 0.9, 0.01), Vector3(float(c["x"]), 1.5, -9.0), cloth, false, Vector3(0, 0, 3))
-			# dunkle Flecken
+			# in eine Lücke zwischen den eigenen Handtüchern hängen (nicht überlappend), minimal versetzt
+			var gaps := [-11.0, -10.45, -8.82, -6.3]
+			var gx: float = gaps[0]
+			for g: float in gaps:
+				if absf(g - float(c["x"])) < absf(gx - float(c["x"])):
+					gx = g
+			var t := BuildKit.box(v, Vector3(0.55, 0.9, 0.01), Vector3(gx, 1.5, -9.012), cloth, false, Vector3(0, 0, 3))
+			# dunkle Flecken (dicker als das Tuch, damit sie nicht flimmern)
 			for k in 4:
-				BuildKit.box(t, Vector3(0.12, 0.1, 0.012), Vector3(_rng.randf_range(-0.2, 0.2), _rng.randf_range(-0.35, 0.3), 0), BuildKit.color_mat(Color(0.14, 0.11, 0.09)), false)
+				BuildKit.box(t, Vector3(0.12, 0.1, 0.018), Vector3(_rng.randf_range(-0.2, 0.2), _rng.randf_range(-0.35, 0.3), 0), BuildKit.color_mat(Color(0.14, 0.11, 0.09)), false)
 		"bench_moved":
 			var bench := scene.get_node_or_null("Cabin/PorchBench") as Node3D
 			if bench:
@@ -206,11 +212,25 @@ func _apply(c: Dictionary) -> void:
 			var stone := BuildKit.tex_mat("rock", 0.4, Color(0.9, 0.9, 0.88))
 			var from := Vector3(float(c["x"]), 0, float(c["z"]))
 			var to := Vector3(-3.0, 0, 7.8)
-			var n := int(from.distance_to(to) / 0.7)
-			for k in n:
-				var p := from.lerp(to, float(k) / float(n))
-				p.y = Terrain.height_at(p.x, p.z) + 0.03
-				BuildKit.sphere(v, 0.09, p, stone, Vector3(1.2, 0.5, 1.0), 7)
+			# nicht schnurgerade: Linie schlängelt sich leicht, Abstände, Größen und Lage der Steine schwanken
+			var r := RandomNumberGenerator.new()
+			r.seed = int(absf(from.x) * 1000.0 + absf(from.z) * 7.0)
+			var dir := (to - from)
+			var length := dir.length()
+			dir = dir.normalized()
+			var side := Vector3(-dir.z, 0, dir.x)
+			var wave_a := r.randf_range(0.8, 1.6)
+			var wave_f := r.randf_range(0.12, 0.22)
+			var phase := r.randf() * TAU
+			var d := 0.0
+			while d < length:
+				var bend := sin(d * wave_f + phase) * wave_a * sin(PI * d / length)  # an den Enden gerade
+				var p := from + dir * d + side * (bend + r.randf_range(-0.12, 0.12))
+				p.y = Terrain.height_at(p.x, p.z) + 0.02
+				var sz := r.randf_range(0.06, 0.12)
+				var st := BuildKit.sphere(v, sz, p, stone, Vector3(r.randf_range(1.0, 1.5), r.randf_range(0.4, 0.65), r.randf_range(0.8, 1.2)), 7)
+				st.rotation.y = r.randf() * TAU
+				d += r.randf_range(0.5, 0.95)
 		"shoes":
 			var v := _holder(kind)
 			var leather := BuildKit.color_mat(Color(0.18, 0.12, 0.08), 0.8)

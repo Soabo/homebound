@@ -4,7 +4,7 @@ extends Interactable
 ## und schaltet sich manchmal nachts von selbst ein (GDD 13.2, Phase 5).
 ## Phase 7: An der Werkbank wird es zum improvisierten Analysegerät umgebaut; später
 ## kommt daneben das fremde Analysegerät von der Absturzstelle (GDD 12.5).
-## Der Knoten liegt im Ursprung der Hütte; anchor = Position des Radios.
+## Der Knoten steht dort, wo das Radio steht (Vorderseite = lokale -x-Achse); anchor = Versatz (meist 0).
 
 @export var anchor: Vector3 = Vector3.ZERO
 

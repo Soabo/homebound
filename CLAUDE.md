@@ -88,6 +88,14 @@
   `LURK_SPOTS` je Kamera, Sicht wird geprüft), verschwindet beim Umschalten/Schließen, dreht nach einer Weile
   den Kopf zur Kamera. Wie oft: ThreatConfig `camera_lurk_*`. Test: `--night-test=lurk`.
 
+## Entscheidungen Feinschliff nach 10 Spieltagen
+- Radio + Analysegerät stehen in der Werkstatt an der Nordwand (`Cabin._build_radio_corner`, Radio-Knoten lokal gedreht).
+- Alien-Archiv und Notizen nur noch auf dem Tablet (Couch, Reiter Posteingang | Alien-Archiv | Notizen), Taste J entfällt.
+  Analysegerät zeigt keine Ergebnistexte mehr: „Ergebnisse ans Tablet senden“ (`Research.send_results`, `sent`, `tablet_new`).
+  Verknüpfen geht erst, wenn die Analysen gesendet sind. Test: `--night-test=tablet`.
+- Bewegte Teile (Werkzeuge in der Hand, Türen, Schranktüren) mit `BuildKit.localize_materials` (Textur am Objekt).
+- Hände/Werkzeuge ziehen sich vor Wänden zurück (`PlayerHands._avoid_walls`).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

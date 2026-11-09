@@ -110,6 +110,7 @@ const HANDS_LAYER := 1 << 19
 
 
 func _tag_layers(n: Node) -> void:
+	BuildKit.localize_materials(n)
 	for g in n.find_children("*", "GeometryInstance3D", true, false):
 		(g as GeometryInstance3D).layers |= HANDS_LAYER
 	if n is GeometryInstance3D:
@@ -503,6 +504,34 @@ func _process(delta: float) -> void:
 	_update_sway(delta)
 	_pose_right(delta)
 	_pose_left()
+	_avoid_walls(delta)
+
+
+## Steht man dicht vor einer Wand oder Tür, zieht man Hände und Werkzeug zurück und senkt sie –
+## so verschwinden sie nicht in der Wand.
+var _wall_push: float = 0.0
+
+
+func _avoid_walls(delta: float) -> void:
+	var cam := get_parent() as Node3D
+	if cam == null or not is_inside_tree():
+		return
+	var space := get_world_3d().direct_space_state
+	var origin := cam.global_position
+	var b := cam.global_transform.basis
+	var nearest := 9.0
+	# Mitte und Richtung der beiden Hände prüfen
+	for off: Vector3 in [Vector3(0, 0, -1), Vector3(0.35, -0.25, -1).normalized(), Vector3(-0.3, -0.25, -1).normalized(), Vector3(0.3, 0.15, -1).normalized()]:
+		var q := PhysicsRayQueryParameters3D.create(origin, origin + b * off * 1.0)
+		if player:
+			q.exclude = [player.get_rid()]
+		var hit := space.intersect_ray(q)
+		if not hit.is_empty():
+			nearest = minf(nearest, origin.distance_to(hit["position"]))
+	var want := clampf((0.8 - nearest) / 0.55, 0.0, 1.0)
+	_wall_push = move_toward(_wall_push, want, delta * 6.0)
+	position = Vector3(0.0, -0.1 * _wall_push, 0.3 * _wall_push)
+	rotation_degrees = Vector3(-28.0 * _wall_push, 0.0, 0.0)
 
 
 ## Nachschwingen: die Hände bleiben beim Umsehen etwas zurück und federn nach.
