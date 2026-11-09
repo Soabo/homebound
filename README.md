@@ -32,7 +32,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Rechtsklick (halten) | Blocken mit Faust, Axt oder Blechschere |
 | 1–9 / Mausrad | Schnellplatz wählen (leer = Faust) |
 | R | Im Schrank/Spind: heraustreten; Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
-| F | LED der Smartwatch am linken Arm (Taschenlampe) – auch zusätzlich zu einem Gegenstand rechts |
+| F | Uhrlicht am linken Arm an/aus – gedrückt halten: zwischen LED-Lampe und weißem Display (schwaches Umgebungslicht) wechseln |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
 | Tab / I | Inventar (essen, trinken, bauen, ablegen); oben die Schnellplätze 1–9 – Gegenstände mit ✋ dorthin ziehen |
