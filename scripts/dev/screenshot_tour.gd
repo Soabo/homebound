@@ -69,6 +69,7 @@ const SHOTS := [
 	{"name": "55_hochsitz", "hour": 13.0, "pos": Vector3(18.29, 0.0, -73.92), "look": Vector3(12.0, 3.5, -80.0)},
 	{"name": "57_hochsitz_oben", "hour": 13.0, "pos": Vector3(12.26, 4.3, -79.03), "look": Vector3(11.64, 4.8, -81.35), "tower": true},
 	{"name": "56_tankanzeige", "hour": 14.0, "pos": Vector3(3.3, 0.45, 0.9), "look": Vector3(2.8, 1.95, -0.92), "lights": true},
+	{"name": "58_tablet_archiv", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 2.0), "look": Vector3(-2.0, 1.0, 0.0), "lights": true, "tablet_tab": "archive"},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -157,6 +158,17 @@ func _run() -> void:
 			for id: String in ["wood", "scrap", "nails", "planks", "battery", "electronics"]:
 				Inventory.add(id, 4)
 			get_tree().call_group("game_menus", "open_crafting")
+		if shot.has("tablet_tab"):
+			# Beispiel-Forschungsstand: drei Analysen fertig und gesendet, zwei Funde offen
+			for an: String in ["an_tissue", "an_crystal", "an_fungus"]:
+				Research.done.append(an)
+				Research.seen.append(String(Research.analysis(an)["find"]))
+			for f: String in ["alien_blood", "metal_fragment"]:
+				Research.seen.append(f)
+			Research.sent = Research.unsent_results()
+			var couch := get_tree().current_scene.get_node("Cabin/Couch") as Couch
+			get_tree().call_group("tablet_menu", "open", couch)
+			(get_tree().get_first_node_in_group("tablet_menu") as TabletMenu)._set_tab(shot["tablet_tab"])
 		if shot.get("break_window", false):
 			var w := get_tree().current_scene.get_node("Cabin/WindowLiving") as CabinWindow
 			w.receive_hit(999.0)

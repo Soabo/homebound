@@ -247,21 +247,40 @@ static func fill_archive(list: VBoxContainer) -> void:
 			for exp: Dictionary in a.get("experiments", []):
 				if Research.is_sent("%s/%s" % [id, exp.get("id", "")]):
 					sent_exp.append(exp)
+			# Eintrag: Bild links, Text rechts. Bild erst richtig, wenn das Ergebnis gesendet ist – vorher abgedunkelt.
+			var col := VBoxContainer.new()
+			col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			col.add_theme_constant_override("separation", 4)
+			var revealed := false
 			if Research.done.has(id) and Research.is_sent(id):
-				any = true
-				list.add_child(_text("✓ %s – %s" % [a.get("name", id), a.get("summary", "")], 17, Color(0.85, 0.95, 0.9)))
+				revealed = true
+				col.add_child(_text("✓ %s" % a.get("name", id), 19, Color(0.85, 0.95, 0.9)))
+				col.add_child(_text(String(a.get("summary", "")), 16, Color(0.78, 0.86, 0.84)))
 			elif Research.slot == id or not sent_exp.is_empty() or Research.done.has(id):
-				any = true
 				var state := "Analyse fertig – Ergebnis noch am Analysegerät" if Research.done.has(id) else "wird untersucht (%d %%)" % int(Research.progress_of(id) * 100.0)
-				list.add_child(_text("◐ %s – %s" % [a.get("name", id), state], 17, Color(0.8, 0.85, 0.7)))
-			for exp: Dictionary in sent_exp:
-				list.add_child(_text("     · %s: %s" % [exp.get("label", ""), exp.get("text", "")], 15, Color(0.6, 0.75, 0.75)))
-			if Research.done.has(id) or Research.slot == id or not sent_exp.is_empty():
-				continue
-			if Research.seen.has(find):
-				any = true
+				col.add_child(_text("◐ %s – %s" % [a.get("name", id), state], 17, Color(0.8, 0.85, 0.7)))
+			elif Research.seen.has(find):
 				var pr := Research.progress_of(id)
-				list.add_child(_text("○ Fund: %s – noch nicht untersucht%s" % [Inventory.display_name(find), (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
+				col.add_child(_text("○ Fund: %s – noch nicht untersucht%s" % [Inventory.display_name(find), (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
+			else:
+				continue
+			any = true
+			for exp: Dictionary in sent_exp:
+				col.add_child(_text("· %s: %s" % [exp.get("label", ""), exp.get("text", "")], 15, Color(0.6, 0.75, 0.75)))
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 14)
+			var pic := research_picture(find)
+			if pic:
+				var tr := TextureRect.new()
+				tr.texture = pic
+				tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+				tr.custom_minimum_size = Vector2(210, 210) if revealed else Vector2(90, 90)
+				tr.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+				tr.modulate = Color.WHITE if revealed else Color(0.25, 0.27, 0.3)
+				row.add_child(tr)
+			row.add_child(col)
+			list.add_child(row)
 		if not any:
 			list.add_child(_text("   – noch nichts –", 15, Color(0.45, 0.5, 0.5)))
 	# Verknüpfungen und Hypothesen
@@ -289,6 +308,15 @@ static func fill_archive(list: VBoxContainer) -> void:
 				var a := Research.analysis(n)
 				parts.append(String(a.get("name", "?")) if Research.done.has(n) and Research.is_sent(n) else "???")
 			list.add_child(_text("? Offene Frage – braucht: %s" % ", ".join(parts), 16, Color(0.6, 0.6, 0.55)))
+
+
+## Bild zum Fund aus assets/research/<id>.jpg|png (KI-Bilder von Christian), sonst null.
+static func research_picture(find: String) -> Texture2D:
+	for ext: String in ["jpg", "png", "webp"]:
+		var path := "res://assets/research/%s.%s" % [find, ext]
+		if ResourceLoader.exists(path):
+			return load(path) as Texture2D
+	return null
 
 
 ## Gefundene Notizen (für das Tablet).

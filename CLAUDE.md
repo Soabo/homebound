@@ -102,6 +102,8 @@
 - Hinsetzen mit Kamerabewegung: `Seat` (Verandabank, wandert mit), Couch, Monitorstuhl (`MonitorStation`), Leiter klettern
   (`TowerLadder`), Verstecke. Partikel `Fx.burst` (Holz, Stein, Funken, Erde, Glas, Staub).
 - Tablet flackert nur nachts bei Alien-Aktivität. Fenster: Glaszacken bleiben im Rahmen, Hammerserie beim Verbarrikadieren.
+- Forschungsbilder (KI-Bilder von Christian): `assets/research/<fund-id>.jpg` (512 px, Import verlustbehaftet),
+  im Tablet-Archiv groß, sobald gesendet, vorher abgedunkelt (`ResearchMenu.research_picture`).
 - Hochsitz: Rückwand bis unters Dach, Dach fest, Notizen ohne festen Körper. Test: `--night-test=extras`.
 
 ## Technik
