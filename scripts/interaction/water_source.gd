@@ -9,6 +9,8 @@ extends Interactable
 @export var thirst_gain: float = 30.0
 ## Kann durch das Terraforming verunreinigt werden (Bach, Leitungswasser). Regenwasser bleibt sauber.
 @export var contaminable: bool = false
+## Leitungswasser ist sauber (Flasche = Trinkwasser), Regentonne/Bach geben Rohwasser zum Abkochen
+@export var clean: bool = false
 ## Geräusch beim Trinken (Wasserhahn: echtes Rauschen)
 @export var sound: String = "step_grass"
 
@@ -37,6 +39,40 @@ func get_prompt(_player: Node) -> String:
 		var how := "mit Filter" if Inventory.count("water_filter") > 0 else "VERFÄRBT – ohne Filter gefährlich"
 		return "[E] %s – trinken (%s)  (Durst %d%%)" % [label, how, int(Survival.thirst)]
 	return "[E] %s – trinken  (Durst %d%%)" % [label, int(Survival.thirst)]
+
+
+## [R] Gießkanne füllen (wenn nicht voll) oder eine leere Flasche abfüllen.
+## Gießkanne zuerst, wenn sie leer ist (oder keine leere Flasche dabei); sonst Flaschen.
+func _fill_can_first() -> bool:
+	if Inventory.count("watering_can") <= 0 or Supplies.can_water >= Supplies.config.watering_can_charges:
+		return false
+	return Supplies.can_water <= 0 or Inventory.count("bottle_empty") <= 0
+
+
+func get_secondary_prompt(_player: Node) -> String:
+	if _fill_can_first():
+		return "[R] Gießkanne füllen"
+	var n := Inventory.count("bottle_empty")
+	if n > 0:
+		return "[R] Flasche füllen (%d leer)" % n
+	return ""
+
+
+func secondary_interact(_player: Node) -> void:
+	if _fill_can_first():
+		Supplies.fill_can(_dirty())
+		_splash()
+		EventBus.notify("Gießkanne gefüllt.", 1.5)
+		return
+	if not Inventory.remove("bottle_empty", 1):
+		return
+	var what := "water" if clean else "water_raw"
+	if _dirty():
+		what = "water_raw" if Inventory.count("water_filter") > 0 else "water_tainted"
+	Inventory.add(what, 1)
+	_splash()
+	EventBus.notify("%s abgefüllt." % Inventory.display_name(what), 2.0)
+	Tasks.flag("filled_bottle")
 
 
 func interact(player: Node) -> void:

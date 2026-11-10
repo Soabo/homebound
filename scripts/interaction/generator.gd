@@ -37,7 +37,8 @@ func _ready() -> void:
 
 
 func get_prompt(_player: Node) -> String:
-	var tank := "Tank %d%%" % int(PowerManager.fuel)
+	Tasks.flag("generator_checked")
+	var tank := "Tank %d%%, Zustand %d%%" % [int(PowerManager.fuel), int(Supplies.generator_condition)]
 	if PowerManager.generator_running and not PowerManager.outage:
 		return "[E] Generator abstellen  (%s)" % tank
 	if PowerManager.outage:
@@ -46,9 +47,15 @@ func get_prompt(_player: Node) -> String:
 
 
 func get_secondary_prompt(_player: Node) -> String:
+	if PowerManager.fuel >= 99.0:
+		return ""
 	var cans := Inventory.count("fuel_can")
-	if cans > 0 and PowerManager.fuel < 99.0:
+	if cans > 0:
 		return "[R] Benzin nachfüllen  (%d Kanister)" % cans
+	if Supplies.gasifier and Inventory.count("wood") > 0:
+		return "[R] Holz in den Vergaser  (%d Holz)" % Inventory.count("wood")
+	if Supplies.cell_adapter and Inventory.count("energy_cell") > 0:
+		return "[R] Energiezelle einsetzen"
 	return ""
 
 
@@ -56,17 +63,34 @@ func interact(_player: Node) -> void:
 	if PowerManager.generator_running and not PowerManager.outage:
 		PowerManager.stop_generator()
 	else:
+		if PowerManager.fuel > 0.0 and not Supplies.start_ok():
+			SoundBank.play_at(self, "rattle", to_global(anchor + Vector3(0, 0.5, 0)), -4.0, 0.6)
+			EventBus.notify("Der Motor orgelt, springt aber nicht an. Er braucht dringend Wartung.", 3.0)
+			return
 		if PowerManager.start_generator():
+			Tasks.flag("generator_started")
 			SoundBank.play_at(self, "bang", to_global(anchor + Vector3(0, 0.5, 0)), -8.0, 1.6)
 			EventBus.noise_made.emit(to_global(anchor), 14.0)
 	_update()
 
 
 func secondary_interact(_player: Node) -> void:
+	if PowerManager.fuel >= 99.0:
+		return
 	if Inventory.remove("fuel_can", 1):
 		PowerManager.add_fuel(FUEL_PER_CAN)
 		SoundBank.play_at(self, "pickup", to_global(anchor), -4.0, 0.5)
 		EventBus.notify("Tank aufgefüllt: %d%%" % int(PowerManager.fuel), 2.0)
+	elif Supplies.gasifier and Inventory.remove("wood", 1):
+		PowerManager.add_fuel(Supplies.config.fuel_per_wood)
+		SoundBank.play_at(self, "place", to_global(anchor), -4.0, 0.8)
+		EventBus.notify("Holzgas: Tank %d%%" % int(PowerManager.fuel), 1.5)
+		Tasks.flag("gasifier_used")
+	elif Supplies.cell_adapter and Inventory.remove("energy_cell", 1):
+		PowerManager.add_fuel(Supplies.config.fuel_per_cell)
+		SoundBank.play_at(self, "signal", to_global(anchor), -6.0, 1.4)
+		EventBus.notify("Die Zelle summt. Tank %d%% – und die Anzeige zittert seltsam." % int(PowerManager.fuel), 3.0)
+		Tasks.flag("cell_used")
 
 
 func _on_power_changed(_p: bool) -> void:

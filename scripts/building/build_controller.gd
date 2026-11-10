@@ -27,9 +27,97 @@ func _ready() -> void:
 func _buildable_items() -> Array[String]:
 	var out: Array[String] = []
 	for id in Inventory.items:
-		if DataDB.item(id).has("build"):
+		if DataDB.item(id).has("build") or DataDB.item(id).has("camera"):
 			out.append(id)
 	return out
+
+
+# --- Kameras anbringen ------------------------------------------------------
+## Kameras nur außen an Hütte oder Schuppen, zwischen diesen Höhen (über dem Boden der Wand)
+var _cam_preview: SecurityCamera
+var _cam_key: String = ""
+var _cam_pos: Vector3
+var _cam_normal: Vector3
+var _cam_yaw: float = 0.0
+
+
+func _is_camera() -> bool:
+	return DataDB.item(type).has("camera")
+
+
+func _camera_update(player: Player) -> void:
+	var cam := player.camera.global_transform
+	var q := PhysicsRayQueryParameters3D.create(cam.origin, cam.origin - cam.basis.z * REACH)
+	q.exclude = [player.get_rid()]
+	var hit := player.get_world_3d().direct_space_state.intersect_ray(q)
+	_valid = false
+	var why := "Ziel auf eine Außenwand von Hütte oder Schuppen."
+	if not hit.is_empty():
+		var n: Vector3 = hit["normal"]
+		var p: Vector3 = hit["position"]
+		var owner := ""
+		var node := hit["collider"] as Node
+		while node:
+			if node.name in ["Cabin", "Shed"]:
+				owner = node.name
+				break
+			node = node.get_parent()
+		if owner != "" and absf(n.y) < 0.3:
+			n.y = 0.0
+			n = n.normalized()
+			# Außenseite: Wandrichtung zeigt von der Gebäudemitte weg
+			var center := Vector3.ZERO if owner == "Cabin" else Shed.ORIGIN
+			var outward := (p - center)
+			outward.y = 0.0
+			var lo := (Cabin.FLOOR_Y + 1.5) if owner == "Cabin" else 1.4
+			var hi := (Cabin.WALL_TOP - 0.15) if owner == "Cabin" else 2.15
+			# vor der Wand muss draußen sein (nicht an Innenwänden)
+			var front := p + n * 0.3
+			var inside := Cabin.is_inside(front) if owner == "Cabin" else \
+					(absf(front.x - Shed.ORIGIN.x) < Shed.HALF.x and absf(front.z - Shed.ORIGIN.z) < Shed.HALF.y)
+			if outward.dot(n) <= 0.0 or inside:
+				why = "Nur außen am Gebäude."
+			elif p.y < lo:
+				why = "Höher anbringen (über Kopfhöhe)."
+			elif p.y > hi:
+				why = "Hier ist kein Platz mehr unterm Dach."
+			else:
+				_valid = true
+				_cam_pos = p
+				_cam_normal = n
+	var key := "%s|%.1f|%.1f|%.1f|%.2f|%s" % [type, _cam_pos.x, _cam_pos.y, _cam_pos.z, _cam_yaw, _valid]
+	if key != _cam_key:
+		_cam_key = key
+		if _cam_preview:
+			_cam_preview.queue_free()
+			_cam_preview = null
+		if _valid:
+			_cam_preview = SecurityCamera.new()
+			_cam_preview.preview = true
+			_cam_preview.wall_normal = _cam_normal
+			_cam_preview.position = _cam_pos
+			_cam_preview.look_target = SecurityCamera.aim_target(_cam_pos, _cam_normal, _cam_yaw)
+			get_tree().current_scene.add_child(_cam_preview)
+	EventBus.interaction_prompt_changed.emit("%s  –  [E / Linksklick] anbringen   [R] schwenken   [B] weiter / beenden%s" % [
+		Inventory.display_name(type), "" if _valid else "\n" + why])
+
+
+func _camera_place() -> void:
+	if not _valid:
+		EventBus.notify("Kameras gehen nur außen an Hütte oder Schuppen.", 2.0)
+		return
+	var idx := int(DataDB.item(type).get("camera", 0))
+	if not Inventory.remove(type, 1):
+		return
+	Supplies.install_camera(idx, _cam_pos, _cam_normal, _cam_yaw)
+	SoundBank.hammer_series(get_tree().current_scene, _cam_pos, 3)
+	EventBus.notify("%s angebracht. Das Bild siehst du am Monitor im Wohnzimmer." % Inventory.display_name(type), 3.0)
+	_cam_yaw = 0.0
+	var items := _buildable_items()
+	if items.is_empty():
+		stop()
+	else:
+		start(items[0])
 
 
 func start(id: String) -> void:
@@ -37,6 +125,13 @@ func start(id: String) -> void:
 		return
 	type = id
 	active = true
+	_cam_key = ""
+	if _is_camera():
+		if _preview:
+			_preview.queue_free()
+			_preview = null
+		EventBus.notify("Kamera anbringen: auf eine Außenwand zielen  –  E anbringen, R schwenken, B weiter/aus", 4.0)
+		return
 	_make_preview()
 	EventBus.notify("Bauen: %s  –  E platzieren, R drehen, B weiter/aus" % Inventory.display_name(id), 4.0)
 
@@ -46,6 +141,9 @@ func stop() -> void:
 	if _preview:
 		_preview.queue_free()
 		_preview = null
+	if _cam_preview:
+		_cam_preview.queue_free()
+		_cam_preview = null
 	EventBus.interaction_prompt_changed.emit("")
 
 
@@ -85,21 +183,35 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not active:
 		return
 	if event.is_action_pressed("interact_secondary"):
-		_rot += PI * 0.25
+		if _is_camera():
+			# schwenken: -75° … +75° in 15°-Schritten
+			_cam_yaw += deg_to_rad(15.0)
+			if _cam_yaw > deg_to_rad(76.0):
+				_cam_yaw = deg_to_rad(-75.0)
+		else:
+			_rot += PI * 0.25
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact") or (active and event.is_action_pressed("attack")):
 		get_viewport().set_input_as_handled()
-		_place()
+		if _is_camera():
+			_camera_place()
+		else:
+			_place()
 
 
 func _physics_process(_delta: float) -> void:
-	if not active or _preview == null:
+	if not active:
 		return
 	if Inventory.count(type) <= 0:
 		stop()
 		return
 	var player := get_tree().get_first_node_in_group("player") as Player
 	if player == null:
+		return
+	if _is_camera():
+		_camera_update(player)
+		return
+	if _preview == null:
 		return
 	var cam := player.camera.global_transform
 	var from := cam.origin

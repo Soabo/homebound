@@ -68,6 +68,15 @@ func get_prompt(_player: Node) -> String:
 	return "Kamin – das Feuer brennt.  [E] Holz nachlegen (%d Holz)" % wood
 
 
+func get_secondary_prompt(_player: Node) -> String:
+	return "[R] Über dem Feuer kochen" if _strength > 0.2 else ""
+
+
+func secondary_interact(_player: Node) -> void:
+	if _strength > 0.2:
+		get_tree().call_group("game_menus", "open_crafting", "stove")
+
+
 func interact(_player: Node) -> void:
 	var wood := int(_cfg.get("wood", 1))
 	if Inventory.count("wood") < wood:

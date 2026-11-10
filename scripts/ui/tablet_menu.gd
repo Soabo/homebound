@@ -80,11 +80,11 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	for t: Array in [["inbox", "Posteingang"], ["archive", "Alien-Archiv"], ["notes", "Notizen"]]:
+	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Alien-Archiv"], ["notes", "Notizen"]]:
 		var tb := Button.new()
 		tb.text = t[1]
 		tb.toggle_mode = true
-		tb.custom_minimum_size = Vector2(170, 36)
+		tb.custom_minimum_size = Vector2(150, 36)
 		tb.add_theme_font_size_override("font_size", 16)
 		tb.pressed.connect(_set_tab.bind(t[0]))
 		tabs.add_child(tb)
@@ -138,6 +138,9 @@ func _ready() -> void:
 	Research.changed.connect(func() -> void:
 		if _root.visible:
 			_refresh())
+	Tasks.changed.connect(func() -> void:
+		if _root.visible and _tab != "tasks":
+			_refresh())
 
 
 func _label(t: String, size: int, col: Color) -> Label:
@@ -186,12 +189,19 @@ func _refresh() -> void:
 		(_tabs[id] as Button).button_pressed = id == _tab
 	var nb := _tabs["archive"] as Button
 	nb.text = "Alien-Archiv" + ("  ● %d neu" % Research.tablet_new if Research.tablet_new > 0 and _tab != "archive" else "")
+	var tk := _tabs["tasks"] as Button
+	tk.text = "Aufgaben" + ("  ● %d neu" % Tasks.unseen if Tasks.unseen > 0 and _tab != "tasks" else "")
 	_split.visible = _tab == "inbox"
 	_wide_scroll.visible = _tab != "inbox"
 	if _tab != "inbox":
 		for c in _wide.get_children():
 			c.queue_free()
-		if _tab == "archive":
+		if _tab == "tasks":
+			_title.text = "Aufgaben"
+			_hint.text = "Neue Aufgaben kommen dazu, je weiter du kommst.     [E] Tablet weglegen und aufstehen"
+			_fill_tasks(_wide)
+			Tasks.mark_seen.call_deferred()
+		elif _tab == "archive":
 			_title.text = "Alien-Archiv"
 			_hint.text = "Ergebnisse kommen vom Analysegerät in der Werkstatt.     [E] Tablet weglegen und aufstehen"
 			ResearchMenu.fill_archive(_wide)
@@ -220,6 +230,40 @@ func _refresh() -> void:
 		_list.add_child(b)
 	if _list.get_child_count() == 0:
 		_list.add_child(_label("Keine Nachrichten.", 16, Color(0.6, 0.6, 0.65)))
+
+
+## Reiter „Aufgaben“: Tagesroutine, offene Ziele, erledigte Ziele.
+func _fill_tasks(box: VBoxContainer) -> void:
+	box.add_child(_label("HEUTE  (Tag %d)" % TimeManager.day, 17, Color(1.0, 0.82, 0.45)))
+	var routine := Tasks.daily()
+	if routine.is_empty():
+		box.add_child(_label("   Noch keine festen Routinen.", 17, Color(0.6, 0.6, 0.65)))
+	for d: Dictionary in routine:
+		var l := _label(("   ✓  " if d["done"] else "   ○  ") + String(d["title"]), 19,
+				Color(0.55, 0.8, 0.55) if d["done"] else Color(0.9, 0.92, 0.95))
+		box.add_child(l)
+	box.add_child(_spacer())
+	box.add_child(_label("ZIELE", 17, Color(1.0, 0.82, 0.45)))
+	var open_g := Tasks.open_goals()
+	if open_g.is_empty():
+		box.add_child(_label("   Im Moment nichts Neues.", 17, Color(0.6, 0.6, 0.65)))
+	for g: Dictionary in open_g:
+		box.add_child(_label("   ○  " + String(g.get("title", "")), 20, Color(0.92, 0.94, 0.97)))
+		var t := _label("        " + String(g.get("text", "")), 16, Color(0.68, 0.72, 0.8))
+		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(t)
+	var done_g := Tasks.done_goals()
+	if not done_g.is_empty():
+		box.add_child(_spacer())
+		box.add_child(_label("ERLEDIGT", 17, Color(0.6, 0.66, 0.75)))
+		for g: Dictionary in done_g:
+			box.add_child(_label("   ✓  " + String(g.get("title", "")), 17, Color(0.5, 0.68, 0.5)))
+
+
+func _spacer() -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(0, 10)
+	return c
 
 
 func _show(m: Dictionary) -> void:

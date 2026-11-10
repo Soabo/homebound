@@ -31,6 +31,9 @@ func _run() -> void:
 		get_tree().quit()
 		return
 	_ran = true
+	# Tests mit den alten drei Kamerapositionen (im Spiel baut man sie selbst ein)
+	if mode != "supplies":
+		get_tree().call_group("surveillance", "install_defaults")
 	if mode == "events":
 		await _event_test()
 		return
@@ -59,6 +62,10 @@ func _run() -> void:
 		return
 	if mode == "extras":
 		await _extras_test()
+		get_tree().quit()
+		return
+	if mode == "supplies":
+		await _supplies_test()
 		get_tree().quit()
 		return
 	if mode == "tablet":
@@ -978,3 +985,189 @@ func _extras_test() -> void:
 	win.receive_hit(9999.0)
 	print("FENSTER zerbrochen: Zacken sichtbar %s, Glas weg %s" % [win._jagged.visible, not win._glass.visible])
 	print("EXTRAS TEST ENDE")
+
+
+func _aim(player: Player, target: Vector3) -> void:
+	var eye := player.camera.global_position
+	var d := target - eye
+	player.rotation.y = atan2(-d.x, -d.z)
+	player.head.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
+
+
+## Selbstversorgung: Beete, Wasser, Kochen, Schlinge, Generator, Schrott, Kameras, Aufgaben, Tablet.
+func _supplies_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var sv := get_tree().get_first_node_in_group("surveillance") as Surveillance
+	print("AUFGABEN Start offen: %s" % [Tasks.open_goals().map(func(g: Dictionary) -> String: return g["id"])])
+	print("KAMERAS am Start installiert: %d, Monitor Kamera 1 installiert: %s" % [Supplies.cameras.size(), sv.installed(0)])
+	# Fundstücke
+	for n: String in ["SupplyProps/Camera1Box", "SupplyProps/Camera2Box", "SupplyProps/Camera3Box", "SupplyProps/EmptyBottles",
+			"SupplyProps/SeedsRadish", "SupplyProps/SeedsCarrot", "SupplyProps/SeedPotatoes", "SupplyProps/MotorOil", "SupplyProps/WateringCan"]:
+		var pk := scene.get_node(n) as ItemPickup
+		while pk.amount > 0:
+			pk.interact(player)
+	print("FUNDE: Kameras %d/%d/%d, Flaschen %d, Samen R%d K%d P%d, Öl %d, Kanne %d" % [Inventory.count("camera_1"), Inventory.count("camera_2"), Inventory.count("camera_3"),
+		Inventory.count("bottle_empty"), Inventory.count("seeds_radish"), Inventory.count("seeds_carrot"), Inventory.count("seed_potato"), Inventory.count("motor_oil"), Inventory.count("watering_can")])
+	await get_tree().create_timer(1.2).timeout
+	# Hochbeet: säen, ohne Kanne gießen geht nicht, Kanne füllen, gießen, wachsen, ernten
+	var bed := scene.get_node("Garden/GardenBed1") as GardenBed
+	bed.interact(player)
+	print("BEET gesät: %s (%s)" % [Supplies.bed_state(0), Supplies.beds[0]["crop"]])
+	var barrel := [scene.get_node("Garden/RainBarrel")]
+	var tap := scene.get_node("Cabin/KitchenTap") as WaterSource
+	tap.secondary_interact(player)
+	print("KANNE gefüllt: %d" % Supplies.can_water)
+	bed.interact(player)
+	print("BEET gegossen: %s, Kanne %d" % [Supplies.beds[0]["watered"], Supplies.can_water])
+	var days := int(Supplies.config.crops[Supplies.beds[0]["crop"]]["days"])
+	for d in days:
+		Supplies.beds[0]["watered"] = true
+		Supplies._on_day_changed(TimeManager.day)
+	print("BEET nach %d Tagen: %s" % [days, Supplies.bed_state(0)])
+	var before := Inventory.count("radish")
+	bed.interact(player)
+	print("ERNTE Radieschen +%d, Beet %s, Flag %s" % [Inventory.count("radish") - before, Supplies.bed_state(1 - 1), Tasks.flags.has("harvested")])
+	# vertrocknen
+	Supplies.plant(1, "seeds_carrot")
+	for d in Supplies.config.dry_days_to_wither:
+		Supplies._on_day_changed(TimeManager.day)
+	print("BEET 2 ohne Wasser: %s" % Supplies.bed_state(1))
+	# Wasser: Hahn = sauber, Regentonne = roh, abkochen
+	tap.secondary_interact(player)
+	print("FLASCHE am Hahn: Wasser %d" % Inventory.count("water"))
+	if not barrel.is_empty():
+		(barrel[0] as WaterSource).secondary_interact(player)
+	print("FLASCHE draußen (%s): roh %d, verseucht %d" % [barrel[0].label if not barrel.is_empty() else "-", Inventory.count("water_raw"), Inventory.count("water_tainted")])
+	Inventory.use("water")
+	print("TRINKEN: leere Flaschen zurück %d" % Inventory.count("bottle_empty"))
+	# Küchenofen
+	var stove := scene.get_node("Cabin/CookStove") as CookStove
+	Inventory.add("wood", 3)
+	stove.interact(player)
+	await get_tree().process_frame
+	stove.interact(player)
+	await get_tree().process_frame
+	print("OFEN an: %s" % stove.lit())
+	var menus := get_tree().get_first_node_in_group("game_menus")
+	print("OFEN Menü offen: %s, Station %s" % [menus.call("is_open") if menus.has_method("is_open") else "?", menus.get("_station")])
+	get_tree().call_group("game_menus", "close")
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Inventory.add("meat_raw", 1)
+	var h0 := TimeManager.hour
+	for r: Dictionary in DataDB.recipes():
+		if r.get("id", "") == "meat_cooked":
+			menus.call("_on_craft", r)
+	print("KOCHEN: Fleisch gebraten %d, Zeit +%.2f h" % [Inventory.count("meat_cooked"), TimeManager.hour - h0])
+	# Schlinge
+	var snare := Builder.place("snare", Vector3(30, Terrain.height_at(30, 30), 30), 0.0)
+	var saved := Supplies.config.snare_catch_chance
+	Supplies.config.snare_catch_chance = 1.0
+	Supplies._on_day_changed(TimeManager.day)
+	Supplies.config.snare_catch_chance = saved
+	print("SCHLINGE Fang: %s, Hase sichtbar %s" % [Builder.record(snare.uid).get("caught", false), snare._catch.visible if snare._catch else false])
+	snare.interact(player)
+	print("SCHLINGE geleert: Fleisch %d" % Inventory.count("meat_raw"))
+	# Generator: Wartung, Holzvergaser, Zelle
+	var svc := scene.get_node("Shed/GeneratorService") as GeneratorService
+	Supplies.generator_condition = 30.0
+	svc.interact(player)
+	print("WARTUNG mit Öl: Zustand %.0f" % Supplies.generator_condition)
+	Inventory.add("gasifier_kit", 1)
+	svc.interact(player)
+	var gen := scene.get_node("Shed/Generator")
+	PowerManager.fuel = 50.0
+	Inventory.add("wood", 2)
+	gen.secondary_interact(player)
+	print("HOLZVERGASER: eingebaut %s, Tank %.0f" % [Supplies.gasifier, PowerManager.fuel])
+	Inventory.add("cell_adapter", 1)
+	svc.interact(player)
+	Inventory.add("energy_cell", 1)
+	PowerManager.fuel = 10.0
+	gen.secondary_interact(player)
+	print("ZELLE: Adapter %s, Tank %.0f" % [Supplies.cell_adapter, PowerManager.fuel])
+	# Schrott-Fundstellen
+	var spots := scene.get_node("ScrapField").get_children().filter(func(n: Node) -> bool: return n is ScrapSpot)
+	print("SCHROTT Fundstellen: %d (Daten %d)" % [spots.size(), Supplies.scrap_spots.size()])
+	if not spots.is_empty():
+		var sp := spots[0] as ScrapSpot
+		Inventory.add("tin_snips", 1)
+		Inventory.set_slot(0, "tin_snips")
+		Inventory.select(0)
+		var sc := Inventory.count("scrap")
+		sp.interact(player)
+		await get_tree().create_timer(3.0).timeout
+		await get_tree().process_frame
+		print("SCHROTT abgebaut: +%d, Stelle weg %s" % [Inventory.count("scrap") - sc, not is_instance_valid(sp) or sp.is_queued_for_deletion()])
+	# Kamera anbringen: vor der Ostwand stehen und hochzielen
+	var bc := get_tree().get_first_node_in_group("build_controller") as BuildController
+	player.global_position = Vector3(Cabin.HALF_X + 2.5, Terrain.height_at(Cabin.HALF_X + 2.5, -1.0) + 0.1, -1.0)
+	await get_tree().create_timer(0.3).timeout
+	_aim(player, Vector3(Cabin.HALF_X + 0.15, Cabin.FLOOR_Y + 2.3, -1.0))
+	bc.start("camera_1")
+	for i in 4:
+		await get_tree().physics_frame
+	print("KAMERA Ostwand gültig: %s (Vorschau %s)" % [bc._valid, bc._cam_preview != null])
+	var cq := PhysicsRayQueryParameters3D.create(player.camera.global_position, player.camera.global_position - player.camera.global_transform.basis.z * 6.0)
+	cq.exclude = [player.get_rid()]
+	var ch := player.get_world_3d().direct_space_state.intersect_ray(cq)
+	print("  Treffer: %s" % [[ch.get("collider"), (ch.get("collider") as Node).get_path() if ch.get("collider") else "", ch.get("position"), ch.get("normal")] if not ch.is_empty() else "nichts"])
+	_aim(player, Vector3(Cabin.HALF_X + 0.15, Cabin.FLOOR_Y + 0.8, -1.0))
+	for i in 3:
+		await get_tree().physics_frame
+	print("KAMERA zu tief gültig: %s" % bc._valid)
+	_aim(player, Vector3(Cabin.HALF_X + 0.15, Cabin.FLOOR_Y + 2.3, -1.0))
+	for i in 3:
+		await get_tree().physics_frame
+	bc._cam_yaw = deg_to_rad(30.0)
+	bc._camera_place()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("KAMERA 1 angebracht: %s, Inventar %d, Surveillance %s (%s)" % [Supplies.camera_installed(0), Inventory.count("camera_1"), sv.installed(0), sv.active_name()])
+	# drinnen geht nicht
+	player.global_position = Vector3(3.0, Cabin.FLOOR_Y + 0.1, -1.0)
+	await get_tree().create_timer(0.3).timeout
+	_aim(player, Vector3(Cabin.HALF_X - 0.15, Cabin.FLOOR_Y + 2.2, -1.0))
+	bc.start("camera_2")
+	for i in 4:
+		await get_tree().physics_frame
+	print("KAMERA innen gültig: %s" % bc._valid)
+	# Schuppen außen
+	player.global_position = Shed.ORIGIN + Vector3(0, 0, Shed.HALF.y + 2.0)
+	player.global_position.y = Terrain.height_at(player.global_position.x, player.global_position.z) + 0.1
+	await get_tree().create_timer(0.3).timeout
+	_aim(player, Shed.ORIGIN + Vector3(0.5, 1.8, Shed.HALF.y))
+	for i in 4:
+		await get_tree().physics_frame
+	print("KAMERA Schuppen gültig: %s" % bc._valid)
+	bc._camera_place()
+	bc.stop()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("KAMERAS installiert: %d, Monitor-Slots %s/%s/%s" % [Supplies.cameras.size(), sv.installed(0), sv.installed(1), sv.installed(2)])
+	# abbauen
+	var cam1: SecurityCamera = sv.cameras[0]
+	cam1.interact(player)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("KAMERA 1 abgebaut: installiert %s, Inventar %d" % [sv.installed(0), Inventory.count("camera_1")])
+	# Aufgaben + Tablet
+	Tasks._evaluate(true)
+	print("AUFGABEN erledigt: %s" % [Tasks.done.duplicate()])
+	print("AUFGABEN offen: %s" % [Tasks.open_goals().map(func(g: Dictionary) -> String: return g["id"])])
+	print("ROUTINE: %s" % [Tasks.daily().map(func(d: Dictionary) -> String: return "%s=%s" % [d["title"], d["done"]])])
+	var couch := scene.get_node("Cabin/Couch") as Couch
+	get_tree().call_group("tablet_menu", "open", couch)
+	var tm := get_tree().get_first_node_in_group("tablet_menu") as TabletMenu
+	print("TABLET Reiter: %s" % (tm._tabs["tasks"] as Button).text)
+	tm._set_tab("tasks")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("TABLET Aufgaben-Zeilen: %d, ungesehen %d" % [tm._wide.get_child_count(), Tasks.unseen])
+	tm.close()
+	# Spielstand
+	var st := Supplies.get_state()
+	Supplies.set_state(st)
+	print("SPIELSTAND: Beete %d, Kameras %d, Vergaser %s" % [Supplies.beds.size(), Supplies.cameras.size(), Supplies.gasifier])

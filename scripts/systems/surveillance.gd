@@ -65,33 +65,79 @@ func _ready() -> void:
 	camera.environment = _env
 	EventBus.camera_glitch.connect(_on_glitch)
 	EventBus.camera_phantom.connect(_on_phantom)
+	Supplies.changed.connect(_on_supplies)
 	_collect.call_deferred()
 
 
+var _cam_sig: String = ""
+
+
+func _on_supplies() -> void:
+	# nur neu aufbauen, wenn sich an den Kameras etwas geändert hat
+	var sig := str(Supplies.cameras)
+	if sig != _cam_sig:
+		_cam_sig = sig
+		_collect()
+
+
+## Kameras kommen aus dem Versorgungs-Manager (selbst eingebaut). Drei feste Plätze 0..2, leere zeigen „kein Signal“.
+const SLOTS := 3
+
+
 func _collect() -> void:
-	cameras.clear()
 	for c in get_tree().get_nodes_in_group("security_camera"):
-		cameras.append(c as SecurityCamera)
-	cameras.sort_custom(func(a: SecurityCamera, b: SecurityCamera) -> bool: return a.index < b.index)
-	set_active(0)
+		if not (c as Node).is_queued_for_deletion():
+			c.queue_free()
+	cameras.clear()
+	for i in SLOTS:
+		cameras.append(null)
+	var scene := get_tree().current_scene
+	for d: Dictionary in Supplies.cameras:
+		var i := int(d["index"])
+		if i < 0 or i >= SLOTS:
+			continue
+		var cam := SecurityCamera.from_install(d)
+		scene.add_child.call_deferred(cam)
+		cameras[i] = cam
+	set_active(active_index)
+
+
+func installed(i: int) -> bool:
+	return i >= 0 and i < cameras.size() and cameras[i] != null and is_instance_valid(cameras[i])
 
 
 func set_active(i: int) -> void:
-	if cameras.is_empty():
-		return
-	active_index = posmod(i, cameras.size())
-	camera.global_transform = cameras[active_index].eye_transform()
-	camera.fov = cameras[active_index].fov
-	# beim Umschalten ist sie weg – auf dem neuen Bild hockt sie vielleicht woanders
+	active_index = posmod(i, SLOTS)
 	_remove_lurker()
-	if viewing:
-		_maybe_lurk()
+	if installed(active_index):
+		_apply_camera.call_deferred()
+		if viewing:
+			_maybe_lurk.call_deferred()
+
+
+func _apply_camera() -> void:
+	if installed(active_index) and cameras[active_index].is_inside_tree():
+		camera.global_transform = cameras[active_index].eye_transform()
+		camera.fov = cameras[active_index].fov
 
 
 func active_name() -> String:
-	if cameras.is_empty():
-		return ""
+	if not installed(active_index):
+		return "nicht installiert"
 	return cameras[active_index].camera_name
+
+
+## Ältere Tests/Kontrollbilder: die drei Kameras an den früheren festen Stellen einbauen.
+func install_defaults() -> void:
+	var front_z := Cabin.HALF_Z + Cabin.LOG_R
+	var setups := [
+		[Vector3(5.7, Cabin.WALL_TOP - 0.35, front_z), Vector3(0, 0, 1), -0.75],
+		[Vector3(-5.0, Cabin.WALL_TOP - 0.35, -front_z), Vector3(0, 0, -1), 0.35],
+		[Vector3(Shed.ORIGIN.x - Shed.HALF.x - 0.05, 2.05, Shed.ORIGIN.z + 1.2), Vector3(-1, 0, 0), 0.6],
+	]
+	for i in setups.size():
+		Supplies.install_camera(i, setups[i][0], setups[i][1], setups[i][2])
+	_collect()
 
 
 func is_glitching() -> bool:
@@ -102,7 +148,7 @@ func _process(delta: float) -> void:
 	_time += delta
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	var near_monitor := player != null and player.global_position.distance_to(Vector3(1.6, 1.0, 3.6)) < 4.5
-	var render := PowerManager.has_power() and (viewing or near_monitor)
+	var render := PowerManager.has_power() and (viewing or near_monitor) and installed(active_index)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if render else SubViewport.UPDATE_DISABLED
 	PowerManager.set_consumer("monitor", viewing)
 	# Infrarot-Look: nachts aufgehellt, tagsüber normaler
@@ -128,14 +174,28 @@ func _on_glitch(index: int, seconds: float) -> void:
 
 ## Trugbild: eine Gestalt, die nur auf dieser Kamera zu sehen ist.
 func _on_phantom(index: int, seconds: float) -> void:
-	if cameras.is_empty() or _phantom:
+	if _phantom:
 		return
-	var cam := cameras[clampi(index, 0, cameras.size() - 1)]
+	# nur auf einer eingebauten Kamera; sonst auf irgendeiner, die es gibt
+	if not installed(index):
+		index = -1
+		for i in SLOTS:
+			if installed(i):
+				index = i
+				break
+		if index < 0:
+			return
+	var cam: SecurityCamera = cameras[index]
 	var scene := get_tree().current_scene
 	_phantom = Node3D.new()
 	_phantom.name = "Phantom"
 	scene.add_child(_phantom)
-	var spot := cam.phantom_spot
+	# ein Stück vor der Kamera auf dem Boden, etwas seitlich
+	var eye := cam.eye_transform()
+	var fwd := -eye.basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	var spot := eye.origin + fwd * randf_range(9.0, 13.0) + Vector3(-fwd.z, 0, fwd.x) * randf_range(-2.5, 2.5)
 	spot.y = Terrain.height_at(spot.x, spot.z)
 	_phantom.global_position = spot
 	Creature.build_model(_phantom)
@@ -150,6 +210,8 @@ func _on_phantom(index: int, seconds: float) -> void:
 
 
 func _maybe_lurk() -> void:
+	if not installed(active_index):
+		return
 	var tc := ThreatDirector.config
 	if tc == null or TimeManager.day < tc.camera_lurk_from_day or not PowerManager.has_power():
 		return
@@ -163,12 +225,16 @@ func _maybe_lurk() -> void:
 
 ## Setzt die hockende Gestalt an einen Ort, den die aktuelle Kamera wirklich sieht. Gibt false zurück, wenn keiner passt.
 func spawn_lurker(only_spot: int = -1) -> bool:
-	if active_index >= LURK_SPOTS.size():
+	if not installed(active_index):
 		return false
-	var spots: Array = (LURK_SPOTS[active_index] as Array).duplicate()
+	_apply_camera()
+	# alle Orte rund um Haus und Schuppen – geprüft wird, ob die aktive Kamera sie wirklich sieht
+	var spots: Array = []
+	for group: Array in LURK_SPOTS:
+		spots.append_array(group)
 	spots.shuffle()
 	if only_spot >= 0:
-		spots = [LURK_SPOTS[active_index][only_spot]]
+		spots = [LURK_SPOTS[0][only_spot]]
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	for sp: Array in spots:
 		var pos: Vector3 = sp[0]

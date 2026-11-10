@@ -152,7 +152,17 @@ func use(id: String) -> bool:
 	if effect.is_empty() or count(id) <= 0:
 		return false
 	remove(id, 1)
-	Survival.apply(effect)
+	var eat := {}
+	for k: String in ["hunger", "thirst"]:
+		if effect.has(k):
+			eat[k] = effect[k]
+	Survival.apply(eat)
+	# leere Flasche zurück, evtl. Übelkeit / Schaden (Rohwasser, rohes Fleisch, verfärbtes Wasser)
+	if effect.has("returns"):
+		add(String(effect["returns"]), 1)
+	if effect.has("sick") or effect.has("damage"):
+		Supplies.maybe_sick(float(effect.get("sick", 0.0)), float(effect.get("damage", 0.0)))
+	Tasks.flag("ate_" + id)
 	return true
 
 

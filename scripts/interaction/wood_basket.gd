@@ -10,6 +10,7 @@ var _logs: Array[Node3D] = []
 
 func _ready() -> void:
 	add_to_group("persistent")
+	add_to_group("wood_basket")
 	var staves := BuildKit.tex_mat("planks_v", 0.4, Color(0.8, 0.7, 0.6))
 	BuildKit.cylinder(self, 0.25, 0.3, Vector3(0, 0.15, 0), staves, true, Vector3.ZERO, 0.22, 10)
 	# Boden innen dunkel, damit ein leerer Korb auch leer aussieht

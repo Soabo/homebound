@@ -56,6 +56,12 @@ func _ready() -> void:
 	add_child(gen)
 	Cabin.generator_model(gen, 0.03)
 	gen.position = Vector3(-0.92, 0, -1.03) - Vector3(4.7, 0, -3.83)
+	# Wartungsklappe vorne rechts am Generator; Holzvergaser (wenn gebaut) außen an der Nordwand
+	var service := GeneratorService.new()
+	service.name = "GeneratorService"
+	service.position = Vector3(-0.42, 0.62, -0.6)
+	service.gasifier_spot = ORIGIN + Vector3(-0.9, 0.0, -HALF.y - 0.45)
+	add_child(service)
 	# Kabel vom Generator durch die Wand Richtung Hütte, Sicherungskasten neben der Tür
 	var cable := BuildKit.color_mat(Color(0.08, 0.08, 0.08), 0.6)
 	BuildKit.box_mm(self, Vector3(-1.95, 0.05, -1.25), Vector3(-1.6, 0.08, -1.21), cable, false)

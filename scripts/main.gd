@@ -22,6 +22,8 @@ func _ready() -> void:
 	add_child(CarWreck.new())
 	add_child(NightChanges.new())
 	add_child(Wildlife.new())
+	add_child(ScrapField.new())
+	add_child(SupplyProps.new())
 	_build_world_limits()
 	_build_cameras()
 	Builder.spawn_all(self)
@@ -52,27 +54,9 @@ func _ready() -> void:
 
 ## Drei Überwachungskameras (GDD 18.2), jeweils fest an einer Wand montiert:
 ## Hausfront mit Veranda und Haustür, Garten hinten, Maisfeld am Schuppen.
+## Überwachungskameras baut der Spieler selbst ein (Kamera 1–3 finden, außen anbringen) – siehe Surveillance/Supplies.
 func _build_cameras() -> void:
-	var front_z := Cabin.HALF_Z + Cabin.LOG_R
-	var setups := [
-		# Name, Punkt auf der Wand, Wand-Richtung nach außen, Blickziel, Trugbild-Ort
-		["Hausfront / Veranda", Vector3(5.7, Cabin.WALL_TOP - 0.35, front_z), Vector3(0, 0, 1), Vector3(-3.5, 0.5, 9.0), Vector3(-1.5, 0, 10.5)],
-		["Garten hinten", Vector3(-5.0, Cabin.WALL_TOP - 0.35, -front_z), Vector3(0, 0, -1), Vector3(-9.0, 0.8, -15.0), Vector3(-13.0, 0, -14.0)],
-		# an der Südwest-Ecke des Schuppens, starker Weitwinkel: links der Maisfeldrand, rechts die Hütte
-		["Schuppen / Maisfeld", Vector3(Shed.ORIGIN.x - Shed.HALF.x - 0.05, 2.05, Shed.ORIGIN.z + Shed.HALF.y + 0.05), Vector3(-1, 0, 1), Vector3(5.4, 0.3, 14.4), Vector3(12.0, 0, 12.5), 106.0],
-	]
-	for i in setups.size():
-		var cam := SecurityCamera.new()
-		cam.name = "Camera%d" % (i + 1)
-		cam.index = i
-		cam.camera_name = setups[i][0]
-		cam.position = setups[i][1]
-		cam.wall_normal = setups[i][2]
-		cam.look_target = setups[i][3]
-		cam.phantom_spot = setups[i][4]
-		if setups[i].size() > 5:
-			cam.fov = setups[i][5]
-		add_child(cam)
+	pass
 
 
 func _build_world_limits() -> void:

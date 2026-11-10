@@ -197,6 +197,7 @@ func _enter(p: Player) -> void:
 		return
 	_player = p
 	occupied = true
+	Tasks.flag("hidden")
 	_stand_pos = p.global_position
 	_stand_rot = p.rotation.y
 	p.velocity = Vector3.ZERO

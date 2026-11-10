@@ -146,6 +146,7 @@ func secondary_interact(_player: Node) -> void:
 		EventBus.notify("Du brauchst %d Bretter und %d Nägel. Beides gibt es in der Werkstatt." % [need, need * 2], 3.0)
 		return
 	barricade = max_barricade if need == 2 else minf(barricade + max_barricade * 0.5, max_barricade)
+	Tasks.flag("barricaded")
 	SoundBank.hammer_series(self, global_position + Vector3(0, height * 0.5, 0), 4 if need == 2 else 3)
 	EventBus.noise_made.emit(global_position, 12.0)
 	_update_visuals()

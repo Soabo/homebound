@@ -27,6 +27,8 @@ Builder="*res://scripts/systems/builder.gd"
 Research="*res://scripts/systems/research.gd"
 WorldState="*res://scripts/systems/world_state.gd"
 ThreatDirector="*res://scripts/systems/threat_director.gd"
+Supplies="*res://scripts/systems/supplies.gd"
+Tasks="*res://scripts/systems/tasks.gd"
 GameState="*res://scripts/systems/game_state.gd"
 GameInput="*res://scripts/core/game_input.gd"
 

@@ -54,9 +54,12 @@ func _ready() -> void:
 	elif type == "growth_barrier":
 		add_to_group("growth_barrier")
 		_wither_patches.call_deferred()
-	if type == "bear_trap":
-		armed = bool(Builder.record(uid).get("armed", true))
-		_set_jaws(armed, false)
+	if type == "snare":
+		refresh_catch()
+	if type in ["bear_trap", "snare"]:
+		if type == "bear_trap":
+			armed = bool(Builder.record(uid).get("armed", true))
+			_set_jaws(armed, false)
 		# kein fester Körper – man soll hineintreten können; Bereich nur fürs Anschauen/Interagieren
 		var area := Area3D.new()
 		var acs := CollisionShape3D.new()
@@ -99,6 +102,8 @@ func _build_visual() -> void:
 					BuildKit.cylinder(self, 0.05, 1.2, Vector3(x, 0.55, side * 0.18), stake, false, Vector3(side * 50.0, 0, rng.randf_range(-8, 8)), 0.0, 6)
 		"bear_trap":
 			_build_bear_trap()
+		"snare":
+			_build_snare()
 		"stone_wall":
 			var stone := BuildKit.tex_mat("stone", 0.6)
 			for row in 3:
@@ -228,6 +233,36 @@ func _build_bear_trap() -> void:
 	BuildKit.cylinder(self, 0.012, 0.18, Vector3(-0.78, 0.05, 0.15), dark, false, Vector3(0, 0, 12), 0.005, 6)
 
 
+## Kleintierschlinge: Holzpflock, gespannter Draht mit Schlaufe. Hat sie über Nacht etwas gefangen,
+## liegt ein Hase daneben.
+var _catch: Node3D
+
+
+func _build_snare() -> void:
+	var wood := BuildKit.tex_mat("logs", 0.5, Color(1.0, 0.9, 0.8))
+	var wire := BuildKit.color_mat(Color(0.55, 0.55, 0.52), 0.4, 0.7)
+	BuildKit.cylinder(self, 0.025, 0.4, Vector3(-0.18, 0.12, 0), wood, false, Vector3(0, 0, 8), 0.012, 6)
+	BuildKit.box(self, Vector3(0.3, 0.004, 0.004), Vector3(-0.04, 0.2, 0), wire, false, Vector3(0, 0, -20))
+	for k in 10:
+		var a := TAU * k / 10.0
+		BuildKit.box(self, Vector3(0.035, 0.004, 0.004), Vector3(0.12 + cos(a) * 0.07, 0.12 + sin(a) * 0.07, 0), wire, false, Vector3(0, 0, rad_to_deg(a) + 90))
+	# Zweige als Tarnung
+	for k in 3:
+		BuildKit.box(self, Vector3(0.012, 0.25, 0.012), Vector3(0.05 + k * 0.06, 0.1, 0.08 - k * 0.06), wood, false, Vector3(30 - k * 25, 0, 20))
+	_catch = Node3D.new()
+	add_child(_catch)
+	var fur := BuildKit.color_mat(Color(0.42, 0.33, 0.24), 1.0)
+	BuildKit.sphere(_catch, 0.15, Vector3(0.15, 0.08, 0.05), fur, Vector3(1.4, 0.6, 0.8), 8)
+	BuildKit.sphere(_catch, 0.07, Vector3(-0.02, 0.07, 0.05), fur, Vector3(1.2, 0.9, 0.9), 8)
+	BuildKit.box(_catch, Vector3(0.16, 0.025, 0.04), Vector3(-0.12, 0.06, 0.07), fur, false, Vector3(0, 20, 0))
+	_catch.visible = false
+
+
+func refresh_catch() -> void:
+	if type == "snare" and _catch and not preview:
+		_catch.visible = bool(Builder.record(uid).get("caught", false))
+
+
 ## Bügel offen (flach) oder zu (senkrecht, Zähne greifen ineinander).
 func _set_jaws(open: bool, animate: bool) -> void:
 	for i in _jaws.size():
@@ -333,6 +368,10 @@ func set_preview_valid(valid: bool) -> void:
 
 func get_prompt(_player: Node) -> String:
 	var def := DataDB.buildable(type)
+	if type == "snare":
+		if bool(Builder.record(uid).get("caught", false)):
+			return "Schlinge: ein Hase hat sich verfangen  [E] mitnehmen"
+		return "Kleintierschlinge – nichts gefangen  [E] nachsehen"
 	if type == "bear_trap":
 		return "Bärenfalle – gespannt  (%d%%)" % int(health / max_health * 100.0) if armed \
 				else "[E] Bärenfalle spannen  (%d%%)" % int(health / max_health * 100.0)
@@ -342,6 +381,19 @@ func get_prompt(_player: Node) -> String:
 func interact(_player: Node) -> void:
 	if type == "bear_trap" and not armed:
 		_rearm()
+	if type == "snare":
+		Tasks.flag("snare_checked")
+		var r := Builder.record(uid)
+		if bool(r.get("caught", false)):
+			var c := Supplies.config.snare_meat
+			var got := Inventory.add("meat_raw", randi_range(c.x, c.y))
+			r["caught"] = false
+			refresh_catch()
+			Tasks.flag("snare_caught")
+			EventBus.notify("Rohes Hasenfleisch +%d – braten oder kochen!" % got, 3.0)
+			SoundBank.play_ui(self, "pickup", -6.0)
+		else:
+			EventBus.notify("Nichts gefangen. Die Schlinge bleibt gespannt.", 2.0)
 
 
 func get_secondary_prompt(_player: Node) -> String:

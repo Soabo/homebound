@@ -209,7 +209,12 @@ func open_chest(chest: StorageChest) -> void:
 	_open("chest")
 
 
-func open_crafting() -> void:
+var _station: String = "workbench"
+
+
+## station: "workbench" (Werkbank) oder "stove" (Kochen am Ofen/Kamin)
+func open_crafting(station: String = "workbench") -> void:
+	_station = station
 	_open("crafting")
 
 
@@ -292,8 +297,8 @@ func _fill_inventory() -> void:
 			var b := _button("Essen" if def["use"].has("hunger") else "Trinken")
 			b.pressed.connect(_on_use.bind(id))
 			row.add_child(b)
-		if def.has("build"):
-			var b := _button("Bauen")
+		if def.has("build") or def.has("camera"):
+			var b := _button("Anbringen" if def.has("camera") else "Bauen")
 			b.pressed.connect(_on_build.bind(id))
 			row.add_child(b)
 		var drop := _button("Ablegen")
@@ -345,10 +350,14 @@ func _chest_move(side: String, id: String, amount: int) -> void:
 
 
 func _fill_crafting() -> void:
-	_title.text = "Werkbank"
-	_info.text = "Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT]
+	var cooking := _station == "stove"
+	_title.text = "Kochen" if cooking else "Werkbank"
+	_info.text = ("Zubereiten dauert ein wenig Zeit.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
+		"Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
 	var locked := 0
 	for r: Dictionary in DataDB.recipes():
+		if String(r.get("station", "workbench")) != _station:
+			continue
 		if not Research.recipe_unlocked(r):
 			locked += 1
 			continue
@@ -373,13 +382,15 @@ func _fill_crafting() -> void:
 		var ok := Inventory.has_all(needs)
 		col.add_child(_text("braucht: " + ", ".join(need_parts), 16, Color(0.55, 0.85, 0.5) if ok else Color(0.85, 0.5, 0.4)))
 		row.add_child(col)
-		var b := _button("Herstellen")
+		if r.has("minutes"):
+			col.add_child(_text("dauert %d Min." % int(r["minutes"]), 15, Color(0.6, 0.65, 0.7)))
+		var b := _button("Kochen" if cooking else "Herstellen")
 		b.disabled = not ok
 		b.pressed.connect(_on_craft.bind(r))
 		row.add_child(b)
 		_list.add_child(row)
 	if locked > 0:
-		_list.add_child(_text("%d unbekannte(r) Bauplan/Baupläne – entstehen durch Forschung (Archiv: J)" % locked, 18, Color(0.55, 0.7, 0.8)))
+		_list.add_child(_text("%d unbekannte(r) Bauplan/Baupläne – entstehen durch Forschung (Alien-Archiv auf dem Tablet)" % locked, 18, Color(0.55, 0.7, 0.8)))
 
 
 func _on_use(id: String) -> void:
@@ -399,8 +410,17 @@ func _on_build(id: String) -> void:
 func _on_craft(r: Dictionary) -> void:
 	var msg := Workbench.craft(r, get_tree())
 	if msg == "":
-		SoundBank.play_ui(self, "workbench", -2.0)
-		EventBus.notify("Hergestellt.", 1.5)
+		if r.has("minutes"):
+			# Kochen braucht Zeit
+			TimeManager.advance_hours(float(r["minutes"]) / 60.0)
+			SoundBank.play_ui(self, "fire", -10.0)
+			EventBus.notify("Fertig zubereitet (%d Min.)." % int(r["minutes"]), 2.0)
+			Tasks.flag("cooked_" + String(r.get("id", "")))
+			if not String(r.get("id", "")).begins_with("boil"):
+				Tasks.flag("cooked_meal")
+		else:
+			SoundBank.play_ui(self, "workbench", -2.0)
+			EventBus.notify("Hergestellt.", 1.5)
 	else:
 		EventBus.notify(msg, 2.5)
 	_refresh()

@@ -585,6 +585,7 @@ func _build_kitchen() -> void:
 	var tap := WaterSource.new()
 	tap.name = "KitchenTap"
 	tap.label = "Wasserhahn"
+	tap.clean = true
 	tap.contaminable = true
 	tap.sound = "faucet"
 	# der Hahn tropft leise vor sich hin
@@ -611,6 +612,11 @@ func _build_kitchen() -> void:
 		BuildKit.cylinder(self, 0.11, 0.01, Vector3(1.2 + i * 0.35, y + 0.845, z0 + 0.32), BuildKit.color_mat(Color(0.08, 0.08, 0.08)), false, Vector3.ZERO, -1.0, 10)
 	BuildKit.cylinder(self, 0.07, WALL_TOP - y - 0.84, Vector3(1.6, (y + 0.84 + WALL_TOP) * 0.5, z0 + 0.2), iron_dark, false, Vector3.ZERO, -1.0, 8)
 	BuildKit.cylinder(self, 0.14, 0.12, Vector3(1.3, y + 0.9, z0 + 0.3), iron_dark, false, Vector3.ZERO, 0.12, 10)
+	var stove := CookStove.new()
+	stove.name = "CookStove"
+	stove.anchor = Vector3(1.375, y + 0.84, z0 + 0.32)
+	stove.door_center = Vector3(1.275, y + 0.35, z0 + 0.626)
+	add_child(stove)
 	# Hängende Stange mit Pfannen, Kräutern und Würsten (wie in einer Jagdhütte)
 	var rack_y := WALL_TOP - 0.62
 	BuildKit.cylinder(self, 0.02, 1.9, Vector3(-1.02, rack_y, z0 + 0.35), m_iron, false, Vector3(0, 0, 90), -1.0, 6)
@@ -872,6 +878,7 @@ func _build_bathroom() -> void:
 	var bath_tap := WaterSource.new()
 	bath_tap.name = "BathTap"
 	bath_tap.label = "Wasserhahn"
+	bath_tap.clean = true
 	bath_tap.contaminable = true
 	bath_tap.sound = "faucet"
 	bath_tap.anchor = Vector3(x1 - 0.25, y + 0.85, sz)

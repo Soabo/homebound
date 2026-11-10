@@ -1,0 +1,82 @@
+[gd_resource type="Resource" script_class="SupplyConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/supply_config.gd" id="1_sup"]
+
+[resource]
+script = ExtResource("1_sup")
+crops = {
+"carrot": {
+"days": 4,
+"item": "carrot",
+"name": "Karotten",
+"yield": [3, 5]
+},
+"potato": {
+"days": 5,
+"item": "potato",
+"name": "Kartoffeln",
+"yield": [4, 7]
+},
+"radish": {
+"days": 2,
+"item": "radish",
+"name": "Radieschen",
+"yield": [3, 5]
+}
+}
+seeds_back = Vector2i(0, 2)
+dry_days_to_wither = 2
+alien_spoil_chance = PackedFloat32Array(0, 0.03, 0.08, 0.18, 0.35)
+watering_can_charges = 4
+stove_burn_hours = 2.0
+sick_damage = 6.0
+sick_drain_factor = 2.0
+sick_hours = 4.0
+snare_catch_chance = 0.4
+snare_meat = Vector2i(1, 2)
+snare_stage_factor = PackedFloat32Array(1, 0.7, 0.45, 0.2, 0)
+wear_per_hour = 1.1
+oil_restore = 45.0
+plug_restore = 25.0
+low_condition = 40.0
+low_outage_chance = 0.12
+bad_condition = 15.0
+bad_start_fail = 0.5
+fuel_per_wood = 7.0
+fuel_per_cell = 100.0
+scrap_spots_max = 7
+scrap_spots_per_day = Vector2i(1, 2)
+scrap_spots_start = 3
+scrap_near_wreck = 0.45
+scrap_kinds = {
+"barrel": {
+"name": "Rostiges Ölfass",
+"oil": 0.5,
+"plug": 0.0,
+"scrap": [2, 3]
+},
+"engine": {
+"name": "Alter Motorblock",
+"oil": 0.35,
+"plug": 0.6,
+"scrap": [3, 5]
+},
+"exhaust": {
+"name": "Alter Auspuff",
+"oil": 0.0,
+"plug": 0.0,
+"scrap": [2, 3]
+},
+"silo": {
+"name": "Stück eines Metallsilos",
+"oil": 0.0,
+"plug": 0.0,
+"scrap": [4, 6]
+},
+"tractor": {
+"name": "Traktorteile",
+"oil": 0.25,
+"plug": 0.3,
+"scrap": [3, 4]
+}
+}

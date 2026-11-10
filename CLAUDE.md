@@ -106,6 +106,20 @@
   im Tablet-Archiv groß, sobald gesendet, vorher abgedunkelt (`ResearchMenu.research_picture`).
 - Hochsitz: Rückwand bis unters Dach, Dach fest, Notizen ohne festen Körper. Test: `--night-test=extras`.
 
+## Entscheidungen Versorgung & Aufgaben
+- Verbrauchsstoffe haben später eine Quelle: Essen aus Hochbeeten (`GardenBed`, Garden/GardenBed1..4) und Schlingen (buildables `snare`),
+  Wasser aus Flaschen (Hahn sauber, Regentonne/Bach roh → am Küchenofen `CookStove` abkochen), Generator mit Wartung
+  (`GeneratorService`, Öl/Zündkerze) plus Holzvergaser und außerirdischer Energiezelle (Christian: „beides“).
+- Metall: zufällige Fundstellen im Wald (`ScrapField`/`ScrapSpot`, Auspuff/Motor/Silo/Traktor/Fass), nur mit Blechschere,
+  verschwinden nach dem Abbau, neue pro Tag, nahe Autowrack häufiger.
+- Versorgungs-Manager `Supplies` (Autoload), Werte `data/supplies/supplies.tres` (`SupplyConfig`). Fundstücke: `SupplyProps`.
+- Aufgaben-Manager `Tasks` (Autoload), Inhalte `data/tasks/tasks.json` (Ziele + Tagesroutine, Bedingungen siehe `_info`),
+  Systeme melden mit `Tasks.flag("…")`. Anzeige: Tablet-Reiter „Aufgaben“ (Christian: „Ziele + Tagesroutine“).
+- Überwachungskameras baut man selbst ein: Kamera 1–3 (`camera_N`) in der Hütte finden, im Baumodus nur außen an Hütte
+  oder Schuppen anbringen (`BuildController._camera_update`), R schwenkt; gespeichert in `Supplies.cameras`, Monitor
+  (`Surveillance`, 3 Plätze) zeigt leere Plätze als „nicht installiert“. Icons für camera_1..3 liefert Christian.
+  Tests nutzen `Surveillance.install_defaults()`. Test: `--night-test=supplies`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -53,7 +53,10 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Tankanzeige** in der Werkstatt zeigt, wie viel Benzin noch im Generator im Schuppen ist.
 - **Tür abschließen!** Eine nicht abgeschlossene Tür wird einfach aufgestoßen.
 - **Fenster verbarrikadieren:** Bretter liegen in der Werkstatt (je Fenster 2 Bretter).
-- **Kameras:** Am Monitor im Wohnzimmer siehst du die Hausfront mit Veranda, den Garten hinten und – vom Schuppen aus im Weitwinkel – den Platz zwischen Maisfeld und Hütte. Traue nicht allem, was du siehst.
+- **Kameras:** Drei nummerierte Überwachungskameras liegen in der Hütte (Werkbank, Esstisch, oben auf dem Kleiderschrank).
+  Mit B (oder „Anbringen“ im Inventar) bringst du sie außen an Hütte oder Schuppen an, R schwenkt sie.
+  Am Monitor im Wohnzimmer schaltest du mit A/D durch – leere Plätze zeigen „nicht installiert“. E an einer Kamera baut sie wieder ab.
+  Traue nicht allem, was du siehst.
 - **Licht:** Die Taschenlampe verrät dich – aber aus der Nähe blendet sie.
 - **Schlafen:** Ab 16 Uhr. Wenn nachts etwas passiert, schreckst du hoch.
 - **Tod:** Du beginnst den Tag von vorn.
@@ -119,6 +122,19 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
     mit der Axt weghacken oder den Knoten in der Höhle zerstören.
 - **Neue Baupläne** (über Verknüpfungen im Archiv): **Störsender** (Drohnen drehen ab) und **Myzel-Sperre**
   (Wucherungen sterben ab und wachsen dort nicht mehr).
+
+## Selbstversorgung und Aufgaben
+
+- **Aufgaben** stehen auf dem Tablet (Couch, Reiter „Aufgaben“): Tagesroutine für heute und Ziele, die nach und nach dazukommen.
+- **Hochbeete:** E sät (R wechselt die Samenart), gießt und erntet. Samen im Schuppenregal, Saatkartoffeln im Sack am Boden,
+  die Gießkanne steht bei den Beeten (an Wasserhahn, Regentonne oder Bach mit R füllen). Ungegossen wächst nichts, nach 2 Tagen vertrocknet es.
+- **Wasser:** Leere Flaschen (Küche) mit R füllen. Hahn = Trinkwasser, Regentonne/Bach = Rohwasser – lieber am Ofen abkochen.
+- **Küchenofen:** E zündet ihn mit Holz an, dann E = kochen (braten, Suppe, Eintopf), R legt Holz nach. Auch über dem Kaminfeuer (R).
+- **Schlinge** (Werkbank): im Wald aufstellen, morgens nachsehen – manchmal hängt ein Hase darin.
+- **Generator-Wartung:** Ölwechsel (E) und Zündkerze (R) am Werkzeugbrett neben dem Generator. Später: Holzvergaser (mit Holz tanken)
+  oder Zellen-Adapter (fremde Energiezelle).
+- **Metall:** Im Wald liegen immer wieder alte Auspuffe, Motorblöcke, Silo- und Traktorteile – mit der Blechschere abbauen,
+  danach sind sie weg. Nahe dem Autowrack öfter.
 
 ## Rund ums Haus
 

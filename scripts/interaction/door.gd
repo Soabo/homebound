@@ -129,6 +129,7 @@ func upgrade() -> void:
 	if upgraded:
 		return
 	upgraded = true
+	Tasks.flag("barricaded")
 	max_health *= 2.0
 	health = max_health
 	_add_iron_bands()

@@ -409,6 +409,9 @@ func _primary() -> void:
 			if node and node.tool == "tin_snips" and node.amount > 0:
 				node.interact(player)
 				return
+			if player.current_interactable is ScrapSpot:
+				player.current_interactable.interact(player)
+				return
 			_start_action("stab", MELEE["tin_snips"]["len"])
 			_cooldown = MELEE["tin_snips"]["cooldown"]
 		"food", "water":

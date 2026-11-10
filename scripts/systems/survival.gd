@@ -85,6 +85,13 @@ func apply(effect: Dictionary) -> void:
 	changed.emit()
 
 
+## Still abziehen (z. B. Übelkeit), ohne Ess-/Trinkgeräusch.
+func drain(h: float, t: float) -> void:
+	hunger = maxf(hunger - h, 0.0)
+	thirst = maxf(thirst - t, 0.0)
+	changed.emit()
+
+
 func get_state() -> Dictionary:
 	return {"hunger": hunger, "thirst": thirst}
 

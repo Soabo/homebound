@@ -41,6 +41,8 @@ func take_snapshot() -> void:
 		"research": Research.get_state(),
 		"world_state": WorldState.get_state(),
 		"threat": ThreatDirector.get_state(),
+		"supplies": Supplies.get_state(),
+		"tasks": Tasks.get_state(),
 		"world": collect_world(),
 	}
 
@@ -82,6 +84,8 @@ func restart_day() -> void:
 	WorldState.set_state(snap.get("world_state", {}))
 	if snap.has("threat"):
 		ThreatDirector.set_state(snap["threat"])
+	Supplies.set_state(snap.get("supplies", {}))
+	Tasks.set_state(snap.get("tasks", {}))
 	_pending_world = snap.get("world", {})
 	_snapshot = snap
 	_restoring = false

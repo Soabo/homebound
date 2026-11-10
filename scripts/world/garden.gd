@@ -92,19 +92,14 @@ func _build_props() -> void:
 	var frame := BuildKit.tex_mat("planks_h", 0.6, Color(0.9, 0.85, 0.8))
 	var leaf := BuildKit.cutout_mat("fern", Color(0.9, 1.1, 0.8))
 	# Hochbeete westlich der Hütte mit Pflanzen
-	for bed: Vector3 in [Vector3(-14.0, 0, 6.0), Vector3(-14.0, 0, 9.5), Vector3(-10.5, 0, 6.0), Vector3(-10.5, 0, 9.5)]:
-		BuildKit.box(self, Vector3(2.4, 0.42, 1.4), bed + Vector3(0, 0.21, 0), frame, true)
-		BuildKit.box(self, Vector3(2.3, 0.05, 1.3), bed + Vector3(0, 0.42, 0), soil, false)
-		for i in 5:
-			for j in 2:
-				var q := MeshInstance3D.new()
-				var qm := QuadMesh.new()
-				qm.size = Vector2(0.45, 0.45)
-				qm.material = leaf
-				q.mesh = qm
-				q.position = bed + Vector3(-0.9 + i * 0.45, 0.66, -0.3 + j * 0.6)
-				q.rotation_degrees.y = _rng.randf() * 180.0
-				add_child(q)
+	# Hochbeete westlich der Hütte: bepflanzbar (GardenBed, Zustand im Versorgungs-Manager)
+	var beds := [Vector3(-14.0, 0, 6.0), Vector3(-14.0, 0, 9.5), Vector3(-10.5, 0, 6.0), Vector3(-10.5, 0, 9.5)]
+	for i in beds.size():
+		var gb := GardenBed.new()
+		gb.name = "GardenBed%d" % (i + 1)
+		gb.index = i
+		gb.position = beds[i]
+		add_child(gb)
 	_build_rain_barrel(Vector3(6.9, 0.0, -2.6))
 	var band := BuildKit.tex_mat("metal", 0.3, Color(0.7, 0.7, 0.7), 0.5)
 	var barrel_water := WaterSource.new()

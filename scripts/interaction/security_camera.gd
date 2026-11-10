@@ -1,5 +1,5 @@
 class_name SecurityCamera
-extends Node3D
+extends Interactable
 ## Eine Überwachungskamera an Hauswand oder Schuppen (GDD 7.5).
 ## Ursprung = Punkt auf der Wandoberfläche, wall_normal zeigt von der Wand weg.
 ## Ein Wandhalter mit Arm trägt das Gehäuse; das Gehäuse blickt auf look_target.
@@ -24,8 +24,35 @@ var _head: Node3D
 var _t: float = 0.0
 
 
+## Aus einem Einbau-Eintrag des Versorgungs-Managers: Wandpunkt, Wandrichtung, Schwenk (yaw, Bogenmaß).
+static func from_install(d: Dictionary) -> SecurityCamera:
+	var cam := SecurityCamera.new()
+	var i := int(d["index"])
+	cam.index = i
+	cam.name = "Camera%d" % (i + 1)
+	var n: Vector3 = d["normal"]
+	cam.wall_normal = n
+	cam.position = d["pos"]
+	cam.look_target = aim_target(d["pos"], n, float(d["yaw"]))
+	cam.camera_name = "Kamera %d" % (i + 1)
+	cam.fov = 80.0
+	return cam
+
+
+## Wohin eine Kamera schaut: von der Wand weg, um yaw seitlich geschwenkt, leicht nach unten.
+static func aim_target(pos: Vector3, normal: Vector3, yaw: float) -> Vector3:
+	var dir := normal.normalized().rotated(Vector3.UP, yaw)
+	var t := pos + dir * 10.0
+	t.y = Terrain.height_at(t.x, t.z) + 0.6
+	return t
+
+
+var preview: bool = false
+
+
 func _ready() -> void:
-	add_to_group("security_camera")
+	if not preview:
+		add_to_group("security_camera")
 	var n := wall_normal.normalized()
 	var body_mat := BuildKit.tex_mat("metal", 0.2, Color(1.6, 1.6, 1.55), 0.5)
 	var dark_mat := BuildKit.color_mat(Color(0.08, 0.08, 0.09), 0.4, 0.3)
@@ -59,7 +86,29 @@ func _ready() -> void:
 	_led_mat = BuildKit.emissive_mat(Color(1.0, 0.1, 0.05), 2.0)
 	BuildKit.sphere(_head, 0.008, Vector3(0.035, -0.065, -0.192), _led_mat, Vector3.ONE, 4)
 	for vi in find_children("*", "VisualInstance3D", true, false):
-		(vi as VisualInstance3D).layers = BODY_LAYER
+		(vi as VisualInstance3D).layers = BODY_LAYER | (1 if preview else 0)
+	if preview:
+		return
+	# zum Anvisieren (abbauen)
+	var area := Area3D.new()
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(0.3, 0.3, 0.45)
+	cs.shape = sh
+	cs.position = n * ARM_LENGTH * 0.7
+	area.add_child(cs)
+	add_child(area)
+
+
+func get_prompt(_p: Node) -> String:
+	return "%s  [E] abbauen" % camera_name
+
+
+func interact(_p: Node) -> void:
+	if Inventory.add("camera_%d" % (index + 1), 1) > 0:
+		Supplies.uninstall_camera(index)
+		SoundBank.play_ui(self, "pickup", -4.0)
+		EventBus.notify("%s abgebaut." % camera_name, 2.0)
 
 
 ## Blickpunkt des Überwachungsbilds: vor der Linse, Richtung Ziel.
@@ -71,6 +120,8 @@ func eye_transform() -> Transform3D:
 
 
 func _process(delta: float) -> void:
+	if preview:
+		return
 	_t += delta
 	var on := PowerManager.has_power() and fmod(_t, 2.0) < 0.15
 	_led_mat.emission_energy_multiplier = 3.0 if on else 0.0
