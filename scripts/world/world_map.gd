@@ -332,6 +332,18 @@ static func water_level(x: float, z: float) -> float:
 	return -INF
 
 
+## Mulden: (Anteil 0..1, Art) – Art 0 = Steinbruch (Fels), 1 = Stausee (Schlamm).
+static func basin_info(x: float, z: float) -> Vector2:
+	ensure()
+	var q := Vector2(x, z)
+	for b: Dictionary in _cell(x, z)["basins"]:
+		var d := (b["pos"] as Vector2).distance_to(q)
+		var br: float = b["r"]
+		if d < br * 1.05:
+			return Vector2(1.0 - smoothstep(br * 0.8, br * 1.05, d), 0.0 if b["id"] == "steinbruch" else 1.0)
+	return Vector2.ZERO
+
+
 ## 0..1: wie stark man hier im Moor einsinkt (Stege zählen nicht – das prüft der Spieler selbst).
 static func bog_factor(x: float, z: float) -> float:
 	ensure()

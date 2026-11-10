@@ -271,7 +271,16 @@ func _build_ground(key: Vector2i, root: Node3D, body: StaticBody3D) -> void:
 		if Terrain.water_level_at(x, z) > g - 0.05:
 			continue
 		var meadow := WorldMap.meadow(x, z)
-		var high := smoothstep(120.0, 160.0, g)
+		# In Orten und Mulden nur Gras (keine Felsen, Büsche, Farne mitten im Lager)
+		var in_place := meadow > 0.5 and WorldMap.tree_density(x, z, g) <= 0.0
+		var bi := WorldMap.basin_info(x, z)
+		if bi.x > 0.3:
+			if bi.y > 0.5 and rng.randf() < 0.85:
+				continue
+			in_place = true
+		if in_place and roll >= 0.55 + meadow * 0.35:
+			continue
+		var high := smoothstep(150.0, 200.0, g)
 		if roll < 0.55 + meadow * 0.35:
 			# Gras: auf Lichtungen und am Wegrand dicht, im Wald dünn
 			if rng.randf() > 0.25 + meadow * 0.75 or high > 0.8:
@@ -289,7 +298,9 @@ func _build_ground(key: Vector2i, root: Node3D, body: StaticBody3D) -> void:
 			bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
 			bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))
 		else:
-			var rs := s * (1.0 + high * 1.5)
+			if rng.randf() < 0.5 and high < 0.5:
+				continue
+			var rs := s * (1.0 + high * 0.8)
 			var sc := Vector3(rs * rng.randf_range(1.0, 1.7), rs * rng.randf_range(0.5, 0.85), rs * rng.randf_range(1.0, 1.5))
 			rocks.append(Transform3D(Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4)).scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
 			rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))

@@ -249,9 +249,15 @@ static func ground_color(x: float, z: float, h: float, ny: float, with_density: 
 		if ti.x < 1.2:
 			var path_col := [Color(0.27, 0.21, 0.14), Color(0.36, 0.33, 0.27), Color(0.2, 0.2, 0.21)][clampi(int(ti.y), 0, 2)] as Color
 			col = col.lerp(path_col, 1.0 - smoothstep(-0.4, 1.2, ti.x))
-		# Fels an steilen Hängen und auf den Gipfeln
-		var rock := maxf(1.0 - smoothstep(0.62, 0.82, ny), smoothstep(125.0, 160.0, h))
+		# Bergwiese oberhalb des Waldes, Fels nur an steilen Stellen und ganz oben
+		col = col.lerp(Color(0.2, 0.22, 0.09).lerp(Color(0.26, 0.25, 0.12), n), smoothstep(115.0, 160.0, h) * 0.8)
+		var rock := maxf(1.0 - smoothstep(0.55, 0.72, ny), smoothstep(190.0, 240.0, h) * 0.85)
 		col = col.lerp(Color(0.36, 0.35, 0.33).lerp(Color(0.46, 0.45, 0.42), n), rock)
+		# Mulden: Steinbruch = Fels, abgelassener Stausee = trockener, rissiger Schlamm
+		var bi := WorldMap.basin_info(x, z)
+		if bi.x > 0.0:
+			var basin_col := Color(0.28, 0.27, 0.25).lerp(Color(0.36, 0.35, 0.32), n) if bi.y < 0.5 else Color(0.13, 0.105, 0.075).lerp(Color(0.19, 0.155, 0.11), n)
+			col = col.lerp(basin_col, bi.x)
 		# Moor: dunkel, nass
 		var bog := WorldMap.bog_factor(x, z)
 		col = col.lerp(Color(0.13, 0.12, 0.07), bog * 0.8)
@@ -299,9 +305,11 @@ func _ready() -> void:
 	for cz in range(-CORE_CHUNKS, CORE_CHUNKS):
 		for cx in range(-CORE_CHUNKS, CORE_CHUNKS):
 			_build_chunk_now(Vector2i(cx, cz))
+	var t_core := Time.get_ticks_msec() - _born
 	_build_far()
 	_build_stream()
 	_build_lakes()
+	print("[Terrain] Tal %d ms, gesamt %d ms" % [t_core, Time.get_ticks_msec() - _born])
 
 
 static func is_core(key: Vector2i) -> bool:
