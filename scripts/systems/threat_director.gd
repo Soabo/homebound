@@ -146,6 +146,8 @@ func plan_night(night_day: int) -> void:
 			_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
 		if (st >= 1 or night_day >= config.manipulator_from_night) and night_kind == "hints" and _rng.randf() < config.manipulator_chance + config.species_chance_per_stage * st:
 			_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
+		if night_day >= config.seeker_from_day and _rng.randf() < config.seeker_chance + config.seeker_chance_per_stage * st:
+			_add(start + _rng.randf_range(1.0, night_len - 2.5), "seeker")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 	night_planned.emit(night_intensity)
 	print("[ThreatDirector] Nacht %d: %s, Bedrohung %.1f, %d Ereignisse" % [night_day, night_kind, threat_level, events.size()])
@@ -234,7 +236,7 @@ func sleep_blocker() -> String:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if is_instance_valid(creature) and player and (creature as Node3D).global_position.distance_to(player.global_position) < config.no_sleep_creature_distance:
 		return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
-	for g in ["manipulator", "drone", "apparition"]:
+	for g in ["manipulator", "drone", "apparition", "seeker"]:
 		if not get_tree().get_nodes_in_group(g).is_empty():
 			return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
 	return ""
@@ -245,7 +247,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -339,6 +341,14 @@ func _fire(type: String) -> void:
 			_appeared_tonight = true
 			Apparition.spawn(scene, "forest")
 			CreatureSounds.play_phrase(scene, "breath", _random_forest_point(14.0, 20.0) + Vector3(0, 1.2, 0), -4.0, _rng.randf_range(3.0, 5.0), 30.0)
+		"seeker":
+			Seeker.spawn_for(scene, _seeker_target(player))
+		"camp":
+			var camps := get_tree().get_nodes_in_group("tent_camp").filter(func(c: Node) -> bool: return c.call("occupied"))
+			if not camps.is_empty():
+				camps[0].call("camp_event", "")
+			elif far_from_home():
+				_play_phantom_steps(scene)
 		"drone":
 			if get_tree().get_nodes_in_group("drone").is_empty():
 				var d := AlienDrone.new()
@@ -436,6 +446,35 @@ func _play_phantom_steps(scene: Node) -> void:
 		p.y = Terrain.height_at(p.x, p.z) + 0.1
 		CreatureSounds.play(scene, "step", p, -3.0, _rng.randf_range(0.9, 1.05), 40.0)
 		await get_tree().create_timer(0.6).timeout
+
+
+## Wo sucht der Sucher: am Zelt, um den Spieler draußen oder an der Hütte.
+func _seeker_target(player: Node3D) -> Vector3:
+	if player and player.get("in_tent"):
+		return (player.get("in_tent") as Node3D).global_position
+	if player and far_from_home():
+		return player.global_position
+	return Vector3.ZERO
+
+
+## Zeltnacht: ein bis drei Ereignisse zwischen jetzt und dem Morgen (einmal pro Nacht).
+var _camp_planned_night: int = -1
+
+
+func plan_camp_night(camp: Node) -> void:
+	var night := current_night()
+	if _camp_planned_night == night or camp == null:
+		return
+	_camp_planned_night = night
+	var now := TimeManager.get_total_hours()
+	var night_end := float(night) * 24.0 + TimeManager.config.day_start_hour
+	if night_end <= now + 1.0:
+		return
+	var n := _rng.randi_range(config.camp_events.x, config.camp_events.y)
+	for i in n:
+		_add(_rng.randf_range(now + config.camp_first_after, night_end - 0.8), "camp")
+	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
+	print("[ThreatDirector] Zeltnacht: %d Ereignisse" % n)
 
 
 ## Ist der Spieler weit weg von der Hütte (Ausflug, Nacht im Zelt)?

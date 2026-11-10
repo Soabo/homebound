@@ -149,7 +149,22 @@
   Zelt (`tent`, Structure: schlafen draußen), Waten (tiefer als 1,2 m geht nicht), Moor abseits der Stege = einsinken.
   Torf zählt als Brennstoff (`Inventory.count_fuel`). Verbandskasten `use.heal`.
 - Weit weg von der Hütte (> 150 m) werden Haus-Ereignisse des ThreatDirectors zu Wald-Ereignissen um den Spieler
-  (`far_from_home`, `_far_variant`). Eine echte Kreatur-Jagd im Zelt ist noch offen.
+  (`far_from_home`, `_far_variant`).
+
+## Entscheidungen Zeltnacht, Kälte, Sucher
+- Zeltnacht = Psychoterror (Christian): keine Tötung, aber Verletzung + Zelt zerrissen; flicken mit 1 Brett + 3 Nägeln.
+  `TentCamp` (Kind des Zelts): E hineinkriechen, drinnen E schlafen / R hinaus / F Licht (leuchtet nach außen).
+  `ThreatDirector.plan_camp_night` plant `camp_events` Ereignisse („camp“): Schritte ums Zelt, Schatten auf der Plane,
+  Plane eingedrückt, Stimme, Licht von oben, Feuer geht aus, Sucher. Morgens Spuren ums Zelt. Werte: ThreatConfig `camp_*`.
+- Kälte (Christian: ja): `Survival.warmth` (HUD „Wärme“), Werte `data/survival/survival.tres` (`SurvivalConfig`).
+  Draußen nachts schnell kalt (Höhe, nass nach Waten schneller), Hütte mit Kamin/Ofen wärmt, Zelt halbiert den Verlust,
+  Schlafsack (`sleeping_bag`: 3 Wolle + 1 Schaffell) noch mehr; Lagerfeuer (`campfire`-Bündel, 3 Holz, `Campfire`) wärmt,
+  lockt aber Sucher/Drohne. Kalt = Zittern, weniger Ausdauer; sehr kalt = Schaden; durchgefroren aufwachen = Schaden.
+  Wärmequellen in Gruppe `heat_source` (`heat_at`, `heats_cabin`).
+- Sucher (Christian: bauen): `Seeker`, Werte `data/creatures/seeker.tres` (`SeekerConfig`), wann: ThreatConfig `seeker_*`.
+  Dürr, ~2,7 m, Augenschlitz mit vielen kleinen Lichtern. Erscheint, beobachtet lange, sucht ab; reagiert auf Licht
+  (Uhr, Licht im Zelt, Feuer), Geräusche (`noise_made`) und W-17 (`Inventory "w17"` – Gegenstand noch nicht im Spiel).
+  Findet er dich: Schlag bzw. Zelt aufreißen (nie unter `min_health`), dann Teleporterblitz. Test: `--night-test=camp`.
 - Tests: `--night-test=map` (Rechenzeit, Nachladen), `--night-test=places` (alle Orte, Funde, Mechaniken).
 
 ## Technik

@@ -64,6 +64,10 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "camp":
+		await _camp_test()
+		get_tree().quit()
+		return
 	if mode == "places":
 		await _places_test()
 		get_tree().quit()
@@ -1330,3 +1334,87 @@ func _places_test() -> void:
 		await get_tree().physics_frame
 	print("MOOR: Gesundheit nach ~6 s im Schlamm %.0f" % player.health)
 	print("AUFGABEN-Flags Besuche: %d" % Tasks.flags.keys().filter(func(k: String) -> bool: return k.begins_with("visit_")).size())
+
+
+## Zeltnacht, Kälte, Lagerfeuer, Sucher.
+func _camp_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var terrain := scene.get_node("Terrain") as Terrain
+	TimeManager.set_time(6, 22.5)
+	ThreatDirector.set_process(false)
+	# Wärme in der Hütte mit/ohne Kamin
+	player.global_position = Vector3(-2, Cabin.FLOOR_Y + 0.1, 1)
+	await get_tree().physics_frame
+	print("WÄRME Hütte nachts: %.1f/h" % Survival.warmth_rate(player))
+	# Lager bei der Kapelle
+	var base := WorldMap.place_point("kapelle") + Vector3(16, 0, 10)
+	base.y = Terrain.height_at(base.x, base.z)
+	terrain.load_around(base, 70.0)
+	player.global_position = base + Vector3(0, 0.3, 4)
+	await get_tree().physics_frame
+	print("WÄRME draußen nachts (Höhe %.0f m): %.1f/h" % [base.y, Survival.warmth_rate(player)])
+	var tent := Builder.place("tent", base, 0.0) as Structure
+	var fire := Builder.place("campfire", base + Vector3(0, 0, 3.2), 0.0) as Structure
+	for i in 3:
+		await get_tree().process_frame
+	print("FEUER: %s, Wärme am Feuer %.2f, Rate %.1f/h" % [fire.fire.get_prompt(), fire.fire.heat_at(player.global_position), Survival.warmth_rate(player)])
+	tent.camp.interact(player)
+	await get_tree().create_timer(1.2).timeout
+	print("ZELT drinnen: %s, Rate ohne Schlafsack %.1f/h" % [tent.camp.occupied(), Survival.warmth_rate(player)])
+	Inventory.add("sleeping_bag", 1)
+	print("ZELT mit Schlafsack: %.1f/h" % Survival.warmth_rate(player))
+	print("ZELT-Ereignisse geplant: %d" % ThreatDirector.events.filter(func(e: Dictionary) -> bool: return e["type"] == "camp").size())
+	# Alle Ereignisarten
+	for k: String in ["steps", "shadow", "press", "voice", "light", "fire_out"]:
+		tent.camp._busy = false
+		tent.camp.camp_event(k)
+		await get_tree().create_timer(1.0).timeout
+		print("ZELT-Ereignis %s ok" % k)
+	print("FEUER nach fire_out: brennt %s" % fire.fire.burning())
+	fire.fire.secondary_interact()
+	Inventory.add("wood", 2)
+	fire.fire.interact()
+	print("FEUER wieder an: %s" % fire.fire.burning())
+	# Sucher: Licht im Zelt an → er findet das Zelt und reißt es auf
+	player.health = 100.0
+	tent.camp._busy = false
+	var sk := Seeker.spawn_for(scene, tent.global_position)
+	sk.global_position = tent.global_position + Vector3(12, 0, 0)
+	sk.global_position.y = Terrain.height_at(sk.global_position.x, sk.global_position.z)
+	sk._hold = 0.0
+	if not player.light_shining():
+		player.set_flashlight(true)
+	print("SUCHER da: Licht im Zelt %s" % tent.camp.glowing())
+	var t := 0.0
+	while is_instance_valid(sk) and t < 40.0:
+		await get_tree().create_timer(0.5).timeout
+		t += 0.5
+	print("SUCHER nach %.0f s: weg %s, Zelt zerrissen %s, Gesundheit %.0f, im Zelt %s" % [t, not is_instance_valid(sk), tent.camp.torn, player.health, tent.camp.occupied()])
+	print("ZELT Prompt: %s" % tent.camp.get_prompt())
+	Inventory.add("planks", 1)
+	Inventory.add("nails", 3)
+	tent.camp.interact(player)
+	print("ZELT geflickt: %s" % (not tent.camp.torn))
+	# Schlafen im Zelt: Kälte über die Nacht
+	await get_tree().create_timer(1.0).timeout
+	tent.camp.interact(player)
+	await get_tree().create_timer(1.2).timeout
+	Inventory.remove("sleeping_bag", 1)
+	fire.fire.put_out()
+	Survival.warmth = 70.0
+	EventBus.sleep_requested.emit(7.0)
+	await get_tree().create_timer(5.0).timeout
+	print("SCHLAF ohne Schlafsack/Feuer: Wärme %.0f, Gesundheit %.0f, Uhr %s" % [Survival.warmth, player.health, TimeManager.get_clock_text()])
+	# Sucher an der Hütte (nur beobachten/suchen)
+	tent.camp.leave()
+	await get_tree().create_timer(1.0).timeout
+	TimeManager.set_time(7, 23.0)
+	player.global_position = Vector3(-2, Cabin.FLOOR_Y + 0.1, 1)
+	var sk2 := Seeker.spawn_for(scene, Vector3.ZERO)
+	for i in 20:
+		await get_tree().create_timer(0.5).timeout
+	print("SUCHER an der Hütte: Zustand %s, Abstand zur Hütte %.0f m" % [Seeker.State.keys()[sk2.state] if is_instance_valid(sk2) else "weg", sk2.global_position.length() if is_instance_valid(sk2) else -1.0])
+	print("RAMP: Wärme draußen tagsüber Rate: ", Survival.warmth_rate(player))

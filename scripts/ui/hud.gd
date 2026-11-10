@@ -320,13 +320,13 @@ func _build_bars(root: Control) -> void:
 	_bar_root.anchor_top = 1.0
 	_bar_root.anchor_bottom = 1.0
 	_bar_root.offset_left = 32
-	_bar_root.offset_top = -190
+	_bar_root.offset_top = -212
 	_bar_root.offset_right = 260
 	_bar_root.offset_bottom = -120
 	_bar_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bar_root.add_theme_constant_override("separation", 4)
 	root.add_child(_bar_root)
-	for key: String in ["Ausdauer", "Hunger", "Durst", "Gesundheit"]:
+	for key: String in ["Ausdauer", "Hunger", "Durst", "Wärme", "Gesundheit"]:
 		var row := HBoxContainer.new()
 		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var l := _label(row, 14, HORIZONTAL_ALIGNMENT_LEFT)
@@ -339,7 +339,8 @@ func _build_bars(root: Control) -> void:
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		row.add_child(bg)
 		var fg := ColorRect.new()
-		fg.color = {"Ausdauer": Color(0.9, 0.9, 0.85), "Hunger": Color(0.9, 0.6, 0.25), "Durst": Color(0.35, 0.65, 0.95), "Gesundheit": Color(0.85, 0.2, 0.2)}[key]
+		fg.color = {"Ausdauer": Color(0.9, 0.9, 0.85), "Hunger": Color(0.9, 0.6, 0.25), "Durst": Color(0.35, 0.65, 0.95),
+			"Wärme": Color(0.95, 0.75, 0.35), "Gesundheit": Color(0.85, 0.2, 0.2)}[key]
 		fg.size = Vector2(120, 8)
 		fg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bg.add_child(fg)
@@ -350,14 +351,16 @@ func _build_bars(root: Control) -> void:
 func _update_bars() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	var values := {"Ausdauer": Survival.stamina, "Hunger": Survival.hunger, "Durst": Survival.thirst,
-			"Gesundheit": player.health if player else 100.0}
+			"Wärme": Survival.warmth, "Gesundheit": player.health if player else 100.0}
 	for key in _bars:
 		var v: float = values[key]
 		var row: Control = _bars[key][0]
 		var fg: ColorRect = _bars[key][1]
 		fg.size.x = 120.0 * clampf(v / 100.0, 0.0, 1.0)
 		# Nur zeigen, wenn es etwas zu sehen gibt
-		var show := v < 60.0 if key in ["Hunger", "Durst"] else v < 99.0
+		var show := v < 60.0 if key in ["Hunger", "Durst", "Wärme"] else v < 99.0
+		if key == "Wärme":
+			fg.color = Color(0.95, 0.75, 0.35).lerp(Color(0.45, 0.7, 1.0), 1.0 - clampf(v / 60.0, 0.0, 1.0))
 		row.modulate.a = move_toward(row.modulate.a, 1.0 if show else 0.0, 0.05)
 
 

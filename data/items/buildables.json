@@ -11,5 +11,6 @@
   "strobe_light":    {"name": "Stroboskop-Leuchte",     "health": 45,  "obstacle": false, "size": [0.4, 2.2, 0.4], "range": 11},
   "signal_jammer":   {"name": "Störsender",             "health": 35,  "obstacle": false, "size": [0.5, 1.6, 0.5], "range": 26},
   "growth_barrier":  {"name": "Myzel-Sperre",           "health": 60,  "obstacle": false, "size": [0.6, 0.6, 0.6], "range": 15},
-  "tent": {"name": "Zelt", "health": 40, "obstacle": true, "size": [2.0, 1.25, 2.4]}
+  "tent": {"name": "Zelt", "health": 40, "obstacle": false, "size": [2.0, 1.25, 2.4]},
+  "campfire": {"name": "Lagerfeuer", "health": 30, "obstacle": false, "size": [1.2, 0.5, 1.2]}
 }

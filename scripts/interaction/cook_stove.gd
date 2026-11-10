@@ -15,6 +15,7 @@ var _crackle: FireCrackle
 
 
 func _ready() -> void:
+	add_to_group("heat_source")
 	add_to_group("persistent")
 	add_to_group("cook_stove")
 	_glow = BuildKit.emissive_mat(Color(1.0, 0.4, 0.1), 0.0)
@@ -37,6 +38,10 @@ func _ready() -> void:
 	area.add_child(cs)
 	add_child(area)
 	GameState.restore(self)
+
+
+func heats_cabin() -> bool:
+	return lit()
 
 
 func lit() -> bool:

@@ -304,7 +304,7 @@
     {
       "id": "first_night_out",
       "title": "Eine Nacht im Wald",
-      "text": "Ein Zelt aufbauen (Inventar → Anbringen/Bauen) und draußen schlafen. Ich weiß nicht, ob ich mich das traue.",
+      "text": "Ein Zelt aufbauen und draußen schlafen. Nachts wird es eiskalt: ein Lagerfeuer-Bündel (Werkbank, 3 Holz) und ein Schlafsack helfen. Licht im Zelt sieht man von weit her.",
       "unlock": [
         "got:tent"
       ],
@@ -344,6 +344,39 @@
       ],
       "done": [
         "flag:visit_tunnel"
+      ]
+    },
+    {
+      "id": "sleeping_bag",
+      "title": "Ein Schlafsack",
+      "text": "Aus Schafwolle und einem Schaffell lässt sich an der Werkbank ein Schlafsack nähen. Ohne friert man draußen in der Nacht.",
+      "unlock": [
+        "got:wool"
+      ],
+      "done": [
+        "got:sleeping_bag"
+      ]
+    },
+    {
+      "id": "seeker",
+      "title": "Etwas sucht",
+      "text": "Da war etwas Großes, Dünnes mit vielen kleinen Lichtern im Gesicht. Es hat nicht angegriffen. Es hat gesucht. Licht und Lärm locken es an.",
+      "unlock": [
+        "flag:seeker_seen"
+      ],
+      "done": [
+        "flag:seeker_struck"
+      ]
+    },
+    {
+      "id": "tent_repair",
+      "title": "Das Zelt flicken",
+      "text": "Das Zelt ist zerrissen. Mit einem Brett und drei Nägeln lässt es sich notdürftig flicken.",
+      "unlock": [
+        "flag:tent_torn"
+      ],
+      "done": [
+        "flag:tent_repaired"
       ]
     }
   ],

@@ -83,6 +83,15 @@ extends Resource
 ## Nach so vielen Sekunden Hinsehen dreht sie langsam den Kopf zur Kamera.
 @export var camera_lurk_look_after: Vector2 = Vector2(2.0, 5.0)
 
+@export_group("Sucher und Zeltnacht")
+## Ab welcher Nacht der Sucher kommen kann, wie wahrscheinlich (plus je Terraforming-Stufe)
+@export var seeker_from_day: int = 5
+@export var seeker_chance: float = 0.2
+@export var seeker_chance_per_stage: float = 0.06
+## Zeltnacht: so viele Ereignisse pro Nacht im Zelt (frühestens so viele Stunden nach dem Hinlegen)
+@export var camp_events: Vector2i = Vector2i(1, 3)
+@export var camp_first_after: float = 0.4
+
 @export_group("Schlaf")
 ## Nach dem Hochschrecken so viele Spielstunden kein Schlaf.
 @export var scared_awake_hours: float = 1.0

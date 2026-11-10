@@ -17,6 +17,7 @@ var _t := 0.0
 
 
 func _ready() -> void:
+	add_to_group("heat_source")
 	_noise.frequency = 1.6
 	_ember_mat = BuildKit.emissive_mat(Color(1.0, 0.35, 0.08), 3.0)
 	BuildKit.box(self, Vector3(0.36, 0.06, 0.6), Vector3(-0.1, 0.03, 0), _ember_mat, false)
@@ -89,6 +90,10 @@ func interact(_player: Node) -> void:
 
 
 ## Wie stark das Feuer gerade brennt (1 = voll, 0 = aus).
+func heats_cabin() -> bool:
+	return strength() > 0.15
+
+
 func strength() -> float:
 	var left := burn_until - TimeManager.get_total_hours()
 	return clampf(left / maxf(float(_cfg.get("fade_hours", 6.0)), 0.01), 0.0, 1.0)

@@ -136,6 +136,11 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   Wetterstation am Grat, Gewächshäuser, Der Wal, Raststätte an der Autobahn.
 - Dort liegen Vorräte, Notizen (Tablet → Notizen), Baupläne (danach an der Werkbank baubar) und neue Funde für die Forschung.
 - Tiefes Wasser kann man nicht durchqueren, im Moor sinkt man abseits der Stege ein.
+- **Kälte:** Nachts kühlt man draußen schnell aus (oben am Berg und nass noch schneller). Wärme gibt es in der Hütte
+  am Kamin/Ofen, am Lagerfeuer (Bündel an der Werkbank bauen, draußen mit B aufstellen, R legt Holz nach) und im Zelt mit Schlafsack.
+- **Die Nacht im Zelt:** E kriecht hinein, drinnen E schlafen, R hinaus. Licht im Zelt sieht man von weit her.
+  Etwas kann ums Zelt schleichen – oder es aufreißen. Ein zerrissenes Zelt flickt man mit einem Brett und drei Nägeln.
+- **Der Sucher:** hoch, dürr, viele kleine Lichter im Gesicht. Er sucht nach Licht und Lärm. Er tötet nicht – aber er findet dich.
 
 ## Selbstversorgung und Aufgaben
 

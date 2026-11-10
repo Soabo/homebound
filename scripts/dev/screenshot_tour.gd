@@ -80,6 +80,8 @@ const SHOTS := [
 	{"name": "67_dorf", "hour": 15.0, "place": "dorf", "off": Vector3(20.0, 0.0, 32.0), "look_off": Vector3(0.0, 6.0, -6.0)},
 	{"name": "68_ferienlager", "hour": 11.0, "place": "ferienlager", "off": Vector3(6.0, 0.0, 22.0), "look_off": Vector3(0.0, 1.5, -4.0)},
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
+	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
+		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -161,6 +163,16 @@ func _run() -> void:
 				creature._walk_phase = 1.0
 				for k in 60:
 					creature._animate(0.05, true)
+		var seeker: Seeker = null
+		if shot.has("seeker_at"):
+			seeker = Seeker.new()
+			seeker.target = pos
+			get_tree().current_scene.add_child(seeker)
+			seeker.global_position = Creature._ground(shot["seeker_at"])
+			seeker.set_process(false)
+			var sf := pos - seeker.global_position
+			seeker.rotation.y = atan2(sf.x, sf.z)
+			seeker._eye_mat.emission_energy_multiplier = 3.0
 		var drone: AlienDrone = null
 		if shot.has("drone_at"):
 			drone = AlienDrone.new()
@@ -228,6 +240,8 @@ func _run() -> void:
 			creature.queue_free()
 		if drone:
 			drone.queue_free()
+		if seeker:
+			seeker.queue_free()
 		for b in built:
 			if is_instance_valid(b):
 				Builder.remove(b.uid)

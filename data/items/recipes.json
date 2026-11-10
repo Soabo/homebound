@@ -29,6 +29,8 @@
     {"id": "dir_antenna",      "name": "Richtantenne (Bauplan Funkmast)", "blueprint": "bp_antenna", "needs": {"radio_parts": 1, "electronics": 3, "scrap": 4}, "gives": {"dir_antenna": 1}},
     {"id": "blast_charge",     "name": "Sprengladung (Bauplan Steinbruch)", "blueprint": "bp_charge", "needs": {"explosive": 1, "electronics": 1, "battery": 1}, "gives": {"blast_charge": 1}},
     {"id": "overload_module",  "name": "Überlastungsmodul (Bauplan Tunnel)", "blueprint": "bp_overload", "needs": {"energy_cell": 2, "electronics": 3, "metal_fragment": 1}, "gives": {"overload_module": 1}},
+    {"id": "sleeping_bag",     "name": "Schlafsack", "needs": {"wool": 3, "sheepskin": 1}, "gives": {"sleeping_bag": 1}},
+    {"id": "campfire",         "name": "Lagerfeuer-Bündel (zum Mitnehmen)", "needs": {"wood": 3}, "gives": {"campfire": 1}},
     {"id": "candle_light",     "name": "Kerzen aus Wachs", "needs": {"wax": 2}, "gives": {"candles": 3}},
     {"id": "door_upgrade",    "name": "Haustür verstärken", "needs": {"scrap": 3, "planks": 4, "nails": 12}, "special": "door_upgrade"}
   ]

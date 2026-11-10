@@ -58,6 +58,8 @@
   "motion_light":    {"name": "Bewegungsmelder-Leuchte","weight": 3.0, "stack": 4, "category": "Bauteil", "build": "motion_light"},
   "bear_trap":       {"name": "Bärenfalle",             "weight": 2.5, "stack": 4, "category": "Bauteil", "build": "bear_trap"},
   "snare":           {"name": "Kleintierschlinge",      "weight": 0.4, "stack": 6, "category": "Bauteil", "build": "snare"},
+  "sleeping_bag":    {"name": "Schlafsack",             "weight": 1.8, "stack": 1, "category": "Werkzeug"},
+  "campfire":        {"name": "Lagerfeuer-Bündel",      "weight": 2.5, "stack": 4, "category": "Bauteil", "build": "campfire"},
   "candles":         {"name": "Kerzen",                 "weight": 0.1, "stack": 12, "category": "Ressource"},
   "matches":         {"name": "Streichhölzer",          "weight": 0.05, "stack": 4, "category": "Ressource"},
   "binoculars":      {"name": "Fernglas (Taste Q: heranzoomen)", "weight": 0.7, "stack": 1, "category": "Werkzeug"},

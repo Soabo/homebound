@@ -12,6 +12,8 @@ extends Interactable
 ## Werte kommen aus data/items/buildables.json.
 
 var uid: int = 0
+var camp: TentCamp        ## nur beim Zelt
+var fire: Campfire        ## nur beim Lagerfeuer
 var type: String = "fence_panel"
 var health: float = 50.0
 var max_health: float = 50.0
@@ -56,7 +58,17 @@ func _ready() -> void:
 		_wither_patches.call_deferred()
 	if type == "snare":
 		refresh_catch()
-	if type in ["bear_trap", "snare"]:
+	if type == "tent":
+		camp = TentCamp.new()
+		camp.name = "Camp"
+		camp.structure = self
+		add_child(camp)
+	if type in ["bear_trap", "snare", "campfire"]:
+		if type == "campfire":
+			fire = Campfire.new()
+			fire.name = "Fire"
+			fire.structure = self
+			add_child(fire)
 		if type == "bear_trap":
 			armed = bool(Builder.record(uid).get("armed", true))
 			_set_jaws(armed, false)
@@ -106,6 +118,8 @@ func _build_visual() -> void:
 			_build_snare()
 		"tent":
 			_build_tent()
+		"campfire":
+			pass  # baut Campfire selbst
 		"stone_wall":
 			var stone := BuildKit.tex_mat("stone", 0.6)
 			for row in 3:
@@ -251,7 +265,8 @@ func _build_tent() -> void:
 	var slope := sqrt(w * w + h * h)
 	var ang := rad_to_deg(atan2(h, w))
 	for sx: float in [-1.0, 1.0]:
-		BuildKit.box(self, Vector3(slope, 0.02, l), Vector3(sx * w * 0.5, h * 0.5, 0), canvas, false, Vector3(0, 0, sx * ang))
+		var side := BuildKit.box(self, Vector3(slope, 0.02, l), Vector3(sx * w * 0.5, h * 0.5, 0), canvas, false, Vector3(0, 0, sx * ang))
+		side.name = "CanvasR" if sx > 0.0 else "CanvasL"
 	# Rückwand (Dreieck angedeutet durch zwei schräge Stücke)
 	for sx: float in [-1.0, 1.0]:
 		BuildKit.box(self, Vector3(w, h * 0.72, 0.02), Vector3(sx * w * 0.4, h * 0.36, -l * 0.5), canvas, false, Vector3(0, 0, sx * 12.0))
@@ -396,13 +411,10 @@ func set_preview_valid(valid: bool) -> void:
 
 func get_prompt(_player: Node) -> String:
 	var def := DataDB.buildable(type)
-	if type == "tent":
-		var why := ThreatDirector.sleep_blocker()
-		if why != "" and TimeManager.can_sleep():
-			return "Zelt – " + why
-		if TimeManager.can_sleep():
-			return "Zelt  [E] Hineinkriechen und schlafen (bis %02d:00)" % int(TimeManager.config.wake_up_hour)
-		return "Zelt – noch zu früh zum Schlafen"
+	if type == "tent" and camp:
+		return camp.get_prompt()
+	if type == "campfire" and fire:
+		return fire.get_prompt()
 	if type == "snare":
 		if bool(Builder.record(uid).get("caught", false)):
 			return "Schlinge: ein Hase hat sich verfangen  [E] mitnehmen"
@@ -414,16 +426,11 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(_player: Node) -> void:
-	if type == "tent":
-		if not TimeManager.can_sleep():
-			EventBus.notify("Ich bin noch nicht müde.", 2.0)
-			return
-		var why := ThreatDirector.sleep_blocker()
-		if why != "":
-			EventBus.notify(why, 2.5)
-			return
-		Tasks.flag("slept_outside")
-		EventBus.sleep_requested.emit(TimeManager.config.wake_up_hour)
+	if type == "tent" and camp:
+		camp.interact(_player as Player)
+		return
+	if type == "campfire" and fire:
+		fire.interact()
 		return
 	if type == "bear_trap" and not armed:
 		_rearm()
@@ -443,10 +450,22 @@ func interact(_player: Node) -> void:
 
 
 func get_secondary_prompt(_player: Node) -> String:
+	if type == "campfire" and fire:
+		return fire.get_secondary_prompt()
+	if type == "tent" and camp and camp.torn:
+		return "[R] Zerrissenes Zelt abbauen (nur Reste)"
 	return "[R] Abbauen"
 
 
 func secondary_interact(_player: Node) -> void:
+	if type == "campfire" and fire:
+		fire.secondary_interact()
+		return
+	if type == "tent" and camp and camp.torn:
+		Inventory.add("planks", 1)
+		EventBus.notify("Vom Zelt ist nicht viel übrig.", 2.0)
+		_destroy(false)
+		return
 	# Unbeschädigt gibt es das Bauteil zurück, beschädigt nur einen Teil des Holzes
 	if health >= max_health * 0.6:
 		if Inventory.add(type, 1) <= 0:

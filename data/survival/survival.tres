@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SurvivalConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/survival_config.gd" id="1_sc"]
+
+[resource]
+script = ExtResource("1_sc")
+outdoor_loss_day = 1.5
+outdoor_loss_night = 9.0
+altitude_loss_per_100m = 3.0
+wet_factor = 2.0
+wet_hours = 1.5
+cabin_heated_gain = 14.0
+cabin_unheated_gain_day = 4.0
+cabin_unheated_gain_night = 1.0
+tent_factor = 0.5
+sleeping_bag_factor = 0.25
+fire_gain = 30.0
+campfire_radius = 5.0
+campfire_hours = 3.0
+campfire_hours_per_wood = 1.5
+cold_warn = 35.0
+cold_stamina_cut = 25.0
+freeze_below = 12.0
+freeze_damage = 0.35
+sleep_freeze_damage = 30.0
+sleep_min_health = 20.0

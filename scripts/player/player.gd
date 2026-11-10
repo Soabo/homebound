@@ -14,6 +14,8 @@ var _zoom: float = 0.0
 var _last_dry: Vector3 = Vector3.INF
 var _bog_time: float = 0.0
 var _deep_warned: float = 0.0
+## Im Zelt (TentCamp) – fürs Auskühlen und für die Gegner
+var in_tent: Node = null
 @export var interact_distance: float = 2.4
 
 const STAND_HEIGHT := 1.75
@@ -489,6 +491,7 @@ func _wet_factor(delta: float) -> float:
 	var f := 1.0
 	if depth > 0.3:
 		f *= lerpf(1.0, 0.45, smoothstep(0.3, 1.1, depth))
+		Survival.set_wet()
 	if depth > 1.2 and _last_dry != Vector3.INF:
 		global_position = _last_dry
 		velocity = Vector3.ZERO
