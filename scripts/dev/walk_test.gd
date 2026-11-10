@@ -24,6 +24,14 @@ func _run() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	var main := get_tree().current_scene
 	var failed := 0
+	# --lab: komplett ausgebautes Labor im Bad – darf weder Tür noch Fenster verstellen
+	if "--lab" in OS.get_cmdline_user_args():
+		Research.lab_built = true
+		Research.lab_stations = ["bench", "microscope", "terrarium", "shield", "screen"]
+		Research.charger_built = true
+		Research.changed.emit()
+		for i in 5:
+			await get_tree().physics_frame
 	for c: Dictionary in CASES:
 		if c["door"] != "":
 			var door := main.get_node(c["door"]) as Door

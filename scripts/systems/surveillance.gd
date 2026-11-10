@@ -263,6 +263,10 @@ func _porch_height(p: Vector3) -> float:
 
 func _build_lurker(pos: Vector3, kind: String) -> void:
 	_last_lurk = _time
+	# Forschung 2.0: Die Kamera hat sie aufgezeichnet – am Monitor abholen
+	var drops := AlienDrops.get_for(get_tree())
+	if drops and Inventory.count("rec_creature") <= 0 and not Research.done.has("an_rec_creature"):
+		drops.add_footage("rec_creature")
 	_lurker = Node3D.new()
 	_lurker.name = "CameraLurker"
 	get_tree().current_scene.add_child(_lurker)

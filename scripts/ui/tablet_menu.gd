@@ -80,7 +80,7 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Alien-Archiv"], ["notes", "Notizen"]]:
+	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Alien-Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"]]:
 		var tb := Button.new()
 		tb.text = t[1]
 		tb.toggle_mode = true
@@ -193,6 +193,7 @@ func _refresh() -> void:
 	tk.text = "Aufgaben" + ("  ● %d neu" % Tasks.unseen if Tasks.unseen > 0 and _tab != "tasks" else "")
 	_split.visible = _tab == "inbox"
 	_wide_scroll.visible = _tab != "inbox"
+	_wide_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if _tab == "tree" else ScrollContainer.SCROLL_MODE_DISABLED
 	if _tab != "inbox":
 		for c in _wide.get_children():
 			c.queue_free()
@@ -201,6 +202,17 @@ func _refresh() -> void:
 			_hint.text = "Neue Aufgaben kommen dazu, je weiter du kommst.     [E] Tablet weglegen und aufstehen"
 			_fill_tasks(_wide)
 			Tasks.mark_seen.call_deferred()
+		elif _tab == "tree":
+			_title.text = "Forschungsbaum"
+			_hint.text = "Kästchen anklicken für Einzelheiten.  Links: erste Funde, rechts: was darauf aufbaut.     [E] Tablet weglegen und aufstehen"
+			var detail := _label("Fremde Signatur gerade: %s     Laborplätze: %d     Projekte fertig: %d / %d" % [ResearchMenu.signature_bar(Research.signature()),
+				Research.lab_stations.size(), Research.done.size(), (Research.data().get("analyses", {}) as Dictionary).size()], 16, Color(0.75, 0.82, 0.9))
+			detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			detail.custom_minimum_size = Vector2(900, 48)
+			_wide.add_child(detail)
+			var tree := ResearchTree.new()
+			tree.picked.connect(func(id: String) -> void: detail.text = ResearchTree.describe(id))
+			_wide.add_child(tree)
 		elif _tab == "archive":
 			_title.text = "Alien-Archiv"
 			_hint.text = "Ergebnisse kommen vom Analysegerät in der Werkstatt.     [E] Tablet weglegen und aufstehen"
@@ -242,6 +254,11 @@ func _fill_tasks(box: VBoxContainer) -> void:
 		var l := _label(("   ✓  " if d["done"] else "   ○  ") + String(d["title"]), 19,
 				Color(0.55, 0.8, 0.55) if d["done"] else Color(0.9, 0.92, 0.95))
 		box.add_child(l)
+	# Erkenntnis „Ihr Rhythmus“: Vorhersage für die kommende Nacht
+	if Research.has_grant("forecast"):
+		var f: String = {"quiet": "ruhig", "hints": "unruhig – Geräusche, Spuren", "sighting": "sie zeigt sich vielleicht",
+			"visit": "Besuch wahrscheinlich", "hunt": "gefährlich – bleib drinnen"}.get(ThreatDirector.night_kind, "unklar")
+		box.add_child(_label("   ◆  Vorhersage für die Nacht: " + f, 18, Color(1.0, 0.8, 0.55)))
 	box.add_child(_spacer())
 	box.add_child(_label("ZIELE", 17, Color(1.0, 0.82, 0.45)))
 	var open_g := Tasks.open_goals()

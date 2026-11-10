@@ -82,6 +82,8 @@ const SHOTS := [
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
 		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
+	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
+	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -148,6 +150,33 @@ func _run() -> void:
 			Inventory.select(Inventory.slot_of(shot["equip"]))
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.switch_to(shot.get("lights", false))
+		if shot.get("lab", false):
+			# Forschung 2.0: Labor voll ausgebaut, einiges erforscht, Probe im Terrarium
+			PowerManager.add_fuel(100.0)
+			PowerManager.start_generator()
+			Research.tier = 1
+			Research.lab_offered = true
+			Research.lab_built = true
+			Research.lab_stations = ["bench", "microscope", "terrarium", "shield", "screen"]
+			Research.charger_built = true
+			for id: String in ["an_metal", "an_cell", "an_tissue", "an_fungus", "an_glyph", "an_organism", "an_tissue_nerves", "an_claw", "an_shed", "an_saliva", "an_lens", "an_drone"]:
+				if not Research.done.has(id):
+					Research.done.append(id)
+			for f: String in ["metal_fragment", "energy_cell", "alien_tissue", "glow_fungus", "glyph_plate", "organism_sample", "creature_shed", "drone_lens", "rz_drive"]:
+				if not Research.seen.has(f):
+					Research.seen.append(f)
+			Research.sent = Research.unsent_results()
+			Research.link("link_growing")
+			Research.stations = {"device": "", "bench": "", "microscope": "an_metal_struct", "terrarium": "an_fungus_culture", "shield": "an_cell_drain", "screen": "an_rz_drive"}
+			Research.progress["an_fungus_culture"] = 9.0
+			Research.progress["an_rz_drive"] = 26.0
+			Research.changed.emit()
+		if shot.has("tablet"):
+			var couch := get_tree().current_scene.get_node_or_null("Cabin/Couch")
+			var tm := get_tree().get_first_node_in_group("tablet_menu")
+			if couch and tm:
+				tm.call("open", couch)
+				tm.call("_set_tab", String(shot["tablet"]))
 		var creature: Creature = null
 		if shot.has("creature_at"):
 			creature = Creature.new()

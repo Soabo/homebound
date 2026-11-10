@@ -39,6 +39,8 @@ static func get_default() -> SeekerConfig:
 @export var hearing: float = 1.3
 ## W-17 spürt er aus dieser Entfernung (wenn man es bei sich trägt)
 @export var w17_range: float = 120.0
+## Ab dieser Signatur am Körper (Research.carried_signature) spürt er dich überhaupt.
+@export var signature_min: float = 0.15
 ## Sieht den Spieler im Dunkeln / angeleuchtet aus dieser Entfernung
 @export var sight_dark: float = 8.0
 @export var sight_lit: float = 20.0

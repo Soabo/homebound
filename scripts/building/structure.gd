@@ -53,6 +53,10 @@ func _ready() -> void:
 	add_to_group("structure")
 	if type == "signal_jammer":
 		add_to_group("jammer")
+	elif type == "drone_decoy":
+		add_to_group("drone_decoy")
+	elif type == "light_lure":
+		add_to_group("seeker_lure")
 	elif type == "growth_barrier":
 		add_to_group("growth_barrier")
 		_wither_patches.call_deferred()
@@ -85,7 +89,7 @@ func _ready() -> void:
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = size if is_obstacle or type in ["motion_light", "strobe_light", "resonance_sensor", "signal_jammer", "growth_barrier"] else Vector3(size.x, 0.3, 0.4)
+	shape.size = size if is_obstacle or type in ["motion_light", "strobe_light", "resonance_sensor", "signal_jammer", "growth_barrier", "drone_decoy", "light_lure"] else Vector3(size.x, 0.3, 0.4)
 	cs.shape = shape
 	cs.position = Vector3(0, shape.size.y * 0.5, 0)
 	body.add_child(cs)
@@ -198,6 +202,27 @@ func _build_visual() -> void:
 				BuildKit.box(self, Vector3(0.5, 0.01, 0.01), Vector3(0, 1.5 + k * 0.03, 0), metal, false, Vector3(0, k * 45.0, 0))
 			_light_mat = BuildKit.emissive_mat(Color(1.0, 0.3, 0.2), 1.0)
 			BuildKit.sphere(self, 0.025, Vector3(0, 1.6, 0), _light_mat, Vector3.ONE, 6)
+		"drone_decoy":
+			# Forschung: Mast mit Drohnenlinse und warmem Kern – die Drohne vermisst lieber ihn als dich
+			var metal := BuildKit.tex_mat("metal", 0.3, Color(1.0, 1.0, 1.0), 0.5)
+			BuildKit.box(self, Vector3(0.45, 0.05, 0.45), Vector3(0, 0.025, 0), metal, false)
+			BuildKit.cylinder(self, 0.03, 1.2, Vector3(0, 0.6, 0), metal, false, Vector3.ZERO, -1.0, 6)
+			BuildKit.lathe(self, PackedVector2Array([Vector2(0.0, -0.04), Vector2(0.16, 0.0), Vector2(0.0, 0.05)]), Vector3(0, 1.25, 0), CrashSite.hull_material(), 12)
+			_light_mat = BuildKit.emissive_mat(Color(1.0, 0.55, 0.3), 1.6)
+			BuildKit.sphere(self, 0.07, Vector3(0, 1.32, 0), _light_mat, Vector3.ONE, 8)
+		"light_lure":
+			# Forschung: Dose mit Leuchtpilz und Lichtersplitter, glimmt warm
+			var tin2 := BuildKit.tex_mat("metal", 0.25, Color(1.2, 1.2, 1.15), 0.4)
+			BuildKit.cylinder(self, 0.09, 0.22, Vector3(0, 0.11, 0), tin2, false, Vector3.ZERO, -1.0, 10)
+			_light_mat = BuildKit.emissive_mat(Color(0.85, 1.0, 0.75), 2.2)
+			BuildKit.sphere(self, 0.1, Vector3(0, 0.3, 0), _light_mat, Vector3(1.0, 1.2, 1.0), 8)
+			if not preview:
+				var gl := OmniLight3D.new()
+				gl.position = Vector3(0, 0.4, 0)
+				gl.omni_range = 4.0
+				gl.light_energy = 0.8
+				gl.light_color = Color(0.8, 1.0, 0.75)
+				add_child(gl)
 		"growth_barrier":
 			var tin := BuildKit.tex_mat("metal", 0.25, Color(1.3, 1.3, 1.25), 0.4)
 			# Dosenkranz um einen Kern aus fremden Pflanzen, der schwach violett glimmt

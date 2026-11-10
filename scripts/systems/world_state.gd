@@ -136,6 +136,19 @@ func _patch_ok(p: Vector3) -> bool:
 	return true
 
 
+## Neue Wucherung in der Nähe eines Punktes (z. B. Ausbruch im Labor). true = hat geklappt.
+func spawn_patch_near(center: Vector3) -> bool:
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	for i in 16:
+		var p := center + Vector3(rng.randf_range(-3.0, 3.0), 0, rng.randf_range(-2.5, 2.5)) * (1.0 + i * 0.15)
+		if _patch_ok(p):
+			_add_patch(p)
+			changed.emit()
+			return true
+	return false
+
+
 func _add_patch(p: Vector3) -> void:
 	patches.append({"id": next_patch_id, "x": p.x, "z": p.z})
 	next_patch_id += 1

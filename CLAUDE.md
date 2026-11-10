@@ -140,6 +140,34 @@
 - Mitgetragen = Suchgerät `W17Locator` (Balken + Piepen, Reichweite `RANGE`), Orte in map.json `w17_sites`
   (auch der alte Brunnen – Story-Hinweis). Der Sucher spürt W-17. Aufgaben moving_box, w17_locator. Test: `--night-test=w17`.
 
+## Forschung 2.0 (Christian: XCOM-artig, voller Umfang)
+- Christians Entscheidungen: Alien-Technik macht sichtbarer, bringt nützliche Werkzeuge gegen die Wesen / fürs Leben,
+  keine Waffen. Labor im Bad (Waschtisch). Lebende Proben verderben nicht, dürfen aber ausbrechen. Voller Umfang mit
+  Querverweisen, Technologiebaum und verschiedenen Tests.
+- Inhalte: `data/research/research.json` – 51 Projekte (`analyses`: find, station, hours bis 72, requires, living/escape/
+  escape_per_day, signature, experiments mit needs power|light|alien|heat|night|day|water|item:X|built:X, effect
+  drain|noise|signal|escape|hurt), 32 Verknüpfungen (`links`: unlocks = Rezepte, grants = forecast|charger),
+  `lab` (unlock Tag 4 + 3 gesendete Ergebnisse, Material, Stationen, Ladeschale), `drops` (Funde nach Nächten), `gadgets` (Werte).
+- `Research` (Autoload): `stations` (device + bench/microscope/terrarium/shield/screen, alle parallel; `slot` = stations["device"]),
+  `insert_project`, `available_projects`, `run_experiment(exp, station)`, `escape`, `build_lab/build_station/build_charger`,
+  `signature()` = `carried_signature()` (items.json `signature`, Dämpfertasche ×0.4) + `home_signature()` (nachts laufende
+  Projekte außer im Abschirmkasten, Ladeschale, Ausschlag `flare_until`). `expected_signature()` für die Nachtplanung.
+- Labor: `Lab` (Cabin/Lab, Modelle + `Lab.LabControl` je Platz, `LabSetup` am Waschtisch = umbauen / Übersicht, R = Wucherung
+  abkratzen). Unsichtbare Teile ohne Kollision. Handtuchhalter hängt jetzt an der Flurwand. Menü: `ResearchMenu.open_station(st)`, `open_lab()`.
+- Ausbrüche: `LabEscape` (crawl = Probe kriecht im Haus herum und kratzt nachts, spread = Wucherung hinter der Hütte,
+  call = Drohne kommt sicher (`ThreatDirector.force_event`), bloom = Bad wuchert, `Research.lab_bloom`).
+- Funde: `AlienDrops` (Knoten „AlienDrops“, persistent) legt morgens Funde ab (`ThreatDirector._kinds_tonight`), Kameraaufnahmen
+  warten am Monitor (`footage`). Diktiergerät + alter Laptop am Hochsitz (Georg Wendt), Datenträger Außenstelle, Protokolle Messstelle.
+  Diktiergerät nimmt Manipulator-Stimme und (ab Tag 5) Funkspruch auf.
+- Signatur: ThreatConfig `signature_drone_bonus`, `signature_seeker_bonus`, `signature_wakes_quiet`; Sucher spürt Signatur am Körper
+  (`SeekerConfig.signature_min`, Reichweite w17_range × Signatur/0,5).
+- Werkzeuge (Rezepte mit requires): Dämpfer-Stirnband (Hirn-Schaden), Nervenfühler (`GadgetHud`), Stimmfilter, Wärmekristall,
+  Leichtmetall-Trage (`Inventory.MAX_WEIGHT` ist jetzt eine Eigenschaft), Dämpfertasche, Geruchstarnung (`use.buff`), Sporenmaske,
+  Wabenfilter, Wurzelsalz (E an Wucherung), Drohnenköder + Lichtköder (Structure-Typen `drone_decoy`, `light_lure`).
+- Tablet: Reiter „Forschungsbaum“ (`ResearchTree`, Bänder je Gebiet, Spalten = Stufen), Vorhersage in „Aufgaben“ (grant forecast).
+- Tests: `--night-test=lab` (Daten, Labor, Parallelbetrieb, Ausbrüche, Signatur, Werkzeuge, Funde, Baum, Spielstand),
+  `--walk-test --lab` (ausgebautes Labor verstellt nichts).
+
 ## Große Welt (Open World, ca. 2,2 x 2,2 km)
 - Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,
   Tunnel-Einschnitte). Zugriff statisch über `WorldMap` (Raster für schnelle Abfragen). Das Tal um die Hütte (r < ~95 m)

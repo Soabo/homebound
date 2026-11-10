@@ -1,578 +1,1983 @@
 {
- "_info": "Forschung (GDD 12). analyses: je Fund eine Analyse mit Laufzeit (Spielstunden) und Experimenten. needs der Experimente: power = Generator läuft, light = Lampe am Gerät, alien = fremdes Analysegerät eingebaut. effect: drain = zieht Benzin/Strom, noise = laut (lockt nachts an). links: Verknüpfungen zweier Analysen zu einer Erkenntnis, unlocks = Rezepte.",
- "areas": [
-  "Technologie",
-  "Biologie",
-  "Energie und Physik",
-  "Spezies und Verhalten",
-  "Raumfahrt und Infrastruktur",
-  "Zusammenhänge"
- ],
- "analyses": {
-  "an_metal": {
-   "find": "metal_fragment",
-   "name": "Fremdes Metall",
-   "area": "Technologie",
-   "hours": 2.0,
-   "summary": "Eine Legierung, die es auf der Erde nicht gibt: extrem leicht, unzerkratzbar, innen fein strukturiert wie Waben.",
-   "experiments": [
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Das Metall leitet Strom nahezu verlustfrei – und summt dabei leise in einem gleichbleibenden Ton."
+  "_info": "Forschung (GDD 12). analyses: Projekte, je mit Fund (find), Station (device = Analysegerät am Funktisch, bench/microscope/terrarium/shield/screen = Labor im Bad), Laufzeit in Spielstunden (hours), Voraussetzungen (requires: Analysen/Verknüpfungen), living = lebende Probe (kann ausbrechen: escape crawl|spread|call|bloom, escape_per_day), signature = wie stark das laufende Projekt nachts nach außen strahlt (Abschirmkasten hält es zurück). Experimente: needs power|light|alien|heat|night|day|water|item:<id> (verbraucht 1)|built:<station>; effect drain|noise|signal|escape|hurt. links: Verknüpfungen, unlocks = Rezepte, grants = Fähigkeiten (forecast, charger). lab: Umbau des Bads (unlock = Bedingungen, needs = Material), stations = Laborplätze.",
+  "areas": [
+    "Technologie",
+    "Biologie",
+    "Energie und Physik",
+    "Spezies und Verhalten",
+    "Raumfahrt und Infrastruktur",
+    "Menschen und WURZELWERK",
+    "Zusammenhänge"
+  ],
+  "analyses": {
+    "an_metal": {
+      "find": "metal_fragment",
+      "name": "Fremdes Metall",
+      "area": "Technologie",
+      "hours": 2.0,
+      "summary": "Eine Legierung, die es auf der Erde nicht gibt: extrem leicht, unzerkratzbar, innen fein strukturiert wie Waben.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Das Metall leitet Strom nahezu verlustfrei – und summt dabei leise in einem gleichbleibenden Ton."
+        },
+        {
+          "id": "light",
+          "label": "Mit Licht durchleuchten",
+          "needs": "light",
+          "text": "Unter der Lampe zeichnen sich haarfeine Leiterbahnen ab. Das Fragment war Teil eines Geräts."
+        }
+      ],
+      "station": "device"
     },
-    {
-     "id": "light",
-     "label": "Mit Licht durchleuchten",
-     "needs": "light",
-     "text": "Unter der Lampe zeichnen sich haarfeine Leiterbahnen ab. Das Fragment war Teil eines Geräts."
+    "an_cell": {
+      "find": "energy_cell",
+      "name": "Energiezelle",
+      "area": "Energie und Physik",
+      "hours": 3.0,
+      "summary": "Ein Speicher voller Energie in einer Form, die keine Messung erklärt. Er lädt sich langsam von selbst wieder auf.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "effect": "drain",
+          "text": "Die Zelle saugt den Strom regelrecht auf – der Generator stottert, das Licht flackert. Sie reagiert auf Energie in der Nähe."
+        },
+        {
+          "id": "open",
+          "label": "Mit dem fremden Gerät öffnen",
+          "needs": "alien",
+          "text": "Im Inneren pulsiert eine Flüssigkeit, alle sieben Sekunden. Derselbe Takt wie das Summen des Metalls."
+        }
+      ],
+      "station": "device",
+      "signature": 0.2
+    },
+    "an_glyph": {
+      "find": "glyph_plate",
+      "name": "Symbolplatte",
+      "area": "Raumfahrt und Infrastruktur",
+      "hours": 3.0,
+      "summary": "Eine Tafel mit eingeritzten Zeichen in Kreisen und Linien. Es wirkt wie eine Karte, nicht wie Schrift.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Schräg anleuchten",
+          "needs": "light",
+          "text": "Im Streiflicht treten weitere, fast unsichtbare Linien hervor. Einige verbinden sich zu einem Dreieck."
+        },
+        {
+          "id": "compare",
+          "label": "Symbole vergleichen lassen",
+          "needs": "alien",
+          "effect": "noise",
+          "text": "Das fremde Gerät gibt einen hohen Ton von sich und markiert drei Zeichen. Eines davon gleicht den Handabdrücken an deinen Fenstern."
+        }
+      ],
+      "station": "device"
+    },
+    "an_tissue": {
+      "find": "alien_tissue",
+      "name": "Gewebeprobe",
+      "area": "Spezies und Verhalten",
+      "hours": 2.0,
+      "summary": "Graues, faseriges Gewebe, das sich noch Stunden nach dem Treffer bewegt. Kaltblütig. Es riecht nach nassem Metall.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Mit flackerndem Licht reizen",
+          "needs": "light",
+          "text": "Bei schnellem Flackern zieht sich das Gewebe ruckartig zusammen. Gleichmäßiges Licht stört es kaum."
+        },
+        {
+          "id": "power",
+          "label": "Schwachen Strom anlegen",
+          "needs": "power",
+          "text": "Keine Reaktion. Strom allein schreckt sie nicht ab."
+        }
+      ],
+      "station": "device"
+    },
+    "an_blood": {
+      "find": "alien_blood",
+      "name": "Blutprobe (Stachel)",
+      "area": "Biologie",
+      "hours": 2.0,
+      "summary": "Zähes, grünes Blut, eingetrocknet an der Spitze eines Spießes. Unter der Lupe bewegen sich winzige Fäden darin – als würde es noch arbeiten.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Mit Licht bestrahlen",
+          "needs": "light",
+          "text": "Im Licht flockt das Blut aus und wird schwarz. Im Dunkeln bleibt es tagelang flüssig und grün."
+        },
+        {
+          "id": "power",
+          "label": "Schwachen Strom anlegen",
+          "needs": "power",
+          "text": "Die Fäden richten sich alle in eine Richtung aus – wie Eisenspäne an einem Magneten. Sie zeigen nach Nordwesten, zum Krater."
+        },
+        {
+          "id": "alien",
+          "label": "Neben das Metallfragment legen",
+          "needs": "alien",
+          "text": "Das Blut kriecht langsam auf das fremde Metall zu. Körper und Technik scheinen aus demselben Stoff gemacht – oder füreinander."
+        }
+      ],
+      "station": "device"
+    },
+    "an_fungus": {
+      "find": "glow_fungus",
+      "name": "Leuchtpilz",
+      "area": "Biologie",
+      "hours": 2.0,
+      "summary": "Ein Pilz, der nur rund um die Absturzstelle wächst. Er leuchtet aus sich heraus, in einem kalten Blaugrün.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Belichten und abdunkeln",
+          "needs": "light",
+          "text": "Nach dem Belichten leuchtet er minutenlang in schnellem Takt nach – wie ein natürliches Blinklicht."
+        },
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Das Leuchten wird heller und flackert im Takt des Generators."
+        }
+      ],
+      "station": "device"
+    },
+    "an_organism": {
+      "find": "organism_sample",
+      "name": "Wucherung",
+      "area": "Biologie",
+      "hours": 3.0,
+      "summary": "Ein Geflecht aus grauen Fäden, das sich wie ein Pilz durch den Boden zieht – aber es hat Nerven. Es reagiert auf Schritte.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Mit Licht bestrahlen",
+          "needs": "light",
+          "text": "Die Fäden ziehen sich vom Licht weg und wachsen in die Dunkelheit."
+        },
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Zuckungen – dann sendet die Probe ein schwaches Signal. Sie ist mit etwas verbunden."
+        }
+      ],
+      "station": "device"
+    },
+    "an_drone": {
+      "find": "drone_part",
+      "name": "Drohnenteil",
+      "area": "Raumfahrt und Infrastruktur",
+      "hours": 2.5,
+      "summary": "Eine Linse mit Antriebsring aus demselben Metall wie das Wrack. Sie hat aufgezeichnet – Wärme, Licht, Bewegung.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "effect": "noise",
+          "text": "Der Ring summt auf und sucht nach einem Signal. Sie werden über Funk gesteuert."
+        },
+        {
+          "id": "open",
+          "label": "Mit dem fremden Gerät auslesen",
+          "needs": "alien",
+          "text": "Auf der Linse: Bilder deiner Hütte, von oben. Viele Nächte lang."
+        }
+      ],
+      "station": "device"
+    },
+    "an_crystal": {
+      "find": "crystal_shard",
+      "name": "Kristallsplitter",
+      "area": "Energie und Physik",
+      "hours": 3.0,
+      "summary": "Ein Splitter aus dem Kern der Struktur. Er ist kalt, schwer und zieht kleine Metallteile an, obwohl er nicht magnetisch ist.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Durchleuchten",
+          "needs": "light",
+          "text": "Im Inneren laufen Linien nach unten zusammen – wie Wurzeln, die nach etwas tasten."
+        },
+        {
+          "id": "compare",
+          "label": "Mit der Symbolplatte abgleichen",
+          "needs": "alien",
+          "effect": "noise",
+          "text": "Das Gerät zeigt einen Punkt unter dem Dreieck der Vermessung. Er liegt tief im Boden."
+        }
+      ],
+      "station": "device",
+      "signature": 0.25
+    },
+    "an_plant": {
+      "find": "alien_plant",
+      "name": "Fremdpflanze",
+      "area": "Biologie",
+      "hours": 2.0,
+      "summary": "Eine Pflanze mit perfekt symmetrischen Blättern in Spiralen. Sie wächst nur dort, wo die Struktur summt.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Belichten",
+          "needs": "light",
+          "text": "Sie dreht sich nicht zum Licht, sondern zur Struktur im Westen."
+        },
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Ihr Saft wird bitter und giftig – für die grauen Fäden der Wucherung."
+        }
+      ],
+      "station": "device"
+    },
+    "an_comb": {
+      "find": "alien_comb",
+      "name": "Fremdwabe",
+      "area": "Biologie",
+      "hours": 2.0,
+      "summary": "Ein Wabenstück aus den Bienenkästen. Kein Wachs: feine, graue Fäden, die sich zu Sechsecken verflochten haben.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Belichten",
+          "needs": "light",
+          "text": "Die Fäden ziehen sich vom Licht weg, wie die Wucherung."
+        },
+        {
+          "id": "alien",
+          "label": "Mit Fremdgewebe vergleichen",
+          "needs": "alien",
+          "text": "Dasselbe Gewebe wie die Wucherung aus der Höhle. Die Bienen haben es gebaut – oder es hat die Bienen gebaut."
+        }
+      ],
+      "station": "device"
+    },
+    "an_implant": {
+      "find": "alien_implant",
+      "name": "Implantat",
+      "area": "Spezies und Verhalten",
+      "hours": 2.5,
+      "summary": "Ein glatter Splitter, gefunden hinter dem Ohr der Moorleiche. Er ist warm, obwohl die Leiche kalt ist.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Er sendet einen kurzen Impuls – im selben Takt wie die Drohnen."
+        },
+        {
+          "id": "light",
+          "label": "Durchleuchten",
+          "needs": "light",
+          "text": "Feine Wurzeln, die sich ins Gewebe gegraben hatten. Er war nicht nur ein Sender. Er hat zugehört."
+        }
+      ],
+      "station": "device"
+    },
+    "an_probe": {
+      "find": "probe_core",
+      "name": "Sondenkern",
+      "area": "Energie und Physik",
+      "hours": 3.0,
+      "summary": "Aus dem Krater der Windwurf-Schneise. Die Bäume sind von ihm weggefallen, nicht durch Sturm.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Ein Druckstoß, der die Werkbank verrückt. Er hat einmal gezündet, um den Boden zu vermessen."
+        },
+        {
+          "id": "alien",
+          "label": "Mit Fremdmetall vergleichen",
+          "needs": "alien",
+          "text": "Gleiche Legierung, aber grob, wie ein Werkzeug, das nur einmal gebraucht wird."
+        }
+      ],
+      "station": "device",
+      "signature": 0.3
+    },
+    "an_seeds": {
+      "find": "alien_seeds",
+      "name": "Fremde Samen",
+      "area": "Biologie",
+      "hours": 2.0,
+      "summary": "Aus den Gewächshäusern. Sie keimen schon in der Hand, wenn sie warm werden.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Belichten",
+          "needs": "light",
+          "text": "Unter Licht keimen sie in Minuten. Sie wachsen auch dort, wo nichts anderes mehr wächst."
+        },
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Der Keimling dreht sich nach Norden, zur Außenstelle."
+        }
+      ],
+      "station": "device"
+    },
+    "an_hull": {
+      "find": "hull_sample",
+      "name": "Hüllenprobe vom Wal",
+      "area": "Raumfahrt und Infrastruktur",
+      "hours": 3.0,
+      "summary": "Ein Stück Haut vom riesigen Rumpf am Walhügel. Halb Metall, halb lebendig.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Durchleuchten",
+          "needs": "light",
+          "text": "Innen Kammern wie in einem Bienenstock – ein Transportschiff, kein Kriegsschiff."
+        },
+        {
+          "id": "alien",
+          "label": "Mit Fremdgewebe vergleichen",
+          "needs": "alien",
+          "text": "Dasselbe Gewebe wie die Kreaturen. Sie sind nicht gekommen, um zu kämpfen. Sie sind gekommen, um zu bleiben."
+        }
+      ],
+      "station": "device"
+    },
+    "an_shed": {
+      "find": "creature_shed",
+      "name": "Häutungsfetzen",
+      "area": "Spezies und Verhalten",
+      "station": "microscope",
+      "hours": 10,
+      "requires": [
+        "an_tissue"
+      ],
+      "summary": "Ein Stück Haut, dünn wie Pergament, mit dem Abdruck von Rippen. Sie häutet sich – und die alte Haut ist kleiner als die Kreatur, die du gesehen hast.",
+      "experiments": [
+        {
+          "id": "layers",
+          "label": "Hautschichten unter dem Mikroskop zählen",
+          "needs": "light",
+          "text": "Elf Schichten, jede mit eigenem Muster. Wie Jahresringe – aber die äußerste ist erst Tage alt."
+        },
+        {
+          "id": "soak",
+          "label": "In Wasser legen",
+          "needs": "water",
+          "text": "Die Haut saugt sich voll und zieht sich zusammen, als wolle sie wieder eine Form annehmen. Nach einer Stunde ist sie eine faustgroße, harte Kugel."
+        }
+      ]
+    },
+    "an_saliva": {
+      "find": "creature_saliva",
+      "name": "Speichelfaden",
+      "area": "Spezies und Verhalten",
+      "station": "bench",
+      "hours": 6,
+      "summary": "Zäh, fast durchsichtig, von der Außenseite einer Fensterscheibe abgekratzt. Er klebte genau auf Kopfhöhe.",
+      "experiments": [
+        {
+          "id": "heat",
+          "label": "Über dem Gaskocher erhitzen",
+          "needs": "heat",
+          "text": "Bei Wärme wird er flüssig und riecht plötzlich nach nassem Laub und Eisen – nach dem Wald nach Regen."
+        },
+        {
+          "id": "taste",
+          "label": "An ein Stück Fleisch geben",
+          "needs": "item:meat_raw",
+          "text": "Das Fleisch wird in Minuten grau. Kein Verwesen – eher, als würde es Schicht für Schicht gelesen."
+        }
+      ]
+    },
+    "an_claw": {
+      "find": "creature_claw",
+      "name": "Abgebrochene Kralle",
+      "area": "Spezies und Verhalten",
+      "station": "device",
+      "hours": 4,
+      "summary": "Eine Kralle, lang wie ein Finger, an der Wurzel abgerissen. Innen hohl, mit einem feinen Kanal bis zur Spitze.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Schwachen Strom anlegen",
+          "needs": "power",
+          "text": "Die Kralle zuckt. Der Kanal leitet Strom wie ein Nerv – sie fühlt mit den Krallen, nicht nur mit den Augen."
+        },
+        {
+          "id": "light",
+          "label": "Gegen das Licht halten",
+          "needs": "light",
+          "text": "Im Kanal sitzen winzige Körnchen, die sich zum Licht hin drehen."
+        }
+      ]
+    },
+    "an_tissue_nerves": {
+      "find": "alien_tissue",
+      "name": "Gewebe: Nervenbahnen",
+      "area": "Spezies und Verhalten",
+      "station": "microscope",
+      "hours": 14,
+      "requires": [
+        "an_tissue"
+      ],
+      "summary": "Eine zweite Gewebeprobe, diesmal Faser für Faser unter dem Mikroskop. Die Nerven laufen nicht zu einem Gehirn – sie laufen nach außen.",
+      "experiments": [
+        {
+          "id": "map",
+          "label": "Nervenbahnen nachzeichnen",
+          "needs": "light",
+          "text": "Jede Bahn endet an der Haut in einer offenen Spitze. Sie empfängt. Etwas sendet ihr – oder sie sendet selbst."
+        },
+        {
+          "id": "pulse",
+          "label": "Strompuls durch die Probe schicken",
+          "needs": "power",
+          "text": "Die ganze Probe antwortet mit einem Puls, der sich zweimal wiederholt. Die Lampe im Bad flackert im selben Takt.",
+          "effect": "drain"
+        }
+      ]
+    },
+    "an_rec_creature": {
+      "find": "rec_creature",
+      "name": "Kameraaufnahme: Kreatur",
+      "area": "Spezies und Verhalten",
+      "station": "screen",
+      "hours": 20,
+      "signature": 0.05,
+      "summary": "Minuten an Bildmaterial, auf das du nicht gern schaust. Sie bewegt sich anders, wenn sie glaubt, dass niemand hinsieht.",
+      "experiments": [
+        {
+          "id": "frames",
+          "label": "Bild für Bild durchgehen",
+          "needs": "power",
+          "text": "Zwischen zwei Bildern fehlt sie, im nächsten steht sie einen Meter weiter. Kein Ruckeln der Kamera – sie war einfach dazwischen nicht da."
+        },
+        {
+          "id": "realtime",
+          "label": "Nachts in Echtzeit ansehen",
+          "needs": "night",
+          "text": "Nach zwanzig Minuten dreht sie den Kopf zur Kamera. Zu dir. Dir wird übel, und das Bild brennt noch lange nach.",
+          "effect": "hurt"
+        }
+      ]
+    },
+    "an_tissue_culture": {
+      "find": "alien_tissue",
+      "name": "Gewebekultur",
+      "area": "Spezies und Verhalten",
+      "station": "terrarium",
+      "hours": 36,
+      "requires": [
+        "an_tissue_nerves"
+      ],
+      "living": true,
+      "escape": "crawl",
+      "escape_per_day": 0.12,
+      "summary": "Gewebe im Glas, mit Wasser und etwas Fleisch. Es soll zeigen, ob sie wächst – oder ob sie gemacht wird.",
+      "experiments": [
+        {
+          "id": "feed",
+          "label": "Mit Fleisch füttern",
+          "needs": "item:meat_raw",
+          "text": "Das Gewebe überzieht das Fleisch in einer Nacht. Am Morgen hat es die Form einer kleinen Hand."
+        },
+        {
+          "id": "dark",
+          "label": "Im Dunkeln beobachten",
+          "needs": "night",
+          "text": "Im Dunkeln wandert die Probe zur Glaswand, die zum Wald zeigt. Jede Nacht. Nie zur anderen Seite."
+        }
+      ]
+    },
+    "an_lens": {
+      "find": "drone_lens",
+      "name": "Drohnenlinse",
+      "area": "Raumfahrt und Infrastruktur",
+      "station": "device",
+      "hours": 3,
+      "summary": "Eine Linse ohne Fassung, die Licht nicht bricht, sondern festhält. Was sie zuletzt gesehen hat, liegt noch als Schimmer darin.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Mit der Lampe hineinleuchten",
+          "needs": "light",
+          "text": "Das Licht kommt nicht heraus. Erst Minuten später leuchtet die Linse – mit deinem Gesicht darin, so wie es gerade eben aussah."
+        },
+        {
+          "id": "power",
+          "label": "Unter Strom setzen",
+          "needs": "power",
+          "text": "Sie richtet sich aus. Immer nach Nordwesten, zur fremden Struktur.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_drone_memory": {
+      "find": "drone_memory",
+      "name": "Speicherkern der Drohne",
+      "area": "Raumfahrt und Infrastruktur",
+      "station": "screen",
+      "hours": 30,
+      "requires": [
+        "an_drone"
+      ],
+      "signature": 0.2,
+      "summary": "Ein schweres Herz aus Wabenmetall, voll von etwas, das Daten sein könnten. Der alte Laptop braucht lange, um überhaupt ein Muster zu finden.",
+      "experiments": [
+        {
+          "id": "decode",
+          "label": "Rohdaten als Bild ausgeben",
+          "needs": "power",
+          "text": "Wärmebilder. Die Hütte, von oben, jede Nacht. Ein heller Fleck im Bett. Du."
+        },
+        {
+          "id": "compare",
+          "label": "Mit den eigenen Kameras vergleichen",
+          "needs": "built:screen",
+          "text": "Die Drohne zählt. Nicht dich – Dinge, die du baust, Fenster, die du vernagelst. Sie führt Buch über deine Hütte."
+        }
+      ]
+    },
+    "an_rec_drone": {
+      "find": "rec_drone",
+      "name": "Kameraaufnahme: Drohne",
+      "area": "Raumfahrt und Infrastruktur",
+      "station": "screen",
+      "hours": 12,
+      "summary": "Die Drohne, aufgenommen von deinen eigenen Kameras. Das Licht, die Bahnen, das lange Stehen vor den Fenstern.",
+      "experiments": [
+        {
+          "id": "paths",
+          "label": "Flugbahnen einzeichnen",
+          "needs": "power",
+          "text": "Die Bahnen sind kein Zufall: Sie meidet die Stellen, an denen du tagsüber gearbeitet hast. Als wolle sie nicht stören, was sie misst."
+        },
+        {
+          "id": "timing",
+          "label": "Zeiten notieren",
+          "needs": "day",
+          "text": "Sie kommt nie, wenn der Mond schon hoch steht. Und nie zweimal in derselben Stunde."
+        }
+      ]
+    },
+    "an_membrane": {
+      "find": "manip_membrane",
+      "name": "Klangmembran",
+      "area": "Spezies und Verhalten",
+      "station": "bench",
+      "hours": 8,
+      "summary": "Eine Haut, dünner als Papier, zwischen zwei Zweigen gespannt, wo er gestanden haben muss. Sie zittert noch, ohne Wind.",
+      "experiments": [
+        {
+          "id": "hum",
+          "label": "Anblasen",
+          "needs": "",
+          "text": "Sie gibt deinen eigenen Atem zurück – einen Herzschlag zu spät.",
+          "effect": "noise"
+        },
+        {
+          "id": "power",
+          "label": "Strom anlegen",
+          "needs": "power",
+          "text": "Ein Klopfen. Dann noch eins. Genau wie das Klopfen an deiner Tür in den ersten Nächten.",
+          "effect": "noise"
+        }
+      ]
+    },
+    "an_voice": {
+      "find": "rec_voice",
+      "name": "Band: fremde Stimme",
+      "area": "Spezies und Verhalten",
+      "station": "screen",
+      "hours": 16,
+      "signature": 0.05,
+      "summary": "Mit dem Diktiergerät aufgenommen, als draußen etwas mit fremder Stimme rief. Auf dem Band klingt es noch falscher.",
+      "experiments": [
+        {
+          "id": "slow",
+          "label": "Verlangsamt abspielen",
+          "needs": "power",
+          "text": "Verlangsamt ist es keine Stimme mehr, sondern viele kleine Klicks, die eine Stimme nachbauen. Wie ein Mosaik."
+        },
+        {
+          "id": "reverse",
+          "label": "Rückwärts abspielen",
+          "needs": "night",
+          "text": "Rückwärts sagt es deinen Namen. Nicht Christian – den Namen, den Lena dir gegeben hat, als sie klein war."
+        }
+      ]
+    },
+    "an_node": {
+      "find": "organism_node",
+      "name": "Knotenherz",
+      "area": "Biologie",
+      "station": "microscope",
+      "hours": 18,
+      "requires": [
+        "an_organism"
+      ],
+      "summary": "Ein Knoten aus der Wucherung, so groß wie eine Walnuss. Er pumpt noch.",
+      "experiments": [
+        {
+          "id": "cut",
+          "label": "Aufschneiden",
+          "needs": "",
+          "text": "Innen liegen Fäden, die nach allen Seiten zeigen – nur einer ist dicker als die anderen und zeigt nach unten.",
+          "effect": "hurt"
+        },
+        {
+          "id": "salt",
+          "label": "Mit Salz bestreuen",
+          "needs": "item:stone",
+          "text": "Mit zerstoßenem Gestein aus dem Bach zieht er sich zusammen und wird schwarz. Das Wasser aus dem Bach enthält etwas, das er nicht mag."
+        }
+      ]
+    },
+    "an_spores": {
+      "find": "spore_pod",
+      "name": "Sporenkapsel",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 24,
+      "requires": [
+        "an_organism"
+      ],
+      "living": true,
+      "escape": "spread",
+      "escape_per_day": 0.1,
+      "summary": "Eine Kapsel, die in der Wucherung wuchs und auf Erschütterung wartet.",
+      "experiments": [
+        {
+          "id": "shake",
+          "label": "Vorsichtig erschüttern",
+          "needs": "",
+          "text": "Eine Wolke steigt auf und sucht – nicht den Boden, sondern deine Nase. Du hustest einen Tag lang.",
+          "effect": "hurt"
+        },
+        {
+          "id": "cold",
+          "label": "Nachts am offenen Fenster lagern",
+          "needs": "night",
+          "text": "Kälte macht sie träge. Unter zehn Grad öffnet sich keine Kapsel."
+        }
+      ]
+    },
+    "an_organism_culture": {
+      "find": "organism_sample",
+      "name": "Geflecht im Glas",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 48,
+      "requires": [
+        "an_organism",
+        "an_node"
+      ],
+      "living": true,
+      "escape": "spread",
+      "escape_per_day": 0.15,
+      "signature": 0.05,
+      "summary": "Ein Stück Wucherung, das im Terrarium weiterwachsen darf. Du willst wissen, wohin es will.",
+      "experiments": [
+        {
+          "id": "map",
+          "label": "Wachstum aufzeichnen",
+          "needs": "day",
+          "text": "Die Fäden wachsen nicht zum Licht, nicht zum Wasser. Sie wachsen nach Nordwesten, wo die Struktur steht – und nach unten."
+        },
+        {
+          "id": "feed",
+          "label": "Mit Fremdpflanze füttern",
+          "needs": "item:alien_plant",
+          "text": "Das Geflecht nimmt die Pflanze nicht auf. Es weicht ihr aus – sie gehören nicht zusammen, sie konkurrieren."
+        }
+      ]
+    },
+    "an_antler": {
+      "find": "infected_antler",
+      "name": "Geweih mit Fäden",
+      "area": "Biologie",
+      "station": "microscope",
+      "hours": 10,
+      "summary": "Ein Rehgeweih, aus dem graue Fäden wachsen. Das Tier lag ohne Wunde am Waldrand.",
+      "experiments": [
+        {
+          "id": "bone",
+          "label": "Knochen anschleifen",
+          "needs": "light",
+          "text": "Die Fäden sitzen im Knochen, nicht darauf. Das Reh trug sie lange, ohne krank zu sein."
+        },
+        {
+          "id": "power",
+          "label": "Strom durch das Geweih",
+          "needs": "power",
+          "text": "Das Geweih wird warm, und die Fäden richten sich aus wie Antennen. Das Reh war ein Empfänger."
+        }
+      ]
+    },
+    "an_seeker_lens": {
+      "find": "seeker_lens",
+      "name": "Lichtersplitter",
+      "area": "Spezies und Verhalten",
+      "station": "shield",
+      "hours": 20,
+      "signature": 0.35,
+      "summary": "Ein Splitter aus dem Augenschlitz des Suchers. Ohne Abschirmung würdest du ihn nicht über Nacht im Haus behalten wollen.",
+      "experiments": [
+        {
+          "id": "dark",
+          "label": "Im Dunkeln beobachten",
+          "needs": "night",
+          "text": "Die Lichter im Splitter blinken in einer Folge. Sie antworten auf etwas, weit weg im Norden.",
+          "effect": "signal"
+        },
+        {
+          "id": "light",
+          "label": "Mit der Lampe anleuchten",
+          "needs": "light",
+          "text": "Er saugt das Licht ein und wird heller. Er sieht nicht mit Licht – er frisst es."
+        }
+      ]
+    },
+    "an_seeker_thread": {
+      "find": "seeker_thread",
+      "name": "Fadenspur",
+      "area": "Spezies und Verhalten",
+      "station": "microscope",
+      "hours": 8,
+      "summary": "Ein Faden, der an Baumrinde klebte, in Brusthöhe eines Riesen. Er riecht nach Ozon.",
+      "experiments": [
+        {
+          "id": "look",
+          "label": "Unter dem Mikroskop",
+          "needs": "light",
+          "text": "Der Faden ist hohl und gefüllt mit Staub, der leuchtet, sobald etwas Fremdes in der Nähe ist."
+        },
+        {
+          "id": "w17",
+          "label": "Neben W-17 legen",
+          "needs": "item:w17",
+          "text": "Der Staub sammelt sich an der Seite, die W-17 zugewandt ist. Der Sucher findet nicht dich. Er findet, was du trägst."
+        }
+      ]
+    },
+    "an_fog": {
+      "find": "fog_jar",
+      "name": "Nebel im Glas",
+      "area": "Energie und Physik",
+      "station": "bench",
+      "hours": 6,
+      "summary": "Morgennebel, in ein Einmachglas gesperrt. Er setzt sich nicht ab.",
+      "experiments": [
+        {
+          "id": "heat",
+          "label": "Erwärmen",
+          "needs": "heat",
+          "text": "Der Nebel dehnt sich nicht aus. Er wird dichter und bildet einen kleinen Wirbel, der sich gegen den Uhrzeigersinn dreht."
+        },
+        {
+          "id": "light",
+          "label": "Durchleuchten",
+          "needs": "light",
+          "text": "Im Licht schwimmen winzige Körner – wie die im Speichel der Kreatur. Der Nebel ist kein Wetter."
+        }
+      ]
+    },
+    "an_water": {
+      "find": "tainted_sample",
+      "name": "Wasserprobe vom Bach",
+      "area": "Biologie",
+      "station": "bench",
+      "hours": 8,
+      "summary": "Bachwasser, ein wenig trüb, mit einem Geruch nach Metall.",
+      "experiments": [
+        {
+          "id": "boil",
+          "label": "Abkochen",
+          "needs": "heat",
+          "text": "Abkochen hilft nicht ganz: Es bleibt ein schillernder Film, der sich am Glas hochzieht."
+        },
+        {
+          "id": "comb",
+          "label": "Durch ein Stück Fremdwabe laufen lassen",
+          "needs": "item:alien_comb",
+          "text": "Die Wabe hält alles zurück. Das Wasser ist klarer als aus dem Hahn."
+        }
+      ]
+    },
+    "an_bird": {
+      "find": "blind_bird",
+      "name": "Vogel ohne Augen",
+      "area": "Biologie",
+      "station": "microscope",
+      "hours": 12,
+      "summary": "Ein Rotkehlchen, unversehrt, ohne Augen. Die Lider sind zugewachsen, als hätte es nie welche gebraucht.",
+      "experiments": [
+        {
+          "id": "open",
+          "label": "Lider öffnen",
+          "needs": "",
+          "text": "Darunter: glatter, grauer Stoff, der warm ist. Das Tier hat nicht gesehen. Es hat empfangen.",
+          "effect": "hurt"
+        },
+        {
+          "id": "light",
+          "label": "Unter dem Mikroskop",
+          "needs": "light",
+          "text": "In den Augenhöhlen dieselben Fäden wie im Implantat der Moorleiche."
+        }
+      ]
+    },
+    "an_soil": {
+      "find": "black_soil",
+      "name": "Schwarze Erde",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 30,
+      "living": true,
+      "escape": "bloom",
+      "escape_per_day": 0.08,
+      "summary": "Erde aus dem Garten, schwarz geworden über Nacht. Sie ist wärmer als die Luft.",
+      "experiments": [
+        {
+          "id": "plant",
+          "label": "Radieschen hineinsäen",
+          "needs": "item:seeds_radish",
+          "text": "Die Radieschen keimen in Stunden. Sie sind essbar – und schmecken nach nichts."
+        },
+        {
+          "id": "dark",
+          "label": "Nachts beobachten",
+          "needs": "night",
+          "text": "Die Erde glimmt schwach, in einem Muster wie Wurzeln. Nur dass da keine Wurzeln sind."
+        }
+      ]
+    },
+    "an_fungus_culture": {
+      "find": "glow_fungus",
+      "name": "Pilzzucht",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 24,
+      "requires": [
+        "an_fungus"
+      ],
+      "living": true,
+      "escape": "bloom",
+      "escape_per_day": 0.1,
+      "summary": "Leuchtpilz auf feuchtem Holz. Wenn er wächst, hast du Licht, das keinen Strom braucht.",
+      "experiments": [
+        {
+          "id": "wood",
+          "label": "Auf Holz setzen",
+          "needs": "item:wood",
+          "text": "Der Pilz durchwächst das Holz in einem Tag. Es leuchtet danach von innen."
+        },
+        {
+          "id": "dark",
+          "label": "Im Dunkeln zählen",
+          "needs": "night",
+          "text": "Im Dunkeln wird er heller, je näher die Kreatur ist. Du hast einen Warnmelder, der lebt."
+        }
+      ]
+    },
+    "an_plant_growth": {
+      "find": "alien_plant",
+      "name": "Fremdpflanze im Topf",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 40,
+      "requires": [
+        "an_plant"
+      ],
+      "living": true,
+      "escape": "spread",
+      "escape_per_day": 0.08,
+      "summary": "Eine Fremdpflanze in Gartenerde. Wie schnell verdrängt sie, was hier wächst?",
+      "experiments": [
+        {
+          "id": "water",
+          "label": "Mit Leitungswasser gießen",
+          "needs": "water",
+          "text": "Sie verträgt das saubere Wasser schlecht. Sie will das Wasser aus dem Bach."
+        },
+        {
+          "id": "music",
+          "label": "Neben das Radio stellen",
+          "needs": "power",
+          "text": "Bei Rauschen drehen sich die Blätter zum Lautsprecher. Bei Musik nicht. Sie hört auf Signale.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_seeds_grow": {
+      "find": "alien_seeds",
+      "name": "Keimversuch",
+      "area": "Biologie",
+      "station": "terrarium",
+      "hours": 60,
+      "requires": [
+        "an_seeds"
+      ],
+      "living": true,
+      "escape": "crawl",
+      "escape_per_day": 0.15,
+      "signature": 0.1,
+      "summary": "Die fremden Samen aus den Gewächshäusern, unter Glas. Du willst sehen, was aus ihnen wird – und hoffst, dass es nichts ist.",
+      "experiments": [
+        {
+          "id": "warm",
+          "label": "Warm halten",
+          "needs": "heat",
+          "text": "Bei Wärme keimen sie und bilden eine Kugel aus Fäden, die nach Tagen zu atmen beginnt."
+        },
+        {
+          "id": "listen",
+          "label": "Nachts lauschen",
+          "needs": "night",
+          "text": "Die Kugel gibt ein leises Klicken von sich. Dasselbe Klicken wie die Kreatur, nur langsamer. Wie ein Kind, das sprechen lernt."
+        }
+      ]
+    },
+    "an_cloth": {
+      "find": "foreign_cloth",
+      "name": "Fremdes Handtuch",
+      "area": "Menschen und WURZELWERK",
+      "station": "bench",
+      "hours": 5,
+      "summary": "Es hing an deiner Leine, wo deine eigenen Handtücher fehlten. Es ist nicht deins. Es ist alt und gewaschen.",
+      "experiments": [
+        {
+          "id": "look",
+          "label": "Genau ansehen",
+          "needs": "light",
+          "text": "In der Ecke ein eingesticktes Monogramm: G. W."
+        },
+        {
+          "id": "wash",
+          "label": "Auswaschen",
+          "needs": "water",
+          "text": "Im Wasser löst sich Erde – dieselbe Erde wie am Hochsitz. Jemand hat es dort lange aufbewahrt."
+        }
+      ]
+    },
+    "an_pillar": {
+      "find": "pillar_chip",
+      "name": "Splitter der Steinsäule",
+      "area": "Energie und Physik",
+      "station": "device",
+      "hours": 6,
+      "summary": "Ein Splitter aus der Säule, die über Nacht in deinem Garten stand. Gewöhnlicher Stein – bis auf die Kälte.",
+      "experiments": [
+        {
+          "id": "heat",
+          "label": "Neben den Ofen legen",
+          "needs": "heat",
+          "text": "Er wird nicht warm. Er nimmt die Wärme auf und gibt sie Stunden später wieder ab."
+        },
+        {
+          "id": "power",
+          "label": "Strom anlegen",
+          "needs": "power",
+          "text": "Er summt im selben Ton wie das fremde Metall."
+        }
+      ]
+    },
+    "an_metal_struct": {
+      "find": "metal_fragment",
+      "name": "Wabenstruktur",
+      "area": "Technologie",
+      "station": "microscope",
+      "hours": 16,
+      "requires": [
+        "an_metal"
+      ],
+      "summary": "Ein zweites Stück fremdes Metall, diesmal angeschliffen und unter dem Mikroskop.",
+      "experiments": [
+        {
+          "id": "look",
+          "label": "Schliff ansehen",
+          "needs": "light",
+          "text": "Die Waben sind gewachsen, nicht gegossen. Das Metall ist ein Skelett."
+        },
+        {
+          "id": "bend",
+          "label": "Biegeprobe",
+          "needs": "",
+          "text": "Es lässt sich nicht biegen, aber es federt zurück, als würde es sich erinnern. Leichter als Holz, fester als Stahl."
+        }
+      ]
+    },
+    "an_cell_drain": {
+      "find": "energy_cell",
+      "name": "Entladung der Zelle",
+      "area": "Energie und Physik",
+      "station": "shield",
+      "hours": 24,
+      "requires": [
+        "an_cell"
+      ],
+      "signature": 0.3,
+      "summary": "Eine Energiezelle im Abschirmkasten, langsam entladen und gemessen.",
+      "experiments": [
+        {
+          "id": "drain",
+          "label": "Ganz entladen",
+          "needs": "power",
+          "text": "Die Zelle lädt sich wieder auf – nicht aus der Luft, sondern aus dem Boden. Aus Richtung Brunnen.",
+          "effect": "drain"
+        },
+        {
+          "id": "cold",
+          "label": "Nachts messen",
+          "needs": "night",
+          "text": "Nachts lädt sie doppelt so schnell. Etwas unter dem Tal ist nachts wacher.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_crystal_field": {
+      "find": "crystal_shard",
+      "name": "Feld des Kristalls",
+      "area": "Energie und Physik",
+      "station": "shield",
+      "hours": 30,
+      "requires": [
+        "an_crystal",
+        "an_cell"
+      ],
+      "signature": 0.3,
+      "summary": "Der Kristallsplitter im Abschirmkasten, umgeben von Nägeln, Kompass und einem Glas Wasser.",
+      "experiments": [
+        {
+          "id": "nails",
+          "label": "Nägel anordnen",
+          "needs": "item:nails",
+          "text": "Die Nägel ordnen sich zu Linien, die sich kreuzen – dasselbe Muster wie auf der Symbolplatte."
+        },
+        {
+          "id": "water",
+          "label": "Wasser daneben",
+          "needs": "water",
+          "text": "Das Wasser im Glas friert an der Seite zum Kristall, während die andere Seite warm bleibt."
+        }
+      ]
+    },
+    "an_glyph_decode": {
+      "find": "glyph_plate",
+      "name": "Symbolplatte entschlüsseln",
+      "area": "Raumfahrt und Infrastruktur",
+      "station": "screen",
+      "hours": 48,
+      "requires": [
+        "an_glyph"
+      ],
+      "summary": "Die Zeichen der Platte, abfotografiert, eingegeben, verglichen. Der Laptop rechnet, und du wartest.",
+      "experiments": [
+        {
+          "id": "overlay",
+          "label": "Über die Wanderkarte legen",
+          "needs": "item:hiking_map",
+          "text": "Die Kreise passen auf die Karte: Absturzstelle, Struktur, Brunnen, Messstelle, Außenstelle. Und ein Kreis tief unter dem Tal."
+        },
+        {
+          "id": "lines",
+          "label": "Die Linien verfolgen",
+          "needs": "power",
+          "text": "Die Linien sind keine Wege. Es sind Leitungen – und alle laufen zu deinem Brunnen."
+        }
+      ]
+    },
+    "an_probe_open": {
+      "find": "probe_core",
+      "name": "Sondenkern öffnen",
+      "area": "Energie und Physik",
+      "station": "shield",
+      "hours": 36,
+      "requires": [
+        "an_probe"
+      ],
+      "signature": 0.4,
+      "summary": "Der Kern aus dem Windwurf-Krater, im Abschirmkasten vorsichtig geöffnet.",
+      "experiments": [
+        {
+          "id": "open",
+          "label": "Hülle lösen",
+          "needs": "power",
+          "text": "Darin: eine Kapsel mit Erde. Menschliche Gartenerde, mit einem Etikett, das nicht mehr lesbar ist.",
+          "effect": "drain"
+        },
+        {
+          "id": "listen",
+          "label": "Nachts lauschen",
+          "needs": "night",
+          "text": "Er sendet einen einzigen Ton pro Stunde. Wie ein Herzschlag, der auf Antwort wartet.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_hull_living": {
+      "find": "hull_sample",
+      "name": "Lebende Hülle",
+      "area": "Raumfahrt und Infrastruktur",
+      "station": "terrarium",
+      "hours": 72,
+      "requires": [
+        "an_hull"
+      ],
+      "living": true,
+      "escape": "call",
+      "escape_per_day": 0.1,
+      "signature": 0.25,
+      "summary": "Ein Stück Haut vom Wal, feucht gehalten. Der längste Versuch, den du je gemacht hast – drei Tage.",
+      "experiments": [
+        {
+          "id": "heal",
+          "label": "Einschneiden",
+          "needs": "",
+          "text": "Der Schnitt schließt sich in einer Stunde. Das Schiff heilt.",
+          "effect": "hurt"
+        },
+        {
+          "id": "call",
+          "label": "Nachts beobachten",
+          "needs": "night",
+          "text": "Die Hülle pulsiert im selben Takt wie der Knoten im Wald. Sie sind verbunden.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_implant_signal": {
+      "find": "alien_implant",
+      "name": "Implantat: Signal",
+      "area": "Spezies und Verhalten",
+      "station": "shield",
+      "hours": 20,
+      "requires": [
+        "an_implant"
+      ],
+      "signature": 0.2,
+      "summary": "Das Implantat der Moorleiche, abgeschirmt, damit du hörst, was es sendet – und niemand sonst.",
+      "experiments": [
+        {
+          "id": "listen",
+          "label": "Signal aufzeichnen",
+          "needs": "power",
+          "text": "Es sendet eine Kennung. Dieselbe, die die Drohne über deiner Hütte sendet."
+        },
+        {
+          "id": "shield",
+          "label": "Abschirmung öffnen",
+          "needs": "night",
+          "text": "Kaum ist der Deckel offen, hörst du draußen etwas antworten.",
+          "effect": "signal"
+        }
+      ]
+    },
+    "an_rz_protocol": {
+      "find": "rz_protocol",
+      "name": "Messprotokolle",
+      "area": "Menschen und WURZELWERK",
+      "station": "bench",
+      "hours": 6,
+      "summary": "Ein Stapel Messprotokolle von Messstelle 4-Nord. Spalten mit Werten, Unterschriften, Stempel von ReZort Industries.",
+      "experiments": [
+        {
+          "id": "read",
+          "label": "Spalten vergleichen",
+          "needs": "light",
+          "text": "Gemessen wird nicht Wasser oder Boden, sondern „Resonanz Tiefe“. Jede Woche. Seit Jahren."
+        },
+        {
+          "id": "sign",
+          "label": "Unterschriften ansehen",
+          "needs": "day",
+          "text": "Unter vielen Seiten dieselbe Unterschrift: G. Wendt."
+        }
+      ]
+    },
+    "an_rz_drive": {
+      "find": "rz_drive",
+      "name": "Datenträger entschlüsseln",
+      "area": "Menschen und WURZELWERK",
+      "station": "screen",
+      "hours": 40,
+      "summary": "Ein Datenträger mit dem Logo von ReZort Industries, verschlüsselt. Der alte Laptop braucht fast zwei Tage.",
+      "experiments": [
+        {
+          "id": "decrypt",
+          "label": "Schlüssel durchprobieren",
+          "needs": "power",
+          "text": "Ein Ordner öffnet sich: WURZELWERK. Darin Listen von Orten, Personen, „Beobachtern“."
+        },
+        {
+          "id": "names",
+          "label": "Nach Namen suchen",
+          "needs": "day",
+          "text": "Dein Nachname steht in einer Liste mit der Überschrift „Familie M4 – Nachsorge“."
+        }
+      ]
+    },
+    "an_radio_cipher": {
+      "find": "rec_radio",
+      "name": "Funkspruch entschlüsseln",
+      "area": "Menschen und WURZELWERK",
+      "station": "screen",
+      "hours": 24,
+      "requires": [
+        "an_rz_protocol"
+      ],
+      "summary": "Ein Funkspruch, mit dem Diktiergerät vom Radio mitgeschnitten. Zwischen den Wettermeldungen: Zahlen.",
+      "experiments": [
+        {
+          "id": "numbers",
+          "label": "Zahlen notieren",
+          "needs": "day",
+          "text": "Zahlengruppen, die sich jede Nacht ändern. Sie passen zum Format der Messprotokolle."
+        },
+        {
+          "id": "decode",
+          "label": "Mit den Protokollen entschlüsseln",
+          "needs": "item:rz_protocol",
+          "text": "„M4 weiter stabil. Beobachter fehlt. Nachsorge Familie M4 offen.“"
+        }
+      ]
     }
-   ]
   },
-  "an_cell": {
-   "find": "energy_cell",
-   "name": "Energiezelle",
-   "area": "Energie und Physik",
-   "hours": 3.0,
-   "summary": "Ein Speicher voller Energie in einer Form, die keine Messung erklärt. Er lädt sich langsam von selbst wieder auf.",
-   "experiments": [
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "effect": "drain",
-     "text": "Die Zelle saugt den Strom regelrecht auf – der Generator stottert, das Licht flackert. Sie reagiert auf Energie in der Nähe."
+  "links": {
+    "link_power": {
+      "name": "Gemeinsame Frequenz",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_metal",
+        "an_cell"
+      ],
+      "text": "Metall und Zelle schwingen im selben Takt. Wo diese Technik in der Nähe ist, verändert sich das Feld – daraus lässt sich ein Sensor bauen, der ihre Nähe spürt.",
+      "unlocks": [
+        "resonance_sensor"
+      ]
     },
-    {
-     "id": "open",
-     "label": "Mit dem fremden Gerät öffnen",
-     "needs": "alien",
-     "text": "Im Inneren pulsiert eine Flüssigkeit, alle sieben Sekunden. Derselbe Takt wie das Summen des Metalls."
+    "link_light": {
+      "name": "Lichtempfindlichkeit",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_tissue",
+        "an_fungus"
+      ],
+      "text": "Ihr Gewebe verkrampft bei schnell flackerndem Licht. Mit dem Leuchtpilz lässt sich ein Stroboskop bauen, das sie länger vertreibt als jede Lampe.",
+      "unlocks": [
+        "strobe_light"
+      ]
+    },
+    "link_signal": {
+      "name": "Die Vermessung",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_glyph",
+        "an_cell"
+      ],
+      "text": "Die Zeichen auf der Platte sind Orte, keine Wörter. Drei davon liegen in diesem Tal, im Dreieck – und die Hütte steht in seiner Mitte. Sie suchen hier etwas. Aber was?",
+      "unlocks": []
+    },
+    "link_drone": {
+      "name": "Fernsteuerung",
+      "area": "Raumfahrt und Infrastruktur",
+      "needs": [
+        "an_drone",
+        "an_metal"
+      ],
+      "text": "Die Drohnen hängen an einem Signal, das durch das fremde Metall läuft. Ein Störsender könnte sie blind machen.",
+      "unlocks": [
+        "signal_jammer"
+      ]
+    },
+    "link_growth": {
+      "name": "Gift gegen das Geflecht",
+      "area": "Biologie",
+      "needs": [
+        "an_organism",
+        "an_plant"
+      ],
+      "text": "Der Saft der Fremdpflanze unter Strom tötet die Fäden der Wucherung. Damit lässt sich eine Sperre bauen, über die sie nicht wächst.",
+      "unlocks": [
+        "growth_barrier"
+      ]
+    },
+    "link_core": {
+      "name": "Was unter dem Tal liegt",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_crystal",
+        "an_glyph"
+      ],
+      "text": "Die Struktur sendet nach unten, nicht nach oben. Unter dem Dreieck der Vermessungspunkte liegt etwas Großes – und es antwortet. Die Hütte steht genau darüber.",
+      "unlocks": []
+    },
+    "link_hive": {
+      "name": "Ein einziges Geflecht",
+      "area": "Biologie",
+      "needs": [
+        "an_comb",
+        "an_organism"
+      ],
+      "text": "Waben, Wucherung und Fremdpflanze sind ein und dasselbe Lebewesen. Es wächst nicht zufällig – es verlegt Leitungen.",
+      "unlocks": []
+    },
+    "link_implant": {
+      "name": "Markiert",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_implant",
+        "an_drone"
+      ],
+      "text": "Die Drohnen suchen nicht nach Menschen. Sie suchen nach Markierten – und nach allem, was ihr Signal stört. W-17 stört es.",
+      "unlocks": []
+    },
+    "link_ship": {
+      "name": "Sie bleiben",
+      "area": "Raumfahrt und Infrastruktur",
+      "needs": [
+        "an_hull",
+        "an_seeds"
+      ],
+      "text": "Das Schiff am Walhügel hat Samen gebracht, keine Waffen. Das Tal wird vorbereitet, wie ein Acker.",
+      "unlocks": []
+    },
+    "link_w17": {
+      "name": "Dieselbe Handschrift",
+      "area": "Raumfahrt und Infrastruktur",
+      "needs": [
+        "an_glyph",
+        "an_metal"
+      ],
+      "text": "Die Zeichen auf der Platte und die Fragmente von der Absturzstelle tragen dieselbe Kennung wie die Fassung von W-17. Es ist kein Ersatzteil. Es ist ein Teil von IHNEN. Ich kann es aus dem Analysegerät ausbauen und mitnehmen – in der Nähe ihrer Orte summt es.",
+      "unlocks": []
+    },
+    "link_growing": {
+      "name": "Sie wächst",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_shed",
+        "an_saliva"
+      ],
+      "text": "Jede Häutung ist größer als die letzte. Die Kreatur, die an deinem Fenster stand, ist nicht dieselbe wie in der ersten Nacht.",
+      "unlocks": []
+    },
+    "link_mind": {
+      "name": "Der Blick",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_tissue_nerves",
+        "an_rec_creature"
+      ],
+      "text": "Ihre Nerven senden, wenn sie gesehen wird. Was dir in den Kopf dringt, ist ein Signal – und Signale lassen sich dämpfen.",
+      "unlocks": [
+        "mind_dampener"
+      ]
+    },
+    "link_alarm": {
+      "name": "Nervenfühler",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_tissue_nerves",
+        "an_claw"
+      ],
+      "text": "Ihre Krallen leiten wie Nerven. Ein Stück Kralle an einer Batterie zuckt, wenn sie in der Nähe ist.",
+      "unlocks": [
+        "creature_alarm"
+      ]
+    },
+    "link_scent": {
+      "name": "Wie sie riecht",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_saliva",
+        "an_fog"
+      ],
+      "text": "Speichel und Nebel tragen dieselben Körner. Sie riecht die Welt mit ihnen – und mit ihnen kann man sich tarnen.",
+      "unlocks": [
+        "scent_mask"
+      ]
+    },
+    "link_voice": {
+      "name": "Falsche Stimmen",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_voice",
+        "an_membrane"
+      ],
+      "text": "Die Stimmen draußen sind gebaut, nicht gesprochen. Ein Filter mit einer Membran knistert, wenn er so eine Stimme hört.",
+      "unlocks": [
+        "voice_filter"
+      ]
+    },
+    "link_decoy": {
+      "name": "Was die Drohne will",
+      "area": "Raumfahrt und Infrastruktur",
+      "needs": [
+        "an_drone_memory",
+        "an_lens"
+      ],
+      "text": "Die Drohne vermisst Wärme und Veränderung. Ein Köder mit ihrer eigenen Linse lenkt sie auf sich.",
+      "unlocks": [
+        "drone_decoy"
+      ]
+    },
+    "link_rhythm": {
+      "name": "Ihr Rhythmus",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_rec_creature",
+        "an_rec_drone"
+      ],
+      "text": "Die Besuche folgen einem Takt. Mit genug Aufnahmen kannst du ahnen, wie die nächste Nacht wird. (Auf dem Tablet: Vorhersage für die Nacht.)",
+      "unlocks": [],
+      "grants": [
+        "forecast"
+      ]
+    },
+    "link_lure": {
+      "name": "Was der Sucher sieht",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_seeker_lens",
+        "an_fungus_culture"
+      ],
+      "text": "Der Sucher frisst Licht. Ein Köder aus Leuchtpilz und einem seiner Splitter zieht ihn weg von dir.",
+      "unlocks": [
+        "light_lure"
+      ]
+    },
+    "link_salt": {
+      "name": "Salz für die Wurzeln",
+      "area": "Biologie",
+      "needs": [
+        "an_node",
+        "an_water"
+      ],
+      "text": "Was im Bachwasser schillert, verträgt das Geflecht nicht. Eingedampft und mit Gestein vermischt wird es zu Wurzelsalz.",
+      "unlocks": [
+        "root_salt"
+      ]
+    },
+    "link_spores": {
+      "name": "Atemschutz",
+      "area": "Biologie",
+      "needs": [
+        "an_spores",
+        "an_organism"
+      ],
+      "text": "Die Sporen suchen deinen Atem. Wolle, eine Dose und eine leere Kapsel halten sie ab.",
+      "unlocks": [
+        "spore_mask"
+      ]
+    },
+    "link_filter": {
+      "name": "Sauberes Wasser",
+      "area": "Biologie",
+      "needs": [
+        "an_water",
+        "an_comb"
+      ],
+      "text": "Die Fremdwabe hält alles zurück, was im Wasser nicht hierhergehört. Ein Wabenfilter macht Bachwasser trinkbar.",
+      "unlocks": [
+        "comb_filter"
+      ]
+    },
+    "link_heat": {
+      "name": "Kalter Kristall, warmer Stein",
+      "area": "Energie und Physik",
+      "needs": [
+        "an_crystal_field",
+        "an_pillar"
+      ],
+      "text": "Der Kristall saugt Wärme, der Säulenstein speichert sie. Zusammen bleibt ein Stein in der Tasche die ganze Nacht warm.",
+      "unlocks": [
+        "heat_stone"
+      ]
+    },
+    "link_alloy": {
+      "name": "Leichter als Holz",
+      "area": "Technologie",
+      "needs": [
+        "an_metal_struct",
+        "an_hull"
+      ],
+      "text": "Das Wabenmetall ist ein Skelett. Daraus lässt sich eine Trage bauen, die fast nichts wiegt und viel hält.",
+      "unlocks": [
+        "alloy_frame"
+      ]
+    },
+    "link_pouch": {
+      "name": "Unsichtbar werden",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_implant_signal",
+        "an_seeker_thread"
+      ],
+      "text": "Fremde Dinge senden. Eine Tasche, ausgekleidet mit der Fadenspur, schluckt einen Teil davon.",
+      "unlocks": [
+        "signature_pouch"
+      ]
+    },
+    "link_charger": {
+      "name": "Die Ladeschale",
+      "area": "Energie und Physik",
+      "needs": [
+        "an_cell_drain",
+        "an_crystal_field"
+      ],
+      "text": "Die Zelle lädt sich aus der Tiefe. Ein Kristall in einer Schale verstärkt das: Im Labor lädt sich alle zwei Tage eine Zelle auf – aber nachts sieht man das von weit her.",
+      "unlocks": [],
+      "grants": [
+        "charger"
+      ]
+    },
+    "link_watchers": {
+      "name": "Beobachter",
+      "area": "Menschen und WURZELWERK",
+      "needs": [
+        "an_cloth",
+        "an_rz_protocol"
+      ],
+      "text": "G. W. – Georg Wendt, der Förster. Er hat für ReZort gemessen. Und jemand hat sein Handtuch an deine Leine gehängt.",
+      "unlocks": []
+    },
+    "link_rz": {
+      "name": "Programm WURZELWERK",
+      "area": "Menschen und WURZELWERK",
+      "needs": [
+        "an_rz_drive",
+        "an_radio_cipher"
+      ],
+      "text": "Menschen wissen von dem, was unter dem Tal liegt. Sie nennen es WURZELWERK, sie zahlen dafür – und deine Familie stand auf ihrer Liste.",
+      "unlocks": []
+    },
+    "link_eyes": {
+      "name": "Augen nach innen",
+      "area": "Biologie",
+      "needs": [
+        "an_bird",
+        "an_implant"
+      ],
+      "text": "Tiere und Menschen werden zu Empfängern gemacht. Nicht getötet – benutzt.",
+      "unlocks": []
+    },
+    "link_seed": {
+      "name": "Die Saat",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_seeds_grow",
+        "an_soil"
+      ],
+      "text": "Die Samen und die schwarze Erde gehören zusammen. Das Tal wird nicht zerstört. Es wird vorbereitet.",
+      "unlocks": []
+    },
+    "link_ship_alive": {
+      "name": "Der Wal atmet",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_hull_living",
+        "an_organism_culture"
+      ],
+      "text": "Das Schiff am Walhügel und das Geflecht im Wald sind ein Körper. Er schläft nicht. Er wartet.",
+      "unlocks": []
+    },
+    "link_pillars": {
+      "name": "Die Säulen",
+      "area": "Energie und Physik",
+      "needs": [
+        "an_pillar",
+        "an_crystal"
+      ],
+      "text": "Die Steinsäule in deinem Garten war eine Antenne – aus deinem eigenen Gestein. Sie bauen mit dem, was hier ist.",
+      "unlocks": []
+    },
+    "link_core_map": {
+      "name": "Unter dem Brunnen",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_glyph_decode",
+        "an_cell_drain"
+      ],
+      "text": "Alle Linien und alle Energie laufen zum alten Brunnen neben deiner Hütte. Dort unten ist etwas, das sie suchen.",
+      "unlocks": []
     }
-   ]
   },
-  "an_glyph": {
-   "find": "glyph_plate",
-   "name": "Symbolplatte",
-   "area": "Raumfahrt und Infrastruktur",
-   "hours": 3.0,
-   "summary": "Eine Tafel mit eingeritzten Zeichen in Kreisen und Linien. Es wirkt wie eine Karte, nicht wie Schrift.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Schräg anleuchten",
-     "needs": "light",
-     "text": "Im Streiflicht treten weitere, fast unsichtbare Linien hervor. Einige verbinden sich zu einem Dreieck."
+  "notes": {
+    "ranger_note": {
+      "name": "Zerknitterte Notiz",
+      "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – R. W., Forstdienst"
     },
-    {
-     "id": "compare",
-     "label": "Symbole vergleichen lassen",
-     "needs": "alien",
-     "effect": "noise",
-     "text": "Das fremde Gerät gibt einen hohen Ton von sich und markiert drei Zeichen. Eines davon gleicht den Handabdrücken an deinen Fenstern."
+    "ranger_note2": {
+      "name": "Tagebuch vom Hochsitz",
+      "text": "»Tag 5. Keine Vögel mehr. Die Rehe sind über den Bach nach Osten gezogen und nicht zurückgekommen. Nachts fliegt etwas Leises über den Wald, mit einem Lichtkegel. Es sucht. Ich bleibe tagsüber hier oben, nachts unten im Unterstand.« – R. W."
+    },
+    "ranger_map": {
+      "name": "Karte des Försters",
+      "text": "Auf der Revierkarte sind drei Stellen eingekreist: der Krater im Nordwesten, »die Säulen« weit im Westen und »die alte Höhle« am Bach im Nordosten. Mit Bleistift verbunden zu einem Dreieck. In der Mitte, unterstrichen: die Hütte."
+    },
+    "ranger_note3": {
+      "name": "Letzte Seite",
+      "text": "»Es wächst. Es wächst zur Hütte hin, ganz langsam, jede Nacht ein Stück. Ich habe den Knoten gefunden, tief in der Höhle. Wenn ich ihn zerschlage – « Der Rest ist unleserlich."
+    },
+    "kapelle_buch": {
+      "name": "Gästebuch der Waldkapelle",
+      "text": "Die letzten Einträge, verschiedene Handschriften:\n»Für Opa Hans. Ruhe in Frieden.« – »Danke für den Regenschutz! Wanderfreunde Sankt Englmar« – »Wer legt die Steine auf die Bänke? Jeden Morgen einer mehr.« – »Es sind jetzt elf.« – »Sie zählen. Sie zählen UNS.« – »Revier 4 kontrolliert, keine Auffälligkeiten. G. W.«"
+    },
+    "friedhof_liste": {
+      "name": "Abschussliste (durchnässt)",
+      "text": "Jagdgenossenschaft Revier 4 – Ansitzplan Herbst.\nQuer über die Seite, mit Bleistift: »Alle Hochsitze umgedreht. Alle schauen zur Mitte. Ich war es nicht. Niemand war es. Die Leitern sind von INNEN abgesägt.«"
+    },
+    "imkerei_notiz": {
+      "name": "Zettel am Bienenhaus",
+      "text": "»Liebe Kundschaft, Honigverkauf bis auf Weiteres eingestellt. Die Völker sind nicht weggeflogen. Sie sind still geworden. In den Kästen wächst etwas, das kein Wachs ist. Ich bringe die Proben zum Amt.  – Brandl«\nDarunter, später: »Das Amt hat gesagt, ich soll sie verbrennen. Ich habe sie behalten.«"
+    },
+    "messstelle_log": {
+      "name": "Wartungsprotokoll MP4-Nord",
+      "text": "ReZort Industries – Sondertechnik, Messstelle 4-Nord.\n03.05.: Sensorik nachjustiert, Kopplung W-Serie geprüft, Werte stabil. Techniker: C., Pers.-Nr. 40817.\n17.09.: Kopplung driftet. Ursache unbekannt. Ersatzteil W-17 als Ausschuss gemeldet – Verbleib ungeklärt.\n02.11.: Werte steigen. Anweisung von oben: nicht melden."
+    },
+    "funkmast_zettel": {
+      "name": "Zettel im Technikhäuschen",
+      "text": "»Mast seit drei Tagen ohne Strom. Notstrom leer. Wer das liest und ein Funkgerät hat: Kanal 7, jeden Abend um neun. Wir sind noch da oben. – I.«\nAuf der Rückseite eine Liste: Funkteile, Batterie, Richtantenne."
+    },
+    "see_ausweis": {
+      "name": "Firmenausweis im Auto",
+      "text": "ReZort Industries – Abteilung Sondertechnik. Markus Kessler, Projektleitung Messpunkte. Gültig für: MP2, MP4, Tunnel Ost.\nIm Handschuhfach ein Zettel: »Ich höre auf. Sollen sie doch selber runtersteigen.«"
+    },
+    "steinbruch_buch": {
+      "name": "Sprengbuch des Steinbruchs",
+      "text": "Letzte Sprengung vor drei Wochen, Auftraggeber: ReZort Industries, Vermerk »Erweiterung Stollen Ost«. Danach nur noch eine Zeile, krakelig: »Unter der Sohle klopft es zurück.«"
+    },
+    "kontrollpunkt_funk": {
+      "name": "Funkprotokoll Kontrollpunkt",
+      "text": "Sperrgebiet Wald, Abschnitt Süd.\n21:40 Bewegung am Waldrand, keine Wärmesignatur.\n22:15 Zwei Mann zur Aufklärung.\n22:31 Kein Kontakt.\n22:48 Kein Kontakt.\n23:02 Befehl: Stellung räumen. Ausrüstung zurücklassen.\nLetzte Zeile mit anderer Hand: »Sie haben unsere Stimmen benutzt.«"
+    },
+    "lager_bild": {
+      "name": "Kinderzeichnung",
+      "text": "Ein Bild mit Wachsmalkreide: das Ferienlager, ein See, viele kleine Strichmännchen. Am Ufer steht ein schwarzer Mann, so lang wie die Bäume, ohne Gesicht. Darunter in Kinderschrift: »Der lange Mann am See. Er winkt nur, wenn die Betreuer schlafen.«"
+    },
+    "schaefer_tagebuch": {
+      "name": "Tagebuch des Schäfers",
+      "text": "»Montag: Die Hunde sind fort. Dienstag: Die Herde stellt sich nachts im Kreis auf, Köpfe nach innen. Mittwoch: Sie stehen jetzt auch tagsüber so. Sie fressen nicht mehr. Donnerstag: Ich habe mich in die Mitte gestellt. Es war ganz still. Ich habe verstanden, warum sie das machen. Ich darf es nicht aufschreiben.«"
+    },
+    "moor_schild": {
+      "name": "Schild am Moorsteg",
+      "text": "Naturschutzgebiet Hochmoor. Stege nicht verlassen – Lebensgefahr!\nJemand hat darunter geritzt: »Die Toten hier sind nicht alt.«"
+    },
+    "spiegel_notiz": {
+      "name": "Notiz unter der Plane",
+      "text": "»Die Lichter suchen von oben. Sie sehen kein Licht, das von oben kommt – nur Licht von unten, von uns. Darum die Spiegel: Sie werfen den Himmel zurück. Seit ich sie aufgehängt habe, fliegen sie über diese Lichtung, als wäre sie nicht da. Ich gehe jetzt Wasser holen. Ich komme zurück.«"
+    },
+    "ast_wurzelwerk": {
+      "name": "Aktennotiz WURZELWERK",
+      "text": "Programm WURZELWERK – nur für Kategorie A.\nDie Strukturen sind älter als jede Besiedlung. Sie sind miteinander verbunden. Unsere Aufgabe ist Beobachtung und kontrollierte Nutzung, nicht Eingriff. Messpunkte 1–9 liegen über Knoten. Messpunkt 4 zeigt die höchste Aktivität.\nUnterschrift: A. Senn."
+    },
+    "ast_einsatzplan": {
+      "name": "Einsatzplan Technik",
+      "text": "Einsatzplan Sondertechnik, Quartal 3.\nMP2 Tunnel Ost – C. (40817), M. Kessler.\nMP4 Messstelle Nord – C. (40817).\nMP4 Außenstelle, Schacht B – C. (40817), nachts, ohne Begleitung.\nDahinter Christians alter Dienstausweis, kopiert. Das Foto ist durchgestrichen."
+    },
+    "ast_schutzstatus": {
+      "name": "Rundschreiben Schutzstatus",
+      "text": "An alle Mitarbeitenden der Kategorie A.\nFür die Phase nach der Aktivierung ist für Sie und Ihre Angehörigen ein Schutzstatus vorgesehen. Halten Sie den Aktivierungscode bereit. Aktivierungscode MP4: siehe Anlage.\nDie Anlage fehlt. Jemand hat sie herausgerissen.\nA. Senn"
+    },
+    "ast_risiken": {
+      "name": "Liste offene Risiken",
+      "text": "Offene Risiken – vertraulich.\n1. Messwerte MP4 steigen unkontrolliert.\n2. Teil W-17 nicht auffindbar.\n3. Familie C. (40817): Maßnahme abgeschlossen. Kopien der Ehefrau NICHT aufgefunden.\n4. Revierförster Wendt meldet nicht mehr."
+    },
+    "ast_abschaltfolge1": {
+      "name": "Abschaltfolge (Teil 1)",
+      "text": "Notabschaltung Knoten MP4 – Teil 1 von 2.\n1. Oberflächen-Emitter (Säulen) in Folge abschalten.\n2. Biologische Leitung (Höhle) trennen.\n3. Steuerglied der W-Serie in die Fassung setzen.\nTeil 2 liegt bei Tunnel Ost."
+    },
+    "ilse_logbuch": {
+      "name": "Ilses Funk-Logbuch",
+      "text": "»Tag 12. Niemand mehr auf Kanal 7 außer mir. Tag 14. Eine Stimme aus dem Tal unten, aber sie sagt nur meinen Namen. Tag 15. Ich mache die Tür nicht mehr auf. Wer zu mir will, soll über Funk kommen. Wenn du das liest: Der Mast am Kahlen Kopf. Mach ihn heil, dann hören wir uns.«"
+    },
+    "tunnel_massnahme11": {
+      "name": "Akte »Maßnahme 11«",
+      "text": "Maßnahme 11 – Durchführung bestätigt.\nDatum: die Regennacht vor einem Jahr. Ort: B 85, Höhe Kilometer 14.\nFahrzeug: Sattelzug, Kennzeichen DEG-RZ 117, Fahrer: Subunternehmer, unbekannt verzogen.\nZielpersonen: Ehefrau und Kinder C. (40817) – erledigt. C. selbst: nicht im Fahrzeug.\nNachsatz: »Vorerst beobachten. Er weiß nichts.« – A. S."
+    },
+    "tunnel_abschaltfolge2": {
+      "name": "Abschaltfolge (Teil 2)",
+      "text": "Notabschaltung Knoten MP4 – Teil 2 von 2.\n4. Steuerglied drei Atemzüge der Anlage lang halten.\n5. Nicht loslassen, wenn sie zu sprechen beginnt.\n6. Wer den Code eingibt statt abzuschalten, aktiviert. Siehe Rundschreiben Schutzstatus.\nDarunter: »Niemand von uns ist so weit gekommen.«"
+    },
+    "dorf_chronik": {
+      "name": "Dorfchronik (aufgeweicht)",
+      "text": "Chronik der Gemeinde Altenreuth, aufgegeben 1964 für den Stausee.\n»Im Sommer 1962 leuchtete der Talgrund drei Nächte lang von unten. Der Pfarrer ließ die Glocke läuten, bis es aufhörte. Die Herren vom Amt sagten, es seien Sumpfgase. Zwei Jahre später kam der Damm.«"
+    },
+    "wetter_log": {
+      "name": "Wetterbuch der Station",
+      "text": "»Luftdruck fällt seit einer Woche, ohne dass Wetter kommt. Der Wind dreht jede Nacht auf das Tal zu, als würde es einatmen. Ich habe vom Grat aus die Lichtungen gezählt, die es vor einem Monat noch nicht gab. Karte liegt bei.«"
+    },
+    "gw_bericht": {
+      "name": "Versuchsbericht Gewächshaus 3",
+      "text": "Agrarversuch im Auftrag von ReZort Industries.\nDie Proben aus Messpunkt 4 keimen in jeder Erde, auch in vergifteter. Erträge dreifach. Nebenwirkung: Bestäuber meiden die Pflanzen, Nachbarkulturen verwelken. Empfehlung: sofort einstellen.\nStempel: »Weiterführen. Senn.«"
+    },
+    "rast_zettel": {
+      "name": "Zettel an der Kasse",
+      "text": "»Autobahn nach Süden gesperrt. Nicht hinfahren. Wer mit dem Auto weg will, braucht Teile vom Lager hinten – Batterie, Zündung, Reifen. Ich habe versucht, es zu richten. Die Stadt leuchtet nachts nicht mehr. Sie glimmt.«"
+    },
+    "brunnen_hinweis": {
+      "name": "Eingeritzt am Brunnenrand",
+      "text": "In den Stein geritzt, schon verwittert: »MP4 – B«. Darunter ein Pfeil nach unten."
+    },
+    "karton_ausweis": {
+      "name": "Alter Firmenausweis",
+      "text": "ReZort Industries – Technik, Sondereinsätze. Christian, Pers.-Nr. 40817. Gültig bis: abgelaufen.\nDas Foto ist ein Jahr alt. Er sieht darauf jünger aus als ein Jahr."
+    },
+    "karton_mappe": {
+      "name": "Einsatzmappe (Umzugskarton)",
+      "text": "Lose Blätter aus der alten Arbeit: Schaltpläne, Prüfprotokolle, ein Laufzettel.\n»Prüfling W-17 – Ausschuss, Kopplung instabil. Zur Verschrottung.« Daneben, in Stefanies Handschrift: »Warum bringst du so etwas mit nach Hause?«"
+    },
+    "w17_info": {
+      "name": "Bauteil W-17",
+      "text": "Faustgroß, matt, kalt, in einer Industriefassung mit Aufkleber »Prüfling W-17 – Ausschuss«. Der Kern sieht nicht aus wie etwas, das Menschen gemacht haben. Wenn ich es an das alte Funkgerät halte, knackt der Lautsprecher – im Takt der Lichter da draußen."
+    },
+    "lab_decision": {
+      "name": "Notiz: Das Labor",
+      "text": "Der Funktisch reicht nicht mehr. Das Bad hat Wasser, Licht und eine Tür, die man abschließen kann. Ich baue den Waschtisch zum Labor um."
     }
-   ]
   },
-  "an_tissue": {
-   "find": "alien_tissue",
-   "name": "Gewebeprobe",
-   "area": "Spezies und Verhalten",
-   "hours": 2.0,
-   "summary": "Graues, faseriges Gewebe, das sich noch Stunden nach dem Treffer bewegt. Kaltblütig. Es riecht nach nassem Metall.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Mit flackerndem Licht reizen",
-     "needs": "light",
-     "text": "Bei schnellem Flackern zieht sich das Gewebe ruckartig zusammen. Gleichmäßiges Licht stört es kaum."
+  "lab": {
+    "unlock": {
+      "day": 4,
+      "sent": 3
     },
-    {
-     "id": "power",
-     "label": "Schwachen Strom anlegen",
-     "needs": "power",
-     "text": "Keine Reaktion. Strom allein schreckt sie nicht ab."
-    }
-   ]
+    "unlock_text": "Der Funktisch reicht nicht mehr. Das Bad hat Wasser, Licht und eine Tür, die man abschließen kann. Ich baue den Waschtisch zum Labor um.",
+    "needs": {
+      "planks": 3,
+      "nails": 6,
+      "scrap": 2
+    },
+    "stations": {
+      "bench": {
+        "name": "Arbeitsplatte",
+        "built_with_lab": true,
+        "power": false,
+        "info": "Am Waschbecken: Wasser, Gaskocher, Gläser. Für Proben, die man waschen, kochen oder mischen muss."
+      },
+      "microscope": {
+        "name": "Mikroskop",
+        "needs": {
+          "electronics": 1,
+          "scrap": 2,
+          "battery": 1
+        },
+        "requires_any": [
+          "an_tissue",
+          "an_blood",
+          "an_fungus"
+        ],
+        "power": true,
+        "info": "Aus Brillengläsern, Taschenlampe und Schrott. Für alles, was man Faser für Faser ansehen muss."
+      },
+      "terrarium": {
+        "name": "Terrarium",
+        "needs": {
+          "planks": 2,
+          "nails": 4,
+          "cans": 2
+        },
+        "requires_any": [
+          "an_organism",
+          "an_fungus",
+          "an_plant"
+        ],
+        "power": false,
+        "info": "Ein Glaskasten mit Deckel für lebende Proben. Sie verderben nicht – aber sie bleiben nicht immer drin."
+      },
+      "shield": {
+        "name": "Abschirmkasten",
+        "needs": {
+          "scrap": 6,
+          "nails": 6,
+          "electronics": 1
+        },
+        "requires_any": [
+          "an_cell",
+          "an_crystal",
+          "link_power"
+        ],
+        "power": true,
+        "info": "Ein Blechkasten, innen mit Folie ausgeschlagen. Was darin liegt, strahlt nicht nach außen."
+      },
+      "screen": {
+        "name": "Auswertungsplatz",
+        "needs": {
+          "old_laptop": 1,
+          "electronics": 1
+        },
+        "requires_any": [],
+        "power": true,
+        "info": "Der alte Laptop auf dem Wäschekorb. Für Aufnahmen, Datenträger und Zeichen – lange Projekte."
+      }
+    },
+    "charger": {
+      "name": "Ladeschale",
+      "needs": {
+        "crystal_shard": 1,
+        "scrap": 2,
+        "electronics": 1
+      },
+      "requires": "link_charger",
+      "hours": 48,
+      "signature": 0.3,
+      "info": "Ein Kristall in einer Blechschale. Alle zwei Tage liegt eine geladene Energiezelle darin – nachts strahlt sie nach außen."
+    },
+    "flare_hours": 10.0,
+    "pouch_factor": 0.4
   },
-  "an_blood": {
-   "find": "alien_blood",
-   "name": "Blutprobe (Stachel)",
-   "area": "Biologie",
-   "hours": 2.0,
-   "summary": "Zähes, grünes Blut, eingetrocknet an der Spitze eines Spießes. Unter der Lupe bewegen sich winzige Fäden darin – als würde es noch arbeiten.",
-   "experiments": [
+  "drops": [
     {
-     "id": "light",
-     "label": "Mit Licht bestrahlen",
-     "needs": "light",
-     "text": "Im Licht flockt das Blut aus und wird schwarz. Im Dunkeln bleibt es tagelang flüssig und grün."
+      "item": "creature_shed",
+      "after": "creature",
+      "chance": 0.35,
+      "where": "yard"
     },
     {
-     "id": "power",
-     "label": "Schwachen Strom anlegen",
-     "needs": "power",
-     "text": "Die Fäden richten sich alle in eine Richtung aus – wie Eisenspäne an einem Magneten. Sie zeigen nach Nordwesten, zum Krater."
+      "item": "creature_saliva",
+      "after": "creature",
+      "chance": 0.3,
+      "where": "window"
     },
     {
-     "id": "alien",
-     "label": "Neben das Metallfragment legen",
-     "needs": "alien",
-     "text": "Das Blut kriecht langsam auf das fremde Metall zu. Körper und Technik scheinen aus demselben Stoff gemacht – oder füreinander."
+      "item": "creature_claw",
+      "after": "creature",
+      "chance": 0.12,
+      "where": "yard",
+      "from_day": 6
+    },
+    {
+      "item": "drone_lens",
+      "after": "drone",
+      "chance": 0.3,
+      "where": "yard"
+    },
+    {
+      "item": "drone_memory",
+      "after": "drone",
+      "chance": 0.1,
+      "where": "forest",
+      "requires": "an_drone"
+    },
+    {
+      "item": "manip_membrane",
+      "after": "manipulator",
+      "chance": 0.5,
+      "where": "forest"
+    },
+    {
+      "item": "seeker_lens",
+      "after": "seeker",
+      "chance": 0.4,
+      "where": "player"
+    },
+    {
+      "item": "seeker_thread",
+      "after": "seeker",
+      "chance": 0.5,
+      "where": "player"
+    },
+    {
+      "item": "foreign_cloth",
+      "after": "change",
+      "chance": 0.35,
+      "where": "porch"
+    },
+    {
+      "item": "pillar_chip",
+      "after": "change",
+      "chance": 0.3,
+      "where": "yard"
+    },
+    {
+      "item": "fog_jar",
+      "after": "any",
+      "chance": 0.15,
+      "where": "stream",
+      "stage": 1
+    },
+    {
+      "item": "tainted_sample",
+      "after": "any",
+      "chance": 0.2,
+      "where": "stream",
+      "stage": 1
+    },
+    {
+      "item": "blind_bird",
+      "after": "any",
+      "chance": 0.12,
+      "where": "yard",
+      "stage": 2
+    },
+    {
+      "item": "black_soil",
+      "after": "any",
+      "chance": 0.15,
+      "where": "garden",
+      "stage": 2
+    },
+    {
+      "item": "infected_antler",
+      "after": "any",
+      "chance": 0.1,
+      "where": "forest",
+      "stage": 2
+    },
+    {
+      "item": "spore_pod",
+      "after": "any",
+      "chance": 0.15,
+      "where": "patch",
+      "stage": 2
     }
-   ]
-  },
-  "an_fungus": {
-   "find": "glow_fungus",
-   "name": "Leuchtpilz",
-   "area": "Biologie",
-   "hours": 2.0,
-   "summary": "Ein Pilz, der nur rund um die Absturzstelle wächst. Er leuchtet aus sich heraus, in einem kalten Blaugrün.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Belichten und abdunkeln",
-     "needs": "light",
-     "text": "Nach dem Belichten leuchtet er minutenlang in schnellem Takt nach – wie ein natürliches Blinklicht."
+  ],
+  "gadgets": {
+    "_info": "Werte der Werkzeuge aus der Forschung (Christians Regel: beim zuständigen Manager).",
+    "mind_dampener": {
+      "damage_factor": 0.45
     },
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Das Leuchten wird heller und flackert im Takt des Generators."
-    }
-   ]
-  },
-  "an_organism": {
-   "find": "organism_sample",
-   "name": "Wucherung",
-   "area": "Biologie",
-   "hours": 3.0,
-   "summary": "Ein Geflecht aus grauen Fäden, das sich wie ein Pilz durch den Boden zieht – aber es hat Nerven. Es reagiert auf Schritte.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Mit Licht bestrahlen",
-     "needs": "light",
-     "text": "Die Fäden ziehen sich vom Licht weg und wachsen in die Dunkelheit."
+    "creature_alarm": {
+      "range": 45.0
     },
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Zuckungen – dann sendet die Probe ein schwaches Signal. Sie ist mit etwas verbunden."
-    }
-   ]
-  },
-  "an_drone": {
-   "find": "drone_part",
-   "name": "Drohnenteil",
-   "area": "Raumfahrt und Infrastruktur",
-   "hours": 2.5,
-   "summary": "Eine Linse mit Antriebsring aus demselben Metall wie das Wrack. Sie hat aufgezeichnet – Wärme, Licht, Bewegung.",
-   "experiments": [
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "effect": "noise",
-     "text": "Der Ring summt auf und sucht nach einem Signal. Sie werden über Funk gesteuert."
+    "voice_filter": {
+      "range": 70.0
     },
-    {
-     "id": "open",
-     "label": "Mit dem fremden Gerät auslesen",
-     "needs": "alien",
-     "text": "Auf der Linse: Bilder deiner Hütte, von oben. Viele Nächte lang."
-    }
-   ]
-  },
-  "an_crystal": {
-   "find": "crystal_shard",
-   "name": "Kristallsplitter",
-   "area": "Energie und Physik",
-   "hours": 3.0,
-   "summary": "Ein Splitter aus dem Kern der Struktur. Er ist kalt, schwer und zieht kleine Metallteile an, obwohl er nicht magnetisch ist.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Durchleuchten",
-     "needs": "light",
-     "text": "Im Inneren laufen Linien nach unten zusammen – wie Wurzeln, die nach etwas tasten."
+    "heat_stone": {
+      "loss_factor": 0.55
     },
-    {
-     "id": "compare",
-     "label": "Mit der Symbolplatte abgleichen",
-     "needs": "alien",
-     "effect": "noise",
-     "text": "Das Gerät zeigt einen Punkt unter dem Dreieck der Vermessung. Er liegt tief im Boden."
-    }
-   ]
-  },
-  "an_plant": {
-   "find": "alien_plant",
-   "name": "Fremdpflanze",
-   "area": "Biologie",
-   "hours": 2.0,
-   "summary": "Eine Pflanze mit perfekt symmetrischen Blättern in Spiralen. Sie wächst nur dort, wo die Struktur summt.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Belichten",
-     "needs": "light",
-     "text": "Sie dreht sich nicht zum Licht, sondern zur Struktur im Westen."
+    "alloy_frame": {
+      "extra_kg": 15.0
     },
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Ihr Saft wird bitter und giftig – für die grauen Fäden der Wucherung."
-    }
-   ]
-  },
-  "an_comb": {
-   "find": "alien_comb",
-   "name": "Fremdwabe",
-   "area": "Biologie",
-   "hours": 2.0,
-   "summary": "Ein Wabenstück aus den Bienenkästen. Kein Wachs: feine, graue Fäden, die sich zu Sechsecken verflochten haben.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Belichten",
-     "needs": "light",
-     "text": "Die Fäden ziehen sich vom Licht weg, wie die Wucherung."
+    "scent_mask": {
+      "sight_factor": 0.5
     },
-    {
-     "id": "alien",
-     "label": "Mit Fremdgewebe vergleichen",
-     "needs": "alien",
-     "text": "Dasselbe Gewebe wie die Wucherung aus der Höhle. Die Bienen haben es gebaut – oder es hat die Bienen gebaut."
-    }
-   ]
-  },
-  "an_implant": {
-   "find": "alien_implant",
-   "name": "Implantat",
-   "area": "Spezies und Verhalten",
-   "hours": 2.5,
-   "summary": "Ein glatter Splitter, gefunden hinter dem Ohr der Moorleiche. Er ist warm, obwohl die Leiche kalt ist.",
-   "experiments": [
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Er sendet einen kurzen Impuls – im selben Takt wie die Drohnen."
+    "root_salt": {
+      "radius": 5.0
     },
-    {
-     "id": "light",
-     "label": "Durchleuchten",
-     "needs": "light",
-     "text": "Feine Wurzeln, die sich ins Gewebe gegraben hatten. Er war nicht nur ein Sender. Er hat zugehört."
-    }
-   ]
-  },
-  "an_probe": {
-   "find": "probe_core",
-   "name": "Sondenkern",
-   "area": "Energie und Physik",
-   "hours": 3.0,
-   "summary": "Aus dem Krater der Windwurf-Schneise. Die Bäume sind von ihm weggefallen, nicht durch Sturm.",
-   "experiments": [
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Ein Druckstoß, der die Werkbank verrückt. Er hat einmal gezündet, um den Boden zu vermessen."
+    "drone_decoy": {
+      "hold": [
+        25.0,
+        40.0
+      ]
     },
-    {
-     "id": "alien",
-     "label": "Mit Fremdmetall vergleichen",
-     "needs": "alien",
-     "text": "Gleiche Legierung, aber grob, wie ein Werkzeug, das nur einmal gebraucht wird."
-    }
-   ]
-  },
-  "an_seeds": {
-   "find": "alien_seeds",
-   "name": "Fremde Samen",
-   "area": "Biologie",
-   "hours": 2.0,
-   "summary": "Aus den Gewächshäusern. Sie keimen schon in der Hand, wenn sie warm werden.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Belichten",
-     "needs": "light",
-     "text": "Unter Licht keimen sie in Minuten. Sie wachsen auch dort, wo nichts anderes mehr wächst."
+    "light_lure": {
+      "range": 70.0
     },
-    {
-     "id": "power",
-     "label": "Unter Strom setzen",
-     "needs": "power",
-     "text": "Der Keimling dreht sich nach Norden, zur Außenstelle."
+    "dictaphone": {
+      "range": 70.0,
+      "radio_from_day": 5
     }
-   ]
-  },
-  "an_hull": {
-   "find": "hull_sample",
-   "name": "Hüllenprobe vom Wal",
-   "area": "Raumfahrt und Infrastruktur",
-   "hours": 3.0,
-   "summary": "Ein Stück Haut vom riesigen Rumpf am Walhügel. Halb Metall, halb lebendig.",
-   "experiments": [
-    {
-     "id": "light",
-     "label": "Durchleuchten",
-     "needs": "light",
-     "text": "Innen Kammern wie in einem Bienenstock – ein Transportschiff, kein Kriegsschiff."
-    },
-    {
-     "id": "alien",
-     "label": "Mit Fremdgewebe vergleichen",
-     "needs": "alien",
-     "text": "Dasselbe Gewebe wie die Kreaturen. Sie sind nicht gekommen, um zu kämpfen. Sie sind gekommen, um zu bleiben."
-    }
-   ]
   }
- },
- "links": {
-  "link_power": {
-   "name": "Gemeinsame Frequenz",
-   "area": "Zusammenhänge",
-   "needs": [
-    "an_metal",
-    "an_cell"
-   ],
-   "text": "Metall und Zelle schwingen im selben Takt. Wo diese Technik in der Nähe ist, verändert sich das Feld – daraus lässt sich ein Sensor bauen, der ihre Nähe spürt.",
-   "unlocks": [
-    "resonance_sensor"
-   ]
-  },
-  "link_light": {
-   "name": "Lichtempfindlichkeit",
-   "area": "Spezies und Verhalten",
-   "needs": [
-    "an_tissue",
-    "an_fungus"
-   ],
-   "text": "Ihr Gewebe verkrampft bei schnell flackerndem Licht. Mit dem Leuchtpilz lässt sich ein Stroboskop bauen, das sie länger vertreibt als jede Lampe.",
-   "unlocks": [
-    "strobe_light"
-   ]
-  },
-  "link_signal": {
-   "name": "Die Vermessung",
-   "area": "Zusammenhänge",
-   "needs": [
-    "an_glyph",
-    "an_cell"
-   ],
-   "text": "Die Zeichen auf der Platte sind Orte, keine Wörter. Drei davon liegen in diesem Tal, im Dreieck – und die Hütte steht in seiner Mitte. Sie suchen hier etwas. Aber was?",
-   "unlocks": []
-  },
-  "link_drone": {
-   "name": "Fernsteuerung",
-   "area": "Raumfahrt und Infrastruktur",
-   "needs": [
-    "an_drone",
-    "an_metal"
-   ],
-   "text": "Die Drohnen hängen an einem Signal, das durch das fremde Metall läuft. Ein Störsender könnte sie blind machen.",
-   "unlocks": [
-    "signal_jammer"
-   ]
-  },
-  "link_growth": {
-   "name": "Gift gegen das Geflecht",
-   "area": "Biologie",
-   "needs": [
-    "an_organism",
-    "an_plant"
-   ],
-   "text": "Der Saft der Fremdpflanze unter Strom tötet die Fäden der Wucherung. Damit lässt sich eine Sperre bauen, über die sie nicht wächst.",
-   "unlocks": [
-    "growth_barrier"
-   ]
-  },
-  "link_core": {
-   "name": "Was unter dem Tal liegt",
-   "area": "Zusammenhänge",
-   "needs": [
-    "an_crystal",
-    "an_glyph"
-   ],
-   "text": "Die Struktur sendet nach unten, nicht nach oben. Unter dem Dreieck der Vermessungspunkte liegt etwas Großes – und es antwortet. Die Hütte steht genau darüber.",
-   "unlocks": []
-  },
-  "link_hive": {
-   "name": "Ein einziges Geflecht",
-   "area": "Biologie",
-   "needs": [
-    "an_comb",
-    "an_organism"
-   ],
-   "text": "Waben, Wucherung und Fremdpflanze sind ein und dasselbe Lebewesen. Es wächst nicht zufällig – es verlegt Leitungen.",
-   "unlocks": []
-  },
-  "link_implant": {
-   "name": "Markiert",
-   "area": "Spezies und Verhalten",
-   "needs": [
-    "an_implant",
-    "an_drone"
-   ],
-   "text": "Die Drohnen suchen nicht nach Menschen. Sie suchen nach Markierten – und nach allem, was ihr Signal stört. W-17 stört es.",
-   "unlocks": []
-  },
-  "link_ship": {
-   "name": "Sie bleiben",
-   "area": "Raumfahrt und Infrastruktur",
-   "needs": [
-    "an_hull",
-    "an_seeds"
-   ],
-   "text": "Das Schiff am Walhügel hat Samen gebracht, keine Waffen. Das Tal wird vorbereitet, wie ein Acker.",
-   "unlocks": []
-  },
-  "link_w17": {
-   "name": "Dieselbe Handschrift",
-   "area": "Raumfahrt und Infrastruktur",
-   "needs": [
-    "an_glyph",
-    "an_metal"
-   ],
-   "text": "Die Zeichen auf der Platte und die Fragmente von der Absturzstelle tragen dieselbe Kennung wie die Fassung von W-17. Es ist kein Ersatzteil. Es ist ein Teil von IHNEN. Ich kann es aus dem Analysegerät ausbauen und mitnehmen – in der Nähe ihrer Orte summt es.",
-   "unlocks": []
-  }
- },
- "notes": {
-  "ranger_note": {
-   "name": "Zerknitterte Notiz",
-   "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – R. W., Forstdienst"
-  },
-  "ranger_note2": {
-   "name": "Tagebuch vom Hochsitz",
-   "text": "»Tag 5. Keine Vögel mehr. Die Rehe sind über den Bach nach Osten gezogen und nicht zurückgekommen. Nachts fliegt etwas Leises über den Wald, mit einem Lichtkegel. Es sucht. Ich bleibe tagsüber hier oben, nachts unten im Unterstand.« – R. W."
-  },
-  "ranger_map": {
-   "name": "Karte des Försters",
-   "text": "Auf der Revierkarte sind drei Stellen eingekreist: der Krater im Nordwesten, »die Säulen« weit im Westen und »die alte Höhle« am Bach im Nordosten. Mit Bleistift verbunden zu einem Dreieck. In der Mitte, unterstrichen: die Hütte."
-  },
-  "ranger_note3": {
-   "name": "Letzte Seite",
-   "text": "»Es wächst. Es wächst zur Hütte hin, ganz langsam, jede Nacht ein Stück. Ich habe den Knoten gefunden, tief in der Höhle. Wenn ich ihn zerschlage – « Der Rest ist unleserlich."
-  },
-  "kapelle_buch": {
-   "name": "Gästebuch der Waldkapelle",
-   "text": "Die letzten Einträge, verschiedene Handschriften:\n»Für Opa Hans. Ruhe in Frieden.« – »Danke für den Regenschutz! Wanderfreunde Sankt Englmar« – »Wer legt die Steine auf die Bänke? Jeden Morgen einer mehr.« – »Es sind jetzt elf.« – »Sie zählen. Sie zählen UNS.« – »Revier 4 kontrolliert, keine Auffälligkeiten. G. W.«"
-  },
-  "friedhof_liste": {
-   "name": "Abschussliste (durchnässt)",
-   "text": "Jagdgenossenschaft Revier 4 – Ansitzplan Herbst.\nQuer über die Seite, mit Bleistift: »Alle Hochsitze umgedreht. Alle schauen zur Mitte. Ich war es nicht. Niemand war es. Die Leitern sind von INNEN abgesägt.«"
-  },
-  "imkerei_notiz": {
-   "name": "Zettel am Bienenhaus",
-   "text": "»Liebe Kundschaft, Honigverkauf bis auf Weiteres eingestellt. Die Völker sind nicht weggeflogen. Sie sind still geworden. In den Kästen wächst etwas, das kein Wachs ist. Ich bringe die Proben zum Amt.  – Brandl«\nDarunter, später: »Das Amt hat gesagt, ich soll sie verbrennen. Ich habe sie behalten.«"
-  },
-  "messstelle_log": {
-   "name": "Wartungsprotokoll MP4-Nord",
-   "text": "ReZort Industries – Sondertechnik, Messstelle 4-Nord.\n03.05.: Sensorik nachjustiert, Kopplung W-Serie geprüft, Werte stabil. Techniker: C., Pers.-Nr. 40817.\n17.09.: Kopplung driftet. Ursache unbekannt. Ersatzteil W-17 als Ausschuss gemeldet – Verbleib ungeklärt.\n02.11.: Werte steigen. Anweisung von oben: nicht melden."
-  },
-  "funkmast_zettel": {
-   "name": "Zettel im Technikhäuschen",
-   "text": "»Mast seit drei Tagen ohne Strom. Notstrom leer. Wer das liest und ein Funkgerät hat: Kanal 7, jeden Abend um neun. Wir sind noch da oben. – I.«\nAuf der Rückseite eine Liste: Funkteile, Batterie, Richtantenne."
-  },
-  "see_ausweis": {
-   "name": "Firmenausweis im Auto",
-   "text": "ReZort Industries – Abteilung Sondertechnik. Markus Kessler, Projektleitung Messpunkte. Gültig für: MP2, MP4, Tunnel Ost.\nIm Handschuhfach ein Zettel: »Ich höre auf. Sollen sie doch selber runtersteigen.«"
-  },
-  "steinbruch_buch": {
-   "name": "Sprengbuch des Steinbruchs",
-   "text": "Letzte Sprengung vor drei Wochen, Auftraggeber: ReZort Industries, Vermerk »Erweiterung Stollen Ost«. Danach nur noch eine Zeile, krakelig: »Unter der Sohle klopft es zurück.«"
-  },
-  "kontrollpunkt_funk": {
-   "name": "Funkprotokoll Kontrollpunkt",
-   "text": "Sperrgebiet Wald, Abschnitt Süd.\n21:40 Bewegung am Waldrand, keine Wärmesignatur.\n22:15 Zwei Mann zur Aufklärung.\n22:31 Kein Kontakt.\n22:48 Kein Kontakt.\n23:02 Befehl: Stellung räumen. Ausrüstung zurücklassen.\nLetzte Zeile mit anderer Hand: »Sie haben unsere Stimmen benutzt.«"
-  },
-  "lager_bild": {
-   "name": "Kinderzeichnung",
-   "text": "Ein Bild mit Wachsmalkreide: das Ferienlager, ein See, viele kleine Strichmännchen. Am Ufer steht ein schwarzer Mann, so lang wie die Bäume, ohne Gesicht. Darunter in Kinderschrift: »Der lange Mann am See. Er winkt nur, wenn die Betreuer schlafen.«"
-  },
-  "schaefer_tagebuch": {
-   "name": "Tagebuch des Schäfers",
-   "text": "»Montag: Die Hunde sind fort. Dienstag: Die Herde stellt sich nachts im Kreis auf, Köpfe nach innen. Mittwoch: Sie stehen jetzt auch tagsüber so. Sie fressen nicht mehr. Donnerstag: Ich habe mich in die Mitte gestellt. Es war ganz still. Ich habe verstanden, warum sie das machen. Ich darf es nicht aufschreiben.«"
-  },
-  "moor_schild": {
-   "name": "Schild am Moorsteg",
-   "text": "Naturschutzgebiet Hochmoor. Stege nicht verlassen – Lebensgefahr!\nJemand hat darunter geritzt: »Die Toten hier sind nicht alt.«"
-  },
-  "spiegel_notiz": {
-   "name": "Notiz unter der Plane",
-   "text": "»Die Lichter suchen von oben. Sie sehen kein Licht, das von oben kommt – nur Licht von unten, von uns. Darum die Spiegel: Sie werfen den Himmel zurück. Seit ich sie aufgehängt habe, fliegen sie über diese Lichtung, als wäre sie nicht da. Ich gehe jetzt Wasser holen. Ich komme zurück.«"
-  },
-  "ast_wurzelwerk": {
-   "name": "Aktennotiz WURZELWERK",
-   "text": "Programm WURZELWERK – nur für Kategorie A.\nDie Strukturen sind älter als jede Besiedlung. Sie sind miteinander verbunden. Unsere Aufgabe ist Beobachtung und kontrollierte Nutzung, nicht Eingriff. Messpunkte 1–9 liegen über Knoten. Messpunkt 4 zeigt die höchste Aktivität.\nUnterschrift: A. Senn."
-  },
-  "ast_einsatzplan": {
-   "name": "Einsatzplan Technik",
-   "text": "Einsatzplan Sondertechnik, Quartal 3.\nMP2 Tunnel Ost – C. (40817), M. Kessler.\nMP4 Messstelle Nord – C. (40817).\nMP4 Außenstelle, Schacht B – C. (40817), nachts, ohne Begleitung.\nDahinter Christians alter Dienstausweis, kopiert. Das Foto ist durchgestrichen."
-  },
-  "ast_schutzstatus": {
-   "name": "Rundschreiben Schutzstatus",
-   "text": "An alle Mitarbeitenden der Kategorie A.\nFür die Phase nach der Aktivierung ist für Sie und Ihre Angehörigen ein Schutzstatus vorgesehen. Halten Sie den Aktivierungscode bereit. Aktivierungscode MP4: siehe Anlage.\nDie Anlage fehlt. Jemand hat sie herausgerissen.\nA. Senn"
-  },
-  "ast_risiken": {
-   "name": "Liste offene Risiken",
-   "text": "Offene Risiken – vertraulich.\n1. Messwerte MP4 steigen unkontrolliert.\n2. Teil W-17 nicht auffindbar.\n3. Familie C. (40817): Maßnahme abgeschlossen. Kopien der Ehefrau NICHT aufgefunden.\n4. Revierförster Wendt meldet nicht mehr."
-  },
-  "ast_abschaltfolge1": {
-   "name": "Abschaltfolge (Teil 1)",
-   "text": "Notabschaltung Knoten MP4 – Teil 1 von 2.\n1. Oberflächen-Emitter (Säulen) in Folge abschalten.\n2. Biologische Leitung (Höhle) trennen.\n3. Steuerglied der W-Serie in die Fassung setzen.\nTeil 2 liegt bei Tunnel Ost."
-  },
-  "ilse_logbuch": {
-   "name": "Ilses Funk-Logbuch",
-   "text": "»Tag 12. Niemand mehr auf Kanal 7 außer mir. Tag 14. Eine Stimme aus dem Tal unten, aber sie sagt nur meinen Namen. Tag 15. Ich mache die Tür nicht mehr auf. Wer zu mir will, soll über Funk kommen. Wenn du das liest: Der Mast am Kahlen Kopf. Mach ihn heil, dann hören wir uns.«"
-  },
-  "tunnel_massnahme11": {
-   "name": "Akte »Maßnahme 11«",
-   "text": "Maßnahme 11 – Durchführung bestätigt.\nDatum: die Regennacht vor einem Jahr. Ort: B 85, Höhe Kilometer 14.\nFahrzeug: Sattelzug, Kennzeichen DEG-RZ 117, Fahrer: Subunternehmer, unbekannt verzogen.\nZielpersonen: Ehefrau und Kinder C. (40817) – erledigt. C. selbst: nicht im Fahrzeug.\nNachsatz: »Vorerst beobachten. Er weiß nichts.« – A. S."
-  },
-  "tunnel_abschaltfolge2": {
-   "name": "Abschaltfolge (Teil 2)",
-   "text": "Notabschaltung Knoten MP4 – Teil 2 von 2.\n4. Steuerglied drei Atemzüge der Anlage lang halten.\n5. Nicht loslassen, wenn sie zu sprechen beginnt.\n6. Wer den Code eingibt statt abzuschalten, aktiviert. Siehe Rundschreiben Schutzstatus.\nDarunter: »Niemand von uns ist so weit gekommen.«"
-  },
-  "dorf_chronik": {
-   "name": "Dorfchronik (aufgeweicht)",
-   "text": "Chronik der Gemeinde Altenreuth, aufgegeben 1964 für den Stausee.\n»Im Sommer 1962 leuchtete der Talgrund drei Nächte lang von unten. Der Pfarrer ließ die Glocke läuten, bis es aufhörte. Die Herren vom Amt sagten, es seien Sumpfgase. Zwei Jahre später kam der Damm.«"
-  },
-  "wetter_log": {
-   "name": "Wetterbuch der Station",
-   "text": "»Luftdruck fällt seit einer Woche, ohne dass Wetter kommt. Der Wind dreht jede Nacht auf das Tal zu, als würde es einatmen. Ich habe vom Grat aus die Lichtungen gezählt, die es vor einem Monat noch nicht gab. Karte liegt bei.«"
-  },
-  "gw_bericht": {
-   "name": "Versuchsbericht Gewächshaus 3",
-   "text": "Agrarversuch im Auftrag von ReZort Industries.\nDie Proben aus Messpunkt 4 keimen in jeder Erde, auch in vergifteter. Erträge dreifach. Nebenwirkung: Bestäuber meiden die Pflanzen, Nachbarkulturen verwelken. Empfehlung: sofort einstellen.\nStempel: »Weiterführen. Senn.«"
-  },
-  "rast_zettel": {
-   "name": "Zettel an der Kasse",
-   "text": "»Autobahn nach Süden gesperrt. Nicht hinfahren. Wer mit dem Auto weg will, braucht Teile vom Lager hinten – Batterie, Zündung, Reifen. Ich habe versucht, es zu richten. Die Stadt leuchtet nachts nicht mehr. Sie glimmt.«"
-  },
-  "brunnen_hinweis": {
-   "name": "Eingeritzt am Brunnenrand",
-   "text": "In den Stein geritzt, schon verwittert: »MP4 – B«. Darunter ein Pfeil nach unten."
-  },
-  "karton_ausweis": {
-   "name": "Alter Firmenausweis",
-   "text": "ReZort Industries – Technik, Sondereinsätze. Christian, Pers.-Nr. 40817. Gültig bis: abgelaufen.\nDas Foto ist ein Jahr alt. Er sieht darauf jünger aus als ein Jahr."
-  },
-  "karton_mappe": {
-   "name": "Einsatzmappe (Umzugskarton)",
-   "text": "Lose Blätter aus der alten Arbeit: Schaltpläne, Prüfprotokolle, ein Laufzettel.\n»Prüfling W-17 – Ausschuss, Kopplung instabil. Zur Verschrottung.« Daneben, in Stefanies Handschrift: »Warum bringst du so etwas mit nach Hause?«"
-  },
-  "w17_info": {
-   "name": "Bauteil W-17",
-   "text": "Faustgroß, matt, kalt, in einer Industriefassung mit Aufkleber »Prüfling W-17 – Ausschuss«. Der Kern sieht nicht aus wie etwas, das Menschen gemacht haben. Wenn ich es an das alte Funkgerät halte, knackt der Lautsprecher – im Takt der Lichter da draußen."
-  }
- }
 }

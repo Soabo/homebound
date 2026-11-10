@@ -62,6 +62,9 @@ func interact(_player: Node) -> void:
 	if not PowerManager.has_power():
 		EventBus.notify("Kein Strom. Der Generator steht im Schuppen.", 2.5)
 		return
+	var drops := AlienDrops.get_for(get_tree())
+	if drops:
+		drops.collect_footage()
 	# Auf den Stuhl vor dem Monitor setzen, dann erst das Bild öffnen
 	var p := _player as Player
 	if p == null or _seated:

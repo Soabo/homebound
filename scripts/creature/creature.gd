@@ -417,6 +417,8 @@ func _can_see_player() -> bool:
 	var d := _dist()
 	var lit := _player.light_shining() or _player_near_light()
 	var range_m := 34.0 if lit else 13.0
+	if Research.buff_active("scent"):
+		range_m *= float(Research.gadget("scent_mask", "sight_factor", 0.5))
 	if d > range_m:
 		return false
 	var eye := global_position + Vector3(0, 2.0, 0)
@@ -613,6 +615,10 @@ func on_trap(at: Vector3) -> void:
 	CreatureSounds.play(get_parent(), "pain", global_position + Vector3(0, 1.8, 0), 4.0, _rng.randf_range(0.85, 1.0))
 	_head_track = 2.0
 	CrashSite.drop_tissue(get_parent(), at + Vector3(0.25, 0, 0.15), true)
+	# manchmal bricht eine Kralle ab (Forschung 2.0)
+	var drops := AlienDrops.get_for(get_tree())
+	if drops and _rng.randf() < 0.5:
+		drops.spawn("creature_claw", Creature._ground(at + Vector3(-0.3, 0, 0.2)) + Vector3(0, 0.02, 0))
 	EventBus.screen_shake.emit(0.05)
 	if state == State.LEAVE:
 		return

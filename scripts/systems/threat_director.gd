@@ -33,6 +33,7 @@ var _appeared_tonight: bool = false
 var _arc_day: int = -1
 ## War in der laufenden Nacht etwas Fremdes los? (für die Veränderungen am Morgen)
 var _activity_tonight: bool = false
+var _kinds_tonight: Array = []   ## welche Wesen heute Nacht da waren (für AlienDrops)
 const ACTIVITY_EVENTS := ["creature", "sighting", "drone", "manipulator", "phantom", "signal", "music_box", "knock_door",
 		"rattle", "handprint", "roof", "scratch", "breath_wall", "photo"]
 var _forest_day_done: int = -1
@@ -97,7 +98,13 @@ func _on_phase_changed(is_night: bool) -> void:
 		creature.call("leave")
 	if scene and _activity_tonight and _rng.randf() < config.night_change_chance:
 		get_tree().call_group("night_changes", "morning", _rng.randi_range(config.night_change_count.x, config.night_change_count.y), config.night_change_days)
+		_kinds_tonight.append("change")
 	_activity_tonight = false
+	# Forschung 2.0: was die Wesen heute Nacht hinterlassen haben
+	var drops := AlienDrops.get_for(get_tree())
+	if drops:
+		drops.morning(_kinds_tonight)
+	_kinds_tonight.clear()
 	if scene and night_kind in ["hints", "visit", "hunt"] and _rng.randf() < (config.traces_after_hints if night_kind == "hints" else config.traces_after_visit):
 		Traces.morning(scene, _rng)
 	_plan_if_needed()
@@ -141,12 +148,14 @@ func plan_night(night_day: int) -> void:
 				_add(start + _rng.randf_range(2.5, 6.0), "outage")
 	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht) – nicht in ruhigen Nächten
 	var st := WorldState.stage()
-	if night_kind != "quiet":
-		if (st >= 1 or night_day >= config.drone_from_night) and _rng.randf() < config.drone_chance + config.species_chance_per_stage * st:
+	# Fremde Dinge machen sichtbar (Forschung 2.0): wer viel davon trägt oder nachts forscht, wird eher gefunden
+	var sig := Research.expected_signature()
+	if night_kind != "quiet" or sig >= config.signature_wakes_quiet:
+		if (st >= 1 or night_day >= config.drone_from_night) and _rng.randf() < config.drone_chance + config.species_chance_per_stage * st + config.signature_drone_bonus * sig:
 			_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
 		if (st >= 1 or night_day >= config.manipulator_from_night) and night_kind == "hints" and _rng.randf() < config.manipulator_chance + config.species_chance_per_stage * st:
 			_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
-		if night_day >= config.seeker_from_day and _rng.randf() < config.seeker_chance + config.seeker_chance_per_stage * st:
+		if night_day >= config.seeker_from_day and _rng.randf() < config.seeker_chance + config.seeker_chance_per_stage * st + config.signature_seeker_bonus * sig:
 			_add(start + _rng.randf_range(1.0, night_len - 2.5), "seeker")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 	night_planned.emit(night_intensity)
@@ -188,6 +197,12 @@ func _event_pool(intensity: int) -> Array[String]:
 	if intensity >= 2:
 		pool.append_array(["knock_door", "rattle", "music_box", "handprint", "photo", "scratch", "roof"])
 	return pool
+
+
+## Ereignis von außen einplanen (z. B. eine ausgebrochene Probe ruft die Drohne).
+func force_event(type: String, delay_hours: float) -> void:
+	_add(TimeManager.get_total_hours() + delay_hours, type)
+	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 
 
 func _add(at: float, type: String) -> void:
@@ -262,6 +277,8 @@ func _fire(type: String) -> void:
 		type = _far_variant(type)
 		if type == "":
 			return
+	if type in ["creature", "drone", "manipulator", "seeker"] and not _kinds_tonight.has(type):
+		_kinds_tonight.append(type)
 	if type in ACTIVITY_EVENTS:
 		_activity_tonight = true
 		# Tablet flackert nur nachts – ein Hinweis, dass draußen etwas ist

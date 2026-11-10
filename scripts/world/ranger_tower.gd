@@ -65,6 +65,9 @@ func _ready() -> void:
 	_pickup("TowerFood", "food", 2, Vector3(0.75, DECK + 0.42, -1.0))
 	_pickup("TowerBattery", "battery", 1, Vector3(1.05, DECK + 0.42, -1.0))
 	_pickup("TowerWater", "water", 1, Vector3(-0.9, DECK + 0.06, -1.05))
+	# Georg Wendts Diktiergerät und sein alter Laptop (Forschung: Aufnahmen, Auswertungsplatz)
+	_pickup("TowerDictaphone", "dictaphone", 1, Vector3(0.35, DECK + 0.06, 0.55))
+	_pickup("TowerLaptop", "old_laptop", 1, Vector3(-0.85, DECK + 0.06, -0.35))
 	var diary := ResearchNote.new()
 	diary.name = "TowerDiary"
 	diary.note_id = "ranger_note2"
@@ -99,6 +102,12 @@ func _pickup(n: String, item: String, amount: int, at: Vector3) -> void:
 			Icons.food_can(v, at, 0.042, 0.11)
 		"water":
 			BuildKit.cylinder(v, 0.045, 0.26, at + Vector3(0, 0.13, 0), BuildKit.color_mat(Color(0.45, 0.65, 0.8), 0.1), false, Vector3.ZERO, -1.0, 10)
+		"old_laptop":
+			var dark := BuildKit.color_mat(Color(0.12, 0.12, 0.13), 0.5)
+			BuildKit.box(v, Vector3(0.34, 0.025, 0.24), at + Vector3(0, 0.012, 0), dark, false)
+			BuildKit.box(v, Vector3(0.34, 0.22, 0.015), at + Vector3(0, 0.12, -0.115), dark, false, Vector3(-15, 0, 0))
+		"dictaphone":
+			BuildKit.box(v, Vector3(0.05, 0.11, 0.025), at + Vector3(0, 0.012, 0), BuildKit.color_mat(Color(0.2, 0.2, 0.22), 0.4), false, Vector3(-90, 30, 0))
 		_:
 			BuildKit.box(v, Vector3(0.12, 0.08, 0.07), at + Vector3(0, 0.04, 0), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
 	p.visuals.append(v)

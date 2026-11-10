@@ -294,7 +294,7 @@ func _fill_inventory() -> void:
 		row.add_child(l)
 		row.add_child(_text("%s · %.1f kg" % [def.get("category", ""), Inventory.weight_of(id) * Inventory.count(id)], 16, Color(0.6, 0.58, 0.5)))
 		if def.has("use"):
-			var b := _button("Essen" if def["use"].has("hunger") else "Trinken")
+			var b := _button("Essen" if def["use"].has("hunger") else ("Trinken" if def["use"].has("thirst") else "Benutzen"))
 			b.pressed.connect(_on_use.bind(id))
 			row.add_child(b)
 		if def.has("build") or def.has("camera"):

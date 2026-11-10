@@ -46,6 +46,7 @@ static func _messstelle(root: Node3D) -> void:
 	PlaceKit.loot(c, "Electronics", "electronics", 3, Vector3(-1.8, 0.06, -0.8), "case")
 	PlaceKit.loot(c, "Batteries", "battery", 2, Vector3(-1.0, 0.06, -0.85), "case")
 	PlaceKit.loot(c, "Keycard", "keycard_m4", 1, Vector3(1.1, 0.83, -0.7), "card")
+	PlaceKit.loot(c, "Protocols", "rz_protocol", 1, Vector3(0.75, 0.83, -0.75), "paper")
 	PlaceKit.blueprint(c, "bp_winch", "Kabelwinde", Vector3(1.7, 0.83, -0.85))
 	PlaceKit.note(c, "messstelle_log", Vector3(2.2, 1.4, -1.22), true)
 	BuildKit.box(c, Vector3(0.24, 0.32, 0.01), Vector3(2.2, 1.4, -1.24), PlaceKit.mat("paper"), false)

@@ -88,6 +88,14 @@ extends Resource
 @export var seeker_from_day: int = 5
 @export var seeker_chance: float = 0.2
 @export var seeker_chance_per_stage: float = 0.06
+
+@export_group("Signatur (Forschung 2.0)")
+## Zusatzchance pro Signaturpunkt, dass die Drohne kommt (Fremdes tragen, nachts forschen).
+@export var signature_drone_bonus: float = 0.25
+## Zusatzchance pro Signaturpunkt, dass der Sucher kommt.
+@export var signature_seeker_bonus: float = 0.2
+## Ab dieser Signatur bleibt auch eine „ruhige“ Nacht nicht ganz ruhig: Drohne und Sucher dürfen kommen.
+@export var signature_wakes_quiet: float = 0.8
 ## Zeltnacht: so viele Ereignisse pro Nacht im Zelt (frühestens so viele Stunden nach dem Hinlegen)
 @export var camp_events: Vector2i = Vector2i(1, 3)
 @export var camp_first_after: float = 0.4

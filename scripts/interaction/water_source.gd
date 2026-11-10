@@ -69,6 +69,8 @@ func secondary_interact(_player: Node) -> void:
 	var what := "water" if clean else "water_raw"
 	if _dirty():
 		what = "water_raw" if Inventory.count("water_filter") > 0 else "water_tainted"
+	if Inventory.count("comb_filter") > 0:
+		what = "water"  # Wabenfilter (Forschung): alles wird trinkbar
 	Inventory.add(what, 1)
 	_splash()
 	EventBus.notify("%s abgefüllt." % Inventory.display_name(what), 2.0)
@@ -76,7 +78,7 @@ func secondary_interact(_player: Node) -> void:
 
 
 func interact(player: Node) -> void:
-	if _dirty() and Inventory.count("water_filter") <= 0:
+	if _dirty() and Inventory.count("water_filter") <= 0 and Inventory.count("comb_filter") <= 0:
 		# verunreinigt: löscht nur halb den Durst und schadet
 		Survival.apply({"thirst": thirst_gain * 0.5})
 		var p := player as Player

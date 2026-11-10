@@ -400,6 +400,53 @@
       "done": [
         "flag:w17_carried"
       ]
+    },
+    {
+      "id": "lab",
+      "title": "Ein Labor im Bad",
+      "text": "Der Funktisch reicht nicht mehr. Am Waschtisch im Bad baue ich mir ein Labor: Bretter, Nägel, etwas Schrott.",
+      "unlock": [
+        "flag:lab_offered"
+      ],
+      "done": [
+        "flag:lab_built"
+      ]
+    },
+    {
+      "id": "lab_more",
+      "title": "Das Labor ausbauen",
+      "text": "Mikroskop, Terrarium, Abschirmkasten, Auswertungsplatz – jeder Platz forscht für sich, alle gleichzeitig. Was ich einbauen kann, zeigt der Waschtisch.",
+      "unlock": [
+        "flag:lab_built"
+      ],
+      "done": [
+        "flag:lab_microscope",
+        "flag:lab_terrarium",
+        "flag:lab_shield",
+        "flag:lab_screen"
+      ]
+    },
+    {
+      "id": "dictaphone",
+      "title": "Georgs Diktiergerät",
+      "text": "Wenn draußen wieder eine Stimme ruft, die nicht echt ist, soll das Diktiergerät in meiner Tasche mitlaufen.",
+      "unlock": [
+        "got:dictaphone"
+      ],
+      "done": [
+        "got:rec_voice"
+      ]
+    },
+    {
+      "id": "footage",
+      "title": "Was die Kameras sehen",
+      "text": "Die Kameras zeichnen auf. Mit dem alten Laptop im Labor kann ich die Aufnahmen Bild für Bild auswerten.",
+      "unlock": [
+        "got:rec_creature"
+      ],
+      "done": [
+        "flag:done_an_rec_creature"
+      ]
     }
   ],
   "daily": [

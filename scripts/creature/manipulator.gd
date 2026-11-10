@@ -126,6 +126,7 @@ func _lure() -> void:
 	if kind == _last_lure and lures.size() > 1:
 		kind = lures[(lures.find(kind) + 1 + _rng.randi() % (lures.size() - 1)) % lures.size()]
 	_last_lure = kind
+	_listen(at)
 	match kind:
 		"music_box":
 			SoundBank.play_at(scene, "music_box", at, 0.0)
@@ -153,6 +154,20 @@ func _lure() -> void:
 		_:
 			# Geräusche aus deinem eigenen Haus – nur kommen sie aus dem Wald
 			SoundBank.play_at(scene, kind, at, 2.0)
+
+
+## Forschung 2.0: Diktiergerät schneidet mit, Stimmfilter verrät die falsche Stimme.
+func _listen(at: Vector3) -> void:
+	if _player == null:
+		return
+	var d := _player.global_position.distance_to(at)
+	if Inventory.count("dictaphone") > 0 and Inventory.count("rec_voice") <= 0 and not Research.done.has("an_voice") \
+			and d < float(Research.gadget("dictaphone", "range", 70.0)):
+		if Inventory.add("rec_voice", 1) > 0:
+			EventBus.notify("Das Diktiergerät in deiner Tasche läuft. Es hat das aufgenommen.", 3.5)
+	if Inventory.count("voice_filter") > 0 and d < float(Research.gadget("voice_filter", "range", 70.0)):
+		EventBus.notify("Der Stimmfilter knistert: Das war kein echtes Geräusch.", 3.0)
+		SoundBank.play_ui(self, "static", -14.0, 1.8)
 
 
 func _vanish(ambush: bool) -> void:

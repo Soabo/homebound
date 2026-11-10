@@ -6,7 +6,11 @@ signal changed
 ## Schnellplätze oder Auswahl haben sich geändert
 signal hotbar_changed
 
-const MAX_WEIGHT := 40.0
+const BASE_WEIGHT := 40.0
+## Traglast: 40 kg, mit der Leichtmetall-Trage (Forschung) mehr.
+var MAX_WEIGHT: float:
+	get:
+		return BASE_WEIGHT + (float(Research.gadget("alloy_frame", "extra_kg", 15.0)) if items.get("alloy_frame", 0) > 0 else 0.0)
 var _was_overloaded: bool = false
 
 
@@ -173,6 +177,9 @@ func use(id: String) -> bool:
 		if effect.has(k):
 			eat[k] = effect[k]
 	Survival.apply(eat)
+	if effect.has("buff"):
+		Research.add_buff(String(effect["buff"]), float(effect.get("hours", 8.0)))
+		EventBus.notify("Du riechst jetzt nach nassem Laub und Eisen. (%d Std.)" % int(effect.get("hours", 8.0)), 3.5)
 	if effect.has("heal"):
 		var pl := get_tree().get_first_node_in_group("player")
 		if pl:

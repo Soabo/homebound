@@ -48,6 +48,7 @@ static func _aussenstelle(root: Node3D) -> void:
 		BuildKit.box(main, Vector3(0.5, 0.35, 0.05), Vector3(-9.0 + k * 3.2, 1.0, -3.9), PlaceKit.mat("dark"), false)
 	BuildKit.box(main, Vector3(0.5, 1.8, 2.4), Vector3(-10.7, 0.9, 1.0), PlaceKit.mat("steel_dark"), true)
 	PlaceKit.note(main, "ast_wurzelwerk", Vector3(-9.0, 0.79, -3.5))
+	PlaceKit.loot(main, "Drive", "rz_drive", 1, Vector3(-5.8, 0.79, -3.55), "card")
 	PlaceKit.note(main, "ast_einsatzplan", Vector3(-5.8, 0.79, -3.5))
 	PlaceKit.note(main, "ast_risiken", Vector3(-10.4, 0.06, 3.6))
 	PlaceKit.loot(main, "Electronics", "electronics", 4, Vector3(-7.5, 0.06, 3.5), "case")

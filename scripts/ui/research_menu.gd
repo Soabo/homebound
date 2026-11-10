@@ -8,7 +8,8 @@ var _root: Control
 var _title: Label
 var _info: Label
 var _list: VBoxContainer
-var _mode: String = ""   ## "", "station", "archive", "note"
+var _mode: String = ""   ## "", "station", "lab", "note"
+var _station: String = "device"
 var _note: String = ""
 var _last_result: String = ""
 var _tick: float = 0.0
@@ -78,9 +79,16 @@ func _player_free() -> bool:
 	return p != null and not p.input_locked and not get_tree().paused and not (menus and menus.is_open())
 
 
-func open_station() -> void:
+func open_station(st: String = "device") -> void:
 	_last_result = ""
+	_station = st
 	_open("station")
+
+
+## Labor-Übersicht: Plätze einbauen, Ladeschale, Wucherung.
+func open_lab() -> void:
+	_last_result = ""
+	_open("lab")
 
 
 func open_note(id: String) -> void:
@@ -116,7 +124,7 @@ func close() -> void:
 
 
 func _process(delta: float) -> void:
-	if _mode == "station":
+	if _mode in ["station", "lab"]:
 		_tick -= delta
 		if _tick <= 0.0:
 			_tick = 1.0
@@ -130,26 +138,51 @@ func _refresh() -> void:
 		c.queue_free()
 	match _mode:
 		"station": _fill_station()
+		"lab": _fill_lab()
 		"note": _fill_note()
 
 
-# --- Analysegerät -----------------------------------------------------
+# --- Stationen (Analysegerät und Labor) -----------------------------------
+
+## Spielstunden lesbar: „ca. 3 Std.“ bzw. „ca. 1,5 Tage“.
+static func fmt_hours(h: float) -> String:
+	if h >= 20.0:
+		return "ca. %s Tage" % ("%.1f" % (h / 24.0)).replace(".", ",")
+	if h >= 10.0:
+		return "ca. %d Std." % int(round(h))
+	return "ca. %s Std." % ("%.1f" % h).replace(".", ",")
+
 
 func _fill_station() -> void:
-	_title.text = Research.device_name()
-	var power := "Strom: " + ("läuft" if PowerManager.has_power() else "AUS – der Generator muss laufen")
-	if Research.tier >= 2:
-		power = "Eigene Energie – arbeitet doppelt so schnell"
-	_info.text = power
-	if Research.slot != "":
-		var id := Research.slot
+	var st := _station
+	_title.text = Research.station_name(st)
+	var info := ""
+	if st == "device":
+		info = "Strom: " + ("läuft" if PowerManager.has_power() else "AUS – der Generator muss laufen")
+		if Research.tier >= 2:
+			info = "Eigene Energie – arbeitet doppelt so schnell"
+	else:
+		var def: Dictionary = Research.lab_def().get("stations", {}).get(st, {})
+		info = String(def.get("info", ""))
+		if bool(def.get("power", false)):
+			info += "   Strom: " + ("läuft" if PowerManager.has_power() else "AUS")
+	if st == "shield":
+		info += "   Was hier läuft, strahlt nachts nicht nach außen."
+	_info.text = info
+	var id := String(Research.stations.get(st, ""))
+	if id != "":
 		var a := Research.analysis(id)
 		_list.add_child(_text("%s   (%s)" % [a.get("name", id), a.get("area", "")], 24, Color(0.85, 1.0, 1.0)))
+		var tags := _tags(id)
+		if tags != "":
+			_list.add_child(_text(tags, 15, Color(0.9, 0.7, 0.55)))
 		var pr := Research.progress_of(id)
-		var left := maxf(Research.hours_needed(id) * (1.0 - pr) / float(Research.SPEED.get(Research.tier, 1.0)), 0.0)
-		var status := "Analyse %d %%" % int(pr * 100.0)
+		var status := "Fortschritt %d %%" % int(pr * 100.0)
 		if pr < 1.0:
-			status += "   –   noch etwa %.1f Std." % left + ("" if Research.has_power_for_analysis() else "  (pausiert: kein Strom)") + ("" if Research.device_reads() else "  (pausiert: W-17 fehlt im Gerät)")
+			status += "   –   noch " + fmt_hours(Research.hours_left(id))
+			var why := Research.station_blocker(st)
+			if why != "":
+				status += "  (pausiert: %s)" % why
 		_list.add_child(_bar(pr))
 		_list.add_child(_text(status, 18, Color(0.7, 0.85, 0.85)))
 		_list.add_child(_text("Experimente:", 20, Color(0.9, 0.9, 0.8)))
@@ -163,10 +196,10 @@ func _fill_station() -> void:
 				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				row.add_child(l)
 			else:
-				var l := _text(String(exp.get("label", eid)), 19)
+				var l := _text(String(exp.get("label", eid)) + _effect_hint(String(exp.get("effect", ""))), 19)
 				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				row.add_child(l)
-				var blocker := Research.experiment_blocker(exp)
+				var blocker := Research.experiment_blocker(exp, st)
 				if blocker != "":
 					row.add_child(_text(blocker, 16, Color(0.85, 0.55, 0.45)))
 				else:
@@ -177,26 +210,68 @@ func _fill_station() -> void:
 		if _last_result != "":
 			_list.add_child(_text(_last_result, 18, Color(1.0, 0.9, 0.6)))
 		var out := _button("Herausnehmen")
-		out.pressed.connect(func() -> void: Research.take_out())
+		out.pressed.connect(func() -> void: Research.take_out(st))
 		_list.add_child(out)
 	else:
-		_list.add_child(_text("Kein Fund eingelegt.", 22, Color(0.85, 1.0, 1.0)))
+		_list.add_child(_text("Frei.", 22, Color(0.85, 1.0, 1.0)))
+		var avail := Research.available_projects(st)
 		var any := false
-		for find in Inventory.items:
-			var aid := Research.analysis_for_find(find)
-			if aid == "" or Research.done.has(aid):
-				continue
-			any = true
+		for pid: String in avail:
+			var a := Research.analysis(pid)
+			var find := String(a.get("find", ""))
 			var row := HBoxContainer.new()
-			var l := _text("%s  ×%d   →  %s" % [Inventory.display_name(find), Inventory.count(find), Research.analysis(aid).get("area", "")], 19)
+			row.add_theme_constant_override("separation", 12)
+			var tags := _tags(pid)
+			var have := Inventory.count(find)
+			var l := _text("%s   →  %s, %s%s" % [a.get("name", pid), a.get("area", ""), fmt_hours(Research.hours_needed(pid) * (1.0 - Research.progress_of(pid)) / Research.station_speed(st)),
+				("   [" + tags + "]") if tags != "" else ""], 18, Color(0.88, 0.9, 0.88) if have > 0 else Color(0.55, 0.58, 0.58))
 			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(l)
-			var b := _button("Einlegen")
-			b.pressed.connect(_on_insert.bind(find))
-			row.add_child(b)
+			if have > 0:
+				any = true
+				var b := _button("Einlegen")
+				b.pressed.connect(_on_insert.bind(pid))
+				row.add_child(b)
+			elif Research.seen.has(find):
+				row.add_child(_text("braucht: %s" % Inventory.display_name(find), 15, Color(0.75, 0.6, 0.5)))
+			else:
+				continue
 			_list.add_child(row)
+		var locked := 0
+		for pid: String in Research.data().get("analyses", {}):
+			if Research.station_of(pid) == st and not Research.done.has(pid) and not Research.requirements_met(pid):
+				locked += 1
 		if not any:
-			_list.add_child(_text("Du hast keine unerforschten Funde dabei. Draußen im Wald soll etwas abgestürzt sein …", 18, Color(0.6, 0.7, 0.7)))
+			var hint := "Du hast nichts dabei, was sich hier untersuchen lässt."
+			if st == "device" and Research.done.is_empty():
+				hint += " Draußen im Wald soll etwas abgestürzt sein …"
+			_list.add_child(_text(hint, 18, Color(0.6, 0.7, 0.7)))
+		if locked > 0:
+			_list.add_child(_text("Noch %d Projekt(e) an diesem Platz gesperrt – Voraussetzungen stehen im Forschungsbaum auf dem Tablet." % locked, 15, Color(0.55, 0.6, 0.62)))
+	_add_send_button()
+
+
+func _tags(id: String) -> String:
+	var a := Research.analysis(id)
+	var t: PackedStringArray = []
+	if bool(a.get("living", false)):
+		t.append("lebend – kann ausbrechen")
+	if float(a.get("signature", 0.0)) > 0.0 and Research.station_of(id) != "shield":
+		t.append("strahlt nachts nach außen")
+	return ", ".join(t)
+
+
+static func _effect_hint(effect: String) -> String:
+	match effect:
+		"noise": return "  (laut)"
+		"signal": return "  (strahlt kurz grell)"
+		"drain": return "  (zieht viel Strom)"
+		"hurt": return "  (riskant)"
+		"escape": return "  (die Probe wird unruhig)"
+	return ""
+
+
+func _add_send_button() -> void:
 	# Ergebnisse werden nicht hier gelesen, sondern aufs Tablet geschickt
 	var unsent := Research.unsent_results().size()
 	if unsent > 0:
@@ -212,18 +287,115 @@ func _fill_station() -> void:
 		_list.add_child(_text("Alle Ergebnisse sind auf dem Tablet.", 16, Color(0.55, 0.7, 0.7)))
 
 
-func _on_insert(find: String) -> void:
+func _on_insert(pid: String) -> void:
 	_last_result = ""
-	if Research.insert(find):
+	if Research.insert_project(_station, pid):
 		SoundBank.play_ui(self, "menu_click", -4.0)
 
 
 func _on_experiment(eid: String) -> void:
-	var r := Research.run_experiment(eid)
+	var r := Research.run_experiment(eid, _station)
 	if r != "":
 		_last_result = "Experiment durchgeführt – das Ergebnis kann ans Tablet gesendet werden."
 		SoundBank.play_ui(self, "signal", -10.0, 1.6)
 	_refresh()
+
+
+# --- Labor-Übersicht ------------------------------------------------------
+
+func _fill_lab() -> void:
+	_title.text = "Labor im Bad"
+	_info.text = "Jeder Platz arbeitet für sich – mehrere Projekte laufen gleichzeitig. Strom brauchen Mikroskop, Abschirmkasten und Auswertungsplatz."
+	var defs: Dictionary = Research.lab_def().get("stations", {})
+	for st: String in defs:
+		var def: Dictionary = defs[st]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 12)
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(col)
+		if Research.station_built(st):
+			var id := String(Research.stations.get(st, ""))
+			col.add_child(_text("✓ %s" % def.get("name", st), 20, Color(0.75, 0.95, 0.85)))
+			col.add_child(_text(("läuft: %s (%d %%)" % [Research.analysis(id).get("name", id), int(Research.progress_of(id) * 100.0)]) if id != "" else "frei", 15, Color(0.6, 0.75, 0.75)))
+			var b := _button("Öffnen")
+			b.pressed.connect(func() -> void: open_station(st))
+			row.add_child(b)
+		else:
+			col.add_child(_text(String(def.get("name", st)), 20, Color(0.85, 0.85, 0.75)))
+			col.add_child(_text(String(def.get("info", "")), 15, Color(0.6, 0.65, 0.65)))
+			col.add_child(_text("Material: " + _needs_text(def.get("needs", {})), 15, Color(0.7, 0.7, 0.6)))
+			var why := Research.station_build_blocker(st)
+			if why != "":
+				row.add_child(_text(why, 15, Color(0.85, 0.55, 0.45)))
+			else:
+				var b := _button("Einbauen")
+				b.pressed.connect(func() -> void:
+					var err := Research.build_station(st)
+					_last_result = err if err != "" else ""
+					SoundBank.play_ui(self, "menu_click", -4.0)
+					_refresh())
+				row.add_child(b)
+		_list.add_child(row)
+	# Ladeschale
+	var ch: Dictionary = Research.lab_def().get("charger", {})
+	if Research.charger_built:
+		var row := HBoxContainer.new()
+		var l := _text("✓ %s – %d geladene Zelle(n), nächste in %s" % [ch.get("name", "Ladeschale"), Research.charger_ready,
+			fmt_hours(maxf(float(ch.get("hours", 48.0)) - Research.charger_hours, 0.0))], 18, Color(0.75, 0.95, 0.85))
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		if Research.charger_ready > 0:
+			var b := _button("Zelle nehmen")
+			b.pressed.connect(func() -> void:
+				Research.take_charged_cell()
+				_refresh())
+			row.add_child(b)
+		_list.add_child(row)
+	elif Research.has_grant("charger"):
+		var row := HBoxContainer.new()
+		var l := _text("%s – %s  (Material: %s)" % [ch.get("name", ""), ch.get("info", ""), _needs_text(ch.get("needs", {}))], 16, Color(0.85, 0.85, 0.75))
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		var why := Research.charger_blocker()
+		if why != "":
+			row.add_child(_text(why, 15, Color(0.85, 0.55, 0.45)))
+		else:
+			var b := _button("Bauen")
+			b.pressed.connect(func() -> void:
+				Research.build_charger()
+				_refresh())
+			row.add_child(b)
+		_list.add_child(row)
+	if Research.lab_bloom:
+		var b := _button("Wucherung im Bad abkratzen")
+		b.custom_minimum_size = Vector2(320, 40)
+		b.pressed.connect(func() -> void:
+			Research.clean_bloom()
+			_refresh())
+		_list.add_child(b)
+	var drops := AlienDrops.get_for(get_tree())
+	if drops and drops.loose_count() > 0:
+		_list.add_child(_text("Irgendwo im Haus ist noch eine entkommene Probe. Nachts hört man sie kratzen.", 17, Color(1.0, 0.75, 0.55)))
+	var sig := Research.signature()
+	_list.add_child(_text("Fremde Signatur gerade: %s" % signature_bar(sig), 16, Color(0.7, 0.75, 0.8)))
+	if _last_result != "":
+		_list.add_child(_text(_last_result, 17, Color(1.0, 0.85, 0.6)))
+	_add_send_button()
+
+
+static func _needs_text(needs: Dictionary) -> String:
+	var parts: PackedStringArray = []
+	for it: String in needs:
+		parts.append("%s %d/%d" % [Inventory.display_name(it), Inventory.count(it), int(needs[it])])
+	return ", ".join(parts)
+
+
+## ▮▮▮▯▯ – fünf Stufen bis Signatur 1.25
+static func signature_bar(sig: float) -> String:
+	var n := clampi(int(ceil(sig / 0.25)), 0, 5)
+	var word := "keine" if sig < 0.05 else ("schwach" if sig < 0.4 else ("deutlich" if sig < 0.9 else "grell"))
+	return "%s%s  %s" % ["▮".repeat(n), "▯".repeat(5 - n), word]
 
 
 # --- Archiv -------------------------------------------------------------
@@ -256,7 +428,7 @@ static func fill_archive(list: VBoxContainer) -> void:
 				revealed = true
 				col.add_child(_text("✓ %s" % a.get("name", id), 19, Color(0.85, 0.95, 0.9)))
 				col.add_child(_text(String(a.get("summary", "")), 16, Color(0.78, 0.86, 0.84)))
-			elif Research.slot == id or not sent_exp.is_empty() or Research.done.has(id):
+			elif Research.running_at(id) != "" or not sent_exp.is_empty() or Research.done.has(id):
 				var state := "Analyse fertig – Ergebnis noch am Analysegerät" if Research.done.has(id) else "wird untersucht (%d %%)" % int(Research.progress_of(id) * 100.0)
 				col.add_child(_text("◐ %s – %s" % [a.get("name", id), state], 17, Color(0.8, 0.85, 0.7)))
 			elif Research.seen.has(find):

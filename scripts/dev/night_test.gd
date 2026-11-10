@@ -64,6 +64,10 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "lab":
+		await _lab_test()
+		get_tree().quit()
+		return
 	if mode == "w17":
 		await _w17_test()
 		get_tree().quit()
@@ -1480,3 +1484,297 @@ func _w17_test() -> void:
 	var st := Research.get_state()
 	Research.set_state(st)
 	print("W17 Spielstand: im Gerät %s" % Research.w17_in_device)
+
+
+## Forschung 2.0: Daten prüfen, Labor im Bad, Stationen parallel, Ausbrüche, Signatur, Werkzeuge, Funde, Baum.
+func _lab_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	player.global_position = Vector3(3.5, Cabin.FLOOR_Y + 0.1, -2.5)
+	# --- Daten: alles, worauf verwiesen wird, muss es geben
+	var d := Research.data()
+	var errs: PackedStringArray = []
+	var analyses: Dictionary = d.get("analyses", {})
+	var links: Dictionary = d.get("links", {})
+	var stations: Dictionary = d["lab"]["stations"]
+	for id: String in analyses:
+		var a: Dictionary = analyses[id]
+		if DataDB.item(String(a.get("find", ""))).is_empty():
+			errs.append("%s: Fund %s fehlt" % [id, a.get("find", "")])
+		var st := String(a.get("station", "device"))
+		if st != "device" and not stations.has(st):
+			errs.append("%s: Station %s" % [id, st])
+		for r: String in a.get("requires", []):
+			if not analyses.has(r) and not links.has(r):
+				errs.append("%s: Voraussetzung %s" % [id, r])
+		for e: Dictionary in a.get("experiments", []):
+			var n := String(e.get("needs", ""))
+			if n.begins_with("item:") and DataDB.item(n.substr(5)).is_empty():
+				errs.append("%s/%s: %s" % [id, e.get("id", ""), n])
+			if not n.begins_with("item:") and not n.begins_with("built:") and not n in ["", "power", "light", "alien", "heat", "night", "day", "water"]:
+				errs.append("%s/%s: unbekannt %s" % [id, e.get("id", ""), n])
+	for l: String in links:
+		for n: String in links[l].get("needs", []):
+			if not analyses.has(n):
+				errs.append("%s: braucht %s" % [l, n])
+		for u: String in links[l].get("unlocks", []):
+			var found := false
+			for r: Dictionary in DataDB.recipes():
+				if r["id"] == u:
+					found = true
+			if not found:
+				errs.append("%s: Rezept %s" % [l, u])
+	for r: Dictionary in DataDB.recipes():
+		if String(r.get("requires", "")) != "" and not links.has(String(r["requires"])):
+			errs.append("Rezept %s: %s" % [r["id"], r["requires"]])
+		for it: String in r.get("needs", {}):
+			if DataDB.item(it).is_empty():
+				errs.append("Rezept %s: Zutat %s" % [r["id"], it])
+	for dd: Dictionary in d.get("drops", []):
+		if DataDB.item(String(dd["item"])).is_empty():
+			errs.append("Fundstelle: %s" % dd["item"])
+	var living := 0
+	var longest := 0.0
+	for id: String in analyses:
+		living += 1 if bool(analyses[id].get("living", false)) else 0
+		longest = maxf(longest, float(analyses[id].get("hours", 0.0)))
+	print("LAB Daten: %d Projekte, %d Verknüpfungen, %d lebend, längstes %.0f Std., Fehler: %s" % [analyses.size(), links.size(), living, longest, ", ".join(errs) if not errs.is_empty() else "keine"])
+	# --- Labor freischalten und bauen
+	TimeManager.set_time(5, 10.0)
+	PowerManager.add_fuel(100.0)
+	PowerManager.start_generator()
+	Research.tier = 1
+	Research.w17_in_device = true
+	for id: String in ["an_metal", "an_cell", "an_tissue"]:
+		Research.done.append(id)
+	Research.send_results()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("LAB angeboten: %s, Notiz: %s" % [Research.lab_offered, Research.notes.has("lab_decision")])
+	var setup := scene.get_node("Cabin/Lab/LabSetup") as Interactable
+	print("LAB Hinweis vorher: %s" % setup.get_prompt(player))
+	setup.interact(player)
+	print("LAB ohne Material gebaut: %s" % Research.lab_built)
+	for it: String in ["planks", "nails", "scrap", "electronics", "battery", "cans", "old_laptop"]:
+		Inventory.add(it, 24 if it != "old_laptop" else 1)
+	setup.interact(player)
+	await get_tree().process_frame
+	print("LAB gebaut: %s, Platte sichtbar: %s, Plätze %s" % [Research.lab_built, (scene.get_node("Cabin/Lab/Counter") as Node3D).visible, Research.lab_stations])
+	print("LAB Terrarium ohne Erkenntnis: %s" % Research.station_build_blocker("terrarium"))
+	Research.done.append("an_fungus")
+	for st: String in ["microscope", "terrarium", "shield", "screen"]:
+		var err := Research.build_station(st)
+		print("LAB Einbau %s: %s, sichtbar %s" % [st, "OK" if err == "" else err, (scene.get_node("Cabin/Lab/Station_" + st) as Node3D).visible])
+	# --- vier Projekte gleichzeitig
+	for it: String in ["alien_tissue", "glow_fungus", "energy_cell", "rz_drive"]:
+		Inventory.add(it, 2)
+	var plan := {"microscope": "an_tissue_nerves", "terrarium": "an_fungus_culture", "shield": "an_cell_drain", "screen": "an_rz_drive"}
+	for st: String in plan:
+		print("LAB Einlegen %s -> %s: %s" % [st, plan[st], Research.insert_project(st, plan[st])])
+	var menu := scene.get_node("ResearchMenu") as ResearchMenu
+	menu.open_station("microscope")
+	await get_tree().process_frame
+	menu.close()
+	menu.open_lab()
+	await get_tree().process_frame
+	menu.close()
+	var t0 := Research.now()
+	for k in 10:
+		TimeManager.set_time(5 + int((10.0 + (k + 1) * 4.5) / 24.0), fmod(10.0 + (k + 1) * 4.5, 24.0))
+		await get_tree().process_frame
+		await get_tree().process_frame
+	print("LAB nach %.0f Std.: %s" % [Research.now() - t0, ", ".join(plan.values().map(func(id: String) -> String: return "%s %d%%" % [id, int(Research.progress_of(id) * 100.0)]))])
+	# Experimente (Tag und Nacht)
+	PowerManager.add_fuel(100.0)
+	PowerManager.start_generator()
+	Inventory.add("wood", 2)
+	var ran := 0
+	for phase: float in [14.0, 23.0]:
+		TimeManager.set_time(TimeManager.day + 1, phase)
+		await get_tree().process_frame
+		for st: String in plan:
+			var id := String(Research.stations.get(st, ""))
+			for e: Dictionary in Research.analysis(id).get("experiments", []):
+				if Research.experiment_blocker(e, st) == "" and Research.run_experiment(String(e["id"]), st) != "":
+					ran += 1
+	await get_tree().process_frame
+	print("LAB Strom: %s" % PowerManager.has_power())
+	print("LAB Experimente: %d, fertig: %s" % [ran, ", ".join(plan.values().filter(func(id: String) -> bool: return Research.done.has(id)))])
+	# --- Ausbrüche
+	var drops := AlienDrops.get_for(get_tree())
+	Research.done.append_array(["an_tissue_nerves", "an_organism", "an_node", "an_seeds"])
+	Inventory.add("alien_tissue", 1)
+	Inventory.add("spore_pod", 1)
+	Inventory.add("black_soil", 1)
+	Inventory.add("hull_sample", 1)
+	Research.done.append("an_hull")
+	var before_patches := WorldState.patches.size()
+	for pr: Array in [["an_tissue_culture", "crawl"], ["an_spores", "spread"], ["an_soil", "bloom"], ["an_hull_living", "call"]]:
+		Research.stations["terrarium"] = ""
+		Research.insert_project("terrarium", pr[0])
+		Research.escape("terrarium")
+		await get_tree().process_frame
+	var drone_planned := ThreatDirector.events.any(func(e: Dictionary) -> bool: return e["type"] == "drone" and not e["done"])
+	print("LAB Ausbrüche: %d, lose Probe im Haus %d, Wucherungen %d -> %d, Bad wuchert %s (sichtbar %s), Drohne geplant %s, Ausschlag %s" % [Research.escapes,
+		drops.loose_count(), before_patches, WorldState.patches.size(), Research.lab_bloom, (scene.get_node("Cabin/Lab/Bloom") as Node3D).visible, drone_planned, Research.now() < Research.flare_until])
+	var loose: ItemPickup = null
+	for c in drops.get_children():
+		if c is ItemPickup and (c as ItemPickup).amount > 0 and (c as ItemPickup).item_id == "alien_tissue":
+			loose = c
+	print("LAB lose Probe drinnen: %s" % (Cabin.is_inside(loose.global_position) if loose else "keine"))
+	if loose:
+		loose.interact(player)
+	setup.secondary_interact(player)
+	print("LAB eingefangen: lose %d, abgekratzt %s, Leuchtpilz %d" % [drops.loose_count(), not Research.lab_bloom, Inventory.count("glow_fungus")])
+	# --- Signatur
+	Research.flare_until = -1.0
+	for st: String in Research.stations:
+		Research.stations[st] = ""
+	Inventory.items.erase("w17")
+	TimeManager.set_time(TimeManager.day + 1, 12.0)
+	await get_tree().process_frame
+	var s0 := Research.signature()
+	Inventory.add("w17", 1)
+	Inventory.add("crystal_shard", 2)
+	var s1 := Research.carried_signature()
+	Inventory.add("signature_pouch", 1)
+	var s2 := Research.carried_signature()
+	Inventory.remove("w17", 1)
+	Inventory.remove("crystal_shard", 2)
+	Inventory.remove("signature_pouch", 1)
+	Inventory.add("crystal_shard", 1)
+	Research.done.erase("an_crystal_field")
+	Research.done.append("an_crystal")
+	Research.stations["device"] = ""
+	Research.insert_project("shield", "an_crystal_field")
+	TimeManager.set_time(TimeManager.day, 23.0)
+	await get_tree().process_frame
+	var s_shield := Research.home_signature()
+	Research.take_out("shield")
+	Research.tier = 1
+	Inventory.add("seeker_lens", 1)
+	Research.stations["screen"] = ""
+	Inventory.add("rec_creature", 1)
+	Research.insert_project("screen", "an_rec_creature")
+	var s_screen := Research.home_signature()
+	print("LAB Signatur: leer %.2f, mit W-17+Kristallen %.2f, mit Dämpfertasche %.2f, Kristall im Kasten nachts %.2f, Aufnahme am Laptop nachts %.2f, erwartet %.2f" % [s0, s1, s2, s_shield, s_screen, Research.expected_signature()])
+	# --- Werkzeuge: Verknüpfen, bauen, wirken
+	for id: String in ["an_rec_creature", "an_claw", "an_saliva", "an_fog", "an_water", "an_comb", "an_metal_struct", "an_crystal_field", "an_pillar",
+			"an_drone_memory", "an_lens", "an_seeker_lens", "an_fungus_culture", "an_spores", "an_implant_signal", "an_seeker_thread", "an_rec_drone", "an_voice", "an_membrane", "an_drone"]:
+		if not Research.done.has(id):
+			Research.done.append(id)
+	Research.stations["screen"] = ""
+	Research.send_results()
+	var linked: PackedStringArray = []
+	for l: String in ["link_mind", "link_alarm", "link_scent", "link_voice", "link_decoy", "link_rhythm", "link_lure", "link_salt", "link_spores",
+			"link_filter", "link_heat", "link_alloy", "link_pouch", "link_charger"]:
+		if Research.link(l):
+			linked.append(l.trim_prefix("link_"))
+	print("LAB verknüpft: %s, Vorhersage %s, Ladeschale %s" % [", ".join(linked), Research.has_grant("forecast"), Research.charger_blocker()])
+	for it: String in ["wool", "metal_fragment", "battery", "electronics", "creature_claw", "manip_membrane", "crystal_shard", "stone", "planks", "hull_sample",
+			"seeker_thread", "scrap", "creature_saliva", "fog_jar", "wax", "cans", "spore_pod", "alien_comb", "bottle_empty", "tainted_sample", "organism_node",
+			"drone_lens", "glow_fungus", "seeker_lens"]:
+		Inventory.add(it, 6)
+	var made: PackedStringArray = []
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] in ["mind_dampener", "creature_alarm", "voice_filter", "heat_stone", "alloy_frame", "signature_pouch", "scent_mask", "spore_mask",
+				"comb_filter", "root_salt", "drone_decoy", "light_lure"]:
+			var res := Workbench.craft(r, get_tree())
+			made.append("%s %s" % [r["id"], "OK" if res == "" else res])
+	print("LAB gebaut: %s" % ", ".join(made))
+	print("LAB Trage: %.0f kg" % Inventory.MAX_WEIGHT)
+	player.global_position = Vector3(-30, Terrain.height_at(-30, 40) + 0.2, 40)
+	TimeManager.set_time(TimeManager.day, 23.0)
+	var stone := Inventory.count("heat_stone")
+	var w_with := Survival.warmth_rate(player)
+	Inventory.remove("heat_stone", stone)
+	var w_without := Survival.warmth_rate(player)
+	Inventory.add("heat_stone", 1)
+	print("LAB Wärmekristall: Verlust %.1f statt %.1f pro Std." % [-w_with, -w_without])
+	print("LAB Tarnung: benutzt %s, wirkt %s" % [Inventory.use("scent_mask"), Research.buff_active("scent")])
+	print("LAB Nervenfühler ohne Kreatur: „%s“" % GadgetHud.alarm_text(Vector3.ZERO, Basis()))
+	# Wurzelsalz an einer Wucherung
+	var patch := get_tree().get_first_node_in_group("organism_patch") as Interactable
+	if patch:
+		var n0 := WorldState.patches.size()
+		print("LAB Wurzelsalz: %s" % patch.get_prompt(player))
+		patch.interact(player)
+		print("LAB Wucherungen %d -> %d" % [n0, WorldState.patches.size()])
+	# Drohnenköder
+	var decoy := Structure.new()
+	decoy.type = "drone_decoy"
+	decoy.position = Vector3(-14, Terrain.height_at(-14, 22), 22)
+	scene.add_child(decoy)
+	var dr := AlienDrone.new()
+	scene.add_child(dr)
+	await get_tree().process_frame
+	print("LAB Drohne vom Köder abgelenkt: %s, erstes Ziel %.0f m vom Köder" % [dr.decoyed, Vector2(dr._path[0].x - decoy.position.x, dr._path[0].z - decoy.position.z).length() if not dr._path.is_empty() else -1.0])
+	dr.queue_free()
+	# Lichtköder und Sucher
+	var lure := Structure.new()
+	lure.type = "light_lure"
+	lure.position = player.global_position + Vector3(30, 0, 0)
+	lure.position.y = Terrain.height_at(lure.position.x, lure.position.z)
+	scene.add_child(lure)
+	Inventory.items.erase("seeker_lens")
+	var sk := Seeker.spawn_for(scene, player.global_position)
+	sk.global_position = player.global_position + Vector3(45, 0, 10)
+	sk.global_position.y = Terrain.height_at(sk.global_position.x, sk.global_position.z)
+	sk._path.clear()
+	sk.state = Seeker.State.WATCH
+	await get_tree().create_timer(1.0).timeout
+	print("LAB Sucher geht zum Lichtköder: %s (%s)" % [sk._lure.distance_to(lure.global_position) < 3.0, Seeker.State.keys()[sk.state]])
+	sk.queue_free()
+	lure.queue_free()
+	decoy.queue_free()
+	# --- Funde am Morgen
+	var counts := {}
+	for k in 12:
+		for it: String in drops.morning(["creature", "drone", "manipulator", "seeker", "change"]):
+			counts[it] = int(counts.get(it, 0)) + 1
+	var inside := 0
+	for c in drops.get_children():
+		if c is ItemPickup and Cabin.is_inside((c as Node3D).global_position) and (c as ItemPickup).item_id != "alien_tissue":
+			inside += 1
+	print("LAB Funde in 12 Morgen: %s, davon in der Hütte: %d" % [counts, inside])
+	Supplies.cameras = [{"slot": 0}]
+	drops.morning(["creature", "drone"])
+	var mon := get_tree().get_first_node_in_group("monitor_station")
+	print("LAB Aufnahmen am Monitor: %s" % str(drops.footage))
+	drops.collect_footage()
+	print("LAB Speicherkarten: Kreatur %d, Drohne %d" % [Inventory.count("rec_creature"), Inventory.count("rec_drone")])
+	# Diktiergerät beim Manipulator
+	Inventory.add("dictaphone", 1)
+	Inventory.items.erase("rec_voice")
+	Research.done.erase("an_voice")
+	var m := Manipulator.new()
+	scene.add_child(m)
+	await get_tree().process_frame
+	m._listen(player.global_position + Vector3(10, 0, 0))
+	print("LAB Stimme aufgenommen: %d" % Inventory.count("rec_voice"))
+	m.queue_free()
+	# --- Baum
+	var tree := ResearchTree.new()
+	menu.add_child(tree)
+	await get_tree().process_frame
+	var overlap := 0
+	var keys := tree.pos.keys()
+	for i in keys.size():
+		for j in range(i + 1, keys.size()):
+			if Rect2(tree.pos[keys[i]], ResearchTree.BOX).intersects(Rect2(tree.pos[keys[j]], ResearchTree.BOX)):
+				overlap += 1
+	var maxd := 0
+	for id: String in tree.depth:
+		maxd = maxi(maxd, tree.depth[id])
+	print("LAB Baum: %d Kästchen, %d Stufen, Überlappungen %d, Größe %s" % [tree.pos.size(), maxd + 1, overlap, tree.custom_minimum_size])
+	print("LAB Beschreibung: %s" % ResearchTree.describe("an_hull_living").left(120))
+	tree.queue_free()
+	# --- Spielstand
+	var st := Research.get_state()
+	var ds := drops.get_state()
+	Research.set_state(st)
+	drops.set_state(ds)
+	await get_tree().process_frame
+	print("LAB Spielstand: Labor %s, Plätze %d, Ausbrüche %d, Funde %d" % [Research.lab_built, Research.lab_stations.size(), Research.escapes, drops.entries.size()])

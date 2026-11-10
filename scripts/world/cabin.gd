@@ -895,12 +895,16 @@ func _build_bathroom() -> void:
 	# Zahnputzbecher, Seife
 	BuildKit.cylinder(self, 0.03, 0.09, Vector3(x1 - 0.42, y + 0.905, sz + 0.2), BuildKit.color_mat(Color(0.4, 0.6, 0.75), 0.3), false, Vector3.ZERO, -1.0, 8)
 	BuildKit.box(self, Vector3(0.08, 0.03, 0.05), Vector3(x1 - 0.42, y + 0.875, sz - 0.18), BuildKit.color_mat(Color(0.9, 0.75, 0.55), 0.5), false)
-	# Handtuchhalter mit Handtuch, Badematte
-	BuildKit.cylinder(self, 0.012, 0.6, Vector3(x1 - 0.06, y + 1.1, -3.3), chrome, false, Vector3(90, 0, 0), -1.0, 6)
-	BuildKit.box(self, Vector3(0.03, 0.55, 0.45), Vector3(x1 - 0.075, y + 0.85, -3.3), BuildKit.tex_mat("fabric", 0.3, Color(1.5, 1.2, 1.0)), false)
+	# Handtuchhalter mit Handtuch an der Flurwand (die Ostwand gehört später dem Labor), Badematte
+	BuildKit.cylinder(self, 0.012, 0.6, Vector3(3.0, y + 1.1, z1 - 0.06), chrome, false, Vector3(0, 0, 90), -1.0, 6)
+	BuildKit.box(self, Vector3(0.45, 0.55, 0.03), Vector3(3.0, y + 0.85, z1 - 0.075), BuildKit.tex_mat("fabric", 0.3, Color(1.5, 1.2, 1.0)), false)
 	BuildKit.box_mm(self, Vector3(x0 + 0.2, y + 0.002, z0 + 1.0), Vector3(x0 + 0.9, y + 0.012, z0 + 1.45), BuildKit.tex_mat("rug", 0.6, Color(0.9, 0.75, 0.6)), false)
 	# Wäschekorb in der Ecke
 	BuildKit.cylinder(self, 0.2, 0.5, Vector3(x1 - 0.3, y + 0.25, -1.45), BuildKit.tex_mat("logs", 0.25, Color(1.3, 1.15, 0.9)), true, Vector3.ZERO, 0.17, 12)
+	# Labor (Forschung 2.0): erscheint, sobald Christian den Waschtisch umbaut
+	var lab := Lab.new()
+	lab.name = "Lab"
+	add_child(lab)
 
 
 ## Tragbarer Stromerzeuger im Rohrrahmen: Motor mit Kühlrippen und Seilzugstarter, Lichtmaschine,

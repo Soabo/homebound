@@ -199,6 +199,7 @@ func set_on(v: bool, night_event: bool = false) -> void:
 			if msg != "":
 				var again := "" if has_new_message() else "(Wiederholung) "
 				EventBus.notify("Im Radio: " + again + msg, 8.0)
+				_maybe_record_radio()
 				heard_day = TimeManager.day
 				if msg == String(_data.get("crash_hint", "")):
 					_hint_given = true
@@ -206,6 +207,16 @@ func set_on(v: bool, night_event: bool = false) -> void:
 	else:
 		_player3d.stop()
 	SoundBank.play_at(self, "switch", to_global(anchor), -6.0, 0.7)
+
+
+## Mit Georg Wendts Diktiergerät lässt sich ein Funkspruch mitschneiden (Forschung: Funkspruch entschlüsseln).
+func _maybe_record_radio() -> void:
+	if Inventory.count("dictaphone") <= 0 or Inventory.count("rec_radio") > 0 or Research.done.has("an_radio_cipher"):
+		return
+	if TimeManager.day < int(Research.gadget("dictaphone", "radio_from_day", 5)):
+		return
+	if Inventory.add("rec_radio", 1) > 0:
+		EventBus.notify("Zwischen den Meldungen: Zahlen. Das Diktiergerät hat mitgeschnitten.", 4.0)
 
 
 func _fade_out_later(id: int) -> void:

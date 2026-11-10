@@ -1,37 +1,514 @@
 {
   "_info": "Werkbank-Rezepte (GDD 6/7.2/12.7). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand, requires = nötige Forschung (Verknüpfung aus data/research/research.json), blueprint = nötiger Bauplan (in der Welt gefunden).",
   "recipes": [
-    {"id": "planks",          "needs": {"wood": 1},                                  "gives": {"planks": 2}},
-    {"id": "nails",           "needs": {"scrap": 1},                                 "gives": {"nails": 12}},
-    {"id": "fence_panel",     "needs": {"planks": 3, "nails": 6},                    "gives": {"fence_panel": 1}},
-    {"id": "spike_barricade", "needs": {"wood": 3, "nails": 6},                      "gives": {"spike_barricade": 1}},
-    {"id": "stone_wall",      "needs": {"stone": 4},                                 "gives": {"stone_wall": 1}},
-    {"id": "bear_trap",       "needs": {"scrap": 2, "nails": 4},                     "gives": {"bear_trap": 1}},
-    {"id": "snare",           "needs": {"scrap": 1, "wood": 1},                       "gives": {"snare": 2}},
-    {"id": "gasifier_kit",    "name": "Holzvergaser-Bausatz (am Generator anbauen)", "needs": {"scrap": 8, "nails": 10, "planks": 2, "cans": 4}, "gives": {"gasifier_kit": 1}},
-    {"id": "cell_adapter",    "name": "Zellen-Adapter (Energiezellen im Generator)", "requires": "link_power", "needs": {"scrap": 2, "electronics": 2, "metal_fragment": 1}, "gives": {"cell_adapter": 1}},
-    {"id": "boil_water",      "station": "stove", "name": "Wasser abkochen", "needs": {"water_raw": 1}, "gives": {"water": 1}, "minutes": 20},
-    {"id": "boil_water2",     "station": "stove", "name": "Wasser abkochen (2 Flaschen)", "needs": {"water_raw": 2}, "gives": {"water": 2}, "minutes": 25},
-    {"id": "meat_cooked",     "station": "stove", "needs": {"meat_raw": 1}, "gives": {"meat_cooked": 1}, "minutes": 25},
-    {"id": "baked_potato",    "station": "stove", "needs": {"potato": 2}, "gives": {"baked_potato": 1}, "minutes": 20},
-    {"id": "veg_soup",        "station": "stove", "needs": {"carrot": 2, "potato": 1, "water_raw": 1}, "gives": {"veg_soup": 1, "bottle_empty": 1}, "minutes": 40},
-    {"id": "veg_soup2",       "station": "stove", "name": "Gemüsesuppe (mit Radieschen)", "needs": {"radish": 3, "carrot": 1, "water": 1}, "gives": {"veg_soup": 1, "bottle_empty": 1}, "minutes": 35},
-    {"id": "stew",            "station": "stove", "needs": {"meat_raw": 1, "potato": 1, "carrot": 1, "water_raw": 1}, "gives": {"stew": 1, "bottle_empty": 1}, "minutes": 50},
-    {"id": "can_alarm",       "needs": {"cans": 4, "scrap": 1},                      "gives": {"can_alarm": 1}},
-    {"id": "motion_light",    "needs": {"scrap": 2, "battery": 1, "electronics": 1}, "gives": {"motion_light": 1}},
-    {"id": "analyzer_improvised", "name": "Funkgerät zum Analysegerät umbauen", "needs": {"electronics": 2, "battery": 1, "scrap": 2, "w17": 1}, "special": "build_analyzer"},
-    {"id": "resonance_sensor", "requires": "link_power", "needs": {"scrap": 2, "electronics": 1, "energy_cell": 1}, "gives": {"resonance_sensor": 1}},
-    {"id": "strobe_light",     "requires": "link_light", "needs": {"scrap": 2, "battery": 1, "glow_fungus": 2}, "gives": {"strobe_light": 1}},
-    {"id": "water_filter",     "name": "Wasserfilter (Holzkohle und Dosen)", "needs": {"wood": 1, "cans": 2, "scrap": 1}, "gives": {"water_filter": 1}},
-    {"id": "signal_jammer",    "requires": "link_drone",  "needs": {"electronics": 2, "battery": 1, "drone_part": 1}, "gives": {"signal_jammer": 1}},
-    {"id": "growth_barrier",   "requires": "link_growth", "needs": {"scrap": 1, "alien_plant": 2, "cans": 2}, "gives": {"growth_barrier": 1}},
-    {"id": "cable_winch",      "name": "Kabelwinde (Bauplan Messstelle)", "blueprint": "bp_winch", "needs": {"scrap": 6, "electronics": 1, "planks": 2}, "gives": {"cable_winch": 1}},
-    {"id": "dir_antenna",      "name": "Richtantenne (Bauplan Funkmast)", "blueprint": "bp_antenna", "needs": {"radio_parts": 1, "electronics": 3, "scrap": 4}, "gives": {"dir_antenna": 1}},
-    {"id": "blast_charge",     "name": "Sprengladung (Bauplan Steinbruch)", "blueprint": "bp_charge", "needs": {"explosive": 1, "electronics": 1, "battery": 1}, "gives": {"blast_charge": 1}},
-    {"id": "overload_module",  "name": "Überlastungsmodul (Bauplan Tunnel)", "blueprint": "bp_overload", "needs": {"energy_cell": 2, "electronics": 3, "metal_fragment": 1}, "gives": {"overload_module": 1}},
-    {"id": "sleeping_bag",     "name": "Schlafsack", "needs": {"wool": 3, "sheepskin": 1}, "gives": {"sleeping_bag": 1}},
-    {"id": "campfire",         "name": "Lagerfeuer-Bündel (zum Mitnehmen)", "needs": {"wood": 3}, "gives": {"campfire": 1}},
-    {"id": "candle_light",     "name": "Kerzen aus Wachs", "needs": {"wax": 2}, "gives": {"candles": 3}},
-    {"id": "door_upgrade",    "name": "Haustür verstärken", "needs": {"scrap": 3, "planks": 4, "nails": 12}, "special": "door_upgrade"}
+    {
+      "id": "planks",
+      "needs": {
+        "wood": 1
+      },
+      "gives": {
+        "planks": 2
+      }
+    },
+    {
+      "id": "nails",
+      "needs": {
+        "scrap": 1
+      },
+      "gives": {
+        "nails": 12
+      }
+    },
+    {
+      "id": "fence_panel",
+      "needs": {
+        "planks": 3,
+        "nails": 6
+      },
+      "gives": {
+        "fence_panel": 1
+      }
+    },
+    {
+      "id": "spike_barricade",
+      "needs": {
+        "wood": 3,
+        "nails": 6
+      },
+      "gives": {
+        "spike_barricade": 1
+      }
+    },
+    {
+      "id": "stone_wall",
+      "needs": {
+        "stone": 4
+      },
+      "gives": {
+        "stone_wall": 1
+      }
+    },
+    {
+      "id": "bear_trap",
+      "needs": {
+        "scrap": 2,
+        "nails": 4
+      },
+      "gives": {
+        "bear_trap": 1
+      }
+    },
+    {
+      "id": "snare",
+      "needs": {
+        "scrap": 1,
+        "wood": 1
+      },
+      "gives": {
+        "snare": 2
+      }
+    },
+    {
+      "id": "gasifier_kit",
+      "name": "Holzvergaser-Bausatz (am Generator anbauen)",
+      "needs": {
+        "scrap": 8,
+        "nails": 10,
+        "planks": 2,
+        "cans": 4
+      },
+      "gives": {
+        "gasifier_kit": 1
+      }
+    },
+    {
+      "id": "cell_adapter",
+      "name": "Zellen-Adapter (Energiezellen im Generator)",
+      "requires": "link_power",
+      "needs": {
+        "scrap": 2,
+        "electronics": 2,
+        "metal_fragment": 1
+      },
+      "gives": {
+        "cell_adapter": 1
+      }
+    },
+    {
+      "id": "boil_water",
+      "station": "stove",
+      "name": "Wasser abkochen",
+      "needs": {
+        "water_raw": 1
+      },
+      "gives": {
+        "water": 1
+      },
+      "minutes": 20
+    },
+    {
+      "id": "boil_water2",
+      "station": "stove",
+      "name": "Wasser abkochen (2 Flaschen)",
+      "needs": {
+        "water_raw": 2
+      },
+      "gives": {
+        "water": 2
+      },
+      "minutes": 25
+    },
+    {
+      "id": "meat_cooked",
+      "station": "stove",
+      "needs": {
+        "meat_raw": 1
+      },
+      "gives": {
+        "meat_cooked": 1
+      },
+      "minutes": 25
+    },
+    {
+      "id": "baked_potato",
+      "station": "stove",
+      "needs": {
+        "potato": 2
+      },
+      "gives": {
+        "baked_potato": 1
+      },
+      "minutes": 20
+    },
+    {
+      "id": "veg_soup",
+      "station": "stove",
+      "needs": {
+        "carrot": 2,
+        "potato": 1,
+        "water_raw": 1
+      },
+      "gives": {
+        "veg_soup": 1,
+        "bottle_empty": 1
+      },
+      "minutes": 40
+    },
+    {
+      "id": "veg_soup2",
+      "station": "stove",
+      "name": "Gemüsesuppe (mit Radieschen)",
+      "needs": {
+        "radish": 3,
+        "carrot": 1,
+        "water": 1
+      },
+      "gives": {
+        "veg_soup": 1,
+        "bottle_empty": 1
+      },
+      "minutes": 35
+    },
+    {
+      "id": "stew",
+      "station": "stove",
+      "needs": {
+        "meat_raw": 1,
+        "potato": 1,
+        "carrot": 1,
+        "water_raw": 1
+      },
+      "gives": {
+        "stew": 1,
+        "bottle_empty": 1
+      },
+      "minutes": 50
+    },
+    {
+      "id": "can_alarm",
+      "needs": {
+        "cans": 4,
+        "scrap": 1
+      },
+      "gives": {
+        "can_alarm": 1
+      }
+    },
+    {
+      "id": "motion_light",
+      "needs": {
+        "scrap": 2,
+        "battery": 1,
+        "electronics": 1
+      },
+      "gives": {
+        "motion_light": 1
+      }
+    },
+    {
+      "id": "analyzer_improvised",
+      "name": "Funkgerät zum Analysegerät umbauen",
+      "needs": {
+        "electronics": 2,
+        "battery": 1,
+        "scrap": 2,
+        "w17": 1
+      },
+      "special": "build_analyzer"
+    },
+    {
+      "id": "resonance_sensor",
+      "requires": "link_power",
+      "needs": {
+        "scrap": 2,
+        "electronics": 1,
+        "energy_cell": 1
+      },
+      "gives": {
+        "resonance_sensor": 1
+      }
+    },
+    {
+      "id": "strobe_light",
+      "requires": "link_light",
+      "needs": {
+        "scrap": 2,
+        "battery": 1,
+        "glow_fungus": 2
+      },
+      "gives": {
+        "strobe_light": 1
+      }
+    },
+    {
+      "id": "water_filter",
+      "name": "Wasserfilter (Holzkohle und Dosen)",
+      "needs": {
+        "wood": 1,
+        "cans": 2,
+        "scrap": 1
+      },
+      "gives": {
+        "water_filter": 1
+      }
+    },
+    {
+      "id": "signal_jammer",
+      "requires": "link_drone",
+      "needs": {
+        "electronics": 2,
+        "battery": 1,
+        "drone_part": 1
+      },
+      "gives": {
+        "signal_jammer": 1
+      }
+    },
+    {
+      "id": "growth_barrier",
+      "requires": "link_growth",
+      "needs": {
+        "scrap": 1,
+        "alien_plant": 2,
+        "cans": 2
+      },
+      "gives": {
+        "growth_barrier": 1
+      }
+    },
+    {
+      "id": "cable_winch",
+      "name": "Kabelwinde (Bauplan Messstelle)",
+      "blueprint": "bp_winch",
+      "needs": {
+        "scrap": 6,
+        "electronics": 1,
+        "planks": 2
+      },
+      "gives": {
+        "cable_winch": 1
+      }
+    },
+    {
+      "id": "dir_antenna",
+      "name": "Richtantenne (Bauplan Funkmast)",
+      "blueprint": "bp_antenna",
+      "needs": {
+        "radio_parts": 1,
+        "electronics": 3,
+        "scrap": 4
+      },
+      "gives": {
+        "dir_antenna": 1
+      }
+    },
+    {
+      "id": "blast_charge",
+      "name": "Sprengladung (Bauplan Steinbruch)",
+      "blueprint": "bp_charge",
+      "needs": {
+        "explosive": 1,
+        "electronics": 1,
+        "battery": 1
+      },
+      "gives": {
+        "blast_charge": 1
+      }
+    },
+    {
+      "id": "overload_module",
+      "name": "Überlastungsmodul (Bauplan Tunnel)",
+      "blueprint": "bp_overload",
+      "needs": {
+        "energy_cell": 2,
+        "electronics": 3,
+        "metal_fragment": 1
+      },
+      "gives": {
+        "overload_module": 1
+      }
+    },
+    {
+      "id": "sleeping_bag",
+      "name": "Schlafsack",
+      "needs": {
+        "wool": 3,
+        "sheepskin": 1
+      },
+      "gives": {
+        "sleeping_bag": 1
+      }
+    },
+    {
+      "id": "campfire",
+      "name": "Lagerfeuer-Bündel (zum Mitnehmen)",
+      "needs": {
+        "wood": 3
+      },
+      "gives": {
+        "campfire": 1
+      }
+    },
+    {
+      "id": "candle_light",
+      "name": "Kerzen aus Wachs",
+      "needs": {
+        "wax": 2
+      },
+      "gives": {
+        "candles": 3
+      }
+    },
+    {
+      "id": "door_upgrade",
+      "name": "Haustür verstärken",
+      "needs": {
+        "scrap": 3,
+        "planks": 4,
+        "nails": 12
+      },
+      "special": "door_upgrade"
+    },
+    {
+      "id": "mind_dampener",
+      "requires": "link_mind",
+      "needs": {
+        "wool": 1,
+        "metal_fragment": 1,
+        "battery": 1
+      },
+      "gives": {
+        "mind_dampener": 1
+      }
+    },
+    {
+      "id": "creature_alarm",
+      "requires": "link_alarm",
+      "needs": {
+        "electronics": 1,
+        "creature_claw": 1,
+        "battery": 1
+      },
+      "gives": {
+        "creature_alarm": 1
+      }
+    },
+    {
+      "id": "voice_filter",
+      "requires": "link_voice",
+      "needs": {
+        "electronics": 2,
+        "manip_membrane": 1
+      },
+      "gives": {
+        "voice_filter": 1
+      }
+    },
+    {
+      "id": "heat_stone",
+      "requires": "link_heat",
+      "needs": {
+        "crystal_shard": 1,
+        "stone": 2
+      },
+      "gives": {
+        "heat_stone": 1
+      }
+    },
+    {
+      "id": "alloy_frame",
+      "requires": "link_alloy",
+      "needs": {
+        "metal_fragment": 2,
+        "planks": 2,
+        "hull_sample": 1
+      },
+      "gives": {
+        "alloy_frame": 1
+      }
+    },
+    {
+      "id": "signature_pouch",
+      "requires": "link_pouch",
+      "needs": {
+        "wool": 2,
+        "seeker_thread": 1,
+        "scrap": 2
+      },
+      "gives": {
+        "signature_pouch": 1
+      }
+    },
+    {
+      "id": "scent_mask",
+      "requires": "link_scent",
+      "needs": {
+        "creature_saliva": 1,
+        "fog_jar": 1,
+        "wax": 1
+      },
+      "gives": {
+        "scent_mask": 1
+      }
+    },
+    {
+      "id": "spore_mask",
+      "requires": "link_spores",
+      "needs": {
+        "wool": 1,
+        "cans": 1,
+        "spore_pod": 1
+      },
+      "gives": {
+        "spore_mask": 1
+      }
+    },
+    {
+      "id": "comb_filter",
+      "requires": "link_filter",
+      "needs": {
+        "alien_comb": 1,
+        "bottle_empty": 1
+      },
+      "gives": {
+        "comb_filter": 1
+      }
+    },
+    {
+      "id": "root_salt",
+      "requires": "link_salt",
+      "needs": {
+        "tainted_sample": 1,
+        "stone": 1,
+        "organism_node": 1
+      },
+      "gives": {
+        "root_salt": 1
+      }
+    },
+    {
+      "id": "drone_decoy",
+      "requires": "link_decoy",
+      "needs": {
+        "drone_lens": 1,
+        "electronics": 2,
+        "scrap": 2
+      },
+      "gives": {
+        "drone_decoy": 1
+      }
+    },
+    {
+      "id": "light_lure",
+      "requires": "link_lure",
+      "needs": {
+        "glow_fungus": 2,
+        "seeker_lens": 1,
+        "cans": 1
+      },
+      "gives": {
+        "light_lure": 1
+      }
+    }
   ]
 }

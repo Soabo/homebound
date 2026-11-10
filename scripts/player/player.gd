@@ -372,7 +372,8 @@ func _update_mind(delta: float) -> void:
 		mind = maxf(mind - delta / maxf(cfg.mind_fall_time, 0.1), 0.0)
 	_gazed = false
 	if mind > 0.02 and not GameState.dead:
-		health -= cfg.mind_damage_per_second * mind * delta
+		var damp := float(Research.gadget("mind_dampener", "damage_factor", 0.45)) if Inventory.count("mind_dampener") > 0 else 1.0
+		health -= cfg.mind_damage_per_second * mind * delta * damp
 		_shake = maxf(_shake, mind * 0.25)
 		if health <= 0.0:
 			input_locked = true

@@ -71,6 +71,8 @@ func warmth_rate(p: Node3D) -> float:
 	loss += maxf(pos.y, 0.0) / 100.0 * cfg.altitude_loss_per_100m * (1.0 if night else 0.4)
 	if TimeManager.get_total_hours() < wet_until:
 		loss *= cfg.wet_factor
+	if Inventory.count("heat_stone") > 0:
+		loss *= float(Research.gadget("heat_stone", "loss_factor", 0.55))
 	var tent := p.get("in_tent") as Node
 	if tent and is_instance_valid(tent):
 		loss *= cfg.tent_factor

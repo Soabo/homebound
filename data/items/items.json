@@ -1,92 +1,906 @@
 {
   "_info": "Gegenstände (GDD 6.2/6.3). weight = kg pro Stück, stack = max. Anzahl, use = Wirkung beim Benutzen, hand = Modell für die rechte Hand (Schnellplätze 1-9).",
-  "wood":        {"name": "Holz",            "weight": 1.5,  "stack": 20, "category": "Ressource"},
-  "planks":      {"name": "Bretter",         "weight": 1.0,  "stack": 20, "category": "Ressource"},
-  "nails":       {"name": "Nägel",           "weight": 0.02, "stack": 99, "category": "Ressource"},
-  "stone":       {"name": "Steine",          "weight": 2.0,  "stack": 12, "category": "Ressource"},
-  "scrap":       {"name": "Metallschrott",   "weight": 1.2,  "stack": 15, "category": "Ressource"},
-  "cans":        {"name": "Blechdosen",      "weight": 0.1,  "stack": 20, "category": "Ressource"},
-  "electronics": {"name": "Elektronik",      "weight": 0.4,  "stack": 10, "category": "Ressource"},
-  "battery":     {"name": "Batterie",        "weight": 1.5,  "stack": 4,  "category": "Ressource"},
-  "fuel_can":    {"name": "Benzinkanister",  "weight": 5.0,  "stack": 3,  "category": "Ressource"},
-  "food":        {"name": "Konserve",        "weight": 0.5,  "stack": 8,  "category": "Nahrung", "use": {"hunger": 35}, "hand": "food"},
-  "water":       {"name": "Wasserflasche",   "weight": 1.0,  "stack": 4,  "category": "Nahrung", "use": {"thirst": 40, "returns": "bottle_empty"}, "hand": "water"},
-  "bottle_empty":{"name": "Leere Flasche",   "weight": 0.2,  "stack": 6,  "category": "Ressource"},
-  "water_raw":   {"name": "Flasche Rohwasser","weight": 1.0, "stack": 4,  "category": "Nahrung", "use": {"thirst": 30, "returns": "bottle_empty", "sick": 0.35}, "hand": "water"},
-  "water_tainted":{"name": "Flasche verfärbtes Wasser","weight": 1.0, "stack": 4, "category": "Nahrung", "use": {"thirst": 15, "returns": "bottle_empty", "sick": 1.0, "damage": 12}, "hand": "water"},
-  "seeds_radish":{"name": "Radieschensamen", "weight": 0.05, "stack": 20, "category": "Saatgut", "seed": "radish"},
-  "seeds_carrot":{"name": "Karottensamen",   "weight": 0.05, "stack": 20, "category": "Saatgut", "seed": "carrot"},
-  "seed_potato": {"name": "Saatkartoffeln",  "weight": 0.3,  "stack": 12, "category": "Saatgut", "seed": "potato"},
-  "radish":      {"name": "Radieschen",      "weight": 0.1,  "stack": 20, "category": "Nahrung", "use": {"hunger": 8, "thirst": 3}, "hand": "food"},
-  "carrot":      {"name": "Karotte",         "weight": 0.15, "stack": 20, "category": "Nahrung", "use": {"hunger": 10}, "hand": "food"},
-  "potato":      {"name": "Kartoffel",       "weight": 0.25, "stack": 20, "category": "Nahrung", "use": {"hunger": 4, "sick": 0.25}, "hand": "food"},
-  "meat_raw":    {"name": "Rohes Hasenfleisch","weight": 0.6, "stack": 6, "category": "Nahrung", "use": {"hunger": 10, "sick": 0.6}, "hand": "food"},
-  "meat_cooked": {"name": "Gebratenes Fleisch","weight": 0.5, "stack": 6, "category": "Nahrung", "use": {"hunger": 40}, "hand": "food"},
-  "baked_potato":{"name": "Bratkartoffeln",  "weight": 0.4,  "stack": 6,  "category": "Nahrung", "use": {"hunger": 25}, "hand": "food"},
-  "veg_soup":    {"name": "Gemüsesuppe",     "weight": 0.8,  "stack": 4,  "category": "Nahrung", "use": {"hunger": 35, "thirst": 25}, "hand": "food"},
-  "stew":        {"name": "Hasen-Eintopf",   "weight": 1.0,  "stack": 4,  "category": "Nahrung", "use": {"hunger": 65, "thirst": 15}, "hand": "food"},
-  "motor_oil":   {"name": "Motoröl",         "weight": 1.0,  "stack": 4,  "category": "Ressource"},
-  "spark_plug":  {"name": "Zündkerze",       "weight": 0.1,  "stack": 6,  "category": "Ressource"},
-  "gasifier_kit":{"name": "Holzvergaser-Bausatz","weight": 9.0,"stack": 1, "category": "Bauteil"},
-  "cell_adapter":{"name": "Zellen-Adapter",  "weight": 1.5,  "stack": 1,  "category": "Bauteil"},
-  "camera_1":    {"name": "Kamera 1",        "weight": 1.2,  "stack": 1,  "category": "Kamera", "camera": 0},
-  "camera_2":    {"name": "Kamera 2",        "weight": 1.2,  "stack": 1,  "category": "Kamera", "camera": 1},
-  "camera_3":    {"name": "Kamera 3",        "weight": 1.2,  "stack": 1,  "category": "Kamera", "camera": 2},
-  "axe":         {"name": "Axt",             "weight": 2.0,  "stack": 1,  "category": "Werkzeug", "hand": "axe"},
-  "watering_can":{"name": "Gießkanne",       "weight": 1.0,  "stack": 1,  "category": "Werkzeug"},
-  "tin_snips":   {"name": "Blechschere",     "weight": 0.8,  "stack": 1,  "category": "Werkzeug", "hand": "tin_snips"},
-  "metal_fragment": {"name": "Fremdes Metallfragment", "weight": 0.8, "stack": 6,  "category": "Fund"},
-  "energy_cell":    {"name": "Energiezelle",           "weight": 1.2, "stack": 4,  "category": "Fund"},
-  "glyph_plate":    {"name": "Symbolplatte",           "weight": 1.5, "stack": 2,  "category": "Fund"},
-  "alien_tissue":   {"name": "Gewebeprobe",            "weight": 0.3, "stack": 4,  "category": "Fund"},
-  "alien_blood":    {"name": "Blutprobe (Stachel)",    "weight": 0.3, "stack": 4,  "category": "Fund"},
-  "glow_fungus":    {"name": "Leuchtpilz",             "weight": 0.2, "stack": 6,  "category": "Fund"},
-  "alien_analyzer": {"name": "Fremdes Analysegerät",   "weight": 12.0, "stack": 1, "category": "Fund"},
-  "organism_sample": {"name": "Wucherungsprobe",        "weight": 0.4, "stack": 6,  "category": "Fund"},
-  "drone_part":      {"name": "Drohnenteil",            "weight": 1.5, "stack": 3,  "category": "Fund"},
-  "crystal_shard":   {"name": "Kristallsplitter",       "weight": 0.6, "stack": 3,  "category": "Fund"},
-  "alien_plant":     {"name": "Fremdpflanze",           "weight": 0.3, "stack": 8,  "category": "Fund"},
-  "water_filter":    {"name": "Wasserfilter",           "weight": 0.8, "stack": 1,  "category": "Werkzeug"},
-  "signal_jammer":   {"name": "Störsender",             "weight": 3.0, "stack": 3,  "category": "Bauteil", "build": "signal_jammer"},
-  "growth_barrier":  {"name": "Myzel-Sperre",           "weight": 2.5, "stack": 4,  "category": "Bauteil", "build": "growth_barrier"},
-  "resonance_sensor": {"name": "Resonanz-Sensor",      "weight": 3.0, "stack": 4, "category": "Bauteil", "build": "resonance_sensor"},
-  "strobe_light":     {"name": "Stroboskop-Leuchte",   "weight": 3.5, "stack": 4, "category": "Bauteil", "build": "strobe_light"},
-  "fence_panel":     {"name": "Holzzaun-Element",       "weight": 4.0, "stack": 6, "category": "Bauteil", "build": "fence_panel"},
-  "spike_barricade": {"name": "Spießbarrikade",         "weight": 5.0, "stack": 4, "category": "Bauteil", "build": "spike_barricade"},
-  "stone_wall":      {"name": "Steinwall",              "weight": 8.0, "stack": 4, "category": "Bauteil", "build": "stone_wall"},
-  "can_alarm":       {"name": "Dosenalarm",             "weight": 1.0, "stack": 6, "category": "Bauteil", "build": "can_alarm"},
-  "motion_light":    {"name": "Bewegungsmelder-Leuchte","weight": 3.0, "stack": 4, "category": "Bauteil", "build": "motion_light"},
-  "bear_trap":       {"name": "Bärenfalle",             "weight": 2.5, "stack": 4, "category": "Bauteil", "build": "bear_trap"},
-  "snare":           {"name": "Kleintierschlinge",      "weight": 0.4, "stack": 6, "category": "Bauteil", "build": "snare"},
-  "w17":             {"name": "Bauteil W-17",           "weight": 0.6, "stack": 1, "category": "Fund"},
-  "sleeping_bag":    {"name": "Schlafsack",             "weight": 1.8, "stack": 1, "category": "Werkzeug"},
-  "campfire":        {"name": "Lagerfeuer-Bündel",      "weight": 2.5, "stack": 4, "category": "Bauteil", "build": "campfire"},
-  "candles":         {"name": "Kerzen",                 "weight": 0.1, "stack": 12, "category": "Ressource"},
-  "matches":         {"name": "Streichhölzer",          "weight": 0.05, "stack": 4, "category": "Ressource"},
-  "binoculars":      {"name": "Fernglas (Taste Q: heranzoomen)", "weight": 0.7, "stack": 1, "category": "Werkzeug"},
-  "hiking_map":      {"name": "Wanderkarte (Taste M)",  "weight": 0.1, "stack": 1, "category": "Werkzeug"},
-  "tent":            {"name": "Zelt",                   "weight": 3.5, "stack": 1, "category": "Bauteil", "build": "tent"},
-  "honey":           {"name": "Glas Honig",             "weight": 0.5, "stack": 6, "category": "Nahrung", "use": {"hunger": 18}, "hand": "food"},
-  "wax":             {"name": "Bienenwachs",            "weight": 0.3, "stack": 10, "category": "Ressource"},
-  "ration":          {"name": "Feldration",             "weight": 0.6, "stack": 8, "category": "Nahrung", "use": {"hunger": 45, "thirst": 5}, "hand": "food"},
-  "medkit":          {"name": "Verbandskasten",         "weight": 0.8, "stack": 4, "category": "Nahrung", "use": {"heal": 45}},
-  "wool":            {"name": "Schafwolle",             "weight": 0.3, "stack": 10, "category": "Ressource"},
-  "sheepskin":       {"name": "Schaffell",              "weight": 1.2, "stack": 3, "category": "Ressource"},
-  "peat":            {"name": "Torf (brennt wie Holz)", "weight": 1.0, "stack": 12, "category": "Ressource"},
-  "radio_parts":     {"name": "Funkteile",              "weight": 0.6, "stack": 6, "category": "Ressource"},
-  "keycard_m4":      {"name": "Schlüsselkarte MP4",     "weight": 0.02, "stack": 1, "category": "Werkzeug"},
-  "quarry_key":      {"name": "Schlüssel Sprengstofflager", "weight": 0.05, "stack": 1, "category": "Werkzeug"},
-  "explosive":       {"name": "Sprengstoff",            "weight": 1.5, "stack": 6, "category": "Ressource"},
-  "car_parts":       {"name": "Autoteile",              "weight": 3.0, "stack": 6, "category": "Ressource"},
-  "shaft_winch":     {"name": "Schachtwinde",           "weight": 9.0, "stack": 1, "category": "Werkzeug"},
-  "cable_winch":     {"name": "Kabelwinde",             "weight": 4.0, "stack": 2, "category": "Werkzeug"},
-  "dir_antenna":     {"name": "Richtantenne",           "weight": 3.0, "stack": 1, "category": "Bauteil"},
-  "blast_charge":    {"name": "Sprengladung",           "weight": 2.5, "stack": 4, "category": "Bauteil"},
-  "overload_module": {"name": "Überlastungsmodul",      "weight": 2.0, "stack": 1, "category": "Bauteil"},
-  "alien_comb":      {"name": "Fremdwabe",              "weight": 0.4, "stack": 6, "category": "Fund"},
-  "alien_implant":   {"name": "Implantat",              "weight": 0.1, "stack": 4, "category": "Fund"},
-  "probe_core":      {"name": "Sondenkern",             "weight": 1.0, "stack": 3, "category": "Fund"},
-  "alien_seeds":     {"name": "Fremde Samen",           "weight": 0.05, "stack": 20, "category": "Fund", "seed": "alien"},
-  "alien_fruit":     {"name": "Fremdfrucht",            "weight": 0.3, "stack": 20, "category": "Nahrung", "use": {"hunger": 22, "thirst": 10, "sick": 0.15}, "hand": "food"},
-  "hull_sample":     {"name": "Hüllenprobe",            "weight": 0.8, "stack": 4, "category": "Fund"}
+  "wood": {
+    "name": "Holz",
+    "weight": 1.5,
+    "stack": 20,
+    "category": "Ressource"
+  },
+  "planks": {
+    "name": "Bretter",
+    "weight": 1.0,
+    "stack": 20,
+    "category": "Ressource"
+  },
+  "nails": {
+    "name": "Nägel",
+    "weight": 0.02,
+    "stack": 99,
+    "category": "Ressource"
+  },
+  "stone": {
+    "name": "Steine",
+    "weight": 2.0,
+    "stack": 12,
+    "category": "Ressource"
+  },
+  "scrap": {
+    "name": "Metallschrott",
+    "weight": 1.2,
+    "stack": 15,
+    "category": "Ressource"
+  },
+  "cans": {
+    "name": "Blechdosen",
+    "weight": 0.1,
+    "stack": 20,
+    "category": "Ressource"
+  },
+  "electronics": {
+    "name": "Elektronik",
+    "weight": 0.4,
+    "stack": 10,
+    "category": "Ressource"
+  },
+  "battery": {
+    "name": "Batterie",
+    "weight": 1.5,
+    "stack": 4,
+    "category": "Ressource"
+  },
+  "fuel_can": {
+    "name": "Benzinkanister",
+    "weight": 5.0,
+    "stack": 3,
+    "category": "Ressource"
+  },
+  "food": {
+    "name": "Konserve",
+    "weight": 0.5,
+    "stack": 8,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 35
+    },
+    "hand": "food"
+  },
+  "water": {
+    "name": "Wasserflasche",
+    "weight": 1.0,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "thirst": 40,
+      "returns": "bottle_empty"
+    },
+    "hand": "water"
+  },
+  "bottle_empty": {
+    "name": "Leere Flasche",
+    "weight": 0.2,
+    "stack": 6,
+    "category": "Ressource"
+  },
+  "water_raw": {
+    "name": "Flasche Rohwasser",
+    "weight": 1.0,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "thirst": 30,
+      "returns": "bottle_empty",
+      "sick": 0.35
+    },
+    "hand": "water"
+  },
+  "water_tainted": {
+    "name": "Flasche verfärbtes Wasser",
+    "weight": 1.0,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "thirst": 15,
+      "returns": "bottle_empty",
+      "sick": 1.0,
+      "damage": 12
+    },
+    "hand": "water"
+  },
+  "seeds_radish": {
+    "name": "Radieschensamen",
+    "weight": 0.05,
+    "stack": 20,
+    "category": "Saatgut",
+    "seed": "radish"
+  },
+  "seeds_carrot": {
+    "name": "Karottensamen",
+    "weight": 0.05,
+    "stack": 20,
+    "category": "Saatgut",
+    "seed": "carrot"
+  },
+  "seed_potato": {
+    "name": "Saatkartoffeln",
+    "weight": 0.3,
+    "stack": 12,
+    "category": "Saatgut",
+    "seed": "potato"
+  },
+  "radish": {
+    "name": "Radieschen",
+    "weight": 0.1,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 8,
+      "thirst": 3
+    },
+    "hand": "food"
+  },
+  "carrot": {
+    "name": "Karotte",
+    "weight": 0.15,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 10
+    },
+    "hand": "food"
+  },
+  "potato": {
+    "name": "Kartoffel",
+    "weight": 0.25,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 4,
+      "sick": 0.25
+    },
+    "hand": "food"
+  },
+  "meat_raw": {
+    "name": "Rohes Hasenfleisch",
+    "weight": 0.6,
+    "stack": 6,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 10,
+      "sick": 0.6
+    },
+    "hand": "food"
+  },
+  "meat_cooked": {
+    "name": "Gebratenes Fleisch",
+    "weight": 0.5,
+    "stack": 6,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 40
+    },
+    "hand": "food"
+  },
+  "baked_potato": {
+    "name": "Bratkartoffeln",
+    "weight": 0.4,
+    "stack": 6,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 25
+    },
+    "hand": "food"
+  },
+  "veg_soup": {
+    "name": "Gemüsesuppe",
+    "weight": 0.8,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 35,
+      "thirst": 25
+    },
+    "hand": "food"
+  },
+  "stew": {
+    "name": "Hasen-Eintopf",
+    "weight": 1.0,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 65,
+      "thirst": 15
+    },
+    "hand": "food"
+  },
+  "motor_oil": {
+    "name": "Motoröl",
+    "weight": 1.0,
+    "stack": 4,
+    "category": "Ressource"
+  },
+  "spark_plug": {
+    "name": "Zündkerze",
+    "weight": 0.1,
+    "stack": 6,
+    "category": "Ressource"
+  },
+  "gasifier_kit": {
+    "name": "Holzvergaser-Bausatz",
+    "weight": 9.0,
+    "stack": 1,
+    "category": "Bauteil"
+  },
+  "cell_adapter": {
+    "name": "Zellen-Adapter",
+    "weight": 1.5,
+    "stack": 1,
+    "category": "Bauteil"
+  },
+  "camera_1": {
+    "name": "Kamera 1",
+    "weight": 1.2,
+    "stack": 1,
+    "category": "Kamera",
+    "camera": 0
+  },
+  "camera_2": {
+    "name": "Kamera 2",
+    "weight": 1.2,
+    "stack": 1,
+    "category": "Kamera",
+    "camera": 1
+  },
+  "camera_3": {
+    "name": "Kamera 3",
+    "weight": 1.2,
+    "stack": 1,
+    "category": "Kamera",
+    "camera": 2
+  },
+  "axe": {
+    "name": "Axt",
+    "weight": 2.0,
+    "stack": 1,
+    "category": "Werkzeug",
+    "hand": "axe"
+  },
+  "watering_can": {
+    "name": "Gießkanne",
+    "weight": 1.0,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "tin_snips": {
+    "name": "Blechschere",
+    "weight": 0.8,
+    "stack": 1,
+    "category": "Werkzeug",
+    "hand": "tin_snips"
+  },
+  "metal_fragment": {
+    "name": "Fremdes Metallfragment",
+    "weight": 0.8,
+    "stack": 6,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "energy_cell": {
+    "name": "Energiezelle",
+    "weight": 1.2,
+    "stack": 4,
+    "category": "Fund",
+    "signature": 0.15
+  },
+  "glyph_plate": {
+    "name": "Symbolplatte",
+    "weight": 1.5,
+    "stack": 2,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "alien_tissue": {
+    "name": "Gewebeprobe",
+    "weight": 0.3,
+    "stack": 4,
+    "category": "Fund",
+    "signature": 0.03
+  },
+  "alien_blood": {
+    "name": "Blutprobe (Stachel)",
+    "weight": 0.3,
+    "stack": 4,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "glow_fungus": {
+    "name": "Leuchtpilz",
+    "weight": 0.2,
+    "stack": 6,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "alien_analyzer": {
+    "name": "Fremdes Analysegerät",
+    "weight": 12.0,
+    "stack": 1,
+    "category": "Fund"
+  },
+  "organism_sample": {
+    "name": "Wucherungsprobe",
+    "weight": 0.4,
+    "stack": 6,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "drone_part": {
+    "name": "Drohnenteil",
+    "weight": 1.5,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.1
+  },
+  "crystal_shard": {
+    "name": "Kristallsplitter",
+    "weight": 0.6,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.2
+  },
+  "alien_plant": {
+    "name": "Fremdpflanze",
+    "weight": 0.3,
+    "stack": 8,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "water_filter": {
+    "name": "Wasserfilter",
+    "weight": 0.8,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "signal_jammer": {
+    "name": "Störsender",
+    "weight": 3.0,
+    "stack": 3,
+    "category": "Bauteil",
+    "build": "signal_jammer",
+    "signature": 0.1
+  },
+  "growth_barrier": {
+    "name": "Myzel-Sperre",
+    "weight": 2.5,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "growth_barrier"
+  },
+  "resonance_sensor": {
+    "name": "Resonanz-Sensor",
+    "weight": 3.0,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "resonance_sensor",
+    "signature": 0.15
+  },
+  "strobe_light": {
+    "name": "Stroboskop-Leuchte",
+    "weight": 3.5,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "strobe_light",
+    "signature": 0.05
+  },
+  "fence_panel": {
+    "name": "Holzzaun-Element",
+    "weight": 4.0,
+    "stack": 6,
+    "category": "Bauteil",
+    "build": "fence_panel"
+  },
+  "spike_barricade": {
+    "name": "Spießbarrikade",
+    "weight": 5.0,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "spike_barricade"
+  },
+  "stone_wall": {
+    "name": "Steinwall",
+    "weight": 8.0,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "stone_wall"
+  },
+  "can_alarm": {
+    "name": "Dosenalarm",
+    "weight": 1.0,
+    "stack": 6,
+    "category": "Bauteil",
+    "build": "can_alarm"
+  },
+  "motion_light": {
+    "name": "Bewegungsmelder-Leuchte",
+    "weight": 3.0,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "motion_light"
+  },
+  "bear_trap": {
+    "name": "Bärenfalle",
+    "weight": 2.5,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "bear_trap"
+  },
+  "snare": {
+    "name": "Kleintierschlinge",
+    "weight": 0.4,
+    "stack": 6,
+    "category": "Bauteil",
+    "build": "snare"
+  },
+  "w17": {
+    "name": "Bauteil W-17",
+    "weight": 0.6,
+    "stack": 1,
+    "category": "Fund",
+    "signature": 0.5
+  },
+  "sleeping_bag": {
+    "name": "Schlafsack",
+    "weight": 1.8,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "campfire": {
+    "name": "Lagerfeuer-Bündel",
+    "weight": 2.5,
+    "stack": 4,
+    "category": "Bauteil",
+    "build": "campfire"
+  },
+  "candles": {
+    "name": "Kerzen",
+    "weight": 0.1,
+    "stack": 12,
+    "category": "Ressource"
+  },
+  "matches": {
+    "name": "Streichhölzer",
+    "weight": 0.05,
+    "stack": 4,
+    "category": "Ressource"
+  },
+  "binoculars": {
+    "name": "Fernglas (Taste Q: heranzoomen)",
+    "weight": 0.7,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "hiking_map": {
+    "name": "Wanderkarte (Taste M)",
+    "weight": 0.1,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "tent": {
+    "name": "Zelt",
+    "weight": 3.5,
+    "stack": 1,
+    "category": "Bauteil",
+    "build": "tent"
+  },
+  "honey": {
+    "name": "Glas Honig",
+    "weight": 0.5,
+    "stack": 6,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 18
+    },
+    "hand": "food"
+  },
+  "wax": {
+    "name": "Bienenwachs",
+    "weight": 0.3,
+    "stack": 10,
+    "category": "Ressource"
+  },
+  "ration": {
+    "name": "Feldration",
+    "weight": 0.6,
+    "stack": 8,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 45,
+      "thirst": 5
+    },
+    "hand": "food"
+  },
+  "medkit": {
+    "name": "Verbandskasten",
+    "weight": 0.8,
+    "stack": 4,
+    "category": "Nahrung",
+    "use": {
+      "heal": 45
+    }
+  },
+  "wool": {
+    "name": "Schafwolle",
+    "weight": 0.3,
+    "stack": 10,
+    "category": "Ressource"
+  },
+  "sheepskin": {
+    "name": "Schaffell",
+    "weight": 1.2,
+    "stack": 3,
+    "category": "Ressource"
+  },
+  "peat": {
+    "name": "Torf (brennt wie Holz)",
+    "weight": 1.0,
+    "stack": 12,
+    "category": "Ressource"
+  },
+  "radio_parts": {
+    "name": "Funkteile",
+    "weight": 0.6,
+    "stack": 6,
+    "category": "Ressource"
+  },
+  "keycard_m4": {
+    "name": "Schlüsselkarte MP4",
+    "weight": 0.02,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "quarry_key": {
+    "name": "Schlüssel Sprengstofflager",
+    "weight": 0.05,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "explosive": {
+    "name": "Sprengstoff",
+    "weight": 1.5,
+    "stack": 6,
+    "category": "Ressource"
+  },
+  "car_parts": {
+    "name": "Autoteile",
+    "weight": 3.0,
+    "stack": 6,
+    "category": "Ressource"
+  },
+  "shaft_winch": {
+    "name": "Schachtwinde",
+    "weight": 9.0,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "cable_winch": {
+    "name": "Kabelwinde",
+    "weight": 4.0,
+    "stack": 2,
+    "category": "Werkzeug"
+  },
+  "dir_antenna": {
+    "name": "Richtantenne",
+    "weight": 3.0,
+    "stack": 1,
+    "category": "Bauteil"
+  },
+  "blast_charge": {
+    "name": "Sprengladung",
+    "weight": 2.5,
+    "stack": 4,
+    "category": "Bauteil"
+  },
+  "overload_module": {
+    "name": "Überlastungsmodul",
+    "weight": 2.0,
+    "stack": 1,
+    "category": "Bauteil",
+    "signature": 0.3
+  },
+  "alien_comb": {
+    "name": "Fremdwabe",
+    "weight": 0.4,
+    "stack": 6,
+    "category": "Fund",
+    "signature": 0.03
+  },
+  "alien_implant": {
+    "name": "Implantat",
+    "weight": 0.1,
+    "stack": 4,
+    "category": "Fund",
+    "signature": 0.15
+  },
+  "probe_core": {
+    "name": "Sondenkern",
+    "weight": 1.0,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.25
+  },
+  "alien_seeds": {
+    "name": "Fremde Samen",
+    "weight": 0.05,
+    "stack": 20,
+    "category": "Fund",
+    "seed": "alien",
+    "signature": 0.02
+  },
+  "alien_fruit": {
+    "name": "Fremdfrucht",
+    "weight": 0.3,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 22,
+      "thirst": 10,
+      "sick": 0.15
+    },
+    "hand": "food"
+  },
+  "hull_sample": {
+    "name": "Hüllenprobe",
+    "weight": 0.8,
+    "stack": 4,
+    "category": "Fund",
+    "signature": 0.1
+  },
+  "creature_shed": {
+    "name": "Häutungsfetzen",
+    "weight": 0.3,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "creature_saliva": {
+    "name": "Speichelfaden (im Glas)",
+    "weight": 0.2,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "creature_claw": {
+    "name": "Abgebrochene Kralle",
+    "weight": 0.3,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "rec_creature": {
+    "name": "Speicherkarte: Kreatur",
+    "weight": 0.05,
+    "stack": 4,
+    "category": "Fund"
+  },
+  "rec_drone": {
+    "name": "Speicherkarte: Drohne",
+    "weight": 0.05,
+    "stack": 4,
+    "category": "Fund"
+  },
+  "rec_voice": {
+    "name": "Band: fremde Stimme",
+    "weight": 0.05,
+    "stack": 4,
+    "category": "Fund"
+  },
+  "rec_radio": {
+    "name": "Band: Funkspruch",
+    "weight": 0.05,
+    "stack": 4,
+    "category": "Fund"
+  },
+  "drone_lens": {
+    "name": "Drohnenlinse",
+    "weight": 0.4,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.1
+  },
+  "drone_memory": {
+    "name": "Speicherkern der Drohne",
+    "weight": 0.5,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.15
+  },
+  "manip_membrane": {
+    "name": "Klangmembran",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "organism_node": {
+    "name": "Knotenherz",
+    "weight": 0.6,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.1
+  },
+  "spore_pod": {
+    "name": "Sporenkapsel",
+    "weight": 0.2,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "infected_antler": {
+    "name": "Geweih mit Fäden",
+    "weight": 1.0,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.03
+  },
+  "seeker_lens": {
+    "name": "Lichtersplitter",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.2
+  },
+  "seeker_thread": {
+    "name": "Fadenspur",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "fog_jar": {
+    "name": "Nebel im Glas",
+    "weight": 0.4,
+    "stack": 3,
+    "category": "Fund"
+  },
+  "tainted_sample": {
+    "name": "Wasserprobe vom Bach",
+    "weight": 0.5,
+    "stack": 3,
+    "category": "Fund"
+  },
+  "blind_bird": {
+    "name": "Vogel ohne Augen",
+    "weight": 0.3,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "black_soil": {
+    "name": "Schwarze Erde",
+    "weight": 0.8,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "foreign_cloth": {
+    "name": "Fremdes Handtuch",
+    "weight": 0.3,
+    "stack": 3,
+    "category": "Fund"
+  },
+  "pillar_chip": {
+    "name": "Splitter der Steinsäule",
+    "weight": 0.6,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.05
+  },
+  "rz_drive": {
+    "name": "Datenträger (ReZort)",
+    "weight": 0.2,
+    "stack": 3,
+    "category": "Fund"
+  },
+  "rz_protocol": {
+    "name": "Messprotokolle",
+    "weight": 0.2,
+    "stack": 3,
+    "category": "Fund"
+  },
+  "dictaphone": {
+    "name": "Diktiergerät",
+    "weight": 0.3,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "old_laptop": {
+    "name": "Alter Laptop",
+    "weight": 2.0,
+    "stack": 1,
+    "category": "Ressource"
+  },
+  "mind_dampener": {
+    "name": "Dämpfer-Stirnband",
+    "weight": 0.2,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.1
+  },
+  "creature_alarm": {
+    "name": "Nervenfühler",
+    "weight": 0.3,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.1
+  },
+  "voice_filter": {
+    "name": "Stimmfilter",
+    "weight": 0.2,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.05
+  },
+  "heat_stone": {
+    "name": "Wärmekristall",
+    "weight": 0.8,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.2
+  },
+  "alloy_frame": {
+    "name": "Leichtmetall-Trage",
+    "weight": 1.5,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.1
+  },
+  "signature_pouch": {
+    "name": "Dämpfertasche",
+    "weight": 0.5,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "scent_mask": {
+    "name": "Geruchstarnung",
+    "weight": 0.2,
+    "stack": 4,
+    "category": "Werkzeug",
+    "use": {
+      "buff": "scent",
+      "hours": 8
+    }
+  },
+  "spore_mask": {
+    "name": "Sporenmaske",
+    "weight": 0.4,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "comb_filter": {
+    "name": "Wabenfilter",
+    "weight": 0.4,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.02
+  },
+  "root_salt": {
+    "name": "Wurzelsalz",
+    "weight": 0.5,
+    "stack": 4,
+    "category": "Werkzeug"
+  },
+  "drone_decoy": {
+    "name": "Drohnenköder",
+    "weight": 2.5,
+    "stack": 2,
+    "category": "Bauteil",
+    "build": "drone_decoy",
+    "signature": 0.1
+  },
+  "light_lure": {
+    "name": "Lichtköder",
+    "weight": 1.5,
+    "stack": 3,
+    "category": "Bauteil",
+    "build": "light_lure",
+    "signature": 0.05
+  }
 }

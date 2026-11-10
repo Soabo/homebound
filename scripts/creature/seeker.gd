@@ -235,8 +235,18 @@ func _sense() -> void:
 	var lit := _player.light_shining()
 	if _player.is_hidden():
 		return
-	# W-17 ruft ihn aus großer Entfernung
-	if Inventory.count("w17") > 0 and d < cfg.w17_range:
+	# Lichtköder (Forschung) zieht ihn an – solange du nicht direkt vor ihm stehst
+	if d > 6.0:
+		var lure_r := float(Research.gadget("light_lure", "range", 70.0))
+		for lure in get_tree().get_nodes_in_group("seeker_lure"):
+			var lp := (lure as Node3D).global_position
+			if lp.distance_to(global_position) < lure_r and lp.distance_to(target) > 3.0:
+				target = lp
+				_investigate(lp)
+				return
+	# Fremdes am Körper (W-17, Funde, Alien-Werkzeuge) ruft ihn – je mehr, desto weiter (W-17 allein: w17_range)
+	var sig := Research.carried_signature()
+	if sig >= cfg.signature_min and d < cfg.w17_range * clampf(sig / 0.5, 0.0, 2.0):
 		_investigate(pp)
 		return
 	if lit and d < cfg.light_range and (camp != null or _sees(pp)):
@@ -280,7 +290,7 @@ func _investigate_done() -> void:
 	var camp := _player.in_tent as TentCamp
 	var d := global_position.distance_to(_player.global_position)
 	if camp and d < 3.5:
-		var lured := camp.glowing() or Inventory.count("w17") > 0
+		var lured := camp.glowing() or Research.carried_signature() >= 0.4
 		if lured or (ThreatDirector.current_night() >= cfg.tear_from_day and _rng.randf() < cfg.tear_chance_dark):
 			_strike(camp)
 			return

@@ -31,6 +31,9 @@ var _stagger: float = 0.0
 var _player: Player
 
 
+var decoyed: bool = false   ## vom Drohnenköder abgelenkt (Forschung)
+
+
 func _ready() -> void:
 	add_to_group("drone")
 	_player = get_tree().get_first_node_in_group("player") as Player
@@ -46,6 +49,15 @@ func _ready() -> void:
 
 ## Ein oder zwei zufällige Flugmuster hintereinander.
 func _plan() -> void:
+	# Forschung 2.0: Steht ein Drohnenköder, schwebt sie lange darüber, vermisst ihn – und zieht ab
+	var decoys := get_tree().get_nodes_in_group("drone_decoy")
+	if not decoys.is_empty():
+		var hold: Array = Research.gadget("drone_decoy", "hold", [25.0, 40.0])
+		for dn in decoys.slice(0, 2):
+			var dp := (dn as Node3D).global_position
+			_leg(dp + Vector3(_rng.randf_range(-1.5, 1.5), 7.0, _rng.randf_range(-1.5, 1.5)), _rng.randf_range(float(hold[0]), float(hold[1])), dp)
+		decoyed = true
+		return
 	var names := Array(cfg.patterns)
 	var weights := Array(cfg.pattern_weights)
 	var first := _pick_weighted(names, weights)

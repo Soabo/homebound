@@ -139,9 +139,27 @@ class Patch extends Interactable:
 		add_child(area)
 
 	func get_prompt(_p: Node) -> String:
+		if Inventory.count("root_salt") > 0:
+			return "[E] Wurzelsalz streuen (tötet auch Wucherungen in der Nähe)"
 		if Inventory.equipped() == "axe":
 			return "[Linksklick] Wucherung weghacken"
 		return "Graue Wucherung – mit der Axt entfernen"
+
+	## Wurzelsalz (Forschung): diese und alle Wucherungen im Umkreis sterben ab.
+	func interact(_p: Node) -> void:
+		if not Inventory.remove("root_salt", 1):
+			return
+		var r := float(Research.gadget("root_salt", "radius", 5.0))
+		var n := 0
+		for q in get_tree().get_nodes_in_group("organism_patch"):
+			var pp := q as Node3D
+			if pp == self or pp.global_position.distance_to(global_position) < r:
+				WorldState.remove_patch(int(pp.get("patch_id")))
+				pp.queue_free()
+				n += 1
+		SoundBank.play_at(get_parent(), "static", global_position + Vector3(0, 0.3, 0), -6.0, 0.5)
+		EventBus.notify("Das Geflecht zischt, wird schwarz und zerfällt (%d)." % n, 3.0)
+		Tasks.flag("root_salt_used")
 
 	func axe_hit(_p: Node) -> void:
 		hp -= 1
@@ -149,6 +167,8 @@ class Patch extends Interactable:
 		if hp <= 0:
 			if Research.seen.find("organism_sample") < 0 or randf() < 0.3:
 				Inventory.add("organism_sample", 1)
+			elif randf() < 0.25:
+				Inventory.add("organism_node", 1)  # Knotenherz (Forschung 2.0)
 			WorldState.remove_patch(patch_id)
 			queue_free()
 
@@ -159,4 +179,5 @@ class Patch extends Interactable:
 		var d := Vector2(_player.global_position.x - global_position.x, _player.global_position.z - global_position.z).length()
 		if d < 1.5 and not GameState.dead:
 			_player.hazard = 1.0
-			_player.health = maxf(_player.health - 3.0 * delta, 1.0)
+			if Inventory.count("spore_mask") <= 0:
+				_player.health = maxf(_player.health - 3.0 * delta, 1.0)

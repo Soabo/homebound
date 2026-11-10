@@ -144,6 +144,14 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **W-17:** Im Umzugskarton unter dem Funktisch liegt ein Bauteil aus Stefanies Sachen. Ohne W-17 funktioniert das
   improvisierte Analysegerät nicht. Später kann man es ausbauen und mitnehmen – dann piept es in der Nähe bestimmter Orte.
   Aber Vorsicht: Der Sucher spürt es.
+- **Das Labor im Bad:** Nach ein paar Tagen Forschung baut Christian den Waschtisch zum Labor um. Nach und nach kommen
+  Mikroskop, Terrarium, Abschirmkasten und ein Auswertungsplatz (Georgs alter Laptop vom Hochsitz) dazu – alle forschen gleichzeitig.
+  Über 50 Projekte, manche dauern drei Tage. Der **Forschungsbaum** auf dem Tablet zeigt, was worauf aufbaut.
+- **Lebende Proben** verderben nicht, aber sie bleiben nicht immer im Glas: Mal kriecht etwas durchs Haus, mal wächst es
+  durch den Abfluss nach draußen, mal ruft es die Drohne, mal wuchert das ganze Bad.
+- **Fremdes macht sichtbar:** Wer Alien-Zeug trägt oder nachts forscht, „leuchtet“ für sie (Anzeige oben rechts).
+  Dafür gibt es Werkzeuge gegen die Wesen: Stirnband gegen den Blick, Nervenfühler, Stimmfilter, Köder für Drohne und Sucher,
+  Wurzelsalz, Sporenmaske, Wärmekristall, Leichtmetall-Trage, Wabenfilter, Geruchstarnung, Dämpfertasche. Keine Waffen.
 
 ## Selbstversorgung und Aufgaben
 
