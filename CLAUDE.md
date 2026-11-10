@@ -121,12 +121,14 @@
   Tests nutzen `Surveillance.install_defaults()`. Test: `--night-test=supplies`.
 
 ## Story (beschlossen 10.11.2026, Story-Bibel: https://claude.ai/artifact/6FfYY9UAGpkPV9eYFJbYyL)
-- Christian (Spielfigur), Frau Stefanie, Kinder Lena (9) und Ben (6). Unfall = Mord der Organisation (WURZELWERK, Firma Brenntal).
+- Christian (Spielfigur), Frau Stefanie, Kinder Lena (9) und Ben (6). Unfall = Mord der Organisation (WURZELWERK, Firma ReZort Industries).
 - Stefanie hat die Hütte ausgesucht (Messpunkt 4 in seinen Unterlagen), Förster Georg Wendt war Beobachter der Organisation,
   Christian überlebte, weil er länger in der Arbeit blieb. Tablet gehört Christian (alte Mails von Stefanie im Archiv).
 - Bauteil W-17 (Umzugskarton Werkstatt): steckt im Analysegerät → später Suchgerät → Schlüssel im Wurzelknoten unter dem alten Brunnen.
 - 5 Phasen (Zusammenbruch, Gebiet unter dem Wald, menschliche Beteiligung/Außenstelle Messpunkt 4, Wahrheit Familie/Stefanies Mappe,
   Bedeutung der Hütte/Saat). 7 Enden: Gehört (gut), Stille (gemischt), Abgeholt, Glut, Schutzstatus, Flucht, Zu spät (schlecht).
+  Ende = Schluss (Warnung vorher, Abspann, Hauptmenü). Nur Phase 5 hat eine Frist (~5 Nächte ab Schacht offen), Phasen 1–4 offen.
+  Aliens ohne Namen, Spieler nutzt Arbeitstitel (Kreatur, Drohne, Manipulator, Organismus, Sucher).
 - Eine Episode, Hütte als Mittelpunkt + Ausflüge. Geplant: Open World ca. 5 km² (Wald, Lichtungen, Berge, Seen, viele Orte,
   Mehrtagesmärsche mit Zelt/Proviant).
 
