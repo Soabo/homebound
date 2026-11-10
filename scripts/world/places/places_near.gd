@@ -86,7 +86,13 @@ static func _kapelle(root: Node3D) -> void:
 			var off := -0.6 + (i / benches.size()) * 0.4
 			BuildKit.sphere(stones, rng.randf_range(0.05, 0.08), b + Vector3(off, 0.52, rng.randf_range(-0.08, 0.08)), PlaceKit.mat("stone_dark"), Vector3(1.2, 0.7, 1.0), 6)
 	place.call()
-	TimeManager.day_changed.connect(func(_d: int) -> void: place.call())
+	# Die Verbindung muss mit dem Ort verschwinden – sonst ruft die Uhr nach einem Neustart
+	# (Tod, neuer Tag) noch die alte, längst gelöschte Kapelle auf.
+	var on_day := func(_d: int) -> void: place.call()
+	TimeManager.day_changed.connect(on_day)
+	stones.tree_exiting.connect(func() -> void:
+		if TimeManager.day_changed.is_connected(on_day):
+			TimeManager.day_changed.disconnect(on_day))
 
 
 ## Hochstand-Friedhof: ein Dutzend umgestürzter Hochsitze im Kreis, alle zur Mitte gedreht.

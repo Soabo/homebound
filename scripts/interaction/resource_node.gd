@@ -102,7 +102,7 @@ func interact(player: Node) -> void:
 	if got > 0:
 		EventBus.notify("%s +%d  (jetzt %d)" % [Inventory.display_name(item_id), got, Inventory.count(item_id)], 2.0)
 	else:
-		EventBus.notify("Zu schwer – du kannst nicht mehr tragen.", 2.0)
+		EventBus.notify("Mehr %s kannst du nicht tragen." % Inventory.display_name(item_id), 2.0)
 
 
 func persist_key() -> String:

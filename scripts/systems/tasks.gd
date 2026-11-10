@@ -209,6 +209,11 @@ func mark_seen() -> void:
 
 
 func get_state() -> Dictionary:
+	# Vor dem Sichern den Stand nachziehen (geprüft wird sonst nur einmal pro Sekunde): Was kurz vor dem
+	# Sichern passiert ist, soll im Spielstand schon abgehakt sein und nicht erst nach dem Laden auftauchen.
+	# Zweimal, weil eine Aufgabe erst freigeschaltet und im nächsten Durchgang abgehakt wird.
+	_evaluate(true)
+	_evaluate(true)
 	return {"flags": flags.duplicate(), "got": got.duplicate(), "unlocked": unlocked.duplicate(), "done": done.duplicate(), "unseen": unseen}
 
 

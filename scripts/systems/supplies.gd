@@ -150,7 +150,8 @@ func bed_state(i: int) -> String:
 
 func plant(i: int, seed_item: String) -> bool:
 	var crop: String = DataDB.item(seed_item).get("seed", "")
-	if crop == "" or beds[i]["crop"] != "" or not Inventory.remove(seed_item, 1):
+	# nur Pflanzen, die es gibt (sonst stünde ein Beet ohne Namen und ohne Ernte da)
+	if crop == "" or not config.crops.has(crop) or beds[i]["crop"] != "" or not Inventory.remove(seed_item, 1):
 		return false
 	beds[i] = _empty_bed()
 	beds[i]["crop"] = crop
@@ -191,7 +192,8 @@ func harvest(i: int) -> String:
 			return "Die Ernte ist grau und kalt, wie aus Metall. Eine der Pflanzen hat sich verändert – du nimmst sie mit."
 		return "Die Ernte ist grau und kalt, wie aus Metall. Das isst du lieber nicht."
 	var y: Array = crop.get("yield", [3, 5])
-	var got := Inventory.add(String(crop.get("item", "")), _rng.randi_range(int(y[0]), int(y[1])))
+	var crop_item := String(crop.get("item", ""))
+	var got := Inventory.add(crop_item, _rng.randi_range(int(y[0]), int(y[1]))) if not DataDB.item(crop_item).is_empty() else 0
 	var seed_item := ""
 	var all := DataDB.items()
 	for id in all:

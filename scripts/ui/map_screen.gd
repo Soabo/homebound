@@ -48,6 +48,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if _root.visible:
 			close()
+		elif not _player_free():
+			pass  # anderes Menü offen, Schlaf, Sitzen, Pause: Karte bleibt zu
 		elif Inventory.count("hiking_map") > 0:
 			open()
 		else:
@@ -59,6 +61,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func is_open() -> bool:
 	return _root.visible
+
+
+## Karte nur, wenn gerade nichts anderes die Steuerung hat (sonst gäbe das Schließen der Karte
+## die Steuerung frei, obwohl z. B. noch das Inventar offen ist oder man auf der Couch sitzt).
+func _player_free() -> bool:
+	var p := get_tree().get_first_node_in_group("player") as Player
+	return p != null and not p.input_locked and not get_tree().paused
 
 
 func open() -> void:

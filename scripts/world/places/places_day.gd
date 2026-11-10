@@ -236,6 +236,8 @@ static func _kontrollpunkt(root: Node3D) -> void:
 	for t in 2:
 		var tp := PlaceKit.on_ground(root, 12.0 + t * 7.0, -5.0 + t * 8.0)
 		var tent := Node3D.new()
+		# fester Name: die Funde darin gehören zum Spielstand
+		tent.name = "Tent%d" % (t + 1)
 		tent.position = tp
 		tent.rotation_degrees.y = 90.0
 		root.add_child(tent)

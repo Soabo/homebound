@@ -367,7 +367,7 @@ func _stream_chunks(focus: Vector3) -> void:
 	var here := Vector2i(int(floorf(focus.x / CHUNK)), int(floorf(focus.z / CHUNK)))
 	if not _chunks.has(here) and _in_world(here):
 		if _job.get("key", Vector2i(999999, 0)) == here:
-			_job.clear()
+			_drop_job()
 		_build_chunk_now(here)
 	# Entladen
 	for key: Vector2i in _chunks.keys():
@@ -387,7 +387,13 @@ func _stream_chunks(focus: Vector3) -> void:
 			var hs: PackedFloat32Array = _job["h"]
 			hs.resize((CHUNK_RES + 3) * (CHUNK_RES + 3))
 			_job["h"] = hs
-		_work_job(start, budget)
+		if not _work_job(start, budget):
+			return
+
+
+## Wird um den Spieler herum gerade noch Gelände nachgeladen?
+func is_loading() -> bool:
+	return not _job.is_empty() or _next_missing(_focus()) != Vector2i(999999, 0)
 
 
 func _next_missing(focus: Vector3) -> Vector2i:
@@ -407,23 +413,67 @@ func _next_missing(focus: Vector3) -> Vector2i:
 	return best
 
 
-## Höhen zeilenweise berechnen (Zeitbudget), danach Netz und Kollision bauen.
-func _work_job(start: int, budget: float) -> void:
+## Ein Stück in kleinen Schritten bauen, damit kein einzelnes Bild lange dauert (sonst ruckelt es beim Laufen):
+## 1. Höhen zeilenweise, 2. Punkte und Farben zeilenweise, 3. Netz, 4. Kollision – 3 und 4 in eigenen Bildern.
+## Rückgabe: false = für dieses Bild ist Schluss.
+func _work_job(start: int, budget: float) -> bool:
 	var key: Vector2i = _job["key"]
 	var n := CHUNK_RES + 3
 	var x0 := key.x * CHUNK - CELL
 	var z0 := key.y * CHUNK - CELL
 	var hs: PackedFloat32Array = _job["h"]
-	while int(_job["row"]) < n:
-		var row := int(_job["row"])
-		for ix in n:
-			hs[row * n + ix] = height_at(x0 + ix * CELL, z0 + row * CELL)
-		_job["row"] = row + 1
+	if int(_job["row"]) < n:
+		while int(_job["row"]) < n:
+			var row := int(_job["row"])
+			for ix in n:
+				hs[row * n + ix] = height_at(x0 + ix * CELL, z0 + row * CELL)
+			_job["row"] = row + 1
+			if Time.get_ticks_usec() - start > budget:
+				break
+		_job["h"] = hs
+		if int(_job["row"]) < n or Time.get_ticks_usec() - start > budget:
+			return false
+	if not _job.has("build"):
+		_job["build"] = ChunkBuild.new(key, hs)
+	var cb: ChunkBuild = _job["build"]
+	var v := CHUNK_RES + 1
+	while cb.row < v:
+		_fill_row(cb)
 		if Time.get_ticks_usec() - start > budget:
-			_job["h"] = hs
-			return
-	_job["h"] = hs
-	_finish_chunk(key, hs)
+			return false
+	if cb.root == null:
+		# Netz und Kollision sind je ein größerer Brocken: höchstens einer pro Bild (auch der Wald wartet dann)
+		if claim_heavy_step():
+			_make_mesh(cb)
+		return false
+	if claim_heavy_step():
+		_make_collision(cb)
+		_job.clear()
+	return false
+
+
+## Größere Arbeitsschritte beim Nachladen (Gelände-Netz, Kollision, ein Waldstück mit Bäumen) teilen sich
+## die Bilder: pro Bild darf nur einer davon laufen. true = dieser Schritt darf jetzt.
+static var _heavy_frame: int = -1
+
+
+static func claim_heavy_step() -> bool:
+	var f := Engine.get_process_frames()
+	if _heavy_frame == f:
+		return false
+	_heavy_frame = f
+	return true
+
+
+func _exit_tree() -> void:
+	_drop_job()
+
+
+func _drop_job() -> void:
+	if _job.has("build"):
+		var cb: ChunkBuild = _job["build"]
+		if cb.root and not cb.root.is_inside_tree():
+			cb.root.free()
 	_job.clear()
 
 
@@ -439,37 +489,66 @@ func _build_chunk_now(key: Vector2i) -> void:
 	_finish_chunk(key, hs)
 
 
-## Aus den Höhen (mit einem Rand von 1 Feld für die Normalen) Netz + Kollision machen.
+## Aus den Höhen (mit einem Rand von 1 Feld für die Normalen) Netz + Kollision machen – alles sofort.
 func _finish_chunk(key: Vector2i, hs: PackedFloat32Array) -> void:
 	if _chunks.has(key):
 		return
-	var n := CHUNK_RES + 3
-	var v := CHUNK_RES + 1
+	var cb := ChunkBuild.new(key, hs)
+	while cb.row < CHUNK_RES + 1:
+		_fill_row(cb)
+	_make_mesh(cb)
+	_make_collision(cb)
+
+
+## Zwischenstand eines Stücks, das gerade gebaut wird.
+class ChunkBuild:
+	extends RefCounted
+	var key: Vector2i
+	var hs: PackedFloat32Array
+	var row: int = 0
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
 	var uvs := PackedVector2Array()
-	verts.resize(v * v)
-	normals.resize(v * v)
-	colors.resize(v * v)
-	uvs.resize(v * v)
-	var ox := key.x * CHUNK
-	var oz := key.y * CHUNK
 	var heights := PackedFloat32Array()
-	heights.resize(v * v)
-	for iz in v:
-		for ix in v:
-			var hi := (iz + 1) * n + (ix + 1)
-			var h := hs[hi]
-			var x := ox + ix * CELL
-			var z := oz + iz * CELL
-			var nrm := Vector3(hs[hi - 1] - hs[hi + 1], 2.0 * CELL, hs[hi - n] - hs[hi + n]).normalized()
-			var i := iz * v + ix
-			verts[i] = Vector3(ix * CELL, h, iz * CELL)
-			normals[i] = nrm
-			colors[i] = ground_color(x, z, h, nrm.y)
-			uvs[i] = Vector2(x, z) * 0.25
-			heights[i] = h
+	var root: Node3D = null
+
+	func _init(k: Vector2i, h: PackedFloat32Array) -> void:
+		key = k
+		hs = h
+		var count := (Terrain.CHUNK_RES + 1) * (Terrain.CHUNK_RES + 1)
+		verts.resize(count)
+		normals.resize(count)
+		colors.resize(count)
+		uvs.resize(count)
+		heights.resize(count)
+
+
+## Eine Zeile Punkte, Normalen und Bodenfarben.
+func _fill_row(cb: ChunkBuild) -> void:
+	var n := CHUNK_RES + 3
+	var v := CHUNK_RES + 1
+	var ox := cb.key.x * CHUNK
+	var oz := cb.key.y * CHUNK
+	var iz := cb.row
+	var hs := cb.hs
+	for ix in v:
+		var hi := (iz + 1) * n + (ix + 1)
+		var h := hs[hi]
+		var x := ox + ix * CELL
+		var z := oz + iz * CELL
+		var nrm := Vector3(hs[hi - 1] - hs[hi + 1], 2.0 * CELL, hs[hi - n] - hs[hi + n]).normalized()
+		var i := iz * v + ix
+		cb.verts[i] = Vector3(ix * CELL, h, iz * CELL)
+		cb.normals[i] = nrm
+		cb.colors[i] = ground_color(x, z, h, nrm.y)
+		cb.uvs[i] = Vector2(x, z) * 0.25
+		cb.heights[i] = h
+	cb.row += 1
+
+
+func _make_mesh(cb: ChunkBuild) -> void:
+	var v := CHUNK_RES + 1
 	if _indices.is_empty():
 		for iz in CHUNK_RES:
 			for ix in CHUNK_RES:
@@ -477,33 +556,43 @@ func _finish_chunk(key: Vector2i, hs: PackedFloat32Array) -> void:
 				_indices.append_array([i, i + 1, i + v, i + 1, i + v + 1, i + v])
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_COLOR] = colors
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_VERTEX] = cb.verts
+	arrays[Mesh.ARRAY_NORMAL] = cb.normals
+	arrays[Mesh.ARRAY_COLOR] = cb.colors
+	arrays[Mesh.ARRAY_TEX_UV] = cb.uvs
 	arrays[Mesh.ARRAY_INDEX] = _indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	mesh.surface_set_material(0, _ground_mat)
 	var root := Node3D.new()
-	root.name = "Chunk_%d_%d" % [key.x, key.y]
-	root.position = Vector3(ox, 0, oz)
+	root.name = "Chunk_%d_%d" % [cb.key.x, cb.key.y]
+	root.position = Vector3(cb.key.x * CHUNK, 0, cb.key.y * CHUNK)
 	var mi := MeshInstance3D.new()
 	mi.name = "Ground"
 	mi.mesh = mesh
 	root.add_child(mi)
+	cb.root = root
+
+
+func _make_collision(cb: ChunkBuild) -> void:
+	var v := CHUNK_RES + 1
+	var root := cb.root
+	if _chunks.has(cb.key):
+		# inzwischen auf anderem Weg gebaut (Spieler stand schon darauf)
+		root.free()
+		return
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	var shape := HeightMapShape3D.new()
 	shape.map_width = v
 	shape.map_depth = v
-	shape.map_data = heights
+	shape.map_data = cb.heights
 	cs.shape = shape
 	cs.position = Vector3(CHUNK * 0.5, 0, CHUNK * 0.5)
 	body.add_child(cs)
 	root.add_child(body)
 	add_child(root)
-	_chunks[key] = root
+	_chunks[cb.key] = root
 
 
 ## Grobes Gelände bis zum Kartenrand. Rund um den Spieler (und im Tal) sinkt es per Shader weg,

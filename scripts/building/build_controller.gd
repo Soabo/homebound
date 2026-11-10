@@ -180,7 +180,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				start(items[i + 1])
 		get_viewport().set_input_as_handled()
 		return
-	if not active:
+	if not active or player.input_locked:
 		return
 	if event.is_action_pressed("interact_secondary"):
 		if _is_camera():

@@ -16,6 +16,23 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# Eigene Testdateien (überstehen das Neuladen der Szene selbst)
+	if mode == "playthrough":
+		PlaythroughTest.start(get_tree())
+		return
+	if mode == "regress":
+		RegressTest.start(get_tree())
+		return
+	if mode == "fps":
+		for i in 10:
+			await get_tree().physics_frame
+		get_tree().quit(1 if await FpsTest.run(self) > 0 else 0)
+		return
+	if mode == "data":
+		for i in 10:
+			await get_tree().physics_frame
+		get_tree().quit(1 if DataTest.run(get_tree()) > 0 else 0)
+		return
 	if _ran:
 		print("Nach Neustart: Tag %d, %s" % [TimeManager.day, TimeManager.get_clock_text()])
 		print("Spannungsbogen nach Neustart: %s, %d Nächte seit Auftritt, %d ruhige übrig" % [ThreatDirector.night_kind, ThreatDirector.nights_since_appearance, ThreatDirector.quiet_left])
@@ -543,11 +560,12 @@ func _dread_test() -> void:
 	for i in 60:
 		await get_tree().physics_frame
 	print("DREAD Waldrand angeschaut -> weg: ", not is_instance_valid(a))
-	# Fenster: Spieler im Wohnzimmer
-	player.global_position = Vector3(0.5, 0.5, 2.5)
+	# Fenster: Spieler im Wohnzimmer, ein paar Schritte vom Fenster weg. Das Gesicht muss an einem Fenster
+	# erscheinen, das man von dort sieht (früher: Werkstattfenster hinter der Zwischenwand).
+	player.global_position = Vector3(-1.5, 0.5, 1.2)
 	await get_tree().physics_frame
 	var w := Apparition.spawn(scene, "window")
-	print("DREAD Fenster-Gesicht: ", w != null)
+	print("DREAD Fenster-Gesicht: %s, an einem sichtbaren Fenster: %s" % [w != null, w != null and absf(w.global_position.x) < 1.5])
 	if w:
 		var tw := w.global_position + Vector3(0, 2.2, 0) - player.camera.global_position
 		player.rotation.y = atan2(-tw.x, -tw.z)
@@ -710,11 +728,12 @@ func _changes_test() -> void:
 	var couch := scene.get_node("Cabin/Couch") as Couch
 	print("COUCH Nachrichten an Tag 1: %d, ungelesen %d, Hinweis: %s" % [couch.available().size(), couch.unread_count(), couch.get_prompt(player2)])
 	couch.interact(player2)
-	await get_tree().process_frame
+	# Hinsetzen dauert knapp eine Sekunde, erst dann geht das Tablet auf
+	await get_tree().create_timer(1.2).timeout
 	var tm := scene.get_node("TabletMenu") as TabletMenu
 	print("COUCH sitzt: %s, Tablet offen: %s, Augenhöhe %.2f, ungelesen jetzt %d" % [couch.sitting, tm.is_open(), player2.head.global_position.y, couch.unread_count()])
 	tm.close()
-	await get_tree().physics_frame
+	await get_tree().create_timer(1.0).timeout
 	print("COUCH aufgestanden: %s, Steuerung frei: %s" % [not couch.sitting, not player2.input_locked])
 	# Kamin
 	var fire := scene.get_node("Cabin/Fireplace") as Fireplace

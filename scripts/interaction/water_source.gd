@@ -64,13 +64,18 @@ func secondary_interact(_player: Node) -> void:
 		_splash()
 		EventBus.notify("Gießkanne gefüllt.", 1.5)
 		return
-	if not Inventory.remove("bottle_empty", 1):
+	if Inventory.count("bottle_empty") <= 0:
 		return
 	var what := "water" if clean else "water_raw"
 	if _dirty():
 		what = "water_raw" if Inventory.count("water_filter") > 0 else "water_tainted"
 	if Inventory.count("comb_filter") > 0:
 		what = "water"  # Wabenfilter (Forschung): alles wird trinkbar
+	# Erst prüfen, ob die volle Flasche noch Platz hat – sonst wäre die leere Flasche einfach weg.
+	if Inventory.count(what) >= int(DataDB.item(what).get("stack", 99)):
+		EventBus.notify("Mehr %s kannst du nicht tragen." % Inventory.display_name(what), 2.0)
+		return
+	Inventory.remove("bottle_empty", 1)
 	Inventory.add(what, 1)
 	_splash()
 	EventBus.notify("%s abgefüllt." % Inventory.display_name(what), 2.0)

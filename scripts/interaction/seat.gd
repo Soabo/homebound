@@ -57,8 +57,10 @@ static func sit_down(owner: Node, p: Player, feet: Vector3, forward: Vector3, ey
 	p.velocity = Vector3.ZERO
 	p.input_locked = true
 	p.set_physics_process(false)
+	_stop_move(p)
 	var yaw := atan2(-forward.x, -forward.z)
 	var tw := owner.create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	p.set_meta("seat_tween", tw)
 	tw.tween_property(p, "global_position", feet, 0.75)
 	tw.tween_property(p, "rotation:y", p.rotation.y + wrapf(yaw - p.rotation.y, -PI, PI), 0.55)
 	tw.tween_property(p.head, "position:y", eye_h, 0.75).set_ease(Tween.EASE_OUT)
@@ -71,10 +73,22 @@ static func sit_down(owner: Node, p: Player, feet: Vector3, forward: Vector3, ey
 ## Spieler steht auf und tritt zurück an die Stelle, von der er kam.
 static func stand_up(owner: Node, p: Player, back: Vector3) -> Tween:
 	p.look_only = false
+	_stop_move(p)
 	var tw := owner.create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	p.set_meta("seat_tween", tw)
 	tw.tween_property(p, "global_position", back, 0.6)
 	tw.tween_property(p.head, "position:y", Player.STAND_HEIGHT - Player.EYE_OFFSET, 0.55)
 	tw.chain().tween_callback(func() -> void:
 		p.set_physics_process(true)
 		p.input_locked = false)
 	return tw
+
+
+## Wer noch beim Hinsetzen ist und schon wieder aufsteht (E zweimal schnell), würde sonst von zwei
+## Bewegungen gleichzeitig gezogen und am Ende im Sitz stecken.
+static func _stop_move(p: Player) -> void:
+	if not p.has_meta("seat_tween"):
+		return
+	var old: Variant = p.get_meta("seat_tween")
+	if old is Tween and (old as Tween).is_valid():
+		(old as Tween).kill()

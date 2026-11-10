@@ -1264,7 +1264,8 @@
       ],
       "text": "Metall und Zelle schwingen im selben Takt. Wo diese Technik in der Nähe ist, verändert sich das Feld – daraus lässt sich ein Sensor bauen, der ihre Nähe spürt.",
       "unlocks": [
-        "resonance_sensor"
+        "resonance_sensor",
+        "cell_adapter"
       ]
     },
     "link_light": {

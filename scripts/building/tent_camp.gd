@@ -236,7 +236,9 @@ func _light_from_above() -> void:
 	spot.spot_range = 30.0
 	spot.spot_angle = 18.0
 	spot.shadow_enabled = true
-	get_tree().current_scene.add_child(spot)
+	# am Zelt aufhängen (frei in der Welt beweglich): wird das Zelt abgebaut, verschwindet auch das Licht
+	spot.top_level = true
+	add_child(spot)
 	var c := global_position + Vector3(0, 14.0, 0)
 	spot.global_position = c + Vector3(-10, 0, 0)
 	spot.look_at(global_position + Vector3(-6, 0, 0))

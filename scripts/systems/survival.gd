@@ -206,4 +206,10 @@ func set_state(s: Dictionary) -> void:
 	thirst = float(s.get("thirst", 75.0))
 	warmth = float(s.get("warmth", 90.0))
 	stamina = STAMINA_MAX
+	# Reste des abgebrochenen Tages: nasse Kleidung, laufender Schlaf, Warnungen
+	wet_until = -1.0
+	_sleep_from = -1.0
+	_warned_hunger = false
+	_warned_thirst = false
+	_warned_cold = false
 	changed.emit()

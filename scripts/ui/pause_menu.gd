@@ -54,14 +54,28 @@ func _button(parent: Control, text: String) -> Button:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause_menu"):
-		set_paused(not get_tree().paused)
 		get_viewport().set_input_as_handled()
+		# offene Karte: Esc schließt erst die Karte
+		var map := get_tree().get_first_node_in_group("map_screen")
+		if not get_tree().paused and map and map.call("is_open"):
+			map.call("close")
+			return
+		set_paused(not get_tree().paused)
 
 
 func set_paused(value: bool) -> void:
 	get_tree().paused = value
 	visible = value
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value or _menu_needs_mouse() else Input.MOUSE_MODE_CAPTURED
+
+
+## Ist hinter der Pause noch ein Menü offen, das den Mauszeiger braucht (Inventar, Forschung, Tablet)?
+func _menu_needs_mouse() -> bool:
+	for g in ["game_menus", "research_menu", "tablet_menu"]:
+		var m := get_tree().get_first_node_in_group(g)
+		if m and m.has_method("is_open") and m.call("is_open"):
+			return true
+	return false
 
 
 ## TEST: Sprung zu einem späteren Tag (7 Uhr morgens). Spannungsbogen, Talverwandlung und Wucherungen

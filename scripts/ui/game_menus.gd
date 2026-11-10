@@ -398,8 +398,19 @@ func _on_use(id: String) -> void:
 
 
 func _on_drop(id: String) -> void:
+	# „Ablegen“ wirft Sachen endgültig weg. Einzelstücke, die es nur einmal gibt (W-17, Werkzeuge, Kameras,
+	# Schlüssel …), gibt man so nicht her – die gehören in die Truhe.
+	if not can_discard(id):
+		EventBus.notify("%s gebe ich nicht her. (In der Truhe in der Werkstatt ist Platz.)" % Inventory.display_name(id), 3.0)
+		return
 	Inventory.remove(id, Inventory.count(id))
 	EventBus.notify("Abgelegt.", 1.5)
+
+
+## Darf man den Gegenstand wegwerfen? Nicht: Einzelstücke (Stapelgröße 1) aus Werkzeug, Kamera, Fund, Bauteil.
+static func can_discard(id: String) -> bool:
+	var def := DataDB.item(id)
+	return not (int(def.get("stack", 99)) <= 1 and String(def.get("category", "")) in ["Werkzeug", "Kamera", "Fund", "Bauteil"])
 
 
 func _on_build(id: String) -> void:

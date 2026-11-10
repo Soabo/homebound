@@ -203,6 +203,21 @@
   Findet er dich: Schlag bzw. Zelt aufreißen (nie unter `min_health`), dann Teleporterblitz. Test: `--night-test=camp`.
 - Tests: `--night-test=map` (Rechenzeit, Nachladen), `--night-test=places` (alle Orte, Funde, Mechaniken).
 
+## Prüfrunde „runder und fehlerfreier“ (11/2026)
+- Alle Tests auf einmal: `tools/run_tests.sh [ordner]` (Nacht-Tests, Lauftests, Daten, Rückfall-Prüfungen, Bildrate, Durchlauf).
+- `--night-test=data` (`DataTest`): prüft alle Dateien unter `data/` gegeneinander und gegen die gebaute Welt.
+  Bekannter offener Punkt (kein Fehler): `alien_seeds` hat `seed: alien`, aber es gibt noch keine Pflanze „alien“.
+- `--night-test=regress` (`RegressTest`): je behobenem Fehler eine Prüfung. Neue Fehler → dort eine Prüfung ergänzen (`_t_more`).
+- `--night-test=playthrough` (`PlaythroughTest`, optional `--days=N`): spielt 15 Tage automatisch, sichert und lädt nach jedem Tag,
+  vergleicht alles vorher/nachher.
+- `--night-test=fps` (`FpsTest`, optional `--fps-detail=Ort`): Rechenzeit pro Bild an Hütte, Wald, großen Orten; Ruckler beim Laufen.
+- Nachladen ohne Ruckler: `Terrain` baut ein Stück in Schritten (Höhen, Punkte/Farben, Netz, Kollision), `WildForest` baut nahe
+  Stücke als `NearJob` über mehrere Bilder (das einfache Stück bleibt bis zum Tausch stehen). Größere Schritte teilen sich die Bilder
+  über `Terrain.claim_heavy_step()`. Sofort-Bauen (Teleport, Tests, Fotos) geht weiter mit `load_around` / `update_around(pos, 0.0)`.
+- `Player.input_locked` ist eine Eigenschaft: wer tot ist, bleibt gesperrt. E/R am Ziel läuft über `Player.use_target()`.
+- „Ablegen“ im Rucksack wirft Einzelstücke (W-17, Werkzeuge, Kameras, Funde mit Stapel 1) nicht mehr weg (`GameMenus.can_discard`).
+- Orte: Knoten, unter denen Funde liegen, brauchen feste Namen (sonst liegen die Funde nach dem Laden wieder da).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

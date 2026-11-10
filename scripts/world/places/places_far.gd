@@ -421,6 +421,8 @@ static func _wal(root: Node3D) -> void:
 	CreatureModel.pose_crouch(Creature.build_model(sleeper))
 	# Funde nahe am Riss
 	var inner := Node3D.new()
+	# fester Name: die Funde darin gehören zum Spielstand
+	inner.name = "Inner"
 	inner.position = Vector3(length * 0.32, 3.1, 0)
 	hull.add_child(inner)
 	PlaceKit.loot(inner, "Cells", "energy_cell", 2, Vector3(0, 0, 1.5), "cell")

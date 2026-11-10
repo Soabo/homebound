@@ -97,7 +97,9 @@ func _collect() -> void:
 		if i < 0 or i >= SLOTS:
 			continue
 		var cam := SecurityCamera.from_install(d)
-		scene.add_child.call_deferred(cam)
+		# sofort einhängen (nicht erst am Bildende): Bei zwei Änderungen im selben Bild blieben sonst
+		# die Kameras der ersten Runde unbemerkt als Doppelte in der Welt stehen.
+		scene.add_child(cam)
 		cameras[i] = cam
 	set_active(active_index)
 

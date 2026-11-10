@@ -84,6 +84,14 @@ func reset_for_new_scene() -> void:
 	creature = null
 	_planned_for_day = -1
 	events.clear()
+	# Was nur für die abgebrochene Nacht galt, vergessen – sonst gäbe es z. B. nach einem Tod
+	# in derselben Nacht keine Zeltnacht-Ereignisse mehr.
+	_camp_planned_night = -1
+	_tired_night = -1
+	_tired_at = -1.0
+	_activity_tonight = false
+	_appeared_tonight = false
+	_kinds_tonight.clear()
 	_plan_if_needed.call_deferred()
 
 
@@ -463,6 +471,9 @@ func _play_phantom_steps(scene: Node) -> void:
 		p.y = Terrain.height_at(p.x, p.z) + 0.1
 		CreatureSounds.play(scene, "step", p, -3.0, _rng.randf_range(0.9, 1.05), 40.0)
 		await get_tree().create_timer(0.6).timeout
+		# Szene inzwischen neu geladen (Tod, Tagesneustart)? Dann gibt es den alten Wald nicht mehr.
+		if not is_instance_valid(scene) or not scene.is_inside_tree():
+			return
 
 
 ## Wo sucht der Sucher: am Zelt, um den Spieler draußen oder an der Hütte.

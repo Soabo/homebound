@@ -92,14 +92,39 @@ static func spawn(scene: Node, what: String) -> Apparition:
 static func _window_near(scene: Node, p: Vector3) -> Node3D:
 	var best: Node3D = null
 	var best_d := 1e9
+	# Fenster, auf das man von hier aus freie Sicht hat (also im selben Zimmer), geht vor –
+	# sonst stünde das Gesicht hinter einer Zwischenwand, wo es niemand sieht.
+	var seen: Node3D = null
+	var seen_d := 1e9
 	for w in scene.get_tree().get_nodes_in_group("entry_point"):
 		if not w is CabinWindow:
 			continue
-		var d := (w.call("inside_point") as Vector3).distance_to(p)
-		if d < best_d and d > 1.6 and d < 7.0:
+		var inner := w.call("inside_point") as Vector3
+		var d := inner.distance_to(p)
+		if d <= 1.6 or d >= 7.0:
+			continue
+		if d < best_d:
 			best_d = d
 			best = w
-	return best
+		if d < seen_d and _clear_view(scene, p, inner):
+			seen_d = d
+			seen = w
+	return seen if seen else best
+
+
+## Freie Sicht auf Augenhöhe vom Standort bis vor das Fenster (keine Wand dazwischen)?
+static func _clear_view(scene: Node, from: Vector3, to: Vector3) -> bool:
+	var world := scene as Node3D
+	if world == null or world.get_world_3d() == null:
+		return true
+	var a := Vector3(from.x, to.y, from.z)
+	var q := PhysicsRayQueryParameters3D.create(a, to)
+	q.collision_mask = 1
+	var player := scene.get_tree().get_first_node_in_group("player") as CollisionObject3D
+	if player:
+		q.exclude = [player.get_rid()]
+	var hit := world.get_world_3d().direct_space_state.intersect_ray(q)
+	return hit.is_empty() or (hit["position"] as Vector3).distance_to(to) < 0.5
 
 
 func _ready() -> void:

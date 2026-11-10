@@ -19,6 +19,8 @@ var _chunks: Dictionary = {}       ## Vector2i -> {"lod": 1|2, "node": Node3D, "
 var _tree_cache: Dictionary = {}   ## Vector2i -> Array[Dictionary]
 var _meshes: Dictionary = {}
 var _mats: Dictionary = {}
+var _loading: bool = false
+var _job: NearJob = null           ## nahes Stück, das gerade gebaut wird
 
 
 func _ready() -> void:
@@ -105,14 +107,161 @@ func update_around(focus: Vector3, budget_ms: float) -> void:
 			if have != want:
 				todo.append([d, key, want])
 	todo.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	var stepwise := budget_ms > 0.0
+	var limit := start + int(budget_ms * 1000.0)
+	_loading = not todo.is_empty() or _job != null
+	if not stepwise:
+		_drop_job()
+	elif _job:
+		# Ein nahes Stück ist in Arbeit: weiterbauen. Ist der Spieler inzwischen woanders, verwerfen.
+		if _center(_job.key).distance_to(f) > NEAR_RADIUS + 30.0:
+			_drop_job()
+		elif not _work_job(limit):
+			return
 	for t: Array in todo:
-		if budget_ms > 0.0 and Time.get_ticks_usec() - start > budget_ms * 1000.0:
+		if stepwise and Time.get_ticks_usec() > limit:
 			return
 		var key: Vector2i = t[1]
+		var lod := int(t[2])
+		if stepwise and lod == 2:
+			# Nahes Stück = großer Brocken (viele Bäume, Kollision, Bodenpflanzen): über mehrere Bilder verteilt
+			# bauen, sonst ruckelt es beim Laufen. Das einfache Stück bleibt so lange stehen.
+			if _job == null:
+				_job = NearJob.new(key)
+				if not _work_job(limit):
+					return
+			continue
 		if _chunks.has(key):
 			(_chunks[key]["node"] as Node3D).queue_free()
 			_chunks.erase(key)
-		_build_chunk(key, int(t[2]))
+		_build_chunk(key, lod)
+
+
+## Wird um den Spieler herum gerade noch Wald nachgeladen?
+func is_loading() -> bool:
+	return _loading
+
+
+## Zwischenstand eines nahen Stücks, das gerade über mehrere Bilder gebaut wird.
+class NearJob:
+	extends RefCounted
+	var key: Vector2i
+	var stage: int = 0
+	var index: int = 0
+	var root: Node3D
+	var body: StaticBody3D
+	var parts: TreeParts
+	var ground: GroundParts
+
+	func _init(k: Vector2i) -> void:
+		key = k
+
+
+## Bäume eines Stücks als Listen für die Sammel-Netze.
+class TreeParts:
+	extends RefCounted
+	var trunks: Array[Transform3D] = []
+	var trunk_cols: Array[Color] = []
+	var cones: Array[Transform3D] = []
+	var cone_cols: Array[Color] = []
+	var crowns: Array[Transform3D] = []
+	var crown_cols: Array[Color] = []
+
+
+## Bodenpflanzen und Felsen eines Stücks.
+class GroundParts:
+	extends RefCounted
+	var rng: RandomNumberGenerator
+	var tries: int = 0
+	var body: StaticBody3D
+	var grass: Array[Transform3D] = []
+	var grass_cols: Array[Color] = []
+	var ferns: Array[Transform3D] = []
+	var fern_cols: Array[Color] = []
+	var bushes: Array[Transform3D] = []
+	var bush_cols: Array[Color] = []
+	var rocks: Array[Transform3D] = []
+	var rock_cols: Array[Color] = []
+
+
+func _drop_job() -> void:
+	if _job == null:
+		return
+	if _job.root and not _job.root.is_inside_tree():
+		_job.root.free()
+	if _job.ground and _job.ground.body and not _job.ground.body.is_inside_tree():
+		_job.ground.body.free()
+	_job = null
+
+
+func _exit_tree() -> void:
+	_drop_job()
+
+
+## Baut am nahen Stück weiter, bis die Zeit für dieses Bild um ist. Rückgabe: false = für dieses Bild ist Schluss.
+func _work_job(limit: int) -> bool:
+	var j := _job
+	match j.stage:
+		0:
+			# Bäume auswürfeln (wird gemerkt)
+			var cached := _tree_cache.has(j.key)
+			_trees(j.key)
+			j.root = Node3D.new()
+			j.root.name = "W_%d_%d_2" % [j.key.x, j.key.y]
+			j.body = StaticBody3D.new()
+			j.body.name = "Colliders"
+			j.root.add_child(j.body)
+			j.parts = TreeParts.new()
+			j.stage = 1
+			return cached
+		1:
+			var trees := _trees(j.key)
+			while j.index < trees.size():
+				_tree_parts(trees[j.index], 2, j.parts, j.body)
+				j.index += 1
+				if j.index % 6 == 0 and Time.get_ticks_usec() > limit:
+					return false
+			j.stage = 2
+			return Time.get_ticks_usec() <= limit
+		2, 3, 4:
+			if not Terrain.claim_heavy_step():
+				return false
+			var p := j.parts
+			if j.stage == 2:
+				_mm(j.root, "Trunks", _meshes["trunk"], p.trunks, p.trunk_cols, _mats["bark"], true)
+			elif j.stage == 3:
+				_mm(j.root, "Needles", _meshes["cone"], p.cones, p.cone_cols, _mats["needles"], true)
+			else:
+				_mm(j.root, "Crowns", _meshes["crown"], p.crowns, p.crown_cols, _mats["leaves"], true)
+			j.stage += 1
+			return false
+		5:
+			# Tausch: einfaches Stück weg, volles Stück hin
+			if not Terrain.claim_heavy_step():
+				return false
+			if _chunks.has(j.key):
+				(_chunks[j.key]["node"] as Node3D).queue_free()
+			add_child(j.root)
+			_chunks[j.key] = {"lod": 2, "node": j.root}
+			j.parts = null
+			j.ground = _ground_start(j.key)
+			j.stage = 6
+			return false
+		6:
+			if not _ground_scatter(j.key, j.ground, limit):
+				return false
+			j.stage = 7
+			return false
+		_:
+			if not Terrain.claim_heavy_step():
+				return false
+			if is_instance_valid(j.root) and _chunks.has(j.key) and _chunks[j.key]["node"] == j.root:
+				_ground_finish(j.key, j.root, j.ground)
+			else:
+				j.ground.body.free()
+			_job = null
+			return false
+	return false
 
 
 func _center(key: Vector2i) -> Vector2:
@@ -168,95 +317,101 @@ func _trees(key: Vector2i) -> Array:
 	return out
 
 
+## Ein Stück sofort bauen (einfache Stücke immer so; nahe nur bei Teleport, Tests, Bildschirmfotos).
 func _build_chunk(key: Vector2i, lod: int) -> void:
 	var trees := _trees(key)
 	var root := Node3D.new()
 	root.name = "W_%d_%d_%d" % [key.x, key.y, lod]
-	add_child(root)
-	_chunks[key] = {"lod": lod, "node": root}
-	var trunks: Array[Transform3D] = []
-	var trunk_cols: Array[Color] = []
-	var cones: Array[Transform3D] = []
-	var cone_cols: Array[Color] = []
-	var crowns: Array[Transform3D] = []
-	var crown_cols: Array[Color] = []
 	var body: StaticBody3D
 	if lod == 2:
 		body = StaticBody3D.new()
 		body.name = "Colliders"
 		root.add_child(body)
+	var p := TreeParts.new()
 	for t: Dictionary in trees:
-		var rng := RandomNumberGenerator.new()
-		rng.seed = int(t["seed"])
-		var x: float = t["x"]
-		var z: float = t["z"]
-		var g: float = t["g"]
-		var h: float = t["h"]
-		var r: float = t["r"]
-		var yaw: float = t["yaw"]
-		var conifer: bool = t["c"]
-		var trunk_h := h * (0.85 if conifer else 0.62)
-		var bark := Color(0.9, 0.85, 0.8).lerp(Color(1.15, 1.05, 0.95), rng.randf())
-		trunks.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.04, 0.04), yaw, rng.randf_range(-0.04, 0.04))).scaled(Vector3(r, trunk_h, r)),
-				Vector3(x, g + trunk_h * 0.5 - 0.3, z)))
-		trunk_cols.append(bark)
-		if conifer:
-			var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), rng.randf())
-			var crown_r := h * rng.randf_range(0.15, 0.19)
-			var bottom := h * rng.randf_range(0.12, 0.22)
-			var layers := 9 if lod == 2 else 3
-			for i in layers:
-				var fr := float(i) / float(layers - 1)
-				var lr := crown_r * lerpf(1.0, 0.18, fr) * rng.randf_range(0.9, 1.1)
-				var lh := h * (lerpf(0.3, 0.2, fr) if lod == 2 else lerpf(0.45, 0.35, fr))
-				var cy := g + lerpf(bottom, h * 0.92, fr) + lh * 0.5
-				var col := green * lerpf(0.8, 1.2, fr)
-				col.a = 1.0
-				var tilt := Vector3(rng.randf_range(-0.06, 0.06), yaw + i * 0.7, rng.randf_range(-0.06, 0.06))
-				cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy - lh * 0.5, z)))
-				cone_cols.append(col)
-		else:
-			var count := 9 if lod == 2 else 3
-			for i in count:
-				var off := Vector3(rng.randf_range(-1.8, 1.8), rng.randf_range(-1.2, 1.6), rng.randf_range(-1.8, 1.8))
-				var s := rng.randf_range(2.2, 3.4) * (1.0 if lod == 2 else 1.4)
-				var rot := Basis.from_euler(Vector3(rng.randf_range(-0.4, 0.4), rng.randf() * TAU, rng.randf_range(-0.4, 0.4)))
-				crowns.append(Transform3D(rot.scaled(Vector3(s, s, s)), Vector3(x, g + trunk_h - 0.4, z) + off * (1.0 if lod == 2 else 0.6)))
-				var lc := Color(0.75, 0.85, 0.6) * rng.randf_range(0.75, 1.15)
-				lc.a = 1.0
-				crown_cols.append(lc)
-		if body:
-			var cs := CollisionShape3D.new()
-			var shape := CylinderShape3D.new()
-			shape.radius = r * 1.05
-			shape.height = 4.0
-			cs.shape = shape
-			cs.position = Vector3(x, g + 1.8, z)
-			body.add_child(cs)
+		_tree_parts(t, lod, p, body)
 	var shadows := lod == 2
-	_mm(root, "Trunks", _meshes["trunk" if lod == 2 else "trunk_lod"], trunks, trunk_cols, _mats["bark"], shadows)
-	_mm(root, "Needles", _meshes["cone" if lod == 2 else "cone_lod"], cones, cone_cols, _mats["needles"], shadows)
-	_mm(root, "Crowns", _meshes["crown"], crowns, crown_cols, _mats["leaves"], shadows)
+	_mm(root, "Trunks", _meshes["trunk" if lod == 2 else "trunk_lod"], p.trunks, p.trunk_cols, _mats["bark"], shadows)
+	_mm(root, "Needles", _meshes["cone" if lod == 2 else "cone_lod"], p.cones, p.cone_cols, _mats["needles"], shadows)
+	_mm(root, "Crowns", _meshes["crown"], p.crowns, p.crown_cols, _mats["leaves"], shadows)
+	add_child(root)
+	_chunks[key] = {"lod": lod, "node": root}
 	if lod == 2:
-		_build_ground(key, root, body)
+		var gp := _ground_start(key)
+		_ground_scatter(key, gp, -1)
+		_ground_finish(key, root, gp)
+
+
+## Ein Baum: Stamm, Krone (Nadel-Etagen oder Laubbüschel) und – im nahen Stück – die Kollision.
+func _tree_parts(t: Dictionary, lod: int, p: TreeParts, body: StaticBody3D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(t["seed"])
+	var x: float = t["x"]
+	var z: float = t["z"]
+	var g: float = t["g"]
+	var h: float = t["h"]
+	var r: float = t["r"]
+	var yaw: float = t["yaw"]
+	var conifer: bool = t["c"]
+	var trunk_h := h * (0.85 if conifer else 0.62)
+	var bark := Color(0.9, 0.85, 0.8).lerp(Color(1.15, 1.05, 0.95), rng.randf())
+	p.trunks.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.04, 0.04), yaw, rng.randf_range(-0.04, 0.04))).scaled(Vector3(r, trunk_h, r)),
+			Vector3(x, g + trunk_h * 0.5 - 0.3, z)))
+	p.trunk_cols.append(bark)
+	if conifer:
+		var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), rng.randf())
+		var crown_r := h * rng.randf_range(0.15, 0.19)
+		var bottom := h * rng.randf_range(0.12, 0.22)
+		var layers := 9 if lod == 2 else 3
+		for i in layers:
+			var fr := float(i) / float(layers - 1)
+			var lr := crown_r * lerpf(1.0, 0.18, fr) * rng.randf_range(0.9, 1.1)
+			var lh := h * (lerpf(0.3, 0.2, fr) if lod == 2 else lerpf(0.45, 0.35, fr))
+			var cy := g + lerpf(bottom, h * 0.92, fr) + lh * 0.5
+			var col := green * lerpf(0.8, 1.2, fr)
+			col.a = 1.0
+			var tilt := Vector3(rng.randf_range(-0.06, 0.06), yaw + i * 0.7, rng.randf_range(-0.06, 0.06))
+			p.cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy - lh * 0.5, z)))
+			p.cone_cols.append(col)
+	else:
+		var count := 9 if lod == 2 else 3
+		for i in count:
+			var off := Vector3(rng.randf_range(-1.8, 1.8), rng.randf_range(-1.2, 1.6), rng.randf_range(-1.8, 1.8))
+			var s := rng.randf_range(2.2, 3.4) * (1.0 if lod == 2 else 1.4)
+			var rot := Basis.from_euler(Vector3(rng.randf_range(-0.4, 0.4), rng.randf() * TAU, rng.randf_range(-0.4, 0.4)))
+			p.crowns.append(Transform3D(rot.scaled(Vector3(s, s, s)), Vector3(x, g + trunk_h - 0.4, z) + off * (1.0 if lod == 2 else 0.6)))
+			var lc := Color(0.75, 0.85, 0.6) * rng.randf_range(0.75, 1.15)
+			lc.a = 1.0
+			p.crown_cols.append(lc)
+	if body:
+		var cs := CollisionShape3D.new()
+		var shape := CylinderShape3D.new()
+		shape.radius = r * 1.05
+		shape.height = 4.0
+		cs.shape = shape
+		cs.position = Vector3(x, g + 1.8, z)
+		body.add_child(cs)
 
 
 ## Nahbereich: Felsen, Gras (auf Lichtungen dicht), Farn, Büsche, liegende Stämme.
-func _build_ground(key: Vector2i, root: Node3D, body: StaticBody3D) -> void:
-	var rng := _chunk_rng(key, 2)
+## In drei Teilen, damit es sich über mehrere Bilder verteilen lässt: anfangen, verstreuen, fertigstellen.
+func _ground_start(key: Vector2i) -> GroundParts:
+	var gp := GroundParts.new()
+	gp.rng = _chunk_rng(key, 2)
+	gp.body = StaticBody3D.new()
+	gp.body.name = "GroundColliders"
+	return gp
+
+
+## Rückgabe: true = fertig verstreut. limit < 0: ohne Zeitgrenze.
+func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
+	var rng := gp.rng
 	var x0 := key.x * CHUNK
 	var z0 := key.y * CHUNK
-	var grass: Array[Transform3D] = []
-	var grass_cols: Array[Color] = []
-	var ferns: Array[Transform3D] = []
-	var fern_cols: Array[Color] = []
-	var bushes: Array[Transform3D] = []
-	var bush_cols: Array[Color] = []
-	var rocks: Array[Transform3D] = []
-	var rock_cols: Array[Color] = []
-	var tries := 0
-	while tries < 900:
-		tries += 1
+	while gp.tries < 900:
+		if limit >= 0 and gp.tries % 12 == 0 and Time.get_ticks_usec() > limit:
+			return false
+		gp.tries += 1
 		var x := x0 + rng.randf() * CHUNK
 		var z := z0 + rng.randf() * CHUNK
 		var roll := rng.randf()
@@ -285,32 +440,39 @@ func _build_ground(key: Vector2i, root: Node3D, body: StaticBody3D) -> void:
 			# Gras: auf Lichtungen und am Wegrand dicht, im Wald dünn
 			if rng.randf() > 0.25 + meadow * 0.75 or high > 0.8:
 				continue
-			grass.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 0.6, s * 0.65, s * 0.6)), Vector3(x, g - 0.02, z)))
-			grass_cols.append(Color(0.75, 0.9, 0.6).lerp(Color(1.1, 1.05, 0.7), rng.randf()))
+			gp.grass.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 0.6, s * 0.65, s * 0.6)), Vector3(x, g - 0.02, z)))
+			gp.grass_cols.append(Color(0.75, 0.9, 0.6).lerp(Color(1.1, 1.05, 0.7), rng.randf()))
 		elif roll < 0.85:
 			if meadow > 0.6 or high > 0.5:
 				continue
-			ferns.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
-			fern_cols.append(Color(0.8, 0.95, 0.7) * rng.randf_range(0.75, 1.1))
+			gp.ferns.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
+			gp.fern_cols.append(Color(0.8, 0.95, 0.7) * rng.randf_range(0.75, 1.1))
 		elif roll < 0.95:
 			if high > 0.6:
 				continue
-			bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
-			bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))
+			gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
+			gp.bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))
 		else:
 			if rng.randf() < 0.5 and high < 0.5:
 				continue
 			var rs := s * (1.0 + high * 0.8)
 			var sc := Vector3(rs * rng.randf_range(1.0, 1.7), rs * rng.randf_range(0.5, 0.85), rs * rng.randf_range(1.0, 1.5))
-			rocks.append(Transform3D(Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4)).scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
-			rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))
+			gp.rocks.append(Transform3D(Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4)).scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
+			gp.rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))
 			if rs > 0.7:
 				var cs := CollisionShape3D.new()
 				var shape := SphereShape3D.new()
 				shape.radius = maxf(sc.x, sc.z) * 0.75
 				cs.shape = shape
 				cs.position = Vector3(x, g, z)
-				body.add_child(cs)
+				gp.body.add_child(cs)
+	return true
+
+
+func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
+	var rng := gp.rng
+	var x0 := key.x * CHUNK
+	var z0 := key.y * CHUNK
 	# Ein, zwei liegende Stämme
 	for k in rng.randi_range(0, 2):
 		var x := x0 + rng.randf_range(6.0, CHUNK - 6.0)
@@ -331,23 +493,24 @@ func _build_ground(key: Vector2i, root: Node3D, body: StaticBody3D) -> void:
 		cs.shape = shape
 		cs.position = Vector3(x, g + r * 0.7, z)
 		cs.rotation_degrees = Vector3(0, yaw, 90)
-		body.add_child(cs)
-	_mm(root, "Grass", _meshes["cross"], grass, grass_cols, _mats["grass"], false)
-	_mm(root, "Ferns", _meshes["cross"], ferns, fern_cols, _mats["fern"], false)
+		gp.body.add_child(cs)
+	_mm(root, "Grass", _meshes["cross"], gp.grass, gp.grass_cols, _mats["grass"], false)
+	_mm(root, "Ferns", _meshes["cross"], gp.ferns, gp.fern_cols, _mats["fern"], false)
 	var b0: Array[Transform3D] = []
 	var c0: Array[Color] = []
 	var b1: Array[Transform3D] = []
 	var c1: Array[Color] = []
-	for i in bushes.size():
+	for i in gp.bushes.size():
 		if i % 2 == 0:
-			b0.append(bushes[i])
-			c0.append(bush_cols[i])
+			b0.append(gp.bushes[i])
+			c0.append(gp.bush_cols[i])
 		else:
-			b1.append(bushes[i])
-			c1.append(bush_cols[i])
+			b1.append(gp.bushes[i])
+			c1.append(gp.bush_cols[i])
 	_mm(root, "Bushes0", _meshes["bush0"], b0, c0, null, true)
 	_mm(root, "Bushes1", _meshes["bush1"], b1, c1, null, true)
-	_mm(root, "Rocks", _meshes["rock"], rocks, rock_cols, _mats["stone"], true)
+	_mm(root, "Rocks", _meshes["rock"], gp.rocks, gp.rock_cols, _mats["stone"], true)
+	root.add_child(gp.body)
 
 
 func _mm(root: Node3D, n: String, mesh: Mesh, transforms: Array[Transform3D], colors: Array[Color], mat: Material, shadows: bool) -> void:

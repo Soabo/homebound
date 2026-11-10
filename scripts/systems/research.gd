@@ -226,7 +226,7 @@ func take_out(st: String = "device") -> void:
 		return
 	var find: String = analysis(id).get("find", "")
 	if find != "" and Inventory.add(find, 1) <= 0:
-		EventBus.notify("Zu schwer – du kannst den Fund nicht tragen.", 2.0)
+		EventBus.notify("Davon trägst du schon zu viele – erst etwas ablegen, dann den Fund herausnehmen.", 3.0)
 		return
 	stations[st] = ""
 	PowerManager.set_consumer("research_" + st, false)

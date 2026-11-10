@@ -465,6 +465,10 @@ func interact(_player: Node) -> void:
 		if bool(r.get("caught", false)):
 			var c := Supplies.config.snare_meat
 			var got := Inventory.add("meat_raw", randi_range(c.x, c.y))
+			if got <= 0:
+				# kein Platz: der Fang bleibt in der Schlinge, statt zu verschwinden
+				EventBus.notify("Mehr rohes Fleisch kannst du nicht tragen.", 2.5)
+				return
 			r["caught"] = false
 			refresh_catch()
 			Tasks.flag("snare_caught")
@@ -494,7 +498,7 @@ func secondary_interact(_player: Node) -> void:
 	# Unbeschädigt gibt es das Bauteil zurück, beschädigt nur einen Teil des Holzes
 	if health >= max_health * 0.6:
 		if Inventory.add(type, 1) <= 0:
-			EventBus.notify("Zu schwer – du kannst nicht mehr tragen.", 2.0)
+			EventBus.notify("Davon kannst du nicht noch mehr tragen.", 2.0)
 			return
 		EventBus.notify("%s abgebaut." % DataDB.buildable(type).get("name", type), 2.0)
 	else:

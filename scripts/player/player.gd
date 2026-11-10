@@ -29,7 +29,14 @@ var head: Node3D
 var camera: Camera3D
 var flashlight: SpotLight3D  ## LED der Smartwatch (linke Hand)
 var hands: PlayerHands
-var input_locked: bool = false
+## Steuerung gesperrt (Menü offen, Schlaf, Sitzen …). Wer tot ist, bleibt gesperrt – auch wenn ein Menü,
+## das sich gerade schließt, die Sperre aufheben will.
+var _input_locked: bool = false
+var input_locked: bool:
+	get:
+		return _input_locked or GameState.dead
+	set(v):
+		_input_locked = v
 var health: float = 100.0
 const MAX_HEALTH := 100.0
 var current_interactable: Interactable = null
@@ -96,10 +103,18 @@ func _ready() -> void:
 	EventBus.sleep_requested.connect(_on_sleep_requested)
 	EventBus.sleep_finished.connect(_on_sleep_finished)
 	EventBus.screen_shake.connect(_on_shake)
+	GameState.player_died.connect(_on_died)
 
 
 func _on_sleep_requested(_h: float) -> void:
 	input_locked = true
+
+
+## Tot (egal woran: Kreatur, Hunger, Kälte, Moor): nichts mehr anfassen, bis der Tag neu beginnt.
+func _on_died() -> void:
+	input_locked = true
+	current_interactable = null
+	set_flashlight(false)
 
 
 func _on_shake(strength: float) -> void:
@@ -144,17 +159,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		rotate_y(-event.relative.x * sens)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * sens, -1.45, 1.45)
 	elif event.is_action_pressed("interact"):
-		if _building():
-			return
-		if current_interactable:
-			current_interactable.interact(self)
-			_update_prompt(true)
+		use_target(false)
 	elif event.is_action_pressed("interact_secondary"):
-		if _building():
-			return
-		if current_interactable:
-			current_interactable.secondary_interact(self)
-			_update_prompt(true)
+		use_target(true)
 	elif event.is_action_pressed("flashlight") and not event.is_echo():
 		# kurz drücken = an/aus (beim Loslassen), gedrückt halten = Licht-Modus wechseln (siehe _process)
 		_f_held = 0.0
@@ -165,6 +172,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not _f_used and hidden_in == null:
 			set_flashlight(not flashlight.visible)
 			PlayerSounds.play(self, "flashlight", -6.0, randf_range(0.95, 1.05))
+
+
+## E (oder R, secondary) auf das, was im Fadenkreuz ist.
+## Der Tastendruck gilt danach als verbraucht: Sonst bekäme ihn im selben Augenblick auch noch die Bank
+## oder der Schrank, in den man gerade gestiegen ist – und man stünde sofort wieder draußen.
+func use_target(secondary: bool) -> void:
+	if _building() or not current_interactable:
+		return
+	if secondary:
+		current_interactable.secondary_interact(self)
+	else:
+		current_interactable.interact(self)
+	_update_prompt(true)
+	get_viewport().set_input_as_handled()
 
 
 func _building() -> bool:
