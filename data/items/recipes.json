@@ -19,7 +19,7 @@
     {"id": "stew",            "station": "stove", "needs": {"meat_raw": 1, "potato": 1, "carrot": 1, "water_raw": 1}, "gives": {"stew": 1, "bottle_empty": 1}, "minutes": 50},
     {"id": "can_alarm",       "needs": {"cans": 4, "scrap": 1},                      "gives": {"can_alarm": 1}},
     {"id": "motion_light",    "needs": {"scrap": 2, "battery": 1, "electronics": 1}, "gives": {"motion_light": 1}},
-    {"id": "analyzer_improvised", "name": "Funkgerät zum Analysegerät umbauen", "needs": {"electronics": 2, "battery": 1, "scrap": 2}, "special": "build_analyzer"},
+    {"id": "analyzer_improvised", "name": "Funkgerät zum Analysegerät umbauen", "needs": {"electronics": 2, "battery": 1, "scrap": 2, "w17": 1}, "special": "build_analyzer"},
     {"id": "resonance_sensor", "requires": "link_power", "needs": {"scrap": 2, "electronics": 1, "energy_cell": 1}, "gives": {"resonance_sensor": 1}},
     {"id": "strobe_light",     "requires": "link_light", "needs": {"scrap": 2, "battery": 1, "glow_fungus": 2}, "gives": {"strobe_light": 1}},
     {"id": "water_filter",     "name": "Wasserfilter (Holzkohle und Dosen)", "needs": {"wood": 1, "cans": 2, "scrap": 1}, "gives": {"water_filter": 1}},

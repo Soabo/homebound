@@ -149,7 +149,7 @@ func _fill_station() -> void:
 		var left := maxf(Research.hours_needed(id) * (1.0 - pr) / float(Research.SPEED.get(Research.tier, 1.0)), 0.0)
 		var status := "Analyse %d %%" % int(pr * 100.0)
 		if pr < 1.0:
-			status += "   –   noch etwa %.1f Std." % left + ("" if Research.has_power_for_analysis() else "  (pausiert: kein Strom)")
+			status += "   –   noch etwa %.1f Std." % left + ("" if Research.has_power_for_analysis() else "  (pausiert: kein Strom)") + ("" if Research.device_reads() else "  (pausiert: W-17 fehlt im Gerät)")
 		_list.add_child(_bar(pr))
 		_list.add_child(_text(status, 18, Color(0.7, 0.85, 0.85)))
 		_list.add_child(_text("Experimente:", 20, Color(0.9, 0.9, 0.8)))

@@ -2,6 +2,17 @@
   "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG",
   "goals": [
     {
+      "id": "moving_box",
+      "title": "Der Umzugskarton",
+      "text": "Unter dem Funktisch in der Werkstatt steht noch mein Karton mit Sachen aus der alten Arbeit. Ich habe ihn nie ausgepackt.",
+      "unlock": [
+        "got:metal_fragment"
+      ],
+      "done": [
+        "got:w17"
+      ]
+    },
+    {
       "id": "power",
       "title": "Strom sichern",
       "text": "Der Generator steht im Schuppen. Starte ihn und behalte die Tankanzeige in der Werkstatt im Blick.",
@@ -150,7 +161,7 @@
     {
       "id": "analyzer",
       "title": "Ein Analysegerät bauen",
-      "text": "Die Funde sind seltsam. Mit dem alten Funkgerät in der Werkstatt ließe sich etwas Messgerät basteln (Werkbank).",
+      "text": "Die Funde sind seltsam. Mit dem alten Funkgerät in der Werkstatt ließe sich ein Messgerät basteln (Werkbank) – aber dafür bräuchte ich ein Teil, das fremde Signale versteht. In meinem alten Umzugskarton unter dem Funktisch liegt noch Kram aus der Firma.",
       "unlock": [
         "got:metal_fragment"
       ],
@@ -377,6 +388,17 @@
       ],
       "done": [
         "flag:tent_repaired"
+      ]
+    },
+    {
+      "id": "w17_locator",
+      "title": "W-17 als Suchgerät",
+      "text": "W-17 lässt sich aus dem Analysegerät ausbauen. Unterwegs summt es in der Nähe ihrer Orte – je schneller, desto näher. Aber: Etwas da draußen spürt es auch.",
+      "unlock": [
+        "link:link_w17"
+      ],
+      "done": [
+        "flag:w17_carried"
       ]
     }
   ],

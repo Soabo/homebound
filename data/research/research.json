@@ -433,6 +433,16 @@
    ],
    "text": "Das Schiff am Walhügel hat Samen gebracht, keine Waffen. Das Tal wird vorbereitet, wie ein Acker.",
    "unlocks": []
+  },
+  "link_w17": {
+   "name": "Dieselbe Handschrift",
+   "area": "Raumfahrt und Infrastruktur",
+   "needs": [
+    "an_glyph",
+    "an_metal"
+   ],
+   "text": "Die Zeichen auf der Platte und die Fragmente von der Absturzstelle tragen dieselbe Kennung wie die Fassung von W-17. Es ist kein Ersatzteil. Es ist ein Teil von IHNEN. Ich kann es aus dem Analysegerät ausbauen und mitnehmen – in der Nähe ihrer Orte summt es.",
+   "unlocks": []
   }
  },
  "notes": {
@@ -551,6 +561,18 @@
   "brunnen_hinweis": {
    "name": "Eingeritzt am Brunnenrand",
    "text": "In den Stein geritzt, schon verwittert: »MP4 – B«. Darunter ein Pfeil nach unten."
+  },
+  "karton_ausweis": {
+   "name": "Alter Firmenausweis",
+   "text": "ReZort Industries – Technik, Sondereinsätze. Christian, Pers.-Nr. 40817. Gültig bis: abgelaufen.\nDas Foto ist ein Jahr alt. Er sieht darauf jünger aus als ein Jahr."
+  },
+  "karton_mappe": {
+   "name": "Einsatzmappe (Umzugskarton)",
+   "text": "Lose Blätter aus der alten Arbeit: Schaltpläne, Prüfprotokolle, ein Laufzettel.\n»Prüfling W-17 – Ausschuss, Kopplung instabil. Zur Verschrottung.« Daneben, in Stefanies Handschrift: »Warum bringst du so etwas mit nach Hause?«"
+  },
+  "w17_info": {
+   "name": "Bauteil W-17",
+   "text": "Faustgroß, matt, kalt, in einer Industriefassung mit Aufkleber »Prüfling W-17 – Ausschuss«. Der Kern sieht nicht aus wie etwas, das Menschen gemacht haben. Wenn ich es an das alte Funkgerät halte, knackt der Lautsprecher – im Takt der Lichter da draußen."
   }
  }
 }

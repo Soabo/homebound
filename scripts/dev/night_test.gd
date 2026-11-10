@@ -64,6 +64,10 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "w17":
+		await _w17_test()
+		get_tree().quit()
+		return
 	if mode == "camp":
 		await _camp_test()
 		get_tree().quit()
@@ -304,7 +308,11 @@ func _research_test() -> void:
 	await get_tree().physics_frame
 	(scene.find_children("TissueSample_d1_*", "ItemPickup", false, false)[0] as ItemPickup).interact(player)
 	print("RESEARCH Gewebeprobe: ", Inventory.count("alien_tissue"))
-	# Improvisiertes Gerät an der Werkbank
+	# Improvisiertes Gerät an der Werkbank (braucht W-17 aus dem Umzugskarton)
+	var box := scene.get_node("Cabin/MovingBox") as MovingBox
+	box.interact(player)
+	box.interact(player)
+	print("RESEARCH W-17 aus dem Karton: %d, Notizen %s" % [Inventory.count("w17"), Research.notes.has("karton_mappe")])
 	Inventory.add("electronics", 2)
 	Inventory.add("battery", 1)
 	Inventory.add("scrap", 2)
@@ -904,6 +912,7 @@ func _tablet_test() -> void:
 	for i in 10:
 		await get_tree().physics_frame
 	Research.tier = 1
+	Research.w17_in_device = true
 	Inventory.add("alien_tissue", 1)
 	Research.insert("alien_tissue")
 	var id := Research.slot
@@ -1418,3 +1427,56 @@ func _camp_test() -> void:
 		await get_tree().create_timer(0.5).timeout
 	print("SUCHER an der Hütte: Zustand %s, Abstand zur Hütte %.0f m" % [Seeker.State.keys()[sk2.state] if is_instance_valid(sk2) else "weg", sk2.global_position.length() if is_instance_valid(sk2) else -1.0])
 	print("RAMP: Wärme draußen tagsüber Rate: ", Survival.warmth_rate(player))
+
+
+## W-17: Karton, Einbau, Ausbau nach der Verknüpfung, Suchgerät, Sucher spürt es.
+func _w17_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var slot := scene.get_node("Cabin/Radio/W17Slot") as W17Slot
+	var box := scene.get_node("Cabin/MovingBox") as MovingBox
+	print("W17 Karton: %s" % box.get_prompt(player))
+	box.interact(player)
+	box.interact(player)
+	print("W17 genommen: %d" % Inventory.count("w17"))
+	for id: String in ["electronics", "battery", "scrap"]:
+		Inventory.add(id, 3)
+	for r: Dictionary in DataDB.recipes():
+		if r["id"] == "analyzer_improvised":
+			print("W17 Umbau: %s, Stufe %d, im Gerät %s, liest %s" % [Workbench.craft(r, get_tree()), Research.tier, Research.w17_in_device, Research.device_reads()])
+	await get_tree().process_frame
+	print("W17 Fassung vorher: %s" % slot.get_prompt(player))
+	slot.interact(player)
+	print("W17 noch im Gerät (ohne Verknüpfung): %s" % Research.w17_in_device)
+	Research.links_done.append("link_w17")
+	print("W17 Fassung nach Verknüpfung: %s" % slot.get_prompt(player))
+	slot.interact(player)
+	print("W17 ausgebaut: Inventar %d, Gerät liest %s" % [Inventory.count("w17"), Research.device_reads()])
+	# Suchgerät: Signal an verschiedenen Orten
+	for p: Vector3 in [Vector3(0, 0, 30), WorldMap.place_point("absturz"), WorldMap.place_point("schaefer"), WorldMap.place_point("wal") + Vector3(40, 0, 0)]:
+		var sig := W17Locator.signal_at(p)
+		print("W17 Signal bei (%.0f, %.0f): %.2f (%s)" % [p.x, p.z, sig[0], sig[1]])
+	var loc := scene.get_node("W17Locator") as W17Locator
+	await get_tree().process_frame
+	print("W17 Anzeige: %s %s" % [loc._label.visible, loc._label.text])
+	# Sucher spürt W-17 aus der Ferne
+	TimeManager.set_time(7, 23.0)
+	player.global_position = Vector3(-30, Terrain.height_at(-30, 40) + 0.2, 40)
+	var sk := Seeker.spawn_for(scene, player.global_position)
+	sk.global_position = player.global_position + Vector3(70, 0, 0)
+	sk.global_position.y = Terrain.height_at(sk.global_position.x, sk.global_position.z)
+	sk._path.clear()
+	sk.state = Seeker.State.WATCH
+	sk._hold = 30.0
+	await get_tree().create_timer(1.2).timeout
+	print("W17 Sucher reagiert: Zustand %s" % Seeker.State.keys()[sk.state])
+	sk.queue_free()
+	# wieder einsetzen
+	player.global_position = Vector3(2.5, Cabin.FLOOR_Y + 0.1, 0.5)
+	slot.interact(player)
+	print("W17 wieder eingesetzt: %s, Gerät liest %s" % [Research.w17_in_device, Research.device_reads()])
+	var st := Research.get_state()
+	Research.set_state(st)
+	print("W17 Spielstand: im Gerät %s" % Research.w17_in_device)

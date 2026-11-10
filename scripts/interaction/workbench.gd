@@ -37,8 +37,10 @@ static func craft(recipe: Dictionary, scene_tree: SceneTree) -> String:
 		if Research.tier >= 1:
 			return "Das Analysegerät ist schon gebaut."
 		Inventory.remove_all(needs)
+		Research.w17_in_device = true
 		Research.set_tier(1)
-		EventBus.notify("Das alte Funkgerät ist jetzt ein Analysegerät (Schreibtisch im Wohnzimmer).", 4.0)
+		Tasks.flag("w17_installed")
+		EventBus.notify("W-17 sitzt im alten Funkgerät. Der Lautsprecher knackt – es ist jetzt ein Analysegerät (Funktisch in der Werkstatt).", 4.5)
 		return ""
 	if special == "door_upgrade":
 		var door := scene_tree.current_scene.get_node_or_null("Cabin/FrontDoor") as Door

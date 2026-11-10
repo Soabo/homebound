@@ -60,6 +60,11 @@ func _ready() -> void:
 	add_child(_player3d)
 	Research.changed.connect(_update_tier)
 	_update_tier()
+	# Fassung für W-17 seitlich am umgebauten Gerät
+	var slot := W17Slot.new()
+	slot.name = "W17Slot"
+	slot.position = anchor + Vector3(-0.33, 0.0, -0.14)
+	add_child(slot)
 	GameState.restore(self)
 
 

@@ -60,6 +60,7 @@
     {"id": "wal", "name": "Der Wal", "pos": [690, 770], "ring": "multi", "clear": 48, "flat": 22},
     {"id": "raststation", "name": "Raststätte Waldblick", "road_z": 1040, "offset": [26, 0], "ring": "multi", "clear": 62, "flat": 46}
   ],
+  "w17_sites": ["absturz", "struktur", "hoehle", "brunnen", "messstelle", "aussenstelle", "tunnel", "wal", "gewaechshaus", "windwurf", "moor", "imkerei"],
   "cuts": [
     {"place": "tunnel", "pos": [886, -290], "half": [24, 3.2], "yaw": 0}
   ],

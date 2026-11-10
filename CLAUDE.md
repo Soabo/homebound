@@ -132,6 +132,14 @@
 - Eine Episode, Hütte als Mittelpunkt + Ausflüge. Geplant: Open World ca. 5 km² (Wald, Lichtungen, Berge, Seen, viele Orte,
   Mehrtagesmärsche mit Zelt/Proviant).
 
+## W-17 (Bauteil aus Stefanies Umzugskarton)
+- Umzugskarton `MovingBox` (Cabin/MovingBox, unteres Fach am Funktisch, persistent): 1. E öffnen (Notizen karton_ausweis,
+  karton_mappe), 2. E W-17 nehmen (Notiz w17_info). Item `w17` (items.json, Kategorie Fund).
+- Das improvisierte Analysegerät braucht W-17 (recipes.json). Ohne W-17 im Gerät liest Stufe 1 nicht (`Research.device_reads`,
+  `w17_in_device`, gespeichert). Fassung `W17Slot` am Radio: Ausbau erst nach Verknüpfung `link_w17` („Dieselbe Handschrift“).
+- Mitgetragen = Suchgerät `W17Locator` (Balken + Piepen, Reichweite `RANGE`), Orte in map.json `w17_sites`
+  (auch der alte Brunnen – Story-Hinweis). Der Sucher spürt W-17. Aufgaben moving_box, w17_locator. Test: `--night-test=w17`.
+
 ## Große Welt (Open World, ca. 2,2 x 2,2 km)
 - Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,
   Tunnel-Einschnitte). Zugriff statisch über `WorldMap` (Raster für schnelle Abfragen). Das Tal um die Hütte (r < ~95 m)
@@ -163,7 +171,7 @@
   Wärmequellen in Gruppe `heat_source` (`heat_at`, `heats_cabin`).
 - Sucher (Christian: bauen): `Seeker`, Werte `data/creatures/seeker.tres` (`SeekerConfig`), wann: ThreatConfig `seeker_*`.
   Dürr, ~2,7 m, Augenschlitz mit vielen kleinen Lichtern. Erscheint, beobachtet lange, sucht ab; reagiert auf Licht
-  (Uhr, Licht im Zelt, Feuer), Geräusche (`noise_made`) und W-17 (`Inventory "w17"` – Gegenstand noch nicht im Spiel).
+  (Uhr, Licht im Zelt, Feuer), Geräusche (`noise_made`) und W-17 (`Inventory "w17"`).
   Findet er dich: Schlag bzw. Zelt aufreißen (nie unter `min_health`), dann Teleporterblitz. Test: `--night-test=camp`.
 - Tests: `--night-test=map` (Rechenzeit, Nachladen), `--night-test=places` (alle Orte, Funde, Mechaniken).
 

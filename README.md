@@ -141,6 +141,9 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 - **Die Nacht im Zelt:** E kriecht hinein, drinnen E schlafen, R hinaus. Licht im Zelt sieht man von weit her.
   Etwas kann ums Zelt schleichen – oder es aufreißen. Ein zerrissenes Zelt flickt man mit einem Brett und drei Nägeln.
 - **Der Sucher:** hoch, dürr, viele kleine Lichter im Gesicht. Er sucht nach Licht und Lärm. Er tötet nicht – aber er findet dich.
+- **W-17:** Im Umzugskarton unter dem Funktisch liegt ein Bauteil aus Stefanies Sachen. Ohne W-17 funktioniert das
+  improvisierte Analysegerät nicht. Später kann man es ausbauen und mitnehmen – dann piept es in der Nähe bestimmter Orte.
+  Aber Vorsicht: Der Sucher spürt es.
 
 ## Selbstversorgung und Aufgaben
 

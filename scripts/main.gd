@@ -44,6 +44,7 @@ func _ready() -> void:
 	add_child(ResearchMenu.new())
 	add_child(TabletMenu.new())
 	add_child(MapScreen.new())
+	add_child(W17Locator.new())
 	add_child(BuildController.new())
 	add_child(PauseMenu.new())
 

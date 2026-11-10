@@ -172,6 +172,11 @@ func _build_radio_corner(y: float) -> void:
 		for lz: float in [wz + 0.05, zf - 0.05]:
 			BuildKit.box(self, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), m_wood_dark, false)
 	BuildKit.box_mm(self, Vector3(x0 + 0.05, y + 0.15, wz + 0.03), Vector3(x1 - 0.05, y + 0.18, zf - 0.03), m_wood_dark, false)
+	# Umzugskarton mit Sachen aus der alten Arbeit (W-17) unten im Funktisch
+	var box := MovingBox.new()
+	box.name = "MovingBox"
+	box.position = Vector3(x0 + 0.75, y + 0.18, wz + 0.33)
+	add_child(box)
 	# Radio steht hinten links, Vorderseite zum Raum (+z); alles Weitere relativ zum Radio
 	var radio_node := Radio.new()
 	radio_node.name = "Radio"

@@ -20,6 +20,7 @@ var links_done: Array = []         ## gefundene Verknüpfungen
 var seen: Array = []               ## jemals aufgehobene Funde (für das Archiv)
 var notes: Array = []              ## gelesene Notizen
 var blueprints: Array = []         ## in der Welt gefundene Baupläne
+var w17_in_device: bool = false    ## W-17 steckt im umgebauten Funkgerät (ohne W-17 liest es nichts)
 var sent: Array = []               ## ans Tablet gesendete Ergebnisse: "analyse" bzw. "analyse/experiment"
 var tablet_new: int = 0            ## neue, auf dem Tablet noch nicht angesehene Ergebnisse
 
@@ -65,6 +66,11 @@ func _on_inventory_changed() -> void:
 
 func has_power_for_analysis() -> bool:
 	return tier >= 2 or PowerManager.has_power()
+
+
+## Kann das Gerät fremde Proben lesen? Das umgebaute Funkgerät nur mit W-17, das fremde Gerät immer.
+func device_reads() -> bool:
+	return tier >= 2 or (tier >= 1 and w17_in_device)
 
 
 func set_tier(t: int) -> void:
@@ -166,7 +172,7 @@ func _process(_delta: float) -> void:
 		return
 	var dh := h - _last_hour
 	_last_hour = h
-	if slot == "" or tier <= 0 or not has_power_for_analysis():
+	if slot == "" or tier <= 0 or not has_power_for_analysis() or not device_reads():
 		PowerManager.set_consumer("analyzer", false)
 		return
 	var before := progress_of(slot)
@@ -298,7 +304,7 @@ func read_note(id: String) -> void:
 func get_state() -> Dictionary:
 	return {"tier": tier, "slot": slot, "progress": progress.duplicate(), "experiments": experiments.duplicate(true),
 		"done": done.duplicate(), "links": links_done.duplicate(), "seen": seen.duplicate(), "notes": notes.duplicate(),
-		"sent": sent.duplicate(), "tablet_new": tablet_new, "blueprints": blueprints.duplicate()}
+		"sent": sent.duplicate(), "tablet_new": tablet_new, "blueprints": blueprints.duplicate(), "w17": w17_in_device}
 
 
 func set_state(s: Dictionary) -> void:
@@ -312,6 +318,7 @@ func set_state(s: Dictionary) -> void:
 	notes = (s.get("notes", []) as Array).duplicate()
 	tablet_new = int(s.get("tablet_new", 0))
 	blueprints = (s.get("blueprints", []) as Array).duplicate()
+	w17_in_device = bool(s.get("w17", tier >= 1))
 	if s.has("sent"):
 		sent = (s.get("sent", []) as Array).duplicate()
 	else:
