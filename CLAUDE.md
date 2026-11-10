@@ -132,6 +132,26 @@
 - Eine Episode, Hütte als Mittelpunkt + Ausflüge. Geplant: Open World ca. 5 km² (Wald, Lichtungen, Berge, Seen, viele Orte,
   Mehrtagesmärsche mit Zelt/Proviant).
 
+## Große Welt (Open World, ca. 2,2 x 2,2 km)
+- Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,
+  Tunnel-Einschnitte). Zugriff statisch über `WorldMap` (Raster für schnelle Abfragen). Das Tal um die Hütte (r < ~95 m)
+  bleibt exakt wie vorher; draußen mischt `WorldMap.macro_height` die große Landschaft dazu.
+- `Terrain`: Tal (±128 m) fest beim Start, Rest in 64-m-Stücken mit HeightMapShape nachgeladen (Zeitbudget pro Bild),
+  grobes Fernsicht-Gelände per Shader (sinkt um den Spieler weg, in der Ferne Baumkronen). `load_around()` für Teleports.
+  Bach von Quellsee (Norden) bis Kartenrand Süden (`STREAM_BENDS`), Seen/Tümpel als Wasserscheiben, `water_level_at()`.
+- `WildForest`: Wald außerhalb des Tals in Stücken (nah volle Bäume + Kollision + Bodenpflanzen, fern einfache Bäume).
+  Das Tal pflanzt weiter `Forest`. `WorldTrails`: Wegweiser (Luftlinie + Entfernung) und Stege über den Bach.
+- Orte: `Places` baut alle Orte aus map.json mit `PlacesNear` / `PlacesDay` / `PlacesFar`, Bausteine in `PlaceKit`
+  (loot, note, blueprint, inspect, hut, fence). Funde = ItemPickup (persistent: Places/<ort>/…), Notizen in research.json,
+  Baupläne `Blueprint` → `Research.blueprints`, Rezepte mit `"blueprint"`. Aktionen `PlaceInspect` (needs/gives/done_flag),
+  z. B. Funkmast reparieren (`mast_repaired`), Sprengstofflager (`quarry_bunker`), Schacht B (`shaft_b_open`).
+- Besuche: `Tasks.flag("visit_<ort>")` automatisch. Fernglas (Q halten), Wanderkarte (M, `MapScreen`, aus der Wetterstation),
+  Zelt (`tent`, Structure: schlafen draußen), Waten (tiefer als 1,2 m geht nicht), Moor abseits der Stege = einsinken.
+  Torf zählt als Brennstoff (`Inventory.count_fuel`). Verbandskasten `use.heal`.
+- Weit weg von der Hütte (> 150 m) werden Haus-Ereignisse des ThreatDirectors zu Wald-Ereignissen um den Spieler
+  (`far_from_home`, `_far_variant`). Eine echte Kreatur-Jagd im Zelt ist noch offen.
+- Tests: `--night-test=map` (Rechenzeit, Nachladen), `--night-test=places` (alle Orte, Funde, Mechaniken).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
@@ -183,5 +203,6 @@ Export-Vorlagen müssen unter `~/.local/share/godot/export_templates/4.7.2.stabl
 ## Koordinaten
 - Hütte: Mitte bei (0,0,0), 12 x 9 m, Boden auf y = 0.45, Eingang nach +z (Süden).
 - Grundstück/Zaun: x -20..22, z -16..18. Schuppen bei (14, 0, 6.5).
-- Zufahrt läuft vom Tor (x -3, z 18) nach Süden. Spielfeldgrenze ±104 m (Gelände ±112, Wald ±108).
+- Zufahrt läuft vom Tor (x -3, z 18) nach Süden bis zur Autobahn (z ≈ 1086). Spielfeldgrenze ±1100 m (Gelände ±1150).
+  Tal-Wald (`Forest`) ±108 m, danach `WildForest`. Alle Orte und ihre Koordinaten: `data/world/map.json`.
 - Orte: Absturzstelle (-42,-30), fremde Struktur (-78, 40), Höhle am Bach (49, -72), Förster-Hochsitz (12, -80).

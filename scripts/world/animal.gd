@@ -425,7 +425,9 @@ static func _blocked(p: Vector3) -> bool:
 		return true
 	if absf(p.x - 14.0) < 2.5 and absf(p.z - 6.5) < 2.0:
 		return true
-	if absf(p.x) > 100.0 or absf(p.z) > 100.0:
+	if absf(p.x) > WorldMap.limit() - 5.0 or absf(p.z) > WorldMap.limit() - 5.0:
+		return true
+	if Terrain.water_level_at(p.x, p.z) > Terrain.height_at(p.x, p.z) - 0.1:
 		return true
 	return Terrain.stream_distance(p.x, p.z) < 1.6
 

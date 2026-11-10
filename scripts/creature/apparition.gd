@@ -51,7 +51,7 @@ static func spawn(scene: Node, what: String) -> Apparition:
 			back.y = 0.0
 			var side := back.rotated(Vector3.UP, randf_range(-1.0, 1.0)).normalized()
 			pos = Creature._ground(p + side * randf_range(28.0, 36.0))
-			if Vector2(pos.x, pos.z).length() > 100.0:
+			if absf(pos.x) > WorldMap.limit() - 5.0 or absf(pos.z) > WorldMap.limit() - 5.0:
 				return null
 			a.lifetime = 75.0
 		"window":

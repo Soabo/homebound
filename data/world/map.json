@@ -1,0 +1,105 @@
+{
+  "_info": "Die große Welt (ca. 2,2 x 2,2 km, Hütte in der Mitte). Koordinaten in Metern [x, z]; Norden = -z, Süden = +z. mountains: Berg (Mitte, Radius, Höhe). lakes: See (Mitte, Radius, Tiefe; stream_z = See liegt am Bach bei dieser z-Position). basins: Mulden (Steinbruch, Stausee). bogs: Moor (flach, nass). clearings: Lichtungen ohne Bäume. places: Orte (ring: near | day | multi; clear = baumfreier Radius, flat = eingeebneter Radius). trails: Wege (kind: path | track | asphalt; w = Breite). signs: Wegweiser (to = Orts-IDs).",
+  "half_size": 1150,
+  "limit": 1100,
+  "mountains": [
+    {"id": "kahler_kopf", "name": "Kahler Kopf", "pos": [-560, -420], "r": 230, "h": 72},
+    {"id": "nordkamm", "name": "Nordkamm", "pos": [-150, -1090], "r": 430, "h": 120},
+    {"id": "ilse_berg", "name": "Hohe Wand", "pos": [-980, -880], "r": 320, "h": 150},
+    {"id": "grat", "name": "Steingrat", "pos": [880, -930], "r": 400, "h": 185},
+    {"id": "ostwand", "name": "Ostwand", "pos": [1010, -280], "r": 300, "h": 110},
+    {"id": "westruecken", "name": "Westrücken", "pos": [-1010, 250], "r": 360, "h": 85},
+    {"id": "suedhuegel", "name": "Walhügel", "pos": [740, 810], "r": 240, "h": 55},
+    {"id": "huegel_no", "name": "Fichtenbuckel", "pos": [300, -660], "r": 150, "h": 34},
+    {"id": "huegel_sw", "name": "Haselberg", "pos": [-700, 720], "r": 180, "h": 40},
+    {"id": "huegel_o", "name": "Brandkopf", "pos": [520, 440], "r": 160, "h": 30}
+  ],
+  "lakes": [
+    {"id": "schwarzer_see", "name": "Schwarzer See", "pos": [470, -430], "r": 60, "depth": 6.0},
+    {"id": "fuchsweiher", "name": "Fuchsweiher", "pos": [-445, 335], "r": 36, "depth": 3.0},
+    {"id": "quellsee", "name": "Quellsee", "stream_z": -1050, "r": 42, "depth": 4.0}
+  ],
+  "basins": [
+    {"id": "steinbruch", "pos": [565, 245], "r": 42, "depth": 10.0, "steep": 0.75},
+    {"id": "stausee", "stream_z": 885, "r": 135, "depth": 9.0, "steep": 0.3}
+  ],
+  "bogs": [
+    {"id": "hochmoor", "name": "Hochmoor", "pos": [-640, 40], "r": 95,
+     "pools": [[-660, 10, 9], [-610, 60, 7], [-680, 75, 6], [-600, -5, 8], [-700, 30, 5], [-640, 105, 6]]}
+  ],
+  "clearings": [
+    {"pos": [180, -120], "r": 30}, {"pos": [-300, -60], "r": 40}, {"pos": [130, 330], "r": 35},
+    {"pos": [-120, 620], "r": 45}, {"pos": [620, -80], "r": 40}, {"pos": [-820, -300], "r": 50},
+    {"pos": [400, -980], "r": 45}, {"pos": [-400, 900], "r": 55}, {"pos": [900, 200], "r": 50}
+  ],
+  "places": [
+    {"id": "brunnen", "name": "Alter Brunnen", "pos": [13.5, -13.0], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "absturz", "name": "Absturzstelle", "pos": [-42, -30], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "struktur", "name": "Fremde Struktur", "pos": [-78, 40], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "hoehle", "name": "Höhle am Bach", "pos": [49, -72], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "hochsitz", "name": "Förster-Hochsitz", "pos": [12, -80], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "kapelle", "name": "Waldkapelle", "pos": [-160, -200], "ring": "near", "clear": 16, "flat": 9},
+    {"id": "friedhof", "name": "Hochstand-Friedhof", "pos": [210, 130], "ring": "near", "clear": 22, "flat": 0},
+    {"id": "imkerei", "name": "Imkerei Brandl", "pos": [-240, 170], "ring": "near", "clear": 34, "flat": 14},
+    {"id": "messstelle", "name": "Messstelle 4-Nord", "pos": [60, -470], "ring": "day", "clear": 18, "flat": 11},
+    {"id": "funkmast", "name": "Funkmast Kahler Kopf", "pos": [-560, -420], "ring": "day", "clear": 26, "flat": 13},
+    {"id": "see", "name": "Schwarzer See", "pos": [470, -506], "ring": "day", "clear": 14, "flat": 7},
+    {"id": "steinbruch", "name": "Steinbruch", "pos": [565, 245], "ring": "day", "clear": 62, "flat": 0},
+    {"id": "kontrollpunkt", "name": "Kontrollpunkt", "road_z": 560, "ring": "day", "clear": 22, "flat": 0},
+    {"id": "ferienlager", "name": "Ferienlager Waldfuchs", "pos": [-505, 285], "ring": "day", "clear": 38, "flat": 26},
+    {"id": "schaefer", "name": "Schäferkarren", "pos": [330, 520], "ring": "day", "clear": 46, "flat": 10},
+    {"id": "moor", "name": "Hochmoor", "pos": [-640, 40], "ring": "day", "clear": 100, "flat": 0},
+    {"id": "windwurf", "name": "Windwurf-Schneise", "pos": [262, -282], "ring": "day", "clear": 72, "flat": 8},
+    {"id": "spiegel", "name": "Lichtung der Spiegel", "pos": [-330, -565], "ring": "day", "clear": 26, "flat": 6},
+    {"id": "aussenstelle", "name": "Außenstelle Messpunkt 4", "pos": [-180, -930], "ring": "multi", "clear": 62, "flat": 48},
+    {"id": "ilse", "name": "Berghütte", "pos": [-930, -830], "ring": "multi", "clear": 22, "flat": 13},
+    {"id": "tunnel", "name": "Tunnelportal", "pos": [842, -290], "ring": "multi", "clear": 36, "flat": 28},
+    {"id": "dorf", "name": "Versunkenes Dorf", "stream_z": 870, "offset": [24, 0], "ring": "multi", "clear": 140, "flat": 0},
+    {"id": "wetterstation", "name": "Wetterstation am Grat", "pos": [880, -930], "ring": "multi", "clear": 30, "flat": 17},
+    {"id": "gewaechshaus", "name": "Gewächshäuser", "pos": [-860, 620], "ring": "multi", "clear": 56, "flat": 44},
+    {"id": "wal", "name": "Der Wal", "pos": [690, 770], "ring": "multi", "clear": 48, "flat": 22},
+    {"id": "raststation", "name": "Raststätte Waldblick", "road_z": 1040, "offset": [26, 0], "ring": "multi", "clear": 62, "flat": 46}
+  ],
+  "cuts": [
+    {"place": "tunnel", "pos": [886, -290], "half": [24, 3.2], "yaw": 0}
+  ],
+  "trails": [
+    {"id": "nord", "kind": "track", "w": 3.4, "pts": [[4.5, -17], [5, -40], [10, -72], [22, -120], [40, -210], [52, -330], [60, -462], [20, -560], [-40, -680], [-110, -800], [-170, -905]]},
+    {"id": "ilse", "kind": "path", "w": 1.6, "pts": [[-200, -935], [-330, -900], [-480, -880], [-620, -860], [-760, -840], [-900, -830]]},
+    {"id": "nordost", "kind": "path", "w": 1.6, "pts": [[22, -120], [100, -170], [180, -230], [250, -276]]},
+    {"id": "see", "kind": "path", "w": 1.6, "pts": [[268, -290], [330, -360], [420, -470], [470, -512]]},
+    {"id": "grat", "kind": "path", "w": 1.4, "pts": [[480, -520], [560, -620], [660, -720], [760, -820], [870, -915]]},
+    {"id": "tunnel", "kind": "track", "w": 3.2, "pts": [[275, -282], [400, -260], [520, -250], [650, -270], [790, -288], [830, -290]]},
+    {"id": "west", "kind": "path", "w": 1.6, "pts": [[5, -40], [-40, -70], [-100, -130], [-155, -195]]},
+    {"id": "funkmast", "kind": "path", "w": 1.6, "pts": [[-165, -205], [-240, -290], [-330, -370], [-440, -410], [-555, -418]]},
+    {"id": "spiegel", "kind": "path", "w": 1.3, "pts": [[-330, -370], [-325, -460], [-330, -555]]},
+    {"id": "moor", "kind": "path", "w": 1.5, "pts": [[-560, -410], [-600, -300], [-630, -170], [-640, -60], [-640, 40], [-610, 140], [-560, 220], [-520, 270]]},
+    {"id": "lager", "kind": "track", "w": 3.0, "pts": [[-490, 290], [-400, 250], [-300, 200], [-245, 172], [-160, 120], [-80, 60], [-22, 22]]},
+    {"id": "gewaechshaus", "kind": "path", "w": 1.6, "pts": [[-520, 300], [-620, 380], [-720, 470], [-840, 600]]},
+    {"id": "gw_sued", "kind": "track", "w": 3.0, "pts": [[-850, 640], [-700, 760], [-500, 790], [-300, 700], [-120, 620], [-6, 600]]},
+    {"id": "ost", "kind": "track", "w": 3.0, "pts": [[-1, 60], [60, 85], [140, 110], [210, 130], [320, 165], [450, 200], [540, 225]]},
+    {"id": "schaefer", "kind": "path", "w": 1.6, "pts": [[560, 250], [540, 350], [440, 460], [340, 515]]},
+    {"id": "wal", "kind": "path", "w": 1.6, "pts": [[340, 525], [430, 600], [560, 690], [680, 765]]},
+    {"id": "steinbruch_nord", "kind": "track", "w": 3.0, "pts": [[580, 215], [650, 100], [720, -40], [790, -180], [835, -280]]},
+    {"id": "dorf", "kind": "track", "w": 3.0, "pts": [[0, 845], [60, 850], [140, 860], [200, 868]]},
+    {"id": "wal_dorf", "kind": "path", "w": 1.5, "pts": [[690, 780], [560, 840], [420, 880], [320, 885]]},
+    {"id": "autobahn", "kind": "asphalt", "w": 11.0, "pts": [[-1150, 1088], [-400, 1086], [0, 1086], [400, 1088], [1150, 1086]]}
+  ],
+  "signs": [
+    {"pos": [7.5, -22], "to": ["hochsitz", "messstelle", "kapelle", "aussenstelle"]},
+    {"pos": [25, -124], "to": ["messstelle", "windwurf", "hochsitz"]},
+    {"pos": [-150, -192], "to": ["kapelle", "funkmast", "spiegel"]},
+    {"pos": [-333, -378], "to": ["funkmast", "spiegel", "kapelle"]},
+    {"pos": [262, -270], "to": ["windwurf", "see", "tunnel"]},
+    {"pos": [58, -455], "to": ["messstelle", "aussenstelle", "hochsitz"]},
+    {"pos": [-195, -922], "to": ["aussenstelle", "ilse", "messstelle"]},
+    {"pos": [-26, 28], "to": ["imkerei", "ferienlager", "moor"]},
+    {"pos": [-250, 160], "to": ["imkerei", "ferienlager"]},
+    {"pos": [-512, 278], "to": ["ferienlager", "moor", "gewaechshaus"]},
+    {"pos": [4, 62], "to": ["friedhof", "steinbruch", "schaefer"]},
+    {"pos": [548, 232], "to": ["steinbruch", "schaefer", "tunnel", "wal"]},
+    {"pos": [6, 594], "to": ["kontrollpunkt", "gewaechshaus", "raststation"]},
+    {"pos": [7, 840], "to": ["dorf", "raststation", "kontrollpunkt"]},
+    {"pos": [466, -500], "to": ["see", "wetterstation", "windwurf"]}
+  ]
+}

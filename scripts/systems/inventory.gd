@@ -147,6 +147,22 @@ func remove_all(needs: Dictionary) -> bool:
 
 
 ## Benutzt Essen/Trinken. Gibt true zurück, wenn etwas passiert ist.
+## Brennstoff für Kamin und Ofen: Holz, sonst Torf.
+func count_fuel() -> int:
+	return count("wood") + count("peat")
+
+
+func remove_fuel(n: int) -> bool:
+	if count_fuel() < n:
+		return false
+	var from_wood := mini(count("wood"), n)
+	if from_wood > 0:
+		remove("wood", from_wood)
+	if n - from_wood > 0:
+		remove("peat", n - from_wood)
+	return true
+
+
 func use(id: String) -> bool:
 	var effect: Dictionary = DataDB.item(id).get("use", {})
 	if effect.is_empty() or count(id) <= 0:
@@ -157,6 +173,10 @@ func use(id: String) -> bool:
 		if effect.has(k):
 			eat[k] = effect[k]
 	Survival.apply(eat)
+	if effect.has("heal"):
+		var pl := get_tree().get_first_node_in_group("player")
+		if pl:
+			pl.set("health", minf(float(pl.get("health")) + float(effect["heal"]), 100.0))
 	# leere Flasche zurück, evtl. Übelkeit / Schaden (Rohwasser, rohes Fleisch, verfärbtes Wasser)
 	if effect.has("returns"):
 		add(String(effect["returns"]), 1)

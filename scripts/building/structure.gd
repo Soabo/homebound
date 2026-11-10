@@ -104,6 +104,8 @@ func _build_visual() -> void:
 			_build_bear_trap()
 		"snare":
 			_build_snare()
+		"tent":
+			_build_tent()
 		"stone_wall":
 			var stone := BuildKit.tex_mat("stone", 0.6)
 			for row in 3:
@@ -238,6 +240,32 @@ func _build_bear_trap() -> void:
 var _catch: Node3D
 
 
+## Zelt: grüne Plane als Dach mit zwei Stangen, Eingang vorne (+z), Isomatte und Schlafsack drinnen.
+func _build_tent() -> void:
+	var canvas := BuildKit.tex_mat("fabric", 0.6, Color(0.55, 0.75, 0.5))
+	canvas.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var pole := BuildKit.color_mat(Color(0.25, 0.25, 0.27), 0.5, 0.4)
+	var w := size.x * 0.5
+	var h := size.y
+	var l := size.z
+	var slope := sqrt(w * w + h * h)
+	var ang := rad_to_deg(atan2(h, w))
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(slope, 0.02, l), Vector3(sx * w * 0.5, h * 0.5, 0), canvas, false, Vector3(0, 0, sx * ang))
+	# Rückwand (Dreieck angedeutet durch zwei schräge Stücke)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(w, h * 0.72, 0.02), Vector3(sx * w * 0.4, h * 0.36, -l * 0.5), canvas, false, Vector3(0, 0, sx * 12.0))
+	for z: float in [-l * 0.5, l * 0.5]:
+		BuildKit.cylinder(self, 0.015, h, Vector3(0, h * 0.5, z), pole, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box(self, Vector3(0.6, 0.03, l * 0.85), Vector3(-0.25, 0.015, 0), BuildKit.color_mat(Color(0.2, 0.3, 0.5), 0.8), false)
+	BuildKit.box(self, Vector3(0.5, 0.1, l * 0.7), Vector3(-0.25, 0.06, -0.1), BuildKit.tex_mat("blanket", 0.5), false)
+	# Heringe und Leinen
+	var rope := BuildKit.color_mat(Color(0.75, 0.7, 0.55), 0.9)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(self, Vector3(0.01, 0.01, 0.6), Vector3(sx * (w + 0.25), 0.25, sz * l * 0.5), rope, false, Vector3(0, 0, sx * 45.0))
+
+
 func _build_snare() -> void:
 	var wood := BuildKit.tex_mat("logs", 0.5, Color(1.0, 0.9, 0.8))
 	var wire := BuildKit.color_mat(Color(0.55, 0.55, 0.52), 0.4, 0.7)
@@ -368,6 +396,13 @@ func set_preview_valid(valid: bool) -> void:
 
 func get_prompt(_player: Node) -> String:
 	var def := DataDB.buildable(type)
+	if type == "tent":
+		var why := ThreatDirector.sleep_blocker()
+		if why != "" and TimeManager.can_sleep():
+			return "Zelt – " + why
+		if TimeManager.can_sleep():
+			return "Zelt  [E] Hineinkriechen und schlafen (bis %02d:00)" % int(TimeManager.config.wake_up_hour)
+		return "Zelt – noch zu früh zum Schlafen"
 	if type == "snare":
 		if bool(Builder.record(uid).get("caught", false)):
 			return "Schlinge: ein Hase hat sich verfangen  [E] mitnehmen"
@@ -379,6 +414,17 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(_player: Node) -> void:
+	if type == "tent":
+		if not TimeManager.can_sleep():
+			EventBus.notify("Ich bin noch nicht müde.", 2.0)
+			return
+		var why := ThreatDirector.sleep_blocker()
+		if why != "":
+			EventBus.notify(why, 2.5)
+			return
+		Tasks.flag("slept_outside")
+		EventBus.sleep_requested.emit(TimeManager.config.wake_up_hour)
+		return
 	if type == "bear_trap" and not armed:
 		_rearm()
 	if type == "snare":

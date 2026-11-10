@@ -33,6 +33,8 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | 1–9 / Mausrad | Schnellplatz wählen (leer = Faust) |
 | R | Im Schrank/Spind: heraustreten; Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
 | F | Uhrlicht am linken Arm an/aus – gedrückt halten: zwischen LED-Lampe und weißem Display (schwaches Umgebungslicht) wechseln |
+| Q (halten) | Mit dem Fernglas heranzoomen (wenn du eins gefunden hast) |
+| M | Wanderkarte (wenn du sie gefunden hast) |
 | T (halten) | Zeit vorspulen – nur zum Testen |
 | A / D (am Monitor) | Kamera wechseln |
 | Tab / I | Inventar (essen, trinken, bauen, ablegen); oben die Schnellplätze 1–9 – Gegenstände mit ✋ dorthin ziehen |
@@ -122,6 +124,18 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
     mit der Axt weghacken oder den Knoten in der Höhle zerstören.
 - **Neue Baupläne** (über Verknüpfungen im Archiv): **Störsender** (Drohnen drehen ab) und **Myzel-Sperre**
   (Wucherungen sterben ab und wachsen dort nicht mehr).
+
+## Die große Welt
+
+- Rund um die Hütte liegt jetzt ein Gebiet von gut 2 x 2 km: Wald, Lichtungen, Berge, Seen, ein Hochmoor.
+- Waldwege führen von der Hütte zu über 20 Orten, an Kreuzungen stehen Wegweiser mit Entfernungen.
+- **Nah** (vor der Nacht zurück): alter Brunnen, Waldkapelle, Hochstand-Friedhof, Imkerei.
+- **Tagesmarsch:** Messstelle 4-Nord, Funkmast am Kahlen Kopf, Schwarzer See, Steinbruch, Kontrollpunkt,
+  Ferienlager, Schäferkarren, Hochmoor, Windwurf-Schneise, Lichtung der Spiegel.
+- **Mehrtägig** (Zelt, Proviant, Wasser): Außenstelle Messpunkt 4, Berghütte, Tunnelportal, Versunkenes Dorf,
+  Wetterstation am Grat, Gewächshäuser, Der Wal, Raststätte an der Autobahn.
+- Dort liegen Vorräte, Notizen (Tablet → Notizen), Baupläne (danach an der Werkbank baubar) und neue Funde für die Forschung.
+- Tiefes Wasser kann man nicht durchqueren, im Moor sinkt man abseits der Stege ein.
 
 ## Selbstversorgung und Aufgaben
 

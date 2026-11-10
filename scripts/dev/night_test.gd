@@ -64,6 +64,14 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "places":
+		await _places_test()
+		get_tree().quit()
+		return
+	if mode == "map":
+		await _map_test()
+		get_tree().quit()
+		return
 	if mode == "supplies":
 		await _supplies_test()
 		get_tree().quit()
@@ -1171,3 +1179,154 @@ func _supplies_test() -> void:
 	var st := Supplies.get_state()
 	Supplies.set_state(st)
 	print("SPIELSTAND: Beete %d, Kameras %d, Vergaser %s" % [Supplies.beds.size(), Supplies.cameras.size(), Supplies.gasifier])
+
+
+## Große Welt: Rechenzeit, Orte, Seen, Nachladen.
+func _map_test() -> void:
+	var t := Time.get_ticks_msec()
+	for i in 2000:
+		Terrain.height_at(randf_range(-1000, 1000), randf_range(-1000, 1000))
+	print("MAP 2000 Höhen draußen: %d ms" % (Time.get_ticks_msec() - t))
+	t = Time.get_ticks_msec()
+	for i in 2000:
+		Terrain.height_at(randf_range(-80, 80), randf_range(-80, 80))
+	print("MAP 2000 Höhen im Tal: %d ms" % (Time.get_ticks_msec() - t))
+	t = Time.get_ticks_msec()
+	for i in 2000:
+		Terrain.ground_color(randf_range(-1000, 1000), randf_range(-1000, 1000), 10.0, 0.9, true)
+	print("MAP 2000 Farben: %d ms" % (Time.get_ticks_msec() - t))
+	for id: String in WorldMap.places():
+		var p := WorldMap.place_point(id)
+		print("MAP Ort %s: %s" % [id, p])
+	for l: Dictionary in WorldMap.lakes():
+		print("MAP See %s: Spiegel %.1f bei %s" % [l["id"], WorldMap.lake_level(l), l["pos"]])
+	print("MAP Bachbett z -1000/0/500/885/1100: %.1f %.1f %.1f %.1f %.1f" % [Terrain.stream_bed_height(-1000), Terrain.stream_bed_height(0), Terrain.stream_bed_height(500), Terrain.stream_bed_height(885), Terrain.stream_bed_height(1100)])
+	# Nachladen: Spieler weit weg teleportieren
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var terrain := get_tree().current_scene.get_node("Terrain") as Terrain
+	for id: String in ["kapelle", "funkmast", "aussenstelle"]:
+		var p := WorldMap.place_point(id)
+		t = Time.get_ticks_msec()
+		terrain.load_around(p, 70.0)
+		print("MAP Laden um %s: %d ms" % [id, Time.get_ticks_msec() - t])
+		player.global_position = p + Vector3(0, 2, 0)
+		var frames := 0
+		var t0 := Time.get_ticks_msec()
+		while frames < 600:
+			await get_tree().process_frame
+			frames += 1
+			if terrain._job.is_empty() and terrain._next_missing(player.global_position) == Vector2i(999999, 0):
+				break
+		print("MAP alles geladen bei %s nach %d Bildern (%d ms), Stücke %d, Spieler y %.1f / Boden %.1f" % [id, frames, Time.get_ticks_msec() - t0, terrain._chunks.size(), player.global_position.y, p.y])
+
+
+## Alle Orte der großen Welt abgehen: Funde, Notizen, Baupläne zählen, Boden prüfen; dazu Fernglas,
+## Karte, Zelt, Funkmast, Sprengstofflager, Bauplan → Rezept, Torf als Brennstoff, Waten, Moor.
+func _places_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var terrain := scene.get_node("Terrain") as Terrain
+	var wild := scene.get_node("WildForest") as WildForest
+	var places := scene.get_node("Places")
+	for root: Node in places.get_children():
+		var id := String(root.name)
+		var p := WorldMap.place_point(id)
+		terrain.load_around(p, 70.0)
+		wild.update_around(p, 0.0)
+		player.global_position = p + Vector3(0, 1.5, 0)
+		player.velocity = Vector3.ZERO
+		for i in 20:
+			await get_tree().physics_frame
+		var pickups := root.find_children("*", "ItemPickup", true, false)
+		var notes := root.find_children("*", "ResearchNote", true, false)
+		var bps := root.find_children("*", "Blueprint", true, false)
+		var items: PackedStringArray = []
+		for pk: ItemPickup in pickups:
+			items.append("%s×%d" % [pk.item_id, pk.amount])
+		print("ORT %-14s Boden %.1f  Spieler y %.1f  auf Boden: %s  Funde: %s  Notizen %d  Baupläne %d  besucht %s" % [id, p.y, player.global_position.y,
+			absf(player.global_position.y - p.y) < 6.0, ", ".join(items), notes.size(), bps.size(), Tasks.flags.has("visit_" + id)])
+		# alles einsammeln/lesen
+		for pk: ItemPickup in pickups:
+			while pk.amount > 0:
+				var before := pk.amount
+				pk.interact(player)
+				if pk.amount == before:
+					break
+		for n: ResearchNote in notes:
+			Research.read_note(n.note_id)
+		for b: Blueprint in bps:
+			b.interact(player)
+	print("BAUPLÄNE: %s" % [Research.blueprints])
+	for r: Dictionary in DataDB.recipes():
+		if r.has("blueprint"):
+			print("REZEPT %s frei: %s" % [r["id"], Research.recipe_unlocked(r)])
+	# Funkmast reparieren (Funkteile + Batterie)
+	Inventory.add("battery", 1)
+	var mast := places.get_node("funkmast/TechHut/MastRepair") as PlaceInspect
+	mast.interact(player)
+	print("FUNKMAST repariert: %s, Flag %s" % [mast.done, Tasks.flags.has("mast_repaired")])
+	var bunker := places.get_node("steinbruch/Bunker/BunkerDoor") as PlaceInspect
+	var ex := Inventory.count("explosive")
+	bunker.interact(player)
+	print("SPRENGSTOFFLAGER offen: %s, Sprengstoff +%d" % [bunker.done, Inventory.count("explosive") - ex])
+	var shaft := places.get_node("aussenstelle/ShaftB/ShaftLock") as PlaceInspect
+	shaft.interact(player)
+	print("SCHACHT B offen: %s" % shaft.done)
+	var scope := places.get_node("wetterstation/Telescope") as PlaceInspect
+	print("FERNROHR: %s" % scope.text_provider.call())
+	# Torf als Brennstoff
+	Inventory.remove("wood", Inventory.count("wood"))
+	print("BRENNSTOFF: Torf %d, zählt als Brennstoff %d" % [Inventory.count("peat"), Inventory.count_fuel()])
+	# Heilen
+	player.health = 40.0
+	Inventory.use("medkit")
+	print("VERBAND: Gesundheit %.0f" % player.health)
+	# Karte
+	var map := scene.get_node("MapScreen") as MapScreen
+	var t := Time.get_ticks_msec()
+	map.open()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	print("KARTE offen: %s, Markierungen %d, Bild in %d ms" % [map.is_open(), map._marks.get_child_count(), Time.get_ticks_msec() - t])
+	map.close()
+	# Fernglas
+	Input.action_press("zoom")
+	for i in 40:
+		await get_tree().process_frame
+	print("FERNGLAS: Sichtfeld %.0f°" % player.camera.fov)
+	Input.action_release("zoom")
+	# Zelt bei der Kapelle aufbauen und Schlafen anbieten
+	var kp := WorldMap.place_point("kapelle") + Vector3(14, 0, 6)
+	kp.y = Terrain.height_at(kp.x, kp.z)
+	var tent := Builder.place("tent", kp, 0.0)
+	TimeManager.set_time(TimeManager.day, 22.0)
+	print("ZELT: %s" % tent.get_prompt(player))
+	# Waten: am Schwarzen See ins Tiefe laufen
+	var lake: Dictionary = WorldMap.lakes()[0]
+	var lc: Vector2 = lake["pos"]
+	var shore := Vector3(lc.x, 0, lc.y + float(lake["r"]) * 0.97)
+	shore.y = Terrain.height_at(shore.x, shore.z) + 0.2
+	terrain.load_around(shore, 70.0)
+	player.global_position = shore
+	for i in 10:
+		await get_tree().physics_frame
+	Input.action_press("move_forward")
+	player.rotation.y = 0.0
+	for i in 240:
+		await get_tree().physics_frame
+	Input.action_release("move_forward")
+	var depth := WorldMap.lake_level(lake) - player.global_position.y
+	print("SEE: Spieler steht %.1f m tief im Wasser (darf nicht über 1.2), Abstand zur Mitte %.0f m" % [depth, Vector2(player.global_position.x, player.global_position.z).distance_to(lc)])
+	# Moor: abseits vom Steg einsinken
+	var pool: Vector3 = WorldMap.bogs()[0]["pools"][1]
+	var mp := Vector3(pool.x + pool.z + 3.0, 0, pool.y)
+	mp.y = Terrain.height_at(mp.x, mp.z) + 0.1
+	terrain.load_around(mp, 50.0)
+	player.global_position = mp
+	player.health = 100.0
+	for i in 400:
+		await get_tree().physics_frame
+	print("MOOR: Gesundheit nach ~6 s im Schlamm %.0f" % player.health)
+	print("AUFGABEN-Flags Besuche: %d" % Tasks.flags.keys().filter(func(k: String) -> bool: return k.begins_with("visit_")).size())

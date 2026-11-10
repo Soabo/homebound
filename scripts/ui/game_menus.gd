@@ -390,7 +390,7 @@ func _fill_crafting() -> void:
 		row.add_child(b)
 		_list.add_child(row)
 	if locked > 0:
-		_list.add_child(_text("%d unbekannte(r) Bauplan/Baupläne – entstehen durch Forschung (Alien-Archiv auf dem Tablet)" % locked, 18, Color(0.55, 0.7, 0.8)))
+		_list.add_child(_text("%d unbekannte(r) Bauplan/Baupläne – entstehen durch Forschung (Alien-Archiv auf dem Tablet) oder liegen irgendwo draußen" % locked, 18, Color(0.55, 0.7, 0.8)))
 
 
 func _on_use(id: String) -> void:

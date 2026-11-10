@@ -10,5 +10,6 @@
   "resonance_sensor":{"name": "Resonanz-Sensor",        "health": 35,  "obstacle": false, "size": [0.4, 1.3, 0.4], "range": 26},
   "strobe_light":    {"name": "Stroboskop-Leuchte",     "health": 45,  "obstacle": false, "size": [0.4, 2.2, 0.4], "range": 11},
   "signal_jammer":   {"name": "Störsender",             "health": 35,  "obstacle": false, "size": [0.5, 1.6, 0.5], "range": 26},
-  "growth_barrier":  {"name": "Myzel-Sperre",           "health": 60,  "obstacle": false, "size": [0.6, 0.6, 0.6], "range": 15}
+  "growth_barrier":  {"name": "Myzel-Sperre",           "health": 60,  "obstacle": false, "size": [0.6, 0.6, 0.6], "range": 15},
+  "tent": {"name": "Zelt", "health": 40, "obstacle": true, "size": [2.0, 1.25, 2.4]}
 }

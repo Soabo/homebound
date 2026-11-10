@@ -61,6 +61,18 @@ func _check_places() -> void:
 		if Vector2(p.global_position.x - c.x, p.global_position.z - c.z).length() < float(PLACES[f][1]):
 			if not flags.has(f):
 				flag(f)
+	# Orte der großen Welt
+	var q := Vector2(p.global_position.x, p.global_position.z)
+	var all := WorldMap.places()
+	for id: String in all:
+		var f := "visit_" + id
+		if flags.has(f):
+			continue
+		var r := maxf(float(all[id]["clear"]) * 0.8, 16.0)
+		if (all[id]["pos"] as Vector2).distance_to(q) < r:
+			flag(f)
+			if id not in ["brunnen", "absturz", "struktur", "hoehle", "hochsitz"]:
+				EventBus.notify(String(all[id]["name"]), 3.0)
 
 
 ## Prüft Ziele: neue freischalten, erledigte abhaken.

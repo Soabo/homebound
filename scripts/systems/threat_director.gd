@@ -255,6 +255,11 @@ func _fire(type: String) -> void:
 	if scene == null:
 		return
 	var player := get_tree().get_first_node_in_group("player") as Node3D
+	# Weit weg von der Hütte (Ausflug, Zelt): Ereignisse am Haus werden zu Ereignissen im Wald um dich herum
+	if far_from_home():
+		type = _far_variant(type)
+		if type == "":
+			return
 	if type in ACTIVITY_EVENTS:
 		_activity_tonight = true
 		# Tablet flackert nur nachts – ein Hinweis, dass draußen etwas ist
@@ -330,6 +335,10 @@ func _fire(type: String) -> void:
 			_spawn_creature(scene)
 		"sighting":
 			_sighting(scene, player)
+		"forest_sighting":
+			_appeared_tonight = true
+			Apparition.spawn(scene, "forest")
+			CreatureSounds.play_phrase(scene, "breath", _random_forest_point(14.0, 20.0) + Vector3(0, 1.2, 0), -4.0, _rng.randf_range(3.0, 5.0), 30.0)
 		"drone":
 			if get_tree().get_nodes_in_group("drone").is_empty():
 				var d := AlienDrone.new()
@@ -429,11 +438,35 @@ func _play_phantom_steps(scene: Node) -> void:
 		await get_tree().create_timer(0.6).timeout
 
 
+## Ist der Spieler weit weg von der Hütte (Ausflug, Nacht im Zelt)?
+const FAR_FROM_HOME := 150.0
+
+
+func far_from_home() -> bool:
+	var p := get_tree().get_first_node_in_group("player") as Node3D
+	return p != null and Vector2(p.global_position.x, p.global_position.z).length() > FAR_FROM_HOME
+
+
+## Ersatz für Ereignisse, die nur an der Hütte Sinn ergeben. "" = entfällt.
+func _far_variant(type: String) -> String:
+	match type:
+		"scratch", "roof", "knock_door", "rattle", "breath_wall":
+			return "steps" if _rng.randf() < 0.6 else "twig"
+		"handprint", "photo", "flicker", "radio", "outage":
+			return ""
+		"creature", "sighting":
+			return "forest_sighting"
+	return type
+
+
 func _random_forest_point(min_d: float, max_d: float) -> Vector3:
 	var a := _rng.randf() * TAU
 	var d := _rng.randf_range(min_d, max_d)
-	var x := cos(a) * d
-	var z := sin(a) * d
+	var c := Vector3.ZERO
+	if far_from_home():
+		c = (get_tree().get_first_node_in_group("player") as Node3D).global_position
+	var x := c.x + cos(a) * d
+	var z := c.z + sin(a) * d
 	return Vector3(x, Terrain.height_at(x, z) + 0.3, z)
 
 

@@ -21,6 +21,8 @@ const KEY_ACTIONS := {
 	"build": [KEY_B],
 	"toggle_fullscreen": [KEY_F11],
 	"debug_time_fast": [KEY_T],
+	"zoom": [KEY_Q],
+	"map": [KEY_M],
 }
 
 

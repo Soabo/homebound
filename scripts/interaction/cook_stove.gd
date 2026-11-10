@@ -47,11 +47,11 @@ func get_prompt(_p: Node) -> String:
 	if lit():
 		var left := burn_until - TimeManager.get_total_hours()
 		return "Holzofen – brennt noch etwa %d Std.  [E] Kochen" % maxi(1, int(round(left)))
-	return "Holzofen – kalt.  [E] mit 1 Holz anheizen (du hast %d)" % Inventory.count("wood")
+	return "Holzofen – kalt.  [E] mit 1 Holz anheizen (du hast %d)" % Inventory.count_fuel()
 
 
 func get_secondary_prompt(_p: Node) -> String:
-	return "[R] Holz nachlegen" if lit() and Inventory.count("wood") > 0 else ""
+	return "[R] Holz nachlegen" if lit() and Inventory.count_fuel() > 0 else ""
 
 
 func interact(_p: Node) -> void:
@@ -67,7 +67,7 @@ func secondary_interact(_p: Node) -> void:
 
 
 func _add_wood() -> void:
-	if not Inventory.remove("wood", 1):
+	if not Inventory.remove_fuel(1):
 		EventBus.notify("Dafür brauchst du Holz.", 2.0)
 		return
 	var now := TimeManager.get_total_hours()

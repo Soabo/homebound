@@ -228,6 +228,111 @@
      "text": "Ihr Saft wird bitter und giftig – für die grauen Fäden der Wucherung."
     }
    ]
+  },
+  "an_comb": {
+   "find": "alien_comb",
+   "name": "Fremdwabe",
+   "area": "Biologie",
+   "hours": 2.0,
+   "summary": "Ein Wabenstück aus den Bienenkästen. Kein Wachs: feine, graue Fäden, die sich zu Sechsecken verflochten haben.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Belichten",
+     "needs": "light",
+     "text": "Die Fäden ziehen sich vom Licht weg, wie die Wucherung."
+    },
+    {
+     "id": "alien",
+     "label": "Mit Fremdgewebe vergleichen",
+     "needs": "alien",
+     "text": "Dasselbe Gewebe wie die Wucherung aus der Höhle. Die Bienen haben es gebaut – oder es hat die Bienen gebaut."
+    }
+   ]
+  },
+  "an_implant": {
+   "find": "alien_implant",
+   "name": "Implantat",
+   "area": "Spezies und Verhalten",
+   "hours": 2.5,
+   "summary": "Ein glatter Splitter, gefunden hinter dem Ohr der Moorleiche. Er ist warm, obwohl die Leiche kalt ist.",
+   "experiments": [
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Er sendet einen kurzen Impuls – im selben Takt wie die Drohnen."
+    },
+    {
+     "id": "light",
+     "label": "Durchleuchten",
+     "needs": "light",
+     "text": "Feine Wurzeln, die sich ins Gewebe gegraben hatten. Er war nicht nur ein Sender. Er hat zugehört."
+    }
+   ]
+  },
+  "an_probe": {
+   "find": "probe_core",
+   "name": "Sondenkern",
+   "area": "Energie und Physik",
+   "hours": 3.0,
+   "summary": "Aus dem Krater der Windwurf-Schneise. Die Bäume sind von ihm weggefallen, nicht durch Sturm.",
+   "experiments": [
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Ein Druckstoß, der die Werkbank verrückt. Er hat einmal gezündet, um den Boden zu vermessen."
+    },
+    {
+     "id": "alien",
+     "label": "Mit Fremdmetall vergleichen",
+     "needs": "alien",
+     "text": "Gleiche Legierung, aber grob, wie ein Werkzeug, das nur einmal gebraucht wird."
+    }
+   ]
+  },
+  "an_seeds": {
+   "find": "alien_seeds",
+   "name": "Fremde Samen",
+   "area": "Biologie",
+   "hours": 2.0,
+   "summary": "Aus den Gewächshäusern. Sie keimen schon in der Hand, wenn sie warm werden.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Belichten",
+     "needs": "light",
+     "text": "Unter Licht keimen sie in Minuten. Sie wachsen auch dort, wo nichts anderes mehr wächst."
+    },
+    {
+     "id": "power",
+     "label": "Unter Strom setzen",
+     "needs": "power",
+     "text": "Der Keimling dreht sich nach Norden, zur Außenstelle."
+    }
+   ]
+  },
+  "an_hull": {
+   "find": "hull_sample",
+   "name": "Hüllenprobe vom Wal",
+   "area": "Raumfahrt und Infrastruktur",
+   "hours": 3.0,
+   "summary": "Ein Stück Haut vom riesigen Rumpf am Walhügel. Halb Metall, halb lebendig.",
+   "experiments": [
+    {
+     "id": "light",
+     "label": "Durchleuchten",
+     "needs": "light",
+     "text": "Innen Kammern wie in einem Bienenstock – ein Transportschiff, kein Kriegsschiff."
+    },
+    {
+     "id": "alien",
+     "label": "Mit Fremdgewebe vergleichen",
+     "needs": "alien",
+     "text": "Dasselbe Gewebe wie die Kreaturen. Sie sind nicht gekommen, um zu kämpfen. Sie sind gekommen, um zu bleiben."
+    }
+   ]
   }
  },
  "links": {
@@ -298,6 +403,36 @@
    ],
    "text": "Die Struktur sendet nach unten, nicht nach oben. Unter dem Dreieck der Vermessungspunkte liegt etwas Großes – und es antwortet. Die Hütte steht genau darüber.",
    "unlocks": []
+  },
+  "link_hive": {
+   "name": "Ein einziges Geflecht",
+   "area": "Biologie",
+   "needs": [
+    "an_comb",
+    "an_organism"
+   ],
+   "text": "Waben, Wucherung und Fremdpflanze sind ein und dasselbe Lebewesen. Es wächst nicht zufällig – es verlegt Leitungen.",
+   "unlocks": []
+  },
+  "link_implant": {
+   "name": "Markiert",
+   "area": "Spezies und Verhalten",
+   "needs": [
+    "an_implant",
+    "an_drone"
+   ],
+   "text": "Die Drohnen suchen nicht nach Menschen. Sie suchen nach Markierten – und nach allem, was ihr Signal stört. W-17 stört es.",
+   "unlocks": []
+  },
+  "link_ship": {
+   "name": "Sie bleiben",
+   "area": "Raumfahrt und Infrastruktur",
+   "needs": [
+    "an_hull",
+    "an_seeds"
+   ],
+   "text": "Das Schiff am Walhügel hat Samen gebracht, keine Waffen. Das Tal wird vorbereitet, wie ein Acker.",
+   "unlocks": []
   }
  },
  "notes": {
@@ -316,6 +451,106 @@
   "ranger_note3": {
    "name": "Letzte Seite",
    "text": "»Es wächst. Es wächst zur Hütte hin, ganz langsam, jede Nacht ein Stück. Ich habe den Knoten gefunden, tief in der Höhle. Wenn ich ihn zerschlage – « Der Rest ist unleserlich."
+  },
+  "kapelle_buch": {
+   "name": "Gästebuch der Waldkapelle",
+   "text": "Die letzten Einträge, verschiedene Handschriften:\n»Für Opa Hans. Ruhe in Frieden.« – »Danke für den Regenschutz! Wanderfreunde Sankt Englmar« – »Wer legt die Steine auf die Bänke? Jeden Morgen einer mehr.« – »Es sind jetzt elf.« – »Sie zählen. Sie zählen UNS.« – »Revier 4 kontrolliert, keine Auffälligkeiten. G. W.«"
+  },
+  "friedhof_liste": {
+   "name": "Abschussliste (durchnässt)",
+   "text": "Jagdgenossenschaft Revier 4 – Ansitzplan Herbst.\nQuer über die Seite, mit Bleistift: »Alle Hochsitze umgedreht. Alle schauen zur Mitte. Ich war es nicht. Niemand war es. Die Leitern sind von INNEN abgesägt.«"
+  },
+  "imkerei_notiz": {
+   "name": "Zettel am Bienenhaus",
+   "text": "»Liebe Kundschaft, Honigverkauf bis auf Weiteres eingestellt. Die Völker sind nicht weggeflogen. Sie sind still geworden. In den Kästen wächst etwas, das kein Wachs ist. Ich bringe die Proben zum Amt.  – Brandl«\nDarunter, später: »Das Amt hat gesagt, ich soll sie verbrennen. Ich habe sie behalten.«"
+  },
+  "messstelle_log": {
+   "name": "Wartungsprotokoll MP4-Nord",
+   "text": "ReZort Industries – Sondertechnik, Messstelle 4-Nord.\n03.05.: Sensorik nachjustiert, Kopplung W-Serie geprüft, Werte stabil. Techniker: C., Pers.-Nr. 40817.\n17.09.: Kopplung driftet. Ursache unbekannt. Ersatzteil W-17 als Ausschuss gemeldet – Verbleib ungeklärt.\n02.11.: Werte steigen. Anweisung von oben: nicht melden."
+  },
+  "funkmast_zettel": {
+   "name": "Zettel im Technikhäuschen",
+   "text": "»Mast seit drei Tagen ohne Strom. Notstrom leer. Wer das liest und ein Funkgerät hat: Kanal 7, jeden Abend um neun. Wir sind noch da oben. – I.«\nAuf der Rückseite eine Liste: Funkteile, Batterie, Richtantenne."
+  },
+  "see_ausweis": {
+   "name": "Firmenausweis im Auto",
+   "text": "ReZort Industries – Abteilung Sondertechnik. Markus Kessler, Projektleitung Messpunkte. Gültig für: MP2, MP4, Tunnel Ost.\nIm Handschuhfach ein Zettel: »Ich höre auf. Sollen sie doch selber runtersteigen.«"
+  },
+  "steinbruch_buch": {
+   "name": "Sprengbuch des Steinbruchs",
+   "text": "Letzte Sprengung vor drei Wochen, Auftraggeber: ReZort Industries, Vermerk »Erweiterung Stollen Ost«. Danach nur noch eine Zeile, krakelig: »Unter der Sohle klopft es zurück.«"
+  },
+  "kontrollpunkt_funk": {
+   "name": "Funkprotokoll Kontrollpunkt",
+   "text": "Sperrgebiet Wald, Abschnitt Süd.\n21:40 Bewegung am Waldrand, keine Wärmesignatur.\n22:15 Zwei Mann zur Aufklärung.\n22:31 Kein Kontakt.\n22:48 Kein Kontakt.\n23:02 Befehl: Stellung räumen. Ausrüstung zurücklassen.\nLetzte Zeile mit anderer Hand: »Sie haben unsere Stimmen benutzt.«"
+  },
+  "lager_bild": {
+   "name": "Kinderzeichnung",
+   "text": "Ein Bild mit Wachsmalkreide: das Ferienlager, ein See, viele kleine Strichmännchen. Am Ufer steht ein schwarzer Mann, so lang wie die Bäume, ohne Gesicht. Darunter in Kinderschrift: »Der lange Mann am See. Er winkt nur, wenn die Betreuer schlafen.«"
+  },
+  "schaefer_tagebuch": {
+   "name": "Tagebuch des Schäfers",
+   "text": "»Montag: Die Hunde sind fort. Dienstag: Die Herde stellt sich nachts im Kreis auf, Köpfe nach innen. Mittwoch: Sie stehen jetzt auch tagsüber so. Sie fressen nicht mehr. Donnerstag: Ich habe mich in die Mitte gestellt. Es war ganz still. Ich habe verstanden, warum sie das machen. Ich darf es nicht aufschreiben.«"
+  },
+  "moor_schild": {
+   "name": "Schild am Moorsteg",
+   "text": "Naturschutzgebiet Hochmoor. Stege nicht verlassen – Lebensgefahr!\nJemand hat darunter geritzt: »Die Toten hier sind nicht alt.«"
+  },
+  "spiegel_notiz": {
+   "name": "Notiz unter der Plane",
+   "text": "»Die Lichter suchen von oben. Sie sehen kein Licht, das von oben kommt – nur Licht von unten, von uns. Darum die Spiegel: Sie werfen den Himmel zurück. Seit ich sie aufgehängt habe, fliegen sie über diese Lichtung, als wäre sie nicht da. Ich gehe jetzt Wasser holen. Ich komme zurück.«"
+  },
+  "ast_wurzelwerk": {
+   "name": "Aktennotiz WURZELWERK",
+   "text": "Programm WURZELWERK – nur für Kategorie A.\nDie Strukturen sind älter als jede Besiedlung. Sie sind miteinander verbunden. Unsere Aufgabe ist Beobachtung und kontrollierte Nutzung, nicht Eingriff. Messpunkte 1–9 liegen über Knoten. Messpunkt 4 zeigt die höchste Aktivität.\nUnterschrift: A. Senn."
+  },
+  "ast_einsatzplan": {
+   "name": "Einsatzplan Technik",
+   "text": "Einsatzplan Sondertechnik, Quartal 3.\nMP2 Tunnel Ost – C. (40817), M. Kessler.\nMP4 Messstelle Nord – C. (40817).\nMP4 Außenstelle, Schacht B – C. (40817), nachts, ohne Begleitung.\nDahinter Christians alter Dienstausweis, kopiert. Das Foto ist durchgestrichen."
+  },
+  "ast_schutzstatus": {
+   "name": "Rundschreiben Schutzstatus",
+   "text": "An alle Mitarbeitenden der Kategorie A.\nFür die Phase nach der Aktivierung ist für Sie und Ihre Angehörigen ein Schutzstatus vorgesehen. Halten Sie den Aktivierungscode bereit. Aktivierungscode MP4: siehe Anlage.\nDie Anlage fehlt. Jemand hat sie herausgerissen.\nA. Senn"
+  },
+  "ast_risiken": {
+   "name": "Liste offene Risiken",
+   "text": "Offene Risiken – vertraulich.\n1. Messwerte MP4 steigen unkontrolliert.\n2. Teil W-17 nicht auffindbar.\n3. Familie C. (40817): Maßnahme abgeschlossen. Kopien der Ehefrau NICHT aufgefunden.\n4. Revierförster Wendt meldet nicht mehr."
+  },
+  "ast_abschaltfolge1": {
+   "name": "Abschaltfolge (Teil 1)",
+   "text": "Notabschaltung Knoten MP4 – Teil 1 von 2.\n1. Oberflächen-Emitter (Säulen) in Folge abschalten.\n2. Biologische Leitung (Höhle) trennen.\n3. Steuerglied der W-Serie in die Fassung setzen.\nTeil 2 liegt bei Tunnel Ost."
+  },
+  "ilse_logbuch": {
+   "name": "Ilses Funk-Logbuch",
+   "text": "»Tag 12. Niemand mehr auf Kanal 7 außer mir. Tag 14. Eine Stimme aus dem Tal unten, aber sie sagt nur meinen Namen. Tag 15. Ich mache die Tür nicht mehr auf. Wer zu mir will, soll über Funk kommen. Wenn du das liest: Der Mast am Kahlen Kopf. Mach ihn heil, dann hören wir uns.«"
+  },
+  "tunnel_massnahme11": {
+   "name": "Akte »Maßnahme 11«",
+   "text": "Maßnahme 11 – Durchführung bestätigt.\nDatum: die Regennacht vor einem Jahr. Ort: B 85, Höhe Kilometer 14.\nFahrzeug: Sattelzug, Kennzeichen DEG-RZ 117, Fahrer: Subunternehmer, unbekannt verzogen.\nZielpersonen: Ehefrau und Kinder C. (40817) – erledigt. C. selbst: nicht im Fahrzeug.\nNachsatz: »Vorerst beobachten. Er weiß nichts.« – A. S."
+  },
+  "tunnel_abschaltfolge2": {
+   "name": "Abschaltfolge (Teil 2)",
+   "text": "Notabschaltung Knoten MP4 – Teil 2 von 2.\n4. Steuerglied drei Atemzüge der Anlage lang halten.\n5. Nicht loslassen, wenn sie zu sprechen beginnt.\n6. Wer den Code eingibt statt abzuschalten, aktiviert. Siehe Rundschreiben Schutzstatus.\nDarunter: »Niemand von uns ist so weit gekommen.«"
+  },
+  "dorf_chronik": {
+   "name": "Dorfchronik (aufgeweicht)",
+   "text": "Chronik der Gemeinde Altenreuth, aufgegeben 1964 für den Stausee.\n»Im Sommer 1962 leuchtete der Talgrund drei Nächte lang von unten. Der Pfarrer ließ die Glocke läuten, bis es aufhörte. Die Herren vom Amt sagten, es seien Sumpfgase. Zwei Jahre später kam der Damm.«"
+  },
+  "wetter_log": {
+   "name": "Wetterbuch der Station",
+   "text": "»Luftdruck fällt seit einer Woche, ohne dass Wetter kommt. Der Wind dreht jede Nacht auf das Tal zu, als würde es einatmen. Ich habe vom Grat aus die Lichtungen gezählt, die es vor einem Monat noch nicht gab. Karte liegt bei.«"
+  },
+  "gw_bericht": {
+   "name": "Versuchsbericht Gewächshaus 3",
+   "text": "Agrarversuch im Auftrag von ReZort Industries.\nDie Proben aus Messpunkt 4 keimen in jeder Erde, auch in vergifteter. Erträge dreifach. Nebenwirkung: Bestäuber meiden die Pflanzen, Nachbarkulturen verwelken. Empfehlung: sofort einstellen.\nStempel: »Weiterführen. Senn.«"
+  },
+  "rast_zettel": {
+   "name": "Zettel an der Kasse",
+   "text": "»Autobahn nach Süden gesperrt. Nicht hinfahren. Wer mit dem Auto weg will, braucht Teile vom Lager hinten – Batterie, Zündung, Reifen. Ich habe versucht, es zu richten. Die Stadt leuchtet nachts nicht mehr. Sie glimmt.«"
+  },
+  "brunnen_hinweis": {
+   "name": "Eingeritzt am Brunnenrand",
+   "text": "In den Stein geritzt, schon verwittert: »MP4 – B«. Darunter ein Pfeil nach unten."
   }
  }
 }

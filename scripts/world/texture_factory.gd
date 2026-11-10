@@ -20,6 +20,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"bark": img = _bark()
 		"stone": img = _stone(Color(0.46, 0.44, 0.41), 14)
 		"stone_dark": img = _stone(Color(0.3, 0.27, 0.25), 18)
+		"concrete": img = _stone(Color(0.55, 0.54, 0.51), 40)
 		"rock": img = _rock()
 		"tiles": img = _tiles()
 		"shingles": img = _shingles()

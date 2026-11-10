@@ -186,7 +186,7 @@ func _spawn_small(kind: String) -> void:
 		return
 	# Mücken lieber am Bach oder Waldrand
 	if kind == "insects" and _rng.randf() < 0.6:
-		var z := clampf(_player.global_position.z + _rng.randf_range(-20, 20), -95.0, 95.0)
+		var z := clampf(_player.global_position.z + _rng.randf_range(-20, 20), Terrain.STREAM_START + 10.0, WorldMap.limit() - 5.0)
 		var sx := Terrain.stream_x_at(z) + _rng.randf_range(-3.0, 3.0)
 		if Vector2(sx - _player.global_position.x, z - _player.global_position.z).length() < 45.0:
 			p = Vector3(sx, Terrain.height_at(sx, z), z)

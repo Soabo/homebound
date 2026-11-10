@@ -1,34 +1,412 @@
 {
   "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG",
   "goals": [
-    {"id": "power", "title": "Strom sichern", "text": "Der Generator steht im Schuppen. Starte ihn und behalte die Tankanzeige in der Werkstatt im Blick.", "unlock": ["day>=1"], "done": ["flag:generator_started"]},
-    {"id": "cameras_find", "title": "Die Überwachungskameras finden", "text": "Irgendwo in der Hütte liegen drei nummerierte Überwachungskameras.", "unlock": ["day>=1"], "done": ["got:camera_1", "got:camera_2", "got:camera_3"]},
-    {"id": "cameras", "title": "Kameras anbringen", "text": "Bring die Kameras außen an der Hütte oder am Schuppen an (B = Bauen) und richte sie aus. Das Bild siehst du am Monitor.", "unlock": ["got:camera_1"], "done": ["cameras>=3"]},
-    {"id": "garden", "title": "Gemüse anbauen", "text": "Säe in den Hochbeeten aus, gieße jeden Tag mit der Gießkanne und ernte, wenn es reif ist. Samen findest du im Schuppenregal, die Gießkanne steht bei den Beeten.", "unlock": ["day>=2"], "done": ["flag:harvested"]},
-    {"id": "water", "title": "Trinkwasser selbst machen", "text": "Fülle leere Flaschen an Regentonne, Bach oder Wasserhahn (R) und koche das Wasser am Herd ab.", "unlock": ["got:bottle_empty"], "done": ["flag:cooked_boil_water"]},
-    {"id": "snare", "title": "Schlingen auslegen", "text": "Stell an der Werkbank Kleintierschlingen her und lege sie im Wald aus. Morgens nachsehen, ob etwas gefangen wurde.", "unlock": ["day>=2"], "done": ["flag:snare_caught"]},
-    {"id": "cook", "title": "Eine warme Mahlzeit kochen", "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Fleisch und Gemüse zubereiten. Roh wird einem leicht übel.", "unlock": ["got:meat_raw"], "done": ["flag:cooked_meal"]},
-    {"id": "cook2", "title": "Eine warme Mahlzeit kochen", "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Kartoffeln und Gemüse zubereiten.", "unlock": ["got:potato", "not:got:meat_raw"], "done": ["flag:cooked_meal"]},
-    {"id": "scrap", "title": "Metall beschaffen", "text": "Das Autowrack gibt nicht ewig Schrott her. Im Wald liegen immer wieder alte Auspuffe, Motorteile oder Fässer – besonders rund um das Wrack. Nur mit der Blechschere.", "unlock": ["got:tin_snips"], "done": ["flag:scrap_spot"]},
-    {"id": "service", "title": "Den Generator warten", "text": "Der Generator nutzt sich ab. Mit Motoröl und Zündkerzen (aus alten Motoren im Wald) läuft er wieder rund.", "unlock": ["gencond<65"], "done": ["flag:generator_serviced"]},
-    {"id": "gasifier", "title": "Einen Holzvergaser bauen", "text": "Das Benzin reicht nicht ewig. Ein Holzvergaser am Generator macht aus Holz Treibstoff – Bausatz an der Werkbank.", "unlock": ["day>=4"], "done": ["flag:gasifier_installed"]},
-    {"id": "cell", "title": "Fremde Energie nutzen", "text": "Die Energiezellen aus dem Wrack laden sich selbst auf. Mit einem Zellen-Adapter könnten sie den Generator antreiben.", "unlock": ["link:link_power"], "done": ["flag:cell_used"]},
-    {"id": "crash", "title": "Den Lichtern nachgehen", "text": "Im Waldkurier stand etwas von Lichtern über dem Tal. Im Nordwesten des Waldes scheint etwas heruntergekommen zu sein.", "unlock": ["day>=2"], "done": ["flag:visit_crash"]},
-    {"id": "analyzer", "title": "Ein Analysegerät bauen", "text": "Die Funde sind seltsam. Mit dem alten Funkgerät in der Werkstatt ließe sich etwas Messgerät basteln (Werkbank).", "unlock": ["got:metal_fragment"], "done": ["tier>=1"]},
-    {"id": "research", "title": "Funde untersuchen", "text": "Leg Funde ins Analysegerät, führe Experimente durch und schick die Ergebnisse ans Tablet.", "unlock": ["tier>=1"], "done": ["analyses>=3"]},
-    {"id": "tower", "title": "Den Hochsitz finden", "text": "Der Förster hatte einen Hochsitz im Norden des Waldes. Vielleicht hat er etwas gesehen.", "unlock": ["day>=3"], "done": ["flag:visit_tower"]},
-    {"id": "secure", "title": "Das Haus sichern", "text": "Verbarrikadiere Fenster und Türen mit Brettern (R) und baue Hindernisse und Fallen rund ums Haus.", "unlock": ["day>=3"], "done": ["flag:barricaded"]},
-    {"id": "hide", "title": "Ein Versteck kennen", "text": "Im Kleiderschrank und im Spind im Schuppen kann man sich verstecken (R).", "unlock": ["day>=5"], "done": ["flag:hidden"]},
-    {"id": "cave", "title": "Die Höhle am Bach", "text": "Bachaufwärts im Nordosten soll eine Höhle sein.", "unlock": ["day>=5"], "done": ["flag:visit_cave"]},
-    {"id": "structure", "title": "Das Summen im Westen", "text": "Im Westen summt etwas, das nicht dorthin gehört.", "unlock": ["day>=6"], "done": ["flag:visit_structure"]},
-    {"id": "filter", "title": "Wasser filtern", "text": "Das Wasser hat sich verfärbt. Ohne Wasserfilter (Werkbank) wird einem davon schlecht.", "unlock": ["water_bad"], "done": ["item:water_filter>=1"]}
+    {
+      "id": "power",
+      "title": "Strom sichern",
+      "text": "Der Generator steht im Schuppen. Starte ihn und behalte die Tankanzeige in der Werkstatt im Blick.",
+      "unlock": [
+        "day>=1"
+      ],
+      "done": [
+        "flag:generator_started"
+      ]
+    },
+    {
+      "id": "cameras_find",
+      "title": "Die Überwachungskameras finden",
+      "text": "Irgendwo in der Hütte liegen drei nummerierte Überwachungskameras.",
+      "unlock": [
+        "day>=1"
+      ],
+      "done": [
+        "got:camera_1",
+        "got:camera_2",
+        "got:camera_3"
+      ]
+    },
+    {
+      "id": "cameras",
+      "title": "Kameras anbringen",
+      "text": "Bring die Kameras außen an der Hütte oder am Schuppen an (B = Bauen) und richte sie aus. Das Bild siehst du am Monitor.",
+      "unlock": [
+        "got:camera_1"
+      ],
+      "done": [
+        "cameras>=3"
+      ]
+    },
+    {
+      "id": "garden",
+      "title": "Gemüse anbauen",
+      "text": "Säe in den Hochbeeten aus, gieße jeden Tag mit der Gießkanne und ernte, wenn es reif ist. Samen findest du im Schuppenregal, die Gießkanne steht bei den Beeten.",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "flag:harvested"
+      ]
+    },
+    {
+      "id": "water",
+      "title": "Trinkwasser selbst machen",
+      "text": "Fülle leere Flaschen an Regentonne, Bach oder Wasserhahn (R) und koche das Wasser am Herd ab.",
+      "unlock": [
+        "got:bottle_empty"
+      ],
+      "done": [
+        "flag:cooked_boil_water"
+      ]
+    },
+    {
+      "id": "snare",
+      "title": "Schlingen auslegen",
+      "text": "Stell an der Werkbank Kleintierschlingen her und lege sie im Wald aus. Morgens nachsehen, ob etwas gefangen wurde.",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "flag:snare_caught"
+      ]
+    },
+    {
+      "id": "cook",
+      "title": "Eine warme Mahlzeit kochen",
+      "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Fleisch und Gemüse zubereiten. Roh wird einem leicht übel.",
+      "unlock": [
+        "got:meat_raw"
+      ],
+      "done": [
+        "flag:cooked_meal"
+      ]
+    },
+    {
+      "id": "cook2",
+      "title": "Eine warme Mahlzeit kochen",
+      "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Kartoffeln und Gemüse zubereiten.",
+      "unlock": [
+        "got:potato",
+        "not:got:meat_raw"
+      ],
+      "done": [
+        "flag:cooked_meal"
+      ]
+    },
+    {
+      "id": "scrap",
+      "title": "Metall beschaffen",
+      "text": "Das Autowrack gibt nicht ewig Schrott her. Im Wald liegen immer wieder alte Auspuffe, Motorteile oder Fässer – besonders rund um das Wrack. Nur mit der Blechschere.",
+      "unlock": [
+        "got:tin_snips"
+      ],
+      "done": [
+        "flag:scrap_spot"
+      ]
+    },
+    {
+      "id": "service",
+      "title": "Den Generator warten",
+      "text": "Der Generator nutzt sich ab. Mit Motoröl und Zündkerzen (aus alten Motoren im Wald) läuft er wieder rund.",
+      "unlock": [
+        "gencond<65"
+      ],
+      "done": [
+        "flag:generator_serviced"
+      ]
+    },
+    {
+      "id": "gasifier",
+      "title": "Einen Holzvergaser bauen",
+      "text": "Das Benzin reicht nicht ewig. Ein Holzvergaser am Generator macht aus Holz Treibstoff – Bausatz an der Werkbank.",
+      "unlock": [
+        "day>=4"
+      ],
+      "done": [
+        "flag:gasifier_installed"
+      ]
+    },
+    {
+      "id": "cell",
+      "title": "Fremde Energie nutzen",
+      "text": "Die Energiezellen aus dem Wrack laden sich selbst auf. Mit einem Zellen-Adapter könnten sie den Generator antreiben.",
+      "unlock": [
+        "link:link_power"
+      ],
+      "done": [
+        "flag:cell_used"
+      ]
+    },
+    {
+      "id": "crash",
+      "title": "Den Lichtern nachgehen",
+      "text": "Im Waldkurier stand etwas von Lichtern über dem Tal. Im Nordwesten des Waldes scheint etwas heruntergekommen zu sein.",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "flag:visit_crash"
+      ]
+    },
+    {
+      "id": "analyzer",
+      "title": "Ein Analysegerät bauen",
+      "text": "Die Funde sind seltsam. Mit dem alten Funkgerät in der Werkstatt ließe sich etwas Messgerät basteln (Werkbank).",
+      "unlock": [
+        "got:metal_fragment"
+      ],
+      "done": [
+        "tier>=1"
+      ]
+    },
+    {
+      "id": "research",
+      "title": "Funde untersuchen",
+      "text": "Leg Funde ins Analysegerät, führe Experimente durch und schick die Ergebnisse ans Tablet.",
+      "unlock": [
+        "tier>=1"
+      ],
+      "done": [
+        "analyses>=3"
+      ]
+    },
+    {
+      "id": "tower",
+      "title": "Den Hochsitz finden",
+      "text": "Der Förster hatte einen Hochsitz im Norden des Waldes. Vielleicht hat er etwas gesehen.",
+      "unlock": [
+        "day>=3"
+      ],
+      "done": [
+        "flag:visit_tower"
+      ]
+    },
+    {
+      "id": "secure",
+      "title": "Das Haus sichern",
+      "text": "Verbarrikadiere Fenster und Türen mit Brettern (R) und baue Hindernisse und Fallen rund ums Haus.",
+      "unlock": [
+        "day>=3"
+      ],
+      "done": [
+        "flag:barricaded"
+      ]
+    },
+    {
+      "id": "hide",
+      "title": "Ein Versteck kennen",
+      "text": "Im Kleiderschrank und im Spind im Schuppen kann man sich verstecken (R).",
+      "unlock": [
+        "day>=5"
+      ],
+      "done": [
+        "flag:hidden"
+      ]
+    },
+    {
+      "id": "cave",
+      "title": "Die Höhle am Bach",
+      "text": "Bachaufwärts im Nordosten soll eine Höhle sein.",
+      "unlock": [
+        "day>=5"
+      ],
+      "done": [
+        "flag:visit_cave"
+      ]
+    },
+    {
+      "id": "structure",
+      "title": "Das Summen im Westen",
+      "text": "Im Westen summt etwas, das nicht dorthin gehört.",
+      "unlock": [
+        "day>=6"
+      ],
+      "done": [
+        "flag:visit_structure"
+      ]
+    },
+    {
+      "id": "filter",
+      "title": "Wasser filtern",
+      "text": "Das Wasser hat sich verfärbt. Ohne Wasserfilter (Werkbank) wird einem davon schlecht.",
+      "unlock": [
+        "water_bad"
+      ],
+      "done": [
+        "item:water_filter>=1"
+      ]
+    },
+    {
+      "id": "explore_signs",
+      "title": "Den Wegweisern folgen",
+      "text": "Hinter dem Grundstück beginnen Waldwege. An den Kreuzungen stehen Wegweiser – die Kapelle und der Friedhof der Hochsitze sind nicht weit.",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "flag:visit_kapelle"
+      ]
+    },
+    {
+      "id": "explore_bees",
+      "title": "Die Imkerei Brandl",
+      "text": "Westlich der Hütte gab es eine Imkerei. Vielleicht ist dort noch Honig – und der alte Brandl wusste etwas.",
+      "unlock": [
+        "day>=3"
+      ],
+      "done": [
+        "flag:visit_imkerei"
+      ]
+    },
+    {
+      "id": "binoculars",
+      "title": "Ein Fernglas",
+      "text": "Mit einem Fernglas (Taste Q halten) sieht man weit über das Tal. Jäger lassen so etwas an ihren Hochsitzen liegen.",
+      "unlock": [
+        "flag:visit_kapelle"
+      ],
+      "done": [
+        "got:binoculars"
+      ]
+    },
+    {
+      "id": "messstelle",
+      "title": "Messstelle 4-Nord",
+      "text": "Der Weg nach Norden führt an einem eingezäunten Container vorbei. ReZort Industries – meine alte Firma. Was machen die hier im Wald?",
+      "unlock": [
+        "flag:visit_hochsitz"
+      ],
+      "done": [
+        "flag:visit_messstelle"
+      ]
+    },
+    {
+      "id": "funkmast",
+      "title": "Den Funkmast reparieren",
+      "text": "Auf dem Kahlen Kopf steht ein Funkmast. Wenn er wieder sendet, erreiche ich vielleicht jemanden. Ich brauche Funkteile und eine Batterie.",
+      "unlock": [
+        "flag:visit_messstelle"
+      ],
+      "done": [
+        "flag:mast_repaired"
+      ]
+    },
+    {
+      "id": "tent",
+      "title": "Für die Nacht draußen",
+      "text": "Für weite Wege brauche ich ein Zelt, Proviant und Wasser. Im alten Ferienlager im Westen könnte noch Ausrüstung liegen.",
+      "unlock": [
+        "flag:visit_funkmast"
+      ],
+      "done": [
+        "got:tent"
+      ]
+    },
+    {
+      "id": "first_night_out",
+      "title": "Eine Nacht im Wald",
+      "text": "Ein Zelt aufbauen (Inventar → Anbringen/Bauen) und draußen schlafen. Ich weiß nicht, ob ich mich das traue.",
+      "unlock": [
+        "got:tent"
+      ],
+      "done": [
+        "flag:slept_outside"
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Eine Karte",
+      "text": "Ganz oben am Steingrat im Nordosten gibt es eine Wetterstation. Von dort sieht man das ganze Tal – vielleicht liegt dort eine Karte.",
+      "unlock": [
+        "got:tent"
+      ],
+      "done": [
+        "got:hiking_map"
+      ]
+    },
+    {
+      "id": "aussenstelle",
+      "title": "Außenstelle Messpunkt 4",
+      "text": "Die Schlüsselkarte aus der Messstelle gehört zu einer Außenstelle weit im Norden, oben am Nordkamm.",
+      "unlock": [
+        "got:keycard_m4",
+        "got:tent"
+      ],
+      "done": [
+        "flag:shaft_b_open"
+      ]
+    },
+    {
+      "id": "tunnel",
+      "title": "Tunnel Ost",
+      "text": "In den Akten steht: Teil 2 der Abschaltfolge liegt bei Tunnel Ost. Die Baustelle liegt im Osten unter der Ostwand.",
+      "unlock": [
+        "flag:shaft_b_open"
+      ],
+      "done": [
+        "flag:visit_tunnel"
+      ]
+    }
   ],
   "daily": [
-    {"id": "d_beds", "title": "Hochbeete gießen", "unlock": ["beds_planted"], "done": ["beds_watered"]},
-    {"id": "d_snares", "title": "Schlingen kontrollieren", "unlock": ["built:snare"], "done": ["today:snare_checked"]},
-    {"id": "d_generator", "title": "Generator und Tank prüfen", "unlock": ["flag:generator_started"], "done": ["today:generator_checked"]},
-    {"id": "d_wood", "title": "Feuerholz bereitlegen", "unlock": ["day>=2"], "done": ["firewood"]},
-    {"id": "d_water", "title": "Trinkwasser vorrätig (2 Flaschen)", "unlock": ["got:bottle_empty"], "done": ["item:water>=2"]},
-    {"id": "d_radio", "title": "Radio hören", "unlock": ["day>=2"], "done": ["radio_heard"]}
+    {
+      "id": "d_beds",
+      "title": "Hochbeete gießen",
+      "unlock": [
+        "beds_planted"
+      ],
+      "done": [
+        "beds_watered"
+      ]
+    },
+    {
+      "id": "d_snares",
+      "title": "Schlingen kontrollieren",
+      "unlock": [
+        "built:snare"
+      ],
+      "done": [
+        "today:snare_checked"
+      ]
+    },
+    {
+      "id": "d_generator",
+      "title": "Generator und Tank prüfen",
+      "unlock": [
+        "flag:generator_started"
+      ],
+      "done": [
+        "today:generator_checked"
+      ]
+    },
+    {
+      "id": "d_wood",
+      "title": "Feuerholz bereitlegen",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "firewood"
+      ]
+    },
+    {
+      "id": "d_water",
+      "title": "Trinkwasser vorrätig (2 Flaschen)",
+      "unlock": [
+        "got:bottle_empty"
+      ],
+      "done": [
+        "item:water>=2"
+      ]
+    },
+    {
+      "id": "d_radio",
+      "title": "Radio hören",
+      "unlock": [
+        "day>=2"
+      ],
+      "done": [
+        "radio_heard"
+      ]
+    }
   ]
 }

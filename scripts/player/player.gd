@@ -8,6 +8,12 @@ extends CharacterBody3D
 @export var crouch_speed: float = 1.6
 @export var jump_velocity: float = 3.9
 @export var mouse_sensitivity: float = 0.0022
+## Fernglas: 0 = normal, 1 = voll herangezoomt
+var _zoom: float = 0.0
+## Wasser und Moor
+var _last_dry: Vector3 = Vector3.INF
+var _bog_time: float = 0.0
+var _deep_warned: float = 0.0
 @export var interact_distance: float = 2.4
 
 const STAND_HEIGHT := 1.75
@@ -66,7 +72,7 @@ func _ready() -> void:
 	camera = Camera3D.new()
 	camera.fov = 75.0
 	camera.near = 0.05
-	camera.far = 300.0
+	camera.far = 1500.0
 	head.add_child(camera)
 	camera.current = true
 	# Trugbilder (Ebene 2) sieht nur die Überwachungskamera, nicht der Spieler
@@ -132,8 +138,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:
 		return
 	if event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		head.rotation.x = clampf(head.rotation.x - event.relative.y * mouse_sensitivity, -1.45, 1.45)
+		var sens := mouse_sensitivity * lerpf(1.0, 0.25, _zoom)
+		rotate_y(-event.relative.x * sens)
+		head.rotation.x = clampf(head.rotation.x - event.relative.y * sens, -1.45, 1.45)
 	elif event.is_action_pressed("interact"):
 		if _building():
 			return
@@ -222,6 +229,7 @@ func _physics_process(delta: float) -> void:
 	if slow and not crouching:
 		speed = walk_speed * SLOW_FACTOR
 	speed *= 1.0 - 0.55 * hazard
+	speed *= _wet_factor(delta)
 	hazard = move_toward(hazard, 0.0, delta * 3.0)
 	# In der Falle: festgehalten, danach humpelt man kurz
 	if held_time > 0.0:
@@ -252,7 +260,7 @@ func _physics_process(delta: float) -> void:
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
 	_update_lean(delta)
 
-	if global_position.y < -30.0:
+	if global_position.y < Terrain.height_at(global_position.x, global_position.z) - 25.0:
 		global_position = Vector3(-3.0, 1.0, 11.5)
 		velocity = Vector3.ZERO
 
@@ -368,8 +376,10 @@ func _update_mind(delta: float) -> void:
 			input_locked = true
 			set_flashlight(false)
 			GameState.kill_player()
-	# Sichtfeld pumpt leicht mit
-	camera.fov = 75.0 + sin(Time.get_ticks_msec() * 0.007) * 5.0 * mind
+	# Sichtfeld pumpt leicht mit; Fernglas (Q halten) zoomt heran
+	var zooming := not input_locked and Input.is_action_pressed("zoom") and Inventory.count("binoculars") > 0
+	_zoom = move_toward(_zoom, 1.0 if zooming else 0.0, delta * 4.0)
+	camera.fov = lerpf(75.0, 16.0, _zoom * _zoom * (3.0 - 2.0 * _zoom)) + sin(Time.get_ticks_msec() * 0.007) * 5.0 * mind
 	if absf(mind - _mind_shown) > 0.005:
 		_mind_shown = mind
 		get_tree().call_group("retro_filter", "set_mind", mind)
@@ -468,3 +478,38 @@ func _update_prompt(force: bool) -> void:
 ## Für den späteren Save Manager.
 func get_state() -> Dictionary:
 	return {"position": global_position, "yaw": rotation.y, "pitch": head.rotation.x, "flashlight": flashlight.visible}
+
+
+## Wasser und Moor: waten macht langsam, tiefes Wasser lässt einen nicht hinein (kein Schwimmen),
+## abseits der Moorstege sinkt man ein.
+func _wet_factor(delta: float) -> float:
+	var p := global_position
+	var ground := Terrain.height_at(p.x, p.z)
+	var depth := Terrain.water_level_at(p.x, p.z) - p.y
+	var f := 1.0
+	if depth > 0.3:
+		f *= lerpf(1.0, 0.45, smoothstep(0.3, 1.1, depth))
+	if depth > 1.2 and _last_dry != Vector3.INF:
+		global_position = _last_dry
+		velocity = Vector3.ZERO
+		_deep_warned -= delta
+		if _deep_warned <= 0.0:
+			_deep_warned = 4.0
+			EventBus.notify("Zu tief – hier kann ich nicht weiter.", 2.0)
+	elif depth < 0.9 and is_on_floor():
+		_last_dry = p
+	# Moor: nur, wer wirklich im Schlamm steht (nicht auf dem Steg)
+	var bog := WorldMap.bog_factor(p.x, p.z)
+	if bog > 0.35 and is_on_floor() and p.y < ground + 0.15:
+		f *= 0.4
+		_bog_time += delta
+		if _bog_time > 4.0:
+			health -= 5.0 * delta
+			if int(_bog_time * 2.0) % 6 == 0:
+				EventBus.notify("Ich sinke ein! Zurück auf den Steg!", 1.0)
+			if health <= 0.0 and not GameState.dead:
+				input_locked = true
+				GameState.kill_player()
+	else:
+		_bog_time = maxf(_bog_time - delta * 2.0, 0.0)
+	return f

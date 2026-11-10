@@ -60,7 +60,7 @@ func _ready() -> void:
 
 func get_prompt(_player: Node) -> String:
 	var wood := int(_cfg.get("wood", 1))
-	var have := Inventory.count("wood")
+	var have := Inventory.count_fuel()
 	if _strength <= 0.0:
 		return "Kamin – erloschen.  [E] Feuer anzünden (%d Holz – du hast %d)" % [wood, have]
 	if _strength < 1.0:
@@ -79,10 +79,10 @@ func secondary_interact(_player: Node) -> void:
 
 func interact(_player: Node) -> void:
 	var wood := int(_cfg.get("wood", 1))
-	if Inventory.count("wood") < wood:
+	if Inventory.count_fuel() < wood:
 		EventBus.notify("Dafür brauchst du %d Holz." % wood, 2.5)
 		return
-	Inventory.remove("wood", wood)
+	Inventory.remove_fuel(wood)
 	burn_until = TimeManager.get_total_hours() + float(_cfg.get("burn_hours", 12.0))
 	SoundBank.play_at(self, "place", global_position + Vector3(0.2, 0.3, 0), -4.0)
 	EventBus.notify("Das Feuer brennt wieder.", 2.0)

@@ -19,6 +19,7 @@ var done: Array = []               ## fertige Analysen
 var links_done: Array = []         ## gefundene Verknüpfungen
 var seen: Array = []               ## jemals aufgehobene Funde (für das Archiv)
 var notes: Array = []              ## gelesene Notizen
+var blueprints: Array = []         ## in der Welt gefundene Baupläne
 var sent: Array = []               ## ans Tablet gesendete Ergebnisse: "analyse" bzw. "analyse/experiment"
 var tablet_new: int = 0            ## neue, auf dem Tablet noch nicht angesehene Ergebnisse
 
@@ -273,7 +274,17 @@ func link(id: String) -> bool:
 ## Ist ein Rezept freigeschaltet? (Rezepte ohne "requires" immer)
 func recipe_unlocked(recipe: Dictionary) -> bool:
 	var req: String = recipe.get("requires", "")
-	return req == "" or links_done.has(req)
+	var bp: String = recipe.get("blueprint", "")
+	return (req == "" or links_done.has(req)) and (bp == "" or blueprints.has(bp))
+
+
+## Bauplan gefunden (Werkbank kennt das Rezept ab jetzt).
+func learn_blueprint(id: String) -> bool:
+	if blueprints.has(id):
+		return false
+	blueprints.append(id)
+	changed.emit()
+	return true
 
 
 func read_note(id: String) -> void:
@@ -287,7 +298,7 @@ func read_note(id: String) -> void:
 func get_state() -> Dictionary:
 	return {"tier": tier, "slot": slot, "progress": progress.duplicate(), "experiments": experiments.duplicate(true),
 		"done": done.duplicate(), "links": links_done.duplicate(), "seen": seen.duplicate(), "notes": notes.duplicate(),
-		"sent": sent.duplicate(), "tablet_new": tablet_new}
+		"sent": sent.duplicate(), "tablet_new": tablet_new, "blueprints": blueprints.duplicate()}
 
 
 func set_state(s: Dictionary) -> void:
@@ -300,6 +311,7 @@ func set_state(s: Dictionary) -> void:
 	seen = (s.get("seen", []) as Array).duplicate()
 	notes = (s.get("notes", []) as Array).duplicate()
 	tablet_new = int(s.get("tablet_new", 0))
+	blueprints = (s.get("blueprints", []) as Array).duplicate()
 	if s.has("sent"):
 		sent = (s.get("sent", []) as Array).duplicate()
 	else:

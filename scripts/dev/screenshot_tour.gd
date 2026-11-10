@@ -70,6 +70,16 @@ const SHOTS := [
 	{"name": "57_hochsitz_oben", "hour": 13.0, "pos": Vector3(12.26, 4.3, -79.03), "look": Vector3(11.64, 4.8, -81.35), "tower": true},
 	{"name": "56_tankanzeige", "hour": 14.0, "pos": Vector3(3.3, 0.45, 0.9), "look": Vector3(2.8, 1.95, -0.92), "lights": true},
 	{"name": "58_tablet_archiv", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 2.0), "look": Vector3(-2.0, 1.0, 0.0), "lights": true, "tablet_tab": "archive"},
+	{"name": "60_weite_welt", "hour": 12.0, "place": "funkmast", "off": Vector3(4.0, 0.0, 6.0), "look_off": Vector3(300.0, -40.0, 200.0)},
+	{"name": "61_waldweg", "hour": 11.0, "place": "messstelle", "off": Vector3(-8.0, 0.0, 230.0), "look_off": Vector3(-6.0, 1.0, 180.0)},
+	{"name": "62_see", "hour": 14.0, "place": "see", "off": Vector3(-7.0, 0.0, -4.0), "look_off": Vector3(0.0, -2.0, 60.0)},
+	{"name": "63_kapelle", "hour": 15.0, "place": "kapelle", "off": Vector3(9.0, 0.0, 12.0), "look_off": Vector3(0.0, 1.0, 0.0)},
+	{"name": "64_funkmast", "hour": 13.0, "place": "funkmast", "off": Vector3(-14.0, 0.0, 12.0), "look_off": Vector3(0.0, 8.0, 0.0)},
+	{"name": "65_aussenstelle", "hour": 14.0, "place": "aussenstelle", "off": Vector3(4.0, 0.0, 40.0), "look_off": Vector3(-4.0, 2.0, 0.0)},
+	{"name": "66_wal", "hour": 16.0, "place": "wal", "off": Vector3(48.0, 0.0, 22.0), "look_off": Vector3(0.0, 4.0, 0.0)},
+	{"name": "67_dorf", "hour": 15.0, "place": "dorf", "off": Vector3(20.0, 0.0, 32.0), "look_off": Vector3(0.0, 6.0, -6.0)},
+	{"name": "68_ferienlager", "hour": 11.0, "place": "ferienlager", "off": Vector3(6.0, 0.0, 22.0), "look_off": Vector3(0.0, 1.5, -4.0)},
+	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -99,8 +109,8 @@ func _run() -> void:
 			continue
 		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
 		WorldState._check_stage()
-		var pos: Vector3 = shot["pos"]
-		var look: Vector3 = shot["look"]
+		var pos: Vector3 = shot.get("pos", Vector3.ZERO)
+		var look: Vector3 = shot.get("look", Vector3.ZERO)
 		if shot.get("tower", false):
 			var th := Terrain.height_at(RangerTower.SITE.x, RangerTower.SITE.z)
 			pos.y += th
@@ -109,8 +119,21 @@ func _run() -> void:
 			var fh := StreamCave.floor_height()
 			pos.y = fh + 0.05
 			look.y += fh
+		elif shot.has("place"):
+			var base := WorldMap.place_point(shot["place"])
+			pos = base + shot.get("off", Vector3.ZERO)
+			pos.y = Terrain.height_at(pos.x, pos.z)
+			look = base + shot.get("look_off", Vector3(0, 1, -10))
+			look.y = base.y + float(shot.get("look_off", Vector3(0, 1, -10)).y) + 1.6
 		elif pos.y <= 0.0:
 			pos.y = Terrain.height_at(pos.x, pos.z)
+		# große Welt: Gelände und Wald um den Standpunkt sofort laden
+		var terrain := get_tree().current_scene.get_node_or_null("Terrain") as Terrain
+		if terrain:
+			terrain.load_around(pos, 200.0)
+		var wild := get_tree().current_scene.get_node_or_null("WildForest") as WildForest
+		if wild:
+			wild.update_around(pos, 0.0)
 		player.global_position = pos
 		player.velocity = Vector3.ZERO
 		var eye := pos + Vector3(0, Player.STAND_HEIGHT - Player.EYE_OFFSET, 0)

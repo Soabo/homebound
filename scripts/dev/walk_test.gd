@@ -111,7 +111,15 @@ func _stream_walk(player: Player) -> int:
 			if frames % 60 == 0:
 				if player.global_position.distance_to(last) < 0.6:
 					still += 1.0
-					if still >= 2.0:
+					var at_bridge := false
+					for ci in player.get_slide_collision_count():
+						if String((player.get_slide_collision(ci).get_collider() as Node).name).begins_with("Bridge"):
+							at_bridge = true
+					if still >= 2.0 and at_bridge:
+						# Steg über den Bach: absichtlich niedrig – drüberklettern
+						player.global_position += Vector3(0, 0.6, 3.5)
+						still = 0.0
+					elif still >= 2.0:
 						print("BACH hängt fest (Seite %.1f) bei x %.1f z %.1f" % [side, player.global_position.x, player.global_position.z])
 						stuck += 1
 						var q := PhysicsShapeQueryParameters3D.new()

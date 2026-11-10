@@ -1,5 +1,5 @@
 {
-  "_info": "Werkbank-Rezepte (GDD 6/7.2/12.7). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand, requires = nötige Forschung (Verknüpfung aus data/research/research.json).",
+  "_info": "Werkbank-Rezepte (GDD 6/7.2/12.7). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand, requires = nötige Forschung (Verknüpfung aus data/research/research.json), blueprint = nötiger Bauplan (in der Welt gefunden).",
   "recipes": [
     {"id": "planks",          "needs": {"wood": 1},                                  "gives": {"planks": 2}},
     {"id": "nails",           "needs": {"scrap": 1},                                 "gives": {"nails": 12}},
@@ -25,6 +25,11 @@
     {"id": "water_filter",     "name": "Wasserfilter (Holzkohle und Dosen)", "needs": {"wood": 1, "cans": 2, "scrap": 1}, "gives": {"water_filter": 1}},
     {"id": "signal_jammer",    "requires": "link_drone",  "needs": {"electronics": 2, "battery": 1, "drone_part": 1}, "gives": {"signal_jammer": 1}},
     {"id": "growth_barrier",   "requires": "link_growth", "needs": {"scrap": 1, "alien_plant": 2, "cans": 2}, "gives": {"growth_barrier": 1}},
+    {"id": "cable_winch",      "name": "Kabelwinde (Bauplan Messstelle)", "blueprint": "bp_winch", "needs": {"scrap": 6, "electronics": 1, "planks": 2}, "gives": {"cable_winch": 1}},
+    {"id": "dir_antenna",      "name": "Richtantenne (Bauplan Funkmast)", "blueprint": "bp_antenna", "needs": {"radio_parts": 1, "electronics": 3, "scrap": 4}, "gives": {"dir_antenna": 1}},
+    {"id": "blast_charge",     "name": "Sprengladung (Bauplan Steinbruch)", "blueprint": "bp_charge", "needs": {"explosive": 1, "electronics": 1, "battery": 1}, "gives": {"blast_charge": 1}},
+    {"id": "overload_module",  "name": "Überlastungsmodul (Bauplan Tunnel)", "blueprint": "bp_overload", "needs": {"energy_cell": 2, "electronics": 3, "metal_fragment": 1}, "gives": {"overload_module": 1}},
+    {"id": "candle_light",     "name": "Kerzen aus Wachs", "needs": {"wax": 2}, "gives": {"candles": 3}},
     {"id": "door_upgrade",    "name": "Haustür verstärken", "needs": {"scrap": 3, "planks": 4, "nails": 12}, "special": "door_upgrade"}
   ]
 }
