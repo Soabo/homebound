@@ -48,7 +48,7 @@
 - Radio: Nachricht pro Tag aus `data/radio/radio.json` (Texte = Platzhalter, Story offen laut GDD 21), grüne Leuchte
   bei ungehörter Nachricht, blendet nach `play_seconds` aus und schaltet ab. Test: `--night-test=changes`.
 - Couch + Tablet: `Couch` (Cabin/Couch, persistent: gelesene Nachrichten), `TabletMenu`; Inhalte `data/tablet/tablet.json`
-  (Mails/News mit `day`; Familie: Frau Julia, Kinder Lena und Ben, LKW-Unfall bei Regen – Namen sind Platzhalter).
+  (Mails/News mit `day`; Familie: Frau Stefanie, Kinder Lena und Ben, Protagonist Christian, LKW-Unfall bei Regen).
   Müdigkeit 23–1 Uhr (TimeConfig `tired_*`): Hinweis „ins Bett“, wenn bis dahin nichts los war (ThreatDirector).
 - Kamin: `Fireplace` brennt `burn_hours`, wird die letzten `fade_hours` dunkler/leiser, mit Holz neu (data/house/house.json).
 - Nacht: erste Hälfte stockfinster, Mond geht ab ~1 Uhr auf (schwaches Licht). Streulicht der Hände nur auf Sichtebene 20.
@@ -119,6 +119,16 @@
   oder Schuppen anbringen (`BuildController._camera_update`), R schwenkt; gespeichert in `Supplies.cameras`, Monitor
   (`Surveillance`, 3 Plätze) zeigt leere Plätze als „nicht installiert“. Icons für camera_1..3 liefert Christian.
   Tests nutzen `Surveillance.install_defaults()`. Test: `--night-test=supplies`.
+
+## Story (beschlossen 10.11.2026, Story-Bibel: https://claude.ai/artifact/6FfYY9UAGpkPV9eYFJbYyL)
+- Christian (Spielfigur), Frau Stefanie, Kinder Lena (9) und Ben (6). Unfall = Mord der Organisation (WURZELWERK, Firma Brenntal).
+- Stefanie hat die Hütte ausgesucht (Messpunkt 4 in seinen Unterlagen), Förster Georg Wendt war Beobachter der Organisation,
+  Christian überlebte, weil er länger in der Arbeit blieb. Tablet gehört Christian (alte Mails von Stefanie im Archiv).
+- Bauteil W-17 (Umzugskarton Werkstatt): steckt im Analysegerät → später Suchgerät → Schlüssel im Wurzelknoten unter dem alten Brunnen.
+- 5 Phasen (Zusammenbruch, Gebiet unter dem Wald, menschliche Beteiligung/Außenstelle Messpunkt 4, Wahrheit Familie/Stefanies Mappe,
+  Bedeutung der Hütte/Saat). 7 Enden: Gehört (gut), Stille (gemischt), Abgeholt, Glut, Schutzstatus, Flucht, Zu spät (schlecht).
+- Eine Episode, Hütte als Mittelpunkt + Ausflüge. Geplant: Open World ca. 5 km² (Wald, Lichtungen, Berge, Seen, viele Orte,
+  Mehrtagesmärsche mit Zelt/Proviant).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
