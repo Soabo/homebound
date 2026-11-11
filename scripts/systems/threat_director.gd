@@ -66,7 +66,7 @@ func current_night() -> int:
 func get_state() -> Dictionary:
 	return {"night_kind": night_kind, "nights_since": nights_since_appearance, "quiet_left": quiet_left,
 		"arc_day": _arc_day, "last_inside_day": _last_inside_day, "forest_day": _forest_day_done,
-		"scared_until": scared_until, "blocked": blocked_memory.duplicate()}
+		"scared_until": scared_until, "blocked": blocked_memory.duplicate(), "mauler_until": mauler_until}
 
 
 func set_state(s: Dictionary) -> void:
@@ -77,6 +77,7 @@ func set_state(s: Dictionary) -> void:
 	_last_inside_day = int(s.get("last_inside_day", -10))
 	_forest_day_done = int(s.get("forest_day", -1))
 	scared_until = float(s.get("scared_until", -1.0))
+	mauler_until = float(s.get("mauler_until", -1.0))
 	blocked_memory = (s.get("blocked", {}) as Dictionary).duplicate()
 
 
@@ -163,6 +164,8 @@ func plan_night(night_day: int) -> void:
 			_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
 		if (st >= 1 or night_day >= config.manipulator_from_night) and night_kind == "hints" and _rng.randf() < config.manipulator_chance + config.species_chance_per_stage * st:
 			_add(start + _rng.randf_range(2.0, night_len - 2.5), "manipulator")
+		if Story.phase >= 2 and _rng.randf() < config.mauler_night_chance + config.mauler_chance_per_stage * st:
+			_add(start + _rng.randf_range(0.5, night_len - config.mauler_window_hours), "mauler")
 		if night_day >= config.seeker_from_day and _rng.randf() < config.seeker_chance + config.seeker_chance_per_stage * st + config.signature_seeker_bonus * sig:
 			_add(start + _rng.randf_range(1.0, night_len - 2.5), "seeker")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
@@ -240,12 +243,54 @@ func _check_tired() -> void:
 
 func _process(delta: float) -> void:
 	_check_forest_stalker(delta)
+	_check_mauler(delta)
 	_check_tired()
 	var now := TimeManager.get_total_hours()
 	for e in events:
 		if not e["done"] and now >= e["at"]:
 			e["done"] = true
 			_fire(e["type"])
+
+
+## Zerfleischer (ab Story-Phase 2): nachts im Zeitfenster eines „mauler“-Ereignisses, sobald du draußen bist
+## (am Haus, im Wald, beim Zelt – dort schleicht er nur herum); selten auch tagsüber weit weg im dichten Wald.
+var mauler_until: float = -1.0
+var _mauler_check: float = 0.0
+var _mauler_last_hour: float = -1.0
+
+
+func _check_mauler(delta: float) -> void:
+	_mauler_check -= delta
+	if _mauler_check > 0.0:
+		return
+	_mauler_check = 3.0
+	if Story.phase < 2 or GameState.dead or not get_tree().get_nodes_in_group("mauler").is_empty():
+		return
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if scene == null or player == null:
+		return
+	var p := player.global_position
+	if Cabin.is_inside(p) or Shed.is_inside(p) or player.is_hidden():
+		return
+	var now := TimeManager.get_total_hours()
+	if TimeManager.is_night():
+		if now < mauler_until:
+			mauler_until = -1.0
+			Mauler.spawn_near(scene, p)
+			_activity_tonight = true
+			if not _kinds_tonight.has("mauler"):
+				_kinds_tonight.append("mauler")
+		return
+	# Tag: nur weit weg und im dichten Wald, je Spielstunde eine kleine Chance
+	if _mauler_last_hour < 0.0 or now < _mauler_last_hour:
+		_mauler_last_hour = now
+		return
+	var dh := now - _mauler_last_hour
+	_mauler_last_hour = now
+	if far_from_home() and WorldMap.tree_density(p.x, p.z, p.y) >= config.mauler_day_density and _rng.randf() < config.mauler_day_chance_per_hour * dh:
+		var m := Mauler.spawn_near(scene, p)
+		m.set_meta("day_hunt", true)
 
 
 ## Nach dem Hochschrecken mindestens eine Spielstunde wach bleiben (Gesamtstunde, bis wann).
@@ -259,7 +304,7 @@ func sleep_blocker() -> String:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	if is_instance_valid(creature) and player and (creature as Node3D).global_position.distance_to(player.global_position) < config.no_sleep_creature_distance:
 		return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
-	for g in ["manipulator", "drone", "apparition", "seeker"]:
+	for g in ["manipulator", "drone", "apparition", "seeker", "mauler"]:
 		if not get_tree().get_nodes_in_group(g).is_empty():
 			return "Da draußen ist etwas. An Schlaf ist nicht zu denken."
 	return ""
@@ -270,7 +315,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -368,6 +413,9 @@ func _fire(type: String) -> void:
 			CreatureSounds.play_phrase(scene, "breath", _random_forest_point(14.0, 20.0) + Vector3(0, 1.2, 0), -4.0, _rng.randf_range(3.0, 5.0), 30.0)
 		"seeker":
 			Seeker.spawn_for(scene, _seeker_target(player))
+		"mauler":
+			# Er ist jetzt draußen unterwegs – sobald du hinausgehst, jagt er dich
+			mauler_until = TimeManager.get_total_hours() + config.mauler_window_hours
 		"camp":
 			var camps := get_tree().get_nodes_in_group("tent_camp").filter(func(c: Node) -> bool: return c.call("occupied"))
 			if not camps.is_empty():

@@ -81,6 +81,10 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "mauler":
+		await _mauler_test()
+		get_tree().quit()
+		return
 	if mode == "save":
 		await _save_test()
 		get_tree().quit()
@@ -1882,3 +1886,121 @@ func _save_test() -> void:
 		GameState.delete_slot(test_slot)
 	GameState.slot = -1
 	print("SAVE aufgeräumt: Platz leer %s" % GameState.slot_info(test_slot).is_empty())
+
+
+## Zerfleischer: erst ab Story-Phase 2, Jagd, Warnung, Sprint, Treffer → zurückweichen + Halbkreis, Licht vertreibt,
+## Haus/Versteck schützt, am Morgen weg, Planung, Spielstand.
+func _mauler_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var spot := Vector3(-6, 0, 34)
+	spot.y = Terrain.height_at(spot.x, spot.z) + 0.1
+	player.global_position = spot
+	TimeManager.set_time(6, 23.0)
+	# Phase 1: kommt nicht
+	ThreatDirector.mauler_until = TimeManager.get_total_hours() + 2.0
+	ThreatDirector._mauler_check = 0.0
+	ThreatDirector._check_mauler(0.1)
+	print("MAULER Phase 1: gekommen %s" % (not get_tree().get_nodes_in_group("mauler").is_empty()))
+	Story.set_phase(2)
+	ThreatDirector._mauler_check = 0.0
+	ThreatDirector._check_mauler(0.1)
+	var m := get_tree().get_first_node_in_group("mauler") as Mauler
+	print("MAULER Phase 2: gekommen %s, Abstand %.0f m" % [m != null, m.global_position.distance_to(player.global_position) if m else -1.0])
+	# Jagd: 30 m entfernt, Spieler steht still
+	m.global_position = Mauler._ground(spot + Vector3(30, 0, 0))
+	m._enter(Mauler.State.STALK)
+	var states: Array = []
+	var t := 0.0
+	var max_speed := 0.0
+	var charge_d := 0.0
+	var charge_t := 0.0
+	var last := m.global_position
+	var first_hit := -1.0
+	var second_hit := -1.0
+	var hp0 := player.health
+	while t < 40.0:
+		await get_tree().process_frame
+		var dt := get_process_delta_time()
+		t += dt
+		if m.state == Mauler.State.CHARGE:
+			charge_d += Mauler._flat(m.global_position - last).length()
+			charge_t += dt
+		last = m.global_position
+		var sn: String = Mauler.State.keys()[m.state]
+		if states.is_empty() or states[-1] != sn:
+			states.append(sn)
+		if m.hits == 1 and first_hit < 0.0:
+			first_hit = t
+		if m.hits == 2 and second_hit < 0.0:
+			second_hit = t
+			break
+		player.health = maxf(player.health, 50.0)  # im Test nicht sterben
+	print("MAULER Ablauf: %s" % " → ".join(states))
+	max_speed = charge_d / maxf(charge_t, 0.001)
+	print("MAULER Sprint %.1f m/s (Spieler sprintet %.1f), erster Treffer nach %.1f s, zweiter %.1f s später, Schaden %.0f" % [max_speed, player.sprint_speed, first_hit, second_hit - first_hit, m.cfg.hit_damage])
+	print("MAULER Treffer bis zum Tod: %d" % int(ceil(100.0 / m.cfg.hit_damage)))
+	# LED vertreibt, das weiße Display nicht
+	player.health = 100.0
+	for mode_led: bool in [false, true]:
+		m.visible = true
+		m.global_position = Mauler._ground(spot + Vector3(0, 0, -9))
+		m._enter(Mauler.State.STALK)
+		player.rotation.y = 0.0  # Blick nach -z
+		player.head.rotation.x = 0.0
+		player.set_flashlight(true)
+		player.hands.screen_mode = not mode_led
+		player.hands._set_glow(true)
+		for i in 40:
+			await get_tree().process_frame
+		var cam := player.camera.global_transform
+		var to := (m.global_position + Vector3(0, 1.3, 0)) - cam.origin
+		print("MAULER %s: %s (leuchtet %s, Winkel %.0f, freie Sicht %s, Abstand %.1f)" % ["LED-Lampe" if mode_led else "weißes Display", Mauler.State.keys()[m.state],
+			player.light_shining(), rad_to_deg((-cam.basis.z).angle_to(to.normalized())), m._clear_line(), Mauler._flat(m.global_position - player.global_position).length()])
+	player.set_flashlight(false)
+	player.hands.screen_mode = false
+	# helles Licht: Lichtköder neben dem Spieler
+	var lure := Structure.new()
+	lure.type = "light_lure"
+	lure.position = Mauler._ground(spot + Vector3(1.5, 0, 0))
+	scene.add_child(lure)
+	m.visible = true
+	m.global_position = Mauler._ground(spot + Vector3(-16, 0, 0))
+	m._enter(Mauler.State.STALK)
+	var min_d := 99.0
+	for i in 150:
+		await get_tree().process_frame
+		min_d = minf(min_d, m.global_position.distance_to(lure.global_position))
+	print("MAULER Lichtköder: kommt höchstens %.1f m heran (meidet %.0f m), Zustand %s" % [min_d, m.cfg.bright_radius, Mauler.State.keys()[m.state]])
+	lure.queue_free()
+	# Haus schützt
+	player.global_position = Vector3(-2.0, Cabin.FLOOR_Y + 0.1, 1.0)
+	m.visible = true
+	m.global_position = Mauler._ground(Vector3(-2, 0, 14))
+	m._enter(Mauler.State.CHARGE)
+	var inside := false
+	for i in 240:
+		await get_tree().process_frame
+		inside = inside or Cabin.is_inside(m.global_position)
+	print("MAULER Spieler im Haus: %s, war drinnen %s" % [Mauler.State.keys()[m.state], inside])
+	# Morgen: weg
+	TimeManager.set_time(TimeManager.day + 1, 7.0)
+	for i in 30:
+		await get_tree().process_frame
+	print("MAULER Morgen: %s" % (Mauler.State.keys()[m.state] if is_instance_valid(m) else "weg"))
+	if is_instance_valid(m):
+		m.queue_free()
+	# Planung: wie oft in 40 Nächten (Phase 2)
+	var n := 0
+	for k in 40:
+		ThreatDirector.plan_night(20 + k)
+		if ThreatDirector.events.any(func(e: Dictionary) -> bool: return e["type"] == "mauler"):
+			n += 1
+	print("MAULER geplant in %d von 40 Nächten" % n)
+	var st := Story.get_state()
+	Story.set_state({})
+	var p1 := Story.phase
+	Story.set_state(st)
+	print("MAULER Spielstand: Phase %d (leer %d)" % [Story.phase, p1])

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="MaulerConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/creature/mauler_config.gd" id="1_ml"]
+
+[resource]
+script = ExtResource("1_ml")
+stalk_speed = 2.2
+charge_speed = 5.3
+retreat_speed = 4.4
+flee_speed = 6.5
+spawn_distance = Vector2(45, 65)
+charge_distance = 22.0
+charge_warning = 1.4
+strike_range = 1.7
+hit_damage = 36.0
+retreat_distance = Vector2(9, 13)
+circle_radius = 11.0
+circle_degrees = Vector2(120, 200)
+hunt_time = 240.0
+lose_time = 45.0
+led_range = 17.0
+led_cone = 24.0
+led_time = 0.35
+flee_time = Vector2(45, 90)
+return_chance = 0.45
+bright_radius = 9.0
+cue_interval = Vector2(3, 7)

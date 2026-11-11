@@ -82,6 +82,7 @@ func take_state() -> Dictionary:
 		"threat": ThreatDirector.get_state(),
 		"supplies": Supplies.get_state(),
 		"tasks": Tasks.get_state(),
+		"story": Story.get_state(),
 		"world": collect_world(),
 	}
 
@@ -132,6 +133,7 @@ func _apply(snap: Dictionary, morning: Dictionary) -> void:
 		ThreatDirector.set_state(snap["threat"])
 	Supplies.set_state(snap.get("supplies", {}))
 	Tasks.set_state(snap.get("tasks", {}))
+	Story.set_state(snap.get("story", {}))
 	_pending_world = snap.get("world", {})
 	_snapshot = morning
 	_restoring = false

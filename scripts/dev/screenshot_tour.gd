@@ -82,6 +82,8 @@ const SHOTS := [
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
 		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
+	{"name": "73_zerfleischer_tag", "hour": 15.5, "pos": Vector3(4.0, 0.0, 16.5), "look": Vector3(4.0, 1.3, 11.5), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_pose": "warn", "clean": true},
+	{"name": "74_zerfleischer_seite", "hour": 15.5, "pos": Vector3(9.0, 0.0, 12.5), "look": Vector3(4.0, 1.1, 12.0), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_face": Vector3(4.0, 0.0, 17.0), "mauler_pose": "charge", "clean": true},
 	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true},
 	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
 	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
@@ -203,6 +205,19 @@ func _run() -> void:
 			var sf := pos - seeker.global_position
 			seeker.rotation.y = atan2(sf.x, sf.z)
 			seeker._eye_mat.emission_energy_multiplier = 3.0
+		for old in get_tree().get_nodes_in_group("mauler"):
+			old.queue_free()
+		if shot.has("mauler_at"):
+			var ml := Mauler.new()
+			get_tree().current_scene.add_child(ml)
+			ml.global_position = Creature._ground(shot["mauler_at"])
+			ml.set_process(false)
+			var mf: Vector3 = shot.get("mauler_face", pos) - ml.global_position
+			ml.rotation.y = atan2(mf.x, mf.z)
+			ml.state = Mauler.State.WARN if shot.get("mauler_pose", "") == "warn" else Mauler.State.CHARGE
+			ml._speed_now = 0.0 if ml.state == Mauler.State.WARN else ml.cfg.charge_speed
+			for k in 30:
+				ml._animate(0.1)
 		var drone: AlienDrone = null
 		if shot.has("drone_at"):
 			drone = AlienDrone.new()

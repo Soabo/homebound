@@ -218,6 +218,22 @@
 - „Ablegen“ im Rucksack wirft Einzelstücke (W-17, Werkzeuge, Kameras, Funde mit Stapel 1) nicht mehr weg (`GameMenus.can_discard`).
 - Orte: Knoten, unter denen Funde liegen, brauchen feste Namen (sonst liegen die Funde nach dem Laden wieder da).
 
+## Zerfleischer (Christian, 11/2026)
+- Zweibeiner, Oberkörper weit vorn, lange Klauen, Grey-Augen + Reißzähne; jagt statt Psychohorror. Eigener Entwurf (keine
+  Film-Kopie). `Mauler` (Werte `data/creatures/mauler.tres`, `MaulerConfig`), Zustände STALK → WARN (aufrichten, kreischen)
+  → CHARGE (≈ Spieler-Sprint) → STRIKE → RETREAT → CIRCLE (Halbkreis) → erneut CHARGE; PROWL (Spieler im Haus/Versteck/Zelt
+  oder im hellen Licht: schleicht herum, kommt nicht hinein), FLEE, LEAVE.
+- Christians Entscheidungen: tötet bei mehreren Treffern (`hit_damage` 36 → 3 Treffer), nach jedem Treffer zurückweichen +
+  Halbkreis; erst ab Story-Phase 2; darf auch an der Hütte auftauchen (wenn man draußen ist); Licht vertreibt zuverlässig:
+  LED-Kegel der Uhr (nicht das weiße Display) `led_range/led_cone/led_time`, helle Quellen (Lagerfeuer, Scheinwerfer,
+  Blitzlicht, Lichtköder, Außenlampen) im `bright_radius`.
+- Wann: ThreatConfig `mauler_*` (Ereignis „mauler“ öffnet ein Zeitfenster, `ThreatDirector._check_mauler` lässt ihn erscheinen,
+  sobald man draußen ist; tagsüber selten weit weg im dichten Wald). Beim Zelt nur herumschleichen.
+- Story-Gerüst `Story` (Autoload, `phase`, im Spielstand), Phasen + VORLÄUFIGE Auslöser in `data/story/story.json`
+  (Phase 2: link_core_map | w17_carried | shaft_b_open | ab Tag 10) – beim Story-Bau mit Christian festlegen.
+- Test: `--night-test=mauler`. Tour-Bilder 73/74. Schnelle Figuren-Vorschau (Sekunden statt Minuten):
+  `xvfb-run -a godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=BILD.png --pose=warn|charge|stalk --angle=90`.
+
 ## Phase 9: Speichern und Hauptmenü (Christian, 11/2026)
 - Entscheidungen: Speichern automatisch jeden Morgen + beim Beenden (Pause → „Speichern und zum Hauptmenü/beenden“,
   Fenster schließen); Tod = zurück an Tagesbeginn; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,

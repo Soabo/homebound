@@ -89,6 +89,17 @@ extends Resource
 @export var seeker_chance: float = 0.2
 @export var seeker_chance_per_stage: float = 0.06
 
+@export_group("Zerfleischer (ab Story-Phase 2)")
+## Chance pro Nacht (nicht in ruhigen Nächten), dass er jagt
+@export var mauler_night_chance: float = 0.3
+@export var mauler_chance_per_stage: float = 0.05
+## So lange (Spielstunden) ist er in so einer Nacht unterwegs – erscheint, sobald du draußen bist
+@export var mauler_window_hours: float = 2.5
+## Tagsüber, weit weg von der Hütte im dichten Wald: Chance pro Spielstunde
+@export var mauler_day_chance_per_hour: float = 0.05
+## Ab dieser Baumdichte (WorldMap.tree_density) gilt der Wald als dicht
+@export var mauler_day_density: float = 0.55
+
 @export_group("Signatur (Forschung 2.0)")
 ## Zusatzchance pro Signaturpunkt, dass die Drohne kommt (Fremdes tragen, nachts forschen).
 @export var signature_drone_bonus: float = 0.25
