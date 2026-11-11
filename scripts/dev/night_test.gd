@@ -81,6 +81,10 @@ func _run() -> void:
 		await _extras_test()
 		get_tree().quit()
 		return
+	if mode == "save":
+		await _save_test()
+		get_tree().quit()
+		return
 	if mode == "lab":
 		await _lab_test()
 		get_tree().quit()
@@ -1797,3 +1801,84 @@ func _lab_test() -> void:
 	drops.set_state(ds)
 	await get_tree().process_frame
 	print("LAB Spielstand: Labor %s, Plätze %d, Ausbrüche %d, Funde %d" % [Research.lab_built, Research.lab_stations.size(), Research.escapes, drops.entries.size()])
+
+
+## Phase 9: Speicherplätze, Laden, Tagesbeginn nach dem Laden, Einstellungen, Enden, Hauptmenü.
+func _save_test() -> void:
+	for i in 10:
+		await get_tree().physics_frame
+	var scene := get_tree().current_scene
+	print("SAVE im Spiel: %s" % GameState.in_game())
+	var test_slot := 2
+	var had := not GameState.slot_info(test_slot).is_empty()
+	var backup := GameState._read(test_slot) if had else {}
+	GameState.slot = test_slot
+	GameState.play_seconds = 3725.0
+	# Morgen: 3 Holz; später am Tag: 10 Holz, ein Fund, Labor gebaut
+	TimeManager.set_time(4, 8.0)
+	Inventory.add("wood", 3)
+	GameState.take_snapshot()
+	var morning_wood := Inventory.count("wood")
+	Inventory.add("wood", 7)
+	Inventory.add("crystal_shard", 1)
+	Research.lab_built = true
+	TimeManager.set_time(4, 21.5)
+	var drops := AlienDrops.get_for(get_tree())
+	drops.spawn("creature_shed", Vector3(9, Terrain.height_at(9, 9), 9))
+	print("SAVE gespeichert: %s" % GameState.save_game(true))
+	var info := GameState.slot_info(test_slot)
+	print("SAVE Platz-Info: Tag %d, %.1f Uhr, gespielt %d s, am %s, zuletzt: Platz %d" % [int(info.get("day", 0)), float(info.get("hour", 0)), int(info.get("play_seconds", 0)), info.get("saved_at", ""), GameState.latest_slot() + 1])
+	# alles verändern, dann den Platz wieder einspielen (ohne Szenenwechsel)
+	Inventory.items.clear()
+	Research.lab_built = false
+	TimeManager.set_time(4, 23.0)  # (kein Morgen dazwischen, sonst speichert der Morgen von selbst)
+	var data := GameState._read(test_slot)
+	GameState._apply(data["current"], data["morning"])
+	print("SAVE geladen: Tag %d %.1f Uhr, Holz %d, Kristall %d, Labor %s, Funde in der Welt %d" % [TimeManager.day, TimeManager.hour, Inventory.count("wood"), Inventory.count("crystal_shard"),
+		Research.lab_built, (data["current"]["world"].get("alien_drops", {}).get("entries", []) as Array).size()])
+	# Tod nach dem Laden: zurück an den Tagesbeginn (3 Holz, Morgen)
+	var snap: Dictionary = GameState._snapshot
+	print("SAVE Tagesbeginn im Spielstand: Tag %d %.1f Uhr, Holz %d (erwartet %d)" % [int(snap.get("day", 0)), float(snap.get("hour", 0)), int(snap.get("inventory", {}).get("items", {}).get("wood", 0)), morning_wood])
+	# Einstellungen und Enden
+	var vol := Settings.volume
+	Settings.set_value("volume", 0.4)
+	Settings.reach_ending("stille")
+	var cfg := ConfigFile.new()
+	cfg.load(Settings.FILE)
+	print("SAVE Einstellungen: Lautstärke %.2f, Ende gesehen %s, Bus %.1f dB" % [float(cfg.get_value("audio", "volume", 0)), (cfg.get_value("profile", "endings", {}) as Dictionary).has("stille"), AudioServer.get_bus_volume_db(0)])
+	Settings.endings_seen.erase("stille")
+	Settings.set_value("volume", vol)
+	for q: String in ["low", "medium", "high"]:
+		Settings.set_value("quality", q)
+		print("SAVE Grafik %s: Auflösung %.1f" % [q, get_viewport().scaling_3d_scale])
+	# Hauptmenü aufbauen (ohne Szenenwechsel)
+	MainMenu.test_show = true
+	var menu := (load("res://scenes/main_menu.tscn") as PackedScene).instantiate() as MainMenu
+	get_tree().root.add_child(menu)
+	await get_tree().process_frame
+	menu._show_slots("load")
+	await get_tree().process_frame
+	var rows := menu._panel_box.get_child_count()
+	menu._show_settings()
+	await get_tree().process_frame
+	menu._show_controls()
+	menu._show_endings()
+	await get_tree().process_frame
+	print("SAVE Hauptmenü: Titelbild %s, Plätze-Zeilen %d, Enden %d" % [menu._bg.texture != null, rows, Settings.endings().size()])
+	menu.queue_free()
+	MainMenu.test_show = false
+	# Pausenmenü
+	var pm := scene.get_node("PauseMenu") as PauseMenu
+	pm.set_paused(true)
+	pm._toggle_settings()
+	await get_tree().process_frame
+	print("SAVE Pause: %s" % pm._info.text)
+	pm.set_paused(false)
+	# aufräumen: Platz wiederherstellen
+	if had:
+		var f := FileAccess.open(GameState.slot_path(test_slot), FileAccess.WRITE)
+		f.store_var(backup, false)
+	else:
+		GameState.delete_slot(test_slot)
+	GameState.slot = -1
+	print("SAVE aufgeräumt: Platz leer %s" % GameState.slot_info(test_slot).is_empty())

@@ -15,7 +15,7 @@ Umsetzung der Systeme aus GDD Kap. 17 in Godot.
 | Inventory Manager | Autoload `Inventory` + `DataDB` | ✅ Traglast, Essen/Trinken; Daten in `data/items/items.json`, Rezepte in `recipes.json` |
 | Survival (GDD 6.1) | Autoload `Survival` | ✅ Hunger, Durst, Ausdauer |
 | Episode Manager | Autoload | ⏳ Phase 9 |
-| Save Manager | Autoload `GameState` | 🟡 Tages-Schnappschuss inkl. Weltzustand (Gruppe `persistent`) und Bauten; Speichern auf Platte folgt |
+| Save Manager | Autoload `GameState` | ✅ 3 Speicherplätze auf der Platte (morgens + beim Beenden), Tod = Tagesbeginn, Hauptmenü (`MainMenu`), Einstellungen (`Settings`) |
 
 ## Grundregeln
 - **Entkopplung:** Systeme senden Signale über `EventBus`. Der Threat Director löst nur

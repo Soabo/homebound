@@ -142,8 +142,9 @@ func is_hidden() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if look_only and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
-		rotate_y(-event.relative.x * mouse_sensitivity)
-		head.rotation.x = clampf(head.rotation.x - event.relative.y * mouse_sensitivity, -1.2, 1.2)
+		var ms := mouse_sensitivity * Settings.mouse
+		rotate_y(-event.relative.x * ms)
+		head.rotation.x = clampf(head.rotation.x - event.relative.y * ms, -1.2, 1.2)
 		return
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		if input_locked:
@@ -155,7 +156,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if input_locked:
 		return
 	if event is InputEventMouseMotion:
-		var sens := mouse_sensitivity * lerpf(1.0, 0.25, _zoom)
+		var sens := mouse_sensitivity * Settings.mouse * lerpf(1.0, 0.25, _zoom)
 		rotate_y(-event.relative.x * sens)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * sens, -1.45, 1.45)
 	elif event.is_action_pressed("interact"):

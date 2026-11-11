@@ -82,6 +82,7 @@ const SHOTS := [
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
 		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
+	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true},
 	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
 	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
@@ -244,6 +245,15 @@ func _run() -> void:
 			if shot.get("lurk", false):
 				get_tree().call_group("surveillance", "spawn_lurker", int(shot.get("lurk_spot", -1)))
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
+		if shot.get("clean", false):
+			# Titelbild: ohne Anzeigen und Hände, Kamin brennt
+			for h in get_tree().get_nodes_in_group("hud"):
+				(h as CanvasLayer).visible = false
+			for ph in get_tree().current_scene.find_children("*", "PlayerHands", true, false):
+				(ph as Node3D).visible = false
+			for fp in get_tree().get_nodes_in_group("heat_source"):
+				if fp is Fireplace:
+					(fp as Fireplace).burn_until = TimeManager.get_total_hours() + 12.0
 		if shot.get("chest_menu", false):
 			var ch := get_tree().current_scene.get_node("Cabin/StorageChest") as StorageChest
 			for it in [["wood", 8], ["food", 3], ["water", 2], ["axe", 1], ["metal_fragment", 1]]:

@@ -1,0 +1,22 @@
+{
+  "_info": "Startwerte der Einstellungen (Hauptmenü/Pause). Gespeichert wird beim Spieler in user://settings.cfg. volume 0..1, mouse = Faktor auf die Mausempfindlichkeit, brightness = Faktor auf die Belichtung, quality low|medium|high (Auflösungsfaktor + Schatten), fullscreen nur Windows.",
+  "volume": 0.85,
+  "mouse": 1.0,
+  "brightness": 1.0,
+  "quality": "high",
+  "fullscreen": true,
+  "quality_levels": {
+    "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false},
+    "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false},
+    "high": {"scale": 1.0, "shadow_size": 4096, "ssao": true, "volumetric": true}
+  },
+  "endings": [
+    {"id": "gehoert", "name": "Gehört", "kind": "gut"},
+    {"id": "stille", "name": "Stille", "kind": "gemischt"},
+    {"id": "abgeholt", "name": "Abgeholt", "kind": "schlecht"},
+    {"id": "glut", "name": "Glut", "kind": "schlecht"},
+    {"id": "schutzstatus", "name": "Schutzstatus", "kind": "schlecht"},
+    {"id": "flucht", "name": "Flucht", "kind": "schlecht"},
+    {"id": "zu_spaet", "name": "Zu spät", "kind": "schlecht"}
+  ]
+}

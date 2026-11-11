@@ -72,6 +72,11 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
   ist weg), als Gesicht am Fenster, nur auf der Kamera. Manchmal steht sie morgens im Haus, wenn du aufwachst.
 - Erst nach einigen Nächten kommt sie ans Haus und prüft Türen und Fenster. Richtig gefährlich wird sie später.
 
+## Spielstände und Hauptmenü (Phase 9)
+- Drei Speicherplätze. Das Spiel speichert jeden Morgen und beim Beenden von selbst. Stirbst du, beginnt der Tag neu.
+- Hauptmenü mit Fortsetzen, Neues Spiel, Spiel laden, Einstellungen (Lautstärke, Maus, Helligkeit, Grafik, Vollbild),
+  Steuerung und den gesehenen Enden.
+
 ## Tagsüber vorbereiten (Phase 6)
 
 - **Axt** steckt im Hackklotz beim Schuppen. Sie landet auf einem Schnellplatz; nimm sie mit der Ziffer in die Hand

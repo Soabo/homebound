@@ -73,7 +73,17 @@ func _ready() -> void:
 	moon.rotation_degrees = Vector3(-38.0, 150.0, 0.0)
 	add_child(moon)
 
+	Settings.changed.connect(_apply_settings)
+	_apply_settings()
 	_apply(TimeManager.hour)
+
+
+## Einstellungen: Helligkeit und Grafikstufe (Umgebungsverdeckung, Volumennebel).
+func _apply_settings() -> void:
+	env.tonemap_exposure = Settings.brightness
+	var q := Settings.quality_values()
+	env.ssao_enabled = bool(q.get("ssao", true))
+	env.volumetric_fog_enabled = bool(q.get("volumetric", true))
 
 
 func _process(_delta: float) -> void:

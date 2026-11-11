@@ -1,8 +1,10 @@
 class_name PauseMenu
 extends CanvasLayer
-## Pausenmenü (Esc): Weiter / Beenden.
+## Pausenmenü (Esc): Weiter, Einstellungen, Speichern + Hauptmenü, Speichern + Beenden.
 
 var _root: Control
+var _info: Label
+var _settings: SettingsPanel
 
 
 func _ready() -> void:
@@ -37,8 +39,21 @@ func _ready() -> void:
 	var jump := _button(box, "TEST: zu Tag 10 springen")
 	jump.modulate = Color(1.0, 0.8, 0.5)
 	jump.pressed.connect(_test_jump_to_day.bind(10))
-	var quit := _button(box, "Spiel beenden")
-	quit.pressed.connect(func() -> void: get_tree().quit())
+	var settings := _button(box, "Einstellungen")
+	settings.pressed.connect(_toggle_settings)
+	var menu := _button(box, "Speichern und zum Hauptmenü")
+	menu.pressed.connect(func() -> void: GameState.to_menu())
+	if OS.get_name() != "Web":
+		var quit := _button(box, "Speichern und beenden")
+		quit.pressed.connect(func() -> void: GameState.quit_game())
+	_info = Label.new()
+	_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_info.add_theme_font_size_override("font_size", 15)
+	_info.add_theme_color_override("font_color", Color(0.65, 0.65, 0.6))
+	box.add_child(_info)
+	_settings = SettingsPanel.new()
+	_settings.visible = false
+	box.add_child(_settings)
 
 	visible = false
 
@@ -63,9 +78,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_paused(not get_tree().paused)
 
 
+func _toggle_settings() -> void:
+	_settings.visible = not _settings.visible
+
+
 func set_paused(value: bool) -> void:
 	get_tree().paused = value
 	visible = value
+	if value and _info:
+		_settings.visible = false
+		_info.text = ("Speicherplatz %d – das Spiel speichert jeden Morgen und beim Beenden." % (GameState.slot + 1)) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value or _menu_needs_mouse() else Input.MOUSE_MODE_CAPTURED
 
 

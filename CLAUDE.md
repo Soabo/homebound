@@ -218,6 +218,22 @@
 - „Ablegen“ im Rucksack wirft Einzelstücke (W-17, Werkzeuge, Kameras, Funde mit Stapel 1) nicht mehr weg (`GameMenus.can_discard`).
 - Orte: Knoten, unter denen Funde liegen, brauchen feste Namen (sonst liegen die Funde nach dem Laden wieder da).
 
+## Phase 9: Speichern und Hauptmenü (Christian, 11/2026)
+- Entscheidungen: Speichern automatisch jeden Morgen + beim Beenden (Pause → „Speichern und zum Hauptmenü/beenden“,
+  Fenster schließen); Tod = zurück an Tagesbeginn; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,
+  gesehenen Enden und Titelbild der Hütte bei Nacht (langsam bewegt, Nebel, Fensterlicht).
+- `GameState`: `slot`, `play_seconds`, `save_game(current)`, `load_game(n)`, `new_game(n)`, `delete_slot`, `latest_slot`,
+  `slot_info`, `to_menu`, `quit_game`. Datei `user://saves/slot_N.save` (store_var) mit `current` (Stand jetzt) und
+  `morning` (Tagesbeginn für den Tod). Neues Spiel = Zustand beim Programmstart (`_fresh`). Tests haben `slot = -1` (kein Speichern).
+- Startszene ist `scenes/main_menu.tscn` (`MainMenu`). Mit irgendeinem Test-Schalter (`-- --night-test=…`, `--walk-test`,
+  `--screenshot-tour=…`, `--skip-menu`) geht es sofort ins Spiel. Titelbild `assets/ui/title.jpg` (Tour-Bild 00_titelbild, 1920×1080).
+- `Settings` (Autoload): Lautstärke (Master-Bus), Maus (Faktor), Helligkeit (Belichtung), Grafik low|medium|high
+  (Auflösungsfaktor, Schatten, SSAO, Volumennebel), Vollbild; Enden `reach_ending(id)` (für die Story später).
+  Startwerte + Liste der 7 Enden: `data/settings/default_settings.json`, gespeichert in `user://settings.cfg`.
+  `SettingsPanel` in Hauptmenü und Pause.
+- Tests: `--night-test=save` (Platz schreiben/lesen, Tagesbeginn, Einstellungen, Enden, Menü, Pause),
+  `godot --headless --path . -s res://scripts/dev/flow_check.gd` (Menü → Neues Spiel → Hauptmenü → Laden).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
@@ -255,8 +271,8 @@
 ```bash
 # Import / Klassen-Cache erzeugen
 godot --headless --path . --import
-# Kurzer Testlauf auf Skriptfehler
-godot --headless --path . --quit-after 300
+# Kurzer Testlauf auf Skriptfehler (ohne Hauptmenü)
+godot --headless --path . --quit-after 300 -- --skip-menu
 # Screenshots (Software-Vulkan, langsam: ~2-3 Min. pro Bild)
 xvfb-run -a -s "-screen 0 1280x720x24" godot --path . --rendering-driver vulkan \
   --resolution 1280x720 -- --screenshot-tour=/pfad/ordner
