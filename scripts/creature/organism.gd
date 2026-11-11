@@ -106,6 +106,7 @@ func _drop_samples() -> void:
 
 ## Eine Wucherung im Wald: verlangsamt und verletzt, wer hindurchläuft. Mit der Axt entfernbar.
 class Patch extends Interactable:
+	static var _next_hurt_msec: int = 0
 	var patch_id: int = 0
 	var hp: int = 3
 	var _player: Player
@@ -181,3 +182,9 @@ class Patch extends Interactable:
 			_player.hazard = 1.0
 			if Inventory.count("spore_mask") <= 0:
 				_player.health = maxf(_player.health - 3.0 * delta, 1.0)
+				# sichtbar und hörbar machen: rotes Aufblitzen + Stöhnen, höchstens alle 1,4 s
+				var now := Time.get_ticks_msec()
+				if now >= Patch._next_hurt_msec:
+					Patch._next_hurt_msec = now + 1400
+					EventBus.player_hurt.emit(4.0)
+					SoundBank.play_ui(_player, "hurt", -6.0, randf_range(0.72, 0.82))

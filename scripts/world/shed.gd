@@ -74,9 +74,9 @@ func _ready() -> void:
 	locker.name = "Locker"
 	locker.style = "locker"
 	locker.label = "Spind"
-	locker.size = Vector3(0.62, 1.95, 0.55)
+	locker.size = Vector3(0.82, 1.95, 0.8)   # breit und tief genug zum Hineingehen
 	locker.hinge_right = true
-	locker.position = Vector3(0.36, 0.03, -1.17)
+	locker.position = Vector3(0.36, 0.03, -1.05)
 	add_child(locker)
 	# Innen: Regal, Kanister, Werkzeug
 	var wood := BuildKit.tex_mat("planks_h", 0.7)
@@ -95,8 +95,9 @@ func _ready() -> void:
 	pile.name = "Woodpile"
 	pile.item_id = "wood"
 	pile.per_action = 2
-	pile.amount = 10
-	pile.max_amount = 10
+	pile.amount = 4   # nur ein paar trockene Scheite, der Rest ist nass
+	pile.max_amount = 4
+	pile.empty_text = "Unbrauchbar, die Scheite sind nass"
 	pile.action_label = "Brennholz nehmen"
 	pile.action_time = 0.6
 	pile.sound = "step_wood"

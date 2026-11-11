@@ -33,8 +33,15 @@ func data() -> Dictionary:
 	return _data
 
 
+## Aufgaben-Tag: ein neuer Tag beginnt für Aufgaben erst um day_start_hour (8 Uhr, data/tasks/tasks.json),
+## damit neue Ziele und Tagesroutinen nicht um Mitternacht auftauchen (Christian).
+func task_day() -> int:
+	var start := float(_data.get("day_start_hour", 8.0))
+	return TimeManager.day if TimeManager.hour >= start else TimeManager.day - 1
+
+
 func flag(name: String) -> void:
-	flags[name] = TimeManager.day
+	flags[name] = task_day()
 
 
 func _on_inventory() -> void:
@@ -113,7 +120,7 @@ func check(c: String) -> bool:
 	if c.begins_with("flag:"):
 		return flags.has(c.substr(5))
 	if c.begins_with("today:"):
-		return int(flags.get(c.substr(6), -1)) == TimeManager.day
+		return int(flags.get(c.substr(6), -1)) == task_day()
 	if c.begins_with("got:"):
 		return got.has(c.substr(4)) or Inventory.count(c.substr(4)) > 0
 	if c.begins_with("built:"):
@@ -167,7 +174,7 @@ func _compare(expr: String, getter: Callable) -> bool:
 
 func _value(name: String) -> float:
 	match name:
-		"day": return TimeManager.day
+		"day": return task_day()
 		"cameras": return Supplies.cameras.size()
 		"tier": return Research.tier
 		"analyses": return Research.done.size()

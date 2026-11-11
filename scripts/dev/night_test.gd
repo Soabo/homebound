@@ -804,13 +804,19 @@ func _gear_test() -> void:
 		player.set_flashlight(true)
 		h.interact(player)  # E: Tür auf
 		await get_tree().create_timer(0.5).timeout
-		h.secondary_interact(player)  # R: hinein
-		await get_tree().create_timer(0.9).timeout
-		h.set_door(false)  # drinnen: E schließt die Tür
-		await get_tree().create_timer(0.5).timeout
-		print("VERSTECK %s: drin=%s, Tür zu=%s, versteckt=%s, Licht aus=%s" % [path, h.occupied, not h.door_open, player.is_hidden(), not player.flashlight.visible])
-		h._leave()
+		# selbst hineingehen (hier: hineinstellen), von innen zuziehen
+		player.global_position = h.to_global(Vector3(0, 0.08, -h.size.z * 0.5 + 0.38))
+		player.velocity = Vector3.ZERO
+		await get_tree().create_timer(0.3).timeout
+		var hidden_open := player.is_hidden()
+		h.interact(player)  # E von innen: Tür zu
 		await get_tree().create_timer(0.8).timeout
+		var still := h._player_inside(player)
+		print("VERSTECK %s: drin=%s (bleibt drin %s), Tür zu=%s, versteckt=%s (bei offener Tür %s), Licht bleibt=%s" % [path, h.occupied, still, not h.door_open, player.is_hidden(), hidden_open, player.flashlight.visible])
+		h.interact(player)
+		await get_tree().create_timer(0.5).timeout
+		player.global_position = h.to_global(Vector3(0, 0.08, h.size.z * 0.5 + 0.9))
+		await get_tree().create_timer(0.3).timeout
 		print("VERSTECK %s verlassen: versteckt=%s" % [path, player.is_hidden()])
 	# Überladung
 	var added := {}
@@ -1780,6 +1786,8 @@ func _lab_test() -> void:
 	scene.add_child(m)
 	await get_tree().process_frame
 	m._listen(player.global_position + Vector3(10, 0, 0))
+	print("LAB Stimme ohne Aufnahme-Taste: %d (soll 0)" % Inventory.count("rec_voice"))
+	player.hands.capture_recordings()   # wie Linksklick halten mit dem Diktiergerät in der Hand
 	print("LAB Stimme aufgenommen: %d" % Inventory.count("rec_voice"))
 	m.queue_free()
 	# --- Baum

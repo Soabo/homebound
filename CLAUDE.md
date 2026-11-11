@@ -90,14 +90,15 @@
 
 ## Entscheidungen Feinschliff nach 10 Spieltagen
 - Radio + Analysegerät stehen in der Werkstatt an der Nordwand (`Cabin._build_radio_corner`, Radio-Knoten lokal gedreht).
-- Alien-Archiv und Notizen nur noch auf dem Tablet (Couch, Reiter Posteingang | Alien-Archiv | Notizen), Taste J entfällt.
+- Archiv (früher „Alien-Archiv“) und Notizen nur noch auf dem Tablet (Couch, Reiter Posteingang | Archiv | Notizen), Taste J entfällt.
   Analysegerät zeigt keine Ergebnistexte mehr: „Ergebnisse ans Tablet senden“ (`Research.send_results`, `sent`, `tablet_new`).
   Verknüpfen geht erst, wenn die Analysen gesendet sind. Test: `--night-test=tablet`.
 - Bewegte Teile (Werkzeuge in der Hand, Türen, Schranktüren) mit `BuildKit.localize_materials` (Textur am Objekt).
 - Hände/Werkzeuge ziehen sich vor Wänden zurück (`PlayerHands._avoid_walls`).
 - Holzkorb `WoodBasket` (Cabin/WoodBasket, 1 Holz Start, max 4, E nehmen/R hineinlegen). Tankanzeige `FuelGauge`
   (Cabin/FuelGauge über dem Funktisch, `PowerManager.hours_left`). Traglast-Anzeige im HUD (`Hud._update_weight`).
-- Verstecke: E Tür auf/zu, R hinein/hinaus; Uhrlicht geht aus und bleibt drinnen aus.
+- Verstecke (11/2026 neu): nur E = Tür auf/zu. Man geht selbst hinein und schließt von innen; drinnen + Tür zu = versteckt
+  (`HideSpot._player_inside`). Drinnen alles normal (lehnen, Licht, ducken), kein Einsteigen per R mehr.
 - Uhr: F kurz = an/aus, F halten (`Player.LIGHT_MODE_HOLD`) = LED ↔ weißes Display (`PlayerHands.screen_mode`, schwaches Umgebungslicht).
 - Hinsetzen mit Kamerabewegung: `Seat` (Verandabank, wandert mit), Couch, Monitorstuhl (`MonitorStation`), Leiter klettern
   (`TowerLadder`), Verstecke. Partikel `Fx.burst` (Holz, Stein, Funken, Erde, Glas, Staub).
@@ -158,7 +159,8 @@
   call = Drohne kommt sicher (`ThreatDirector.force_event`), bloom = Bad wuchert, `Research.lab_bloom`).
 - Funde: `AlienDrops` (Knoten „AlienDrops“, persistent) legt morgens Funde ab (`ThreatDirector._kinds_tonight`), Kameraaufnahmen
   warten am Monitor (`footage`). Diktiergerät + alter Laptop am Hochsitz (Georg Wendt), Datenträger Außenstelle, Protokolle Messstelle.
-  Diktiergerät nimmt Manipulator-Stimme und (ab Tag 5) Funkspruch auf.
+  Diktiergerät ist ein Hand-Gegenstand: Linksklick halten = Aufnahme (`PlayerHands.capture_recordings`), nimmt
+  Manipulator-Stimme (`Manipulator.last_call_msec`) und ab Tag 5 den Funkspruch (`Radio.message_until_msec`) auf.
 - Signatur: ThreatConfig `signature_drone_bonus`, `signature_seeker_bonus`, `signature_wakes_quiet`; Sucher spürt Signatur am Körper
   (`SeekerConfig.signature_min`, Reichweite w17_range × Signatur/0,5).
 - Werkzeuge (Rezepte mit requires): Dämpfer-Stirnband (Hirn-Schaden), Nervenfühler (`GadgetHud`), Stimmfilter, Wärmekristall,
@@ -250,6 +252,18 @@
   `SettingsPanel` in Hauptmenü und Pause.
 - Tests: `--night-test=save` (Platz schreiben/lesen, Tagesbeginn, Einstellungen, Enden, Menü, Pause),
   `godot --headless --path . -s res://scripts/dev/flow_check.gd` (Menü → Neues Spiel → Hauptmenü → Laden).
+
+## Änderungsliste 11/2026 (28 Punkte von Christian)
+- Gießkanne = Hand-Gegenstand (steht anfangs bei den Beeten), füllen/gießen nur in der Hand. Generator läuft beim Start nicht.
+- Kamera 1 unter der Werkbank, Ersatz-Zündkerze im Schuppenregal. Holzstapel am Schuppen: 4 Scheite, dann „nass“ (`ResourceNode.empty_text`).
+- 17 Uhr Hinweis „Der Abend beginnt“ (TimeConfig `evening_warning_*`, ThreatDirector `_check_evening`). Aufgaben-Tag beginnt 8 Uhr
+  (tasks.json `day_start_hour`, `Tasks.task_day()`).
+- Experimente erst bei 100 % Analyse, dauern `lab.experiment_seconds`; fertiger Fund bleibt im Gerät (herausnehmen per Knopf);
+  Sendezähler zählt Projekte (`Research.unsent_count`). Archiv ohne doppelte Einträge, Bilder anklickbar (groß).
+- Lagerfeuer: nur 1 tragbar, aus = abbauen. Leere Flaschen: Trinken gibt die Flasche zurück, dazu Müllflaschen im Wald
+  (SupplyConfig `litter_bottles_per_day`). Speis-Kisten (`ItemPickup.restock`): R stellt Wasser/Konserven zurück.
+- Wucherung: Schaden mit rotem Aufblitzen + Stöhnen. Holzkorb am Kamin = Metallständer. Glas: kaum Glanz.
+  Wegweiser stehen am Wegrand (`WorldTrails.roadside`), schwarze Schrift auf hellem Brett. Hochsitz-Streben von Pfosten zu Pfosten.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

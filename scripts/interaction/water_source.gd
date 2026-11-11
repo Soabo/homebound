@@ -44,9 +44,8 @@ func get_prompt(_player: Node) -> String:
 ## [R] Gießkanne füllen (wenn nicht voll) oder eine leere Flasche abfüllen.
 ## Gießkanne zuerst, wenn sie leer ist (oder keine leere Flasche dabei); sonst Flaschen.
 func _fill_can_first() -> bool:
-	if Inventory.count("watering_can") <= 0 or Supplies.can_water >= Supplies.config.watering_can_charges:
-		return false
-	return Supplies.can_water <= 0 or Inventory.count("bottle_empty") <= 0
+	# nur mit der Gießkanne in der Hand (Christian)
+	return Inventory.equipped() == "watering_can" and Supplies.can_water < Supplies.config.watering_can_charges
 
 
 func get_secondary_prompt(_player: Node) -> String:

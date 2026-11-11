@@ -9,7 +9,8 @@ var _dark: StandardMaterial3D
 
 func _ready() -> void:
 	name = "WorldTrails"
-	_wood = BuildKit.tex_mat("planks_h", 0.7, Color(0.85, 0.78, 0.7))
+	# helles, gestrichenes Brett, damit die schwarze Schrift gut lesbar ist
+	_wood = BuildKit.tex_mat("planks_h", 0.7, Color(1.5, 1.42, 1.2))
 	_dark = BuildKit.tex_mat("bark", 0.6)
 	for s: Dictionary in WorldMap.data().get("signs", []):
 		_sign(Vector2(float(s["pos"][0]), float(s["pos"][1])), s["to"])
@@ -18,6 +19,8 @@ func _ready() -> void:
 
 ## Holzpfosten mit Brettern, je Ziel ein Pfeil in die (Luftlinien-)Richtung mit Entfernung.
 func _sign(at: Vector2, targets: Array) -> void:
+	var dirs_from := at
+	at = roadside(at)
 	var g := Terrain.height_at(at.x, at.y)
 	var root := Node3D.new()
 	root.name = "Sign_%d_%d" % [int(at.x), int(at.y)]
@@ -28,7 +31,7 @@ func _sign(at: Vector2, targets: Array) -> void:
 	var y := 2.1
 	for id: String in targets:
 		var p := WorldMap.place_pos(id)
-		var dir := p - at
+		var dir := p - dirs_from
 		var dist := dir.length()
 		var yaw := rad_to_deg(atan2(-dir.x, -dir.y))
 		var arm := Node3D.new()
@@ -43,16 +46,49 @@ func _sign(at: Vector2, targets: Array) -> void:
 		for side: float in [1.0, -1.0]:
 			var lab := Label3D.new()
 			lab.text = "%s  %s" % [name_text, km]
-			lab.font_size = 34
-			lab.pixel_size = 0.0028
-			lab.modulate = Color(0.12, 0.09, 0.06)
+			lab.font_size = 40
+			lab.pixel_size = 0.0023
+			lab.modulate = Color(0.0, 0.0, 0.0)   # schwarze Schrift auf hellem Brett
 			lab.outline_size = 0
-			lab.position = Vector3(-0.62, 0, 0.02 * side)
+			lab.double_sided = false
+			lab.position = Vector3(-0.62, 0, 0.022 * side)
 			lab.rotation_degrees = Vector3(0, 0 if side > 0 else 180, 0)
 			lab.width = 400
 			lab.autowrap_mode = TextServer.AUTOWRAP_OFF
 			arm.add_child(lab)
 		y -= 0.27
+
+
+## Stellplatz am Wegrand: nahe der Datenposition, knapp neben dem Weg (nicht darauf, nicht im Wald, nicht im Wasser).
+static func roadside(at: Vector2) -> Vector2:
+	var ti := WorldMap.trail_info(at.x, at.y)
+	if ti.x > 25.0:
+		return at   # kein Weg in der Nähe: bleibt, wo er ist
+	var best := at
+	var best_d := INF
+	for r: float in [0.0, 1.0, 2.0, 3.0, 4.5, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0]:
+		var n := 1 if r == 0.0 else 24
+		for k in n:
+			var q := at + Vector2.from_angle(TAU * k / n) * r
+			var e := WorldMap.trail_info(q.x, q.y).x
+			if e < 0.35 or e > 1.1:
+				continue   # 0,35–1,1 m neben dem Wegrand
+			if z_on_road(q):
+				continue   # nicht auf der Zufahrt
+			var g := Terrain.height_at(q.x, q.y)
+			if Terrain.water_level_at(q.x, q.y) > g - 0.1:
+				continue
+			if r < best_d:
+				best_d = r
+				best = q
+		if best_d < INF:
+			break
+	return best
+
+
+## Liegt der Punkt auf der befahrbaren Zufahrt (nur außerhalb des Grundstücks)?
+static func z_on_road(q: Vector2) -> bool:
+	return q.y > 14.0 and Terrain.road_distance(q.x, q.y) < 3.4
 
 
 ## Wo ein Weg den Bach kreuzt: ein schmaler Steg aus Bohlen.

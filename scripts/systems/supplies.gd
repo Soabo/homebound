@@ -122,6 +122,13 @@ func _on_day_changed(_day: int) -> void:
 			chance *= 0.5
 		if _rng.randf() < chance:
 			rec["caught"] = true
+	# Müll im Wald: leere Flaschen
+	var drops := AlienDrops.get_for(get_tree())
+	if drops:
+		for i in _rng.randi_range(config.litter_bottles_per_day.x, config.litter_bottles_per_day.y):
+			var bp: Variant = drops.spot("forest")
+			if bp != null:
+				drops.spawn("bottle_empty", bp)
 	# neue Metall-Fundstellen
 	var n := _rng.randi_range(config.scrap_spots_per_day.x, config.scrap_spots_per_day.y)
 	for i in n:
@@ -164,7 +171,7 @@ func plant(i: int, seed_item: String) -> bool:
 func water_bed(i: int) -> bool:
 	if beds[i]["crop"] == "" or beds[i]["watered"] or bed_state(i) in ["ripe", "withered"]:
 		return false
-	if can_water <= 0 or Inventory.count("watering_can") <= 0:
+	if can_water <= 0 or Inventory.equipped() != "watering_can":
 		return false
 	can_water -= 1
 	beds[i]["watered"] = true
@@ -207,7 +214,7 @@ func harvest(i: int) -> String:
 
 
 func fill_can(dirty: bool) -> bool:
-	if Inventory.count("watering_can") <= 0 or can_water >= config.watering_can_charges:
+	if Inventory.equipped() != "watering_can" or can_water >= config.watering_can_charges:
 		return false
 	can_water = config.watering_can_charges
 	if dirty:

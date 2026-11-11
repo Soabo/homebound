@@ -479,15 +479,17 @@ func interact(_player: Node) -> void:
 
 
 func get_secondary_prompt(_player: Node) -> String:
-	if type == "campfire" and fire:
+	if type == "campfire" and fire and fire.burning():
 		return fire.get_secondary_prompt()
+	if type == "campfire":
+		return "[R] Abbauen und einpacken"
 	if type == "tent" and camp and camp.torn:
 		return "[R] Zerrissenes Zelt abbauen (nur Reste)"
 	return "[R] Abbauen"
 
 
 func secondary_interact(_player: Node) -> void:
-	if type == "campfire" and fire:
+	if type == "campfire" and fire and fire.burning():
 		fire.secondary_interact()
 		return
 	if type == "tent" and camp and camp.torn:

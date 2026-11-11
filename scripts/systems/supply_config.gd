@@ -52,6 +52,10 @@ extends Resource
 @export var fuel_per_wood: float = 7.0
 @export var fuel_per_cell: float = 100.0
 
+@export_group("Müll im Wald")
+## Leere Flaschen, die jeden Tag irgendwo im Wald herumliegen (min/max pro Tag)
+@export var litter_bottles_per_day: Vector2i = Vector2i(0, 2)
+
 @export_group("Metallquellen im Wald")
 ## Höchstens so viele Fundstellen gleichzeitig, neue pro Tag (min/max)
 @export var scrap_spots_max: int = 7

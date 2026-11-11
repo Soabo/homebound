@@ -6,7 +6,7 @@ extends Control
 
 signal picked(id: String)
 
-const BOX := Vector2(232, 46)
+const BOX := Vector2(236, 60)
 const GAP := Vector2(64, 12)
 const MARGIN := Vector2(16, 34)
 const AREA_COLORS := {
@@ -186,7 +186,8 @@ func _draw() -> void:
 		draw_rect(r, bg)
 		draw_rect(Rect2(p, Vector2(5, BOX.y)), area_col)
 		draw_rect(r, Color(1.0, 0.9, 0.5) if id == selected else area_col.darkened(0.3), false, 2.0 if id == selected else 1.0)
-		draw_string(_font, p + Vector2(11, 19), title_of(id), HORIZONTAL_ALIGNMENT_LEFT, BOX.x - 16, 14, fg)
+		# Titel darf zweizeilig sein (lange Namen werden umbrochen statt abgeschnitten)
+		draw_multiline_string(_font, p + Vector2(11, 17), title_of(id), HORIZONTAL_ALIGNMENT_LEFT, BOX.x - 18, 13, 2, fg)
 		var sub := ""
 		if st != "hidden":
 			if is_link(id):
@@ -200,7 +201,7 @@ func _draw() -> void:
 					sub += "  ✓"
 				if bool(Research.analysis(id).get("living", false)):
 					sub += "  · lebend"
-		draw_string(_font, p + Vector2(11, 37), sub, HORIZONTAL_ALIGNMENT_LEFT, BOX.x - 16, 12, fg.darkened(0.25))
+		draw_string(_font, p + Vector2(11, 53), sub, HORIZONTAL_ALIGNMENT_LEFT, BOX.x - 16, 11, fg.darkened(0.25))
 
 
 func _gui_input(event: InputEvent) -> void:

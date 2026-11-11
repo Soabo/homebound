@@ -16,6 +16,8 @@ extends Interactable
 @export var sound: String = "wood_crack"
 @export var anchor: Vector3 = Vector3.ZERO
 @export var collider_size: Vector3 = Vector3(1, 1, 1)
+## Text, wenn nichts mehr zu holen ist (statt „leer“), z. B. „Unbrauchbar, die Scheite sind nass“
+@export var empty_text: String = ""
 
 var _busy: bool = false
 ## false = man kann hindurchlaufen (Steinhaufen am Bach), anvisieren geht trotzdem
@@ -41,6 +43,8 @@ func _on_day_changed(_day: int) -> void:
 
 
 func get_prompt(_player: Node) -> String:
+	if amount <= 0 and empty_text != "":
+		return empty_text
 	if amount <= 0:
 		return "%s – leer%s" % [Inventory.display_name(item_id), "" if regrow_per_day <= 0 else " (wächst nach)"]
 	if tool != "" and Inventory.count(tool) <= 0:
@@ -55,6 +59,9 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(player: Node) -> void:
+	if amount <= 0 and empty_text != "":
+		EventBus.notify(empty_text, 2.5)
+		return
 	if _busy or amount <= 0:
 		return
 	if tool != "" and Inventory.count(tool) <= 0:

@@ -1,7 +1,7 @@
 class_name SupplyProps
 extends Node3D
 ## Fundstücke für die Selbstversorgung und die drei Überwachungskameras zum Selbst-Einbauen:
-##  Kamera 1 auf der Werkbank, Kamera 2 auf dem Esstisch, Kamera 3 oben auf dem Kleiderschrank,
+##  Kamera 1 unter der Werkbank (unteres Brett), Kamera 2 auf dem Esstisch, Kamera 3 oben auf dem Kleiderschrank,
 ##  leere Flaschen auf der Küchenarbeitsplatte, Samen und Motoröl im Schuppenregal, Gießkanne bei den Hochbeeten.
 ## Alle Positionen in Weltkoordinaten (Hütte im Ursprung).
 
@@ -10,7 +10,7 @@ var _y := Cabin.FLOOR_Y
 
 func _ready() -> void:
 	name = "SupplyProps"
-	_camera_box("Camera1Box", "camera_1", 1, Vector3(5.55, _y + 0.92, 0.05), 90.0)
+	_camera_box("Camera1Box", "camera_1", 1, Vector3(5.45, _y + 0.245, 0.75), 90.0)
 	_camera_box("Camera2Box", "camera_2", 2, Vector3(-0.25, _y + 0.76, 2.05), 20.0)
 	_camera_box("Camera3Box", "camera_3", 3, Vector3(-1.6, _y + 2.05, -3.8), -15.0)
 	_bottles(Vector3(-0.75, _y + 0.92, -0.925 + 0.32))
@@ -19,6 +19,7 @@ func _ready() -> void:
 	_seed_packet("SeedsCarrot", "seeds_carrot", so + Vector3(1.62, 0.98, -0.75), Color(0.95, 0.55, 0.1))
 	_potato_sack("SeedPotatoes", so + Vector3(1.0, 0.03, 1.15))
 	_oil_can("MotorOil", so + Vector3(1.62, 0.43, 0.35))
+	_spark_plug("SparePlug", so + Vector3(1.62, 0.43, -0.35))
 	_watering_can("WateringCan", Vector3(-12.25, 0.0, 7.75))
 
 
@@ -110,6 +111,16 @@ func _oil_can(n: String, at: Vector3) -> void:
 	BuildKit.box(v, Vector3(0.16, 0.22, 0.08), at + Vector3(0, 0.11, 0), BuildKit.color_mat(Color(0.75, 0.6, 0.1), 0.5, 0.2), false)
 	BuildKit.cylinder(v, 0.02, 0.04, at + Vector3(0.05, 0.24, 0), BuildKit.color_mat(Color(0.1, 0.1, 0.1)), false, Vector3.ZERO, -1.0, 8)
 	BuildKit.box(v, Vector3(0.1, 0.08, 0.002), at + Vector3(0, 0.11, 0.041), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
+	p.visuals.append(v)
+
+
+## Eine Ersatz-Zündkerze im Schuppenregal (weitere: Motorblöcke/Traktorteile im Wald, Bootshaus am Schwarzen See).
+func _spark_plug(n: String, at: Vector3) -> void:
+	var p := _pickup(n, "spark_plug", 1, 1, Vector3(0.16, 0.12, 0.12), at)
+	var v := Node3D.new()
+	p.add_child(v)
+	BuildKit.box(v, Vector3(0.1, 0.05, 0.06), at + Vector3(0, 0.025, 0), BuildKit.color_mat(Color(0.75, 0.2, 0.15), 0.6), false)
+	BuildKit.cylinder(v, 0.008, 0.07, at + Vector3(0.0, 0.07, 0), BuildKit.color_mat(Color(0.9, 0.9, 0.88), 0.3), false, Vector3.ZERO, -1.0, 6)
 	p.visuals.append(v)
 
 

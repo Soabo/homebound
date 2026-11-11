@@ -268,7 +268,8 @@
     "name": "Gießkanne",
     "weight": 1.0,
     "stack": 1,
-    "category": "Werkzeug"
+    "category": "Werkzeug",
+    "hand": "watering_can"
   },
   "tin_snips": {
     "name": "Blechschere",
@@ -455,7 +456,7 @@
   "campfire": {
     "name": "Lagerfeuer-Bündel",
     "weight": 2.5,
-    "stack": 4,
+    "stack": 1,
     "category": "Bauteil",
     "build": "campfire"
   },
@@ -809,7 +810,8 @@
     "name": "Diktiergerät",
     "weight": 0.3,
     "stack": 1,
-    "category": "Werkzeug"
+    "category": "Werkzeug",
+    "hand": "dictaphone"
   },
   "old_laptop": {
     "name": "Alter Laptop",

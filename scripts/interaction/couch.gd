@@ -8,7 +8,7 @@ const DATA_PATH := "res://data/tablet/tablet.json"
 ## Sitzplatz (Hüttenkoordinaten): Füße am Boden, Blick zum Kamin (-x)
 const SEAT := Vector3(-2.62, Cabin.FLOOR_Y, 1.75)
 const SIT_EYE := 1.02
-const TABLET_SPOT := Vector3(-3.78, Cabin.FLOOR_Y + 0.445, 1.88)
+const TABLET_SPOT := Vector3(-3.72, Cabin.FLOOR_Y + 0.447, 1.8)
 
 var read_ids: Array = []
 var sitting: bool = false
@@ -139,7 +139,7 @@ func stand_up() -> void:
 
 func _process(_delta: float) -> void:
 	# ungelesene Nachricht: Tablet-Display leuchtet schwach
-	_screen.emission_energy_multiplier = 0.5 if (not sitting and unread_count() > 0 and fmod(TimeManager.hour * 60.0, 2.0) < 1.0) else 0.0
+	_screen.emission_energy_multiplier = 0.35 if (not sitting and unread_count() > 0) else 0.0
 
 
 func persist_key() -> String:

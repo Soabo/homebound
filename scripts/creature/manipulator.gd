@@ -157,14 +157,18 @@ func _lure() -> void:
 
 
 ## Forschung 2.0: Diktiergerät schneidet mit, Stimmfilter verrät die falsche Stimme.
+static var last_call_msec: int = -100000
+static var last_call_pos: Vector3 = Vector3.ZERO
+
+
 func _listen(at: Vector3) -> void:
 	if _player == null:
 		return
 	var d := _player.global_position.distance_to(at)
-	if Inventory.count("dictaphone") > 0 and Inventory.count("rec_voice") <= 0 and not Research.done.has("an_voice") \
-			and d < float(Research.gadget("dictaphone", "range", 70.0)):
-		if Inventory.add("rec_voice", 1) > 0:
-			EventBus.notify("Das Diktiergerät in deiner Tasche läuft. Es hat das aufgenommen.", 3.5)
+	# Für das Diktiergerät: wann und wo zuletzt gerufen wurde (aufgenommen wird nur, wenn man es in der Hand hält
+	# und Linksklick gedrückt hält – PlayerHands.recording)
+	last_call_msec = Time.get_ticks_msec()
+	last_call_pos = at
 	if Inventory.count("voice_filter") > 0 and d < float(Research.gadget("voice_filter", "range", 70.0)):
 		EventBus.notify("Der Stimmfilter knistert: Das war kein echtes Geräusch.", 3.0)
 		SoundBank.play_ui(self, "static", -14.0, 1.8)

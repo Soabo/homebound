@@ -25,10 +25,22 @@ func _ready() -> void:
 			# vorne kürzer, hinten länger: Pfosten enden genau unter dem schrägen Dach
 			var ph := DECK + (2.15 if sz > 0.0 else 2.6)
 			BuildKit.cylinder(self, 0.12, ph, Vector3(sx * 1.35, ph * 0.5 - 0.3, sz * 1.35), logs, true, Vector3(sz * -3.0, 0, sx * 3.0), 0.1, 8)
-	for h: float in [1.4, 2.9]:
-		for side: float in [-1.0, 1.0]:
-			BuildKit.cylinder(self, 0.06, 2.8, Vector3(side * 1.3, h, 0), logs, false, Vector3(35, 0, 0), -1.0, 6)
-			BuildKit.cylinder(self, 0.06, 2.8, Vector3(0, h, side * 1.3), logs, false, Vector3(0, 0, 35), -1.0, 6)
+	# Kreuzstreben: auf jeder Seite zwei Kreuze, jeweils genau von Pfosten zu Pfosten
+	var levels := [0.5, 2.3, DECK - 0.15]
+	for face in 4:
+		# Ecken der Seite (sx, sz) und Richtung nach außen
+		var c: Array = [[Vector2(-1, 1), Vector2(1, 1)], [Vector2(1, 1), Vector2(1, -1)],
+				[Vector2(1, -1), Vector2(-1, -1)], [Vector2(-1, -1), Vector2(-1, 1)]][face]
+		var out := Vector3((c[0].x + c[1].x) * 0.5, 0, (c[0].y + c[1].y) * 0.5).normalized() * 0.1
+		for k in 2:
+			var a0 := _leg_point(c[0].x, c[0].y, levels[k]) + out
+			var b0 := _leg_point(c[1].x, c[1].y, levels[k]) + out
+			var a1 := _leg_point(c[0].x, c[0].y, levels[k + 1]) + out
+			var b1 := _leg_point(c[1].x, c[1].y, levels[k + 1]) + out
+			_beam(a0, b1, logs)
+			_beam(b0, a1, logs)
+		# waagrechter Riegel unter der Plattform
+		_beam(_leg_point(c[0].x, c[0].y, DECK - 0.15) + out, _leg_point(c[1].x, c[1].y, DECK - 0.15) + out, logs)
 	# Plattform
 	BuildKit.box(self, Vector3(3.0, 0.12, 3.0), Vector3(0, DECK, 0), planks, true)
 	# Brüstung aus Brettern an drei Seiten, vorne (+z, Leiter) offen mit zwei kurzen Handläufen.
@@ -84,6 +96,22 @@ func _ready() -> void:
 	map.anchor = Vector3(0, DECK + 1.1, -1.3)
 	map.hide_paper = true
 	add_child(map)
+
+
+## Mittelpunkt des Pfostens (sx, sz) auf Höhe y – die Pfosten stehen leicht schräg.
+func _leg_point(sx: float, sz: float, y: float) -> Vector3:
+	var ph := DECK + (2.15 if sz > 0.0 else 2.6)
+	var center := Vector3(sx * 1.35, ph * 0.5 - 0.3, sz * 1.35)
+	var axis := Basis.from_euler(Vector3(deg_to_rad(sz * -3.0), 0, deg_to_rad(sx * 3.0))) * Vector3.UP
+	return center + axis * ((y - center.y) / axis.y)
+
+
+## Rundholz von a nach b.
+func _beam(a: Vector3, b: Vector3, mat: Material) -> void:
+	var mi := BuildKit.cylinder(self, 0.055, a.distance_to(b), (a + b) * 0.5, mat, false, Vector3.ZERO, -1.0, 6)
+	var y := (b - a).normalized()
+	var x := y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
+	mi.basis = Basis(x, y, x.cross(y).normalized())
 
 
 func _pickup(n: String, item: String, amount: int, at: Vector3) -> void:

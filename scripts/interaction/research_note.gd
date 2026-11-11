@@ -1,7 +1,7 @@
 class_name ResearchNote
 extends Interactable
 ## Ein lesbares Schriftstück (Notiz, Zettel). Der Text steht in data/research/research.json
-## unter "notes" und landet nach dem Lesen im Alien-Archiv.
+## unter "notes" und landet nach dem Lesen im Archiv.
 
 @export var note_id: String = ""
 @export var anchor: Vector3 = Vector3.ZERO

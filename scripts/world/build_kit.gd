@@ -40,9 +40,9 @@ static func glass_mat() -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_color = Color(0.55, 0.65, 0.7, 0.1)
-	m.roughness = 0.12
-	# wenig Glanz: mit der Uhrlampe am Fenster soll man hinaussehen können statt geblendet zu werden
-	m.metallic_specular = 0.27
+	m.roughness = 0.4
+	# kaum Glanz: der Lichtfleck der Uhrlampe auf der Scheibe war nachts viel zu hell (Christian 11/2026)
+	m.metallic_specular = 0.05
 	_materials[key] = m
 	return m
 

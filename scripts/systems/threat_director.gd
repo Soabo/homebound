@@ -241,7 +241,11 @@ func _check_tired() -> void:
 			EventBus.notify("Die Augen fallen dir fast zu. Zeit, ins Bett zu gehen." if sitting else "Du wirst müde. Zeit, ins Bett zu gehen.", 5.0)
 
 
+var _evening_warned: int = -1
+
+
 func _process(delta: float) -> void:
+	_check_evening()
 	_check_forest_stalker(delta)
 	_check_mauler(delta)
 	_check_tired()
@@ -250,6 +254,19 @@ func _process(delta: float) -> void:
 		if not e["done"] and now >= e["at"]:
 			e["done"] = true
 			_fire(e["type"])
+
+
+## Gegen 17 Uhr: „Der Abend beginnt“ (Zeit-Werte in TimeConfig evening_warning_*).
+func _check_evening() -> void:
+	var cfg := TimeManager.config
+	if _evening_warned == TimeManager.day or get_tree().current_scene == null or not GameState.in_game():
+		return
+	if TimeManager.hour >= cfg.evening_warning_hour and TimeManager.hour < cfg.night_start_hour:
+		_evening_warned = TimeManager.day
+		EventBus.notify(cfg.evening_warning_text, 4.0)
+		SoundBank.play_ui(self, "menu_click", -10.0, 0.7)
+	elif TimeManager.hour < cfg.evening_warning_hour and TimeManager.hour > 6.0:
+		pass
 
 
 ## Zerfleischer (ab Story-Phase 2): nachts im Zeitfenster eines „mauler“-Ereignisses, sobald du draußen bist

@@ -1,5 +1,5 @@
 extends Node
-## Forschung und Alien-Archiv (GDD 12). Inhalte in data/research/research.json.
+## Forschung und Archiv (GDD 12). Inhalte in data/research/research.json.
 ##
 ## Ablauf: Fund an einer Station einlegen → Projekt läuft (Spielstunden, manche Stationen brauchen Strom)
 ## + aktive Experimente → fertige Projekte ans Tablet senden → zwei passende Ergebnisse verknüpfen →
@@ -98,7 +98,7 @@ func _on_inventory_changed() -> void:
 		if DataDB.item(id).get("category", "") == "Fund" and not seen.has(id):
 			seen.append(id)
 			if id != "alien_analyzer":
-				EventBus.notify("Neuer Fund: %s – im Alien-Archiv auf dem Tablet vermerkt" % Inventory.display_name(id), 3.5)
+				EventBus.notify("Neuer Fund: %s – im Archiv auf dem Tablet vermerkt" % Inventory.display_name(id), 3.5)
 			changed.emit()
 
 
@@ -205,6 +205,10 @@ func insert(find: String) -> bool:
 
 
 func insert_project(st: String, id: String) -> bool:
+	# Liegt noch ein fertig untersuchter Fund drin, kommt er erst zurück ins Inventar
+	var old := String(stations.get(st, ""))
+	if old != "" and done.has(old):
+		take_out(st)
 	if not station_built(st) or String(stations.get(st, "")) != "" or done.has(id) or station_of(id) != st:
 		return false
 	if not requirements_met(id) or running_at(id) != "":
@@ -253,6 +257,9 @@ func experiment_done(id: String, exp_id: String) -> bool:
 
 ## Warum geht ein Experiment gerade nicht? ("" = geht)
 func experiment_blocker(exp: Dictionary, st: String = "device") -> String:
+	var running := String(stations.get(st, ""))
+	if running != "" and progress_of(running) < 1.0:
+		return "erst, wenn die Analyse fertig ist (%d %%)" % int(progress_of(running) * 100.0)
 	var need := String(exp.get("needs", ""))
 	if need.begins_with("item:"):
 		var it := need.substr(5)
@@ -362,7 +369,7 @@ func _process(_delta: float) -> void:
 	_check_lab_offer()
 	for st: String in stations.keys():
 		var id := String(stations[st])
-		if id == "" or station_blocker(st) != "":
+		if id == "" or done.has(id) or station_blocker(st) != "":
 			PowerManager.set_consumer("research_" + st, false)
 			continue
 		var before := progress_of(id)
@@ -397,9 +404,9 @@ func _check_complete(id: String) -> void:
 	if progress_of(id) >= 1.0 and _missing_experiments(id) == 0:
 		done.append(id)
 		Tasks.flag("done_" + id)
+		# Der Fund bleibt im Gerät liegen (Christian) – herausnehmen oder etwas Neues einlegen gibt ihn zurück
 		var st := running_at(id)
 		if st != "":
-			stations[st] = ""
 			PowerManager.set_consumer("research_" + st, false)
 		EventBus.notify("Abgeschlossen: %s – am Gerät ans Tablet senden" % analysis(id).get("name", id), 4.5)
 		SoundBank.play_ui(self, "signal", -8.0, 1.3)
@@ -594,7 +601,7 @@ func home_signature(assume_night: bool = false) -> float:
 	if assume_night or TimeManager.is_night():
 		for st: String in stations:
 			var id := String(stations[st])
-			if id != "" and st != "shield":
+			if id != "" and st != "shield" and not done.has(id):
 				s += float(analysis(id).get("signature", 0.0))
 		if charger_built:
 			s += float(lab_def().get("charger", {}).get("signature", 0.3))
@@ -640,6 +647,15 @@ func unsent_results() -> Array:
 	return out
 
 
+## Wie viele Projekte neue Ergebnisse haben (für die Anzeige „senden (N)“): ein Projekt zählt einmal,
+## egal wie viele Experimente dazugekommen sind.
+func unsent_count() -> int:
+	var ids := {}
+	for key: String in unsent_results():
+		ids[key.get_slice("/", 0)] = true
+	return ids.size()
+
+
 func is_sent(key: String) -> bool:
 	return sent.has(key)
 
@@ -649,16 +665,17 @@ func send_results() -> int:
 	var list := unsent_results()
 	if list.is_empty():
 		return 0
+	var n := unsent_count()
 	sent.append_array(list)
-	tablet_new += list.size()
-	EventBus.notify("%d Ergebnis%s ans Tablet gesendet – auf der Couch im Alien-Archiv nachlesen" % [list.size(), "" if list.size() == 1 else "se"], 4.0)
+	tablet_new += n
+	EventBus.notify("%d Ergebnis%s ans Tablet gesendet – auf der Couch im Archiv nachlesen" % [n, "" if n == 1 else "se"], 4.0)
 	for l in data().get("links", {}):
 		if can_link(l):
-			EventBus.notify("Im Alien-Archiv lässt sich etwas verknüpfen …", 4.0)
+			EventBus.notify("Im Archiv lässt sich etwas verknüpfen …", 4.0)
 			break
 	_check_lab_offer()
 	changed.emit()
-	return list.size()
+	return n
 
 
 func mark_tablet_seen() -> void:

@@ -29,6 +29,11 @@ extends Resource
 @export_range(0.0, 24.0, 0.25) var tired_from_hour: float = 23.0
 @export_range(0.0, 24.0, 0.25) var tired_until_hour: float = 1.0
 
+@export_group("Abend")
+## Um diese Uhrzeit kommt die Warnung, dass der Abend beginnt (Christian: 17 Uhr)
+@export_range(0.0, 24.0, 0.25) var evening_warning_hour: float = 17.0
+@export var evening_warning_text: String = "Der Abend beginnt"
+
 @export_group("Test")
 ## Faktor, wenn T gedrückt gehalten wird.
 @export var debug_fast_forward_multiplier: float = 40.0

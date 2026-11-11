@@ -155,7 +155,7 @@ func _process(delta: float) -> void:
 			_dial.emission_energy_multiplier = 0.0
 		_was_new = false
 	if _meter_needle:
-		var active := Research.slot != "" and Research.has_power_for_analysis()
+		var active := Research.slot != "" and not Research.done.has(Research.slot) and Research.has_power_for_analysis()
 		_meter_needle.rotation.z = (sin(_t * 7.0) * 0.25 + 0.3) if active else -0.6
 
 
@@ -199,7 +199,7 @@ func set_on(v: bool, night_event: bool = false) -> void:
 			if msg != "":
 				var again := "" if has_new_message() else "(Wiederholung) "
 				EventBus.notify("Im Radio: " + again + msg, 8.0)
-				_maybe_record_radio()
+				message_until_msec = Time.get_ticks_msec() + int(float(_data.get("play_seconds", 20.0)) * 1000.0)
 				heard_day = TimeManager.day
 				if msg == String(_data.get("crash_hint", "")):
 					_hint_given = true
@@ -209,14 +209,8 @@ func set_on(v: bool, night_event: bool = false) -> void:
 	SoundBank.play_at(self, "switch", to_global(anchor), -6.0, 0.7)
 
 
-## Mit Georg Wendts Diktiergerät lässt sich ein Funkspruch mitschneiden (Forschung: Funkspruch entschlüsseln).
-func _maybe_record_radio() -> void:
-	if Inventory.count("dictaphone") <= 0 or Inventory.count("rec_radio") > 0 or Research.done.has("an_radio_cipher"):
-		return
-	if TimeManager.day < int(Research.gadget("dictaphone", "radio_from_day", 5)):
-		return
-	if Inventory.add("rec_radio", 1) > 0:
-		EventBus.notify("Zwischen den Meldungen: Zahlen. Das Diktiergerät hat mitgeschnitten.", 4.0)
+## Bis wann gerade eine Nachricht läuft (für das Diktiergerät: Funkspruch mitschneiden).
+static var message_until_msec: int = -1
 
 
 func _fade_out_later(id: int) -> void:

@@ -1836,7 +1836,8 @@
       "info": "Ein Kristall in einer Blechschale. Alle zwei Tage liegt eine geladene Energiezelle darin – nachts strahlt sie nach außen."
     },
     "flare_hours": 10.0,
-    "pouch_factor": 0.4
+    "pouch_factor": 0.4,
+    "experiment_seconds": 3.0
   },
   "drops": [
     {

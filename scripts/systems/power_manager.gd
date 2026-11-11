@@ -7,7 +7,7 @@ signal fuel_changed(fuel: float)
 
 ## Treibstoff in Prozent des Tanks.
 var fuel: float = 55.0
-var generator_running: bool = true
+var generator_running: bool = false  ## zu Spielbeginn aus (Christian) – erst anwerfen
 ## Ausfall durch ein Ereignis – der Generator muss neu gestartet werden.
 var outage: bool = false
 
@@ -98,7 +98,7 @@ func get_state() -> Dictionary:
 
 func set_state(s: Dictionary) -> void:
 	fuel = float(s.get("fuel", 55.0))
-	generator_running = bool(s.get("running", true))
+	generator_running = bool(s.get("running", false))
 	outage = bool(s.get("outage", false))
 	_consumers.clear()
 	_last_power = not has_power()

@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://scripts/systems/time_config.gd" id="1_time"]
 
 [resource]
+evening_warning_hour = 17.0
+evening_warning_text = "Der Abend beginnt"
 script = ExtResource("1_time")
 day_start_hour = 7.0
 night_start_hour = 19.0

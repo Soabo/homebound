@@ -40,6 +40,10 @@ var _screen: StandardMaterial3D
 var _screen_light: OmniLight3D
 ## Licht-Modus der Uhr: false = LED nach vorn, true = Display leuchtet weiß (schwaches Umgebungslicht)
 var screen_mode: bool = false
+## Diktiergerät in der Hand und Linksklick gehalten = Aufnahme läuft (Manipulator-Stimme, Funkspruch)
+var recording: bool = false
+var _rec_led: StandardMaterial3D
+var _rec_t: float = 0.0
 var _watch_on: bool = false
 
 var _action: String = ""
@@ -191,6 +195,27 @@ func _make_right(kind: String) -> Node3D:
 			BuildKit.box(axe, Vector3(0.016, 0.13, 0.14), Vector3(0, 0.5, -0.09), steel, false)
 			BuildKit.box(axe, Vector3(0.008, 0.15, 0.02), Vector3(0, 0.5, -0.165), BuildKit.tex_mat("metal", 0.1, Color(2.0, 2.0, 2.0), 0.2), false)
 			BuildKit.box(axe, Vector3(0.03, 0.05, 0.03), Vector3(0, 0.5, 0.045), steel, false)
+		"watering_can":
+			# verzinkte Gießkanne am Henkel, Tülle nach vorn
+			_fist(m, 1.0)
+			var zinc := BuildKit.tex_mat("metal", 0.25, Color(1.35, 1.4, 1.4), 0.5)
+			var can := Node3D.new()
+			can.position = Vector3(0.0, -0.2, -0.07)
+			can.rotation_degrees.y = 90.0
+			m.add_child(can)
+			BuildKit.lathe(can, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.1, 0.0), Vector2(0.11, 0.015), Vector2(0.1, 0.22), Vector2(0.08, 0.24), Vector2(0.0, 0.25)]), Vector3.ZERO, zinc, 12)
+			BuildKit.cylinder(can, 0.012, 0.3, Vector3(0.16, 0.15, 0), zinc, false, Vector3(0, 0, -55), 0.02, 8)
+			BuildKit.cylinder(can, 0.035, 0.03, Vector3(0.28, 0.23, 0), zinc, false, Vector3(0, 0, -55), 0.04, 8)
+			BuildKit.box(can, Vector3(0.18, 0.016, 0.016), Vector3(-0.01, 0.32, 0), zinc, false)
+			BuildKit.box(can, Vector3(0.016, 0.09, 0.016), Vector3(-0.1, 0.28, 0), zinc, false)
+		"dictaphone":
+			# kleines Diktiergerät, rote Aufnahme-Leuchte
+			_fist(m, 1.0)
+			var body := BuildKit.color_mat(Color(0.16, 0.16, 0.18), 0.4, 0.3)
+			BuildKit.box(m, Vector3(0.05, 0.11, 0.022), Vector3(0.0, 0.04, -0.06), body, false, Vector3(-20, 0, 0))
+			BuildKit.box(m, Vector3(0.036, 0.03, 0.004), Vector3(0.0, 0.07, -0.048), BuildKit.color_mat(Color(0.3, 0.35, 0.32), 0.2), false, Vector3(-20, 0, 0))
+			_rec_led = BuildKit.emissive_mat(Color(1.0, 0.1, 0.05), 0.0)
+			BuildKit.sphere(m, 0.006, Vector3(0.015, 0.095, -0.05), _rec_led, Vector3.ONE, 5)
 		"food":
 			_fist(m, 1.0)
 			Icons.food_can(m, Vector3(0.0, -0.01, -0.06), 0.042, 0.11)
@@ -339,6 +364,42 @@ func toggle_screen_mode() -> void:
 var working: bool = false
 
 
+## Diktiergerät: Linksklick halten = aufnehmen. Ruft der Manipulator währenddessen in Hörweite, oder läuft
+## am Radio (in der Nähe) eine Nachricht, wird das mitgeschnitten (Forschung: Stimme / Funkspruch).
+func _update_recording(delta: float) -> void:
+	var want := _right_kind == "dictaphone" and _right_out < 0.2 and Input.is_action_pressed("attack") \
+			and not player.input_locked and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not GameState.dead
+	if want != recording:
+		recording = want
+		SoundBank.play_ui(self, "switch", -14.0, 1.7 if want else 1.3)
+		if want:
+			_rec_t = 0.0
+	if _rec_led:
+		_rec_led.emission_energy_multiplier = (2.5 if fmod(_rec_t, 1.0) < 0.6 else 0.6) if recording else 0.0
+	if not recording:
+		return
+	_rec_t += delta
+	capture_recordings()
+
+
+## Was das laufende Diktiergerät gerade mitschneidet (auch für Tests aufrufbar).
+func capture_recordings() -> void:
+	var now := Time.get_ticks_msec()
+	var range_m := float(Research.gadget("dictaphone", "range", 70.0))
+	# Manipulator: Ruf in den letzten Sekunden, in Hörweite
+	if now - Manipulator.last_call_msec < 4000 and player.global_position.distance_to(Manipulator.last_call_pos) < range_m \
+			and Inventory.count("rec_voice") <= 0 and not Research.done.has("an_voice"):
+		if Inventory.add("rec_voice", 1) > 0:
+			EventBus.notify("Aufgenommen: eine Stimme, die nicht echt ist.", 3.5)
+	# Radio: Nachricht läuft, Radio in der Nähe
+	var radio := get_tree().get_first_node_in_group("radio") as Node3D
+	if radio and now < Radio.message_until_msec and player.global_position.distance_to(radio.global_position) < 8.0 \
+			and TimeManager.day >= int(Research.gadget("dictaphone", "radio_from_day", 5)) \
+			and Inventory.count("rec_radio") <= 0 and not Research.done.has("an_radio_cipher"):
+		if Inventory.add("rec_radio", 1) > 0:
+			EventBus.notify("Mitgeschnitten: Zwischen den Meldungen sind Zahlen zu hören.", 4.0)
+
+
 func _building() -> bool:
 	var bc := get_tree().get_first_node_in_group("build_controller") as BuildController
 	return bc != null and bc.active
@@ -417,6 +478,13 @@ func _primary() -> void:
 		"food", "water":
 			_start_action("consume", 1.1)
 			_cooldown = 1.2
+		"watering_can":
+			# Linksklick wie E: am Beet gießen, an Regentonne/Hahn/Bach füllen
+			var t := player.current_interactable
+			if t is GardenBed:
+				t.interact(player)
+			elif t and t.has_method("get_secondary_prompt") and String(t.get_secondary_prompt(player)).contains("Gießkanne"):
+				t.secondary_interact(player)
 
 
 ## Ein einzelner Hieb ohne Treffer-Prüfung (z. B. beim Holzhacken, pro Schlag aufgerufen).
@@ -508,6 +576,8 @@ func _process(delta: float) -> void:
 	blocking = MELEE.has(_right_kind) and Input.is_action_pressed("block") and not player.input_locked \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _building() and _action == ""
 	_block_amount = move_toward(_block_amount, 1.0 if blocking else 0.0, delta * 7.0)
+
+	_update_recording(delta)
 
 	# Rechte Hand: alten Gegenstand wegnehmen, neuen holen
 	var want := _wanted_right()

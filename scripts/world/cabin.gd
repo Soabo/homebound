@@ -526,7 +526,7 @@ func _build_living_room() -> void:
 	for p: Vector2 in [Vector2(-4.12, 1.38), Vector2(-3.58, 1.38), Vector2(-4.12, 2.12), Vector2(-3.58, 2.12)]:
 		BuildKit.box_mm(self, Vector3(p.x - 0.03, y, p.y - 0.03), Vector3(p.x + 0.03, y + 0.38, p.y + 0.03), m_wood_dark, false)
 	BuildKit.cylinder(self, 0.04, 0.1, Vector3(-3.8, y + 0.49, 1.55), BuildKit.color_mat(Color(0.75, 0.73, 0.68), 0.6), false, Vector3.ZERO, -1.0, 8)
-	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-3.85, y + 0.46, 1.95), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
+	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-4.02, y + 0.46, 2.03), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
 	# Bücherregal
 	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
 	# Esstisch – kleiner Tisch für zwei, gegenüber gedeckt (GDD 3.1). Steht vom Fenster weg, damit man hinaussehen kann.
@@ -729,9 +729,9 @@ func _build_bedroom() -> void:
 	wardrobe.name = "Wardrobe"
 	wardrobe.style = "wardrobe"
 	wardrobe.label = "Kleiderschrank"
-	wardrobe.size = Vector3(1.0, 2.05, 0.7)
+	wardrobe.size = Vector3(1.0, 2.05, 0.86)   # tief genug, dass man selbst hineingehen kann
 	wardrobe.hinge_right = true
-	wardrobe.position = Vector3(-1.6, y, -3.98)
+	wardrobe.position = Vector3(-1.6, y, -3.92)
 	add_child(wardrobe)
 	# Ungeöffnetes Geburtstagsgeschenk (GDD 3.1)
 	BuildKit.box_mm(self, Vector3(-1.62, y, -1.65), Vector3(-1.3, y + 0.28, -1.33), BuildKit.color_mat(Color(0.65, 0.12, 0.14), 0.6), true, "Gift")
@@ -770,12 +770,16 @@ func _build_storage() -> void:
 	# Vorräte zum Mitnehmen: Konserven, Wasserflaschen, leere Dosen
 	# Konserven in einer Kiste mit "FOOD"-Etikett, Wasserflaschen in einer Kiste mit Tropfen-Symbol
 	var food := _crate_pickup("FoodShelf", "food", 6, 1, Vector3(0.2, y + 0.9, -4.12), Vector3(0.44, 0.08, 0.27), "food", Vector3(0, 0, 1))
+	food.restock = true   # Vorrat: Konserven lassen sich wieder hineinstellen
+	food.label = "Konservenkiste"
 	for i in 6:
 		var c := Node3D.new()
 		food.add_child(c)
 		Icons.food_can(c, Vector3(0.2 - 0.14 + (i % 3) * 0.14, y + 0.915, -4.12 - 0.06 + (i / 3) * 0.12))
 		food.visuals.append(c)
 	var water := _crate_pickup("WaterBottles", "water", 4, 1, Vector3(1.2, y + 0.9, -4.12), Vector3(0.36, 0.08, 0.26), "water", Vector3(0, 0, 1))
+	water.restock = true  # Vorrat: volle Wasserflaschen lassen sich wieder hineinstellen
+	water.label = "Wasserkiste"
 	var bottle_mat := BuildKit.color_mat(Color(0.45, 0.65, 0.8), 0.1)
 	var cap_mat := BuildKit.color_mat(Color(0.15, 0.3, 0.7), 0.5)
 	for i in 4:

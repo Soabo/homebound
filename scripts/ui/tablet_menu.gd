@@ -2,7 +2,7 @@ class_name TabletMenu
 extends CanvasLayer
 ## Das Tablet, solange man auf der Couch sitzt. Reiter:
 ##  Posteingang  – Mails und Nachrichten (links Liste, rechts Text)
-##  Alien-Archiv – vom Analysegerät gesendete Ergebnisse, Verknüpfungen
+##  Archiv – vom Analysegerät gesendete Ergebnisse, Verknüpfungen
 ##  Notizen      – gefundene Notizen
 ## Die Zeit läuft weiter. [E] legt das Tablet weg und man steht auf.
 
@@ -14,6 +14,7 @@ var _from: Label
 var _subject: Label
 var _body: Label
 var _hint: Label
+var _fixed: Label
 var _current: String = ""
 var _flicker: float = 0.0
 var _screen_bg: ColorRect
@@ -80,7 +81,7 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Alien-Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"]]:
+	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"]]:
 		var tb := Button.new()
 		tb.text = t[1]
 		tb.toggle_mode = true
@@ -100,6 +101,12 @@ func _ready() -> void:
 	_wide_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_wide_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_wide_scroll.visible = false
+	# feste Kopfzeile (Forschungsbaum): bleibt stehen, auch wenn man darunter scrollt
+	_fixed = _label("", 16, Color(0.75, 0.82, 0.9))
+	_fixed.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_fixed.custom_minimum_size = Vector2(0, 46)
+	_fixed.visible = false
+	v.add_child(_fixed)
 	v.add_child(_wide_scroll)
 	_wide = VBoxContainer.new()
 	_wide.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -188,12 +195,13 @@ func _refresh() -> void:
 	for id: String in _tabs:
 		(_tabs[id] as Button).button_pressed = id == _tab
 	var nb := _tabs["archive"] as Button
-	nb.text = "Alien-Archiv" + ("  ● %d neu" % Research.tablet_new if Research.tablet_new > 0 and _tab != "archive" else "")
+	nb.text = "Archiv" + ("  ● %d neu" % Research.tablet_new if Research.tablet_new > 0 and _tab != "archive" else "")
 	var tk := _tabs["tasks"] as Button
 	tk.text = "Aufgaben" + ("  ● %d neu" % Tasks.unseen if Tasks.unseen > 0 and _tab != "tasks" else "")
 	_split.visible = _tab == "inbox"
 	_wide_scroll.visible = _tab != "inbox"
 	_wide_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO if _tab == "tree" else ScrollContainer.SCROLL_MODE_DISABLED
+	_fixed.visible = _tab == "tree"
 	if _tab != "inbox":
 		for c in _wide.get_children():
 			c.queue_free()
@@ -205,16 +213,13 @@ func _refresh() -> void:
 		elif _tab == "tree":
 			_title.text = "Forschungsbaum"
 			_hint.text = "Kästchen anklicken für Einzelheiten.  Links: erste Funde, rechts: was darauf aufbaut.     [E] Tablet weglegen und aufstehen"
-			var detail := _label("Fremde Signatur gerade: %s     Laborplätze: %d     Projekte fertig: %d / %d" % [ResearchMenu.signature_bar(Research.signature()),
-				Research.lab_stations.size(), Research.done.size(), (Research.data().get("analyses", {}) as Dictionary).size()], 16, Color(0.75, 0.82, 0.9))
-			detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			detail.custom_minimum_size = Vector2(900, 48)
-			_wide.add_child(detail)
+			_fixed.text = "Fremde Signatur gerade: %s     Laborplätze: %d     Projekte fertig: %d / %d" % [ResearchMenu.signature_bar(Research.signature()),
+				Research.lab_stations.size(), Research.done.size(), (Research.data().get("analyses", {}) as Dictionary).size()]
 			var tree := ResearchTree.new()
-			tree.picked.connect(func(id: String) -> void: detail.text = ResearchTree.describe(id))
+			tree.picked.connect(func(id: String) -> void: _fixed.text = ResearchTree.describe(id))
 			_wide.add_child(tree)
 		elif _tab == "archive":
-			_title.text = "Alien-Archiv"
+			_title.text = "Archiv"
 			_hint.text = "Ergebnisse kommen vom Analysegerät in der Werkstatt.     [E] Tablet weglegen und aufstehen"
 			ResearchMenu.fill_archive(_wide)
 			Research.mark_tablet_seen.call_deferred()
@@ -312,13 +317,22 @@ func _process(delta: float) -> void:
 		close()
 
 
+## Flackern nur, wenn wirklich etwas da ist (nachts mit Aktivität oder ein Wesen in der Nähe).
 func flicker(seconds: float = 1.2) -> void:
-	_flicker = seconds
+	var threat := TimeManager.is_night() and (ThreatDirector._activity_tonight or ThreatDirector.creature != null \
+			or not get_tree().get_nodes_in_group("drone").is_empty() or not get_tree().get_nodes_in_group("mauler").is_empty())
+	if threat:
+		_flicker = seconds
 
 
 func _input(event: InputEvent) -> void:
 	if not _root.visible:
 		return
-	if event.is_action_pressed("interact") and not event.is_echo():
-		close()
+	if (event.is_action_pressed("interact") or event.is_action_pressed("pause_menu")) and not event.is_echo():
+		# erst ein groß geöffnetes Bild schließen
+		var big := _root.get_parent().get_node_or_null("BigPicture") if _root.get_parent() else null
+		if big:
+			big.queue_free()
+		else:
+			close()
 		get_viewport().set_input_as_handled()

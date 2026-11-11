@@ -19,12 +19,13 @@ func _ready() -> void:
 		BuildKit.box(self, Vector3(0.5, 0.3, 0.012), Vector3(0, 0.15, s * 0.19), card, false)
 		BuildKit.box(self, Vector3(0.012, 0.3, 0.38), Vector3(s * 0.25, 0.15, 0), card, false)
 	var lab := Label3D.new()
-	lab.text = "FIRMA – nicht wegwerfen!"
-	lab.font_size = 36
+	lab.text = "FIRMA –\nnicht wegwerfen!"   # zweizeilig, passt auf die Kartonseite
+	lab.font_size = 28
+	lab.line_spacing = -4.0
 	lab.pixel_size = 0.0018
 	lab.modulate = Color(0.1, 0.1, 0.12)
 	lab.outline_size = 0
-	lab.position = Vector3(0, 0.17, 0.198)
+	lab.position = Vector3(0, 0.155, 0.198)
 	add_child(lab)
 	_lid = Node3D.new()
 	_lid.position = Vector3(0, 0.3, -0.19)

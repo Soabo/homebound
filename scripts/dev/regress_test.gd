@@ -346,6 +346,36 @@ func _t_more() -> void:
 	await _t_terrain_steps()
 	_t_tasks_saved()
 	await _t_seeker_house()
+	_t_list_nov11()
+
+
+## Änderungsliste 11.11.: Sendezähler, Speis-Kisten, Lagerfeuer, Generator.
+func _t_list_nov11() -> void:
+	# Zwei Experimente am selben Projekt zählen beim Senden nur einmal
+	var keep_exp: Dictionary = Research.experiments.duplicate(true)
+	var keep_done: Array = Research.done.duplicate()
+	var keep_sent: Array = Research.sent.duplicate()
+	Research.experiments = {"an_test_x": ["e1", "e2"]}
+	Research.done = []
+	Research.sent = []
+	_ok("Senden: zwei Experimente desselben Funds zählen 1", Research.unsent_count() == 1)
+	Research.experiments = keep_exp
+	Research.done.assign(keep_done)
+	Research.sent = keep_sent
+	# Speis: Konserve zurückstellen
+	var shelf := _scene().find_child("FoodShelf", true, false) as ItemPickup
+	_ok("Speis: Konservenkiste ist ein Lager", shelf != null and shelf.restock)
+	if shelf:
+		var before := shelf.amount
+		shelf.amount = 0
+		Inventory.add("food", 1)
+		shelf.secondary_interact(_player())
+		_ok("Speis: Konserve lässt sich wieder hineinstellen", shelf.amount == 1)
+		shelf.amount = before
+		shelf._update_visuals()
+	_ok("Lagerfeuer: nur eines tragbar", int(DataDB.item("campfire").get("stack", 99)) == 1)
+	_ok("Diktiergerät und Gießkanne sind Hand-Gegenstände", String(DataDB.item("dictaphone").get("hand", "")) == "dictaphone"
+		and String(DataDB.item("watering_can").get("hand", "")) == "watering_can")
 
 
 ## Der Sucher lief an der Hütte durch die Wände hinein und schlug den Spieler im Haus (Christian, 11.11.).

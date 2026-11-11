@@ -1,6 +1,6 @@
 class_name WoodBasket
 extends Interactable
-## Holzkorb vor dem Kamin: Anfangs liegt 1 Holz darin, Platz für bis zu 4.
+## Holzkorb vor dem Kamin (filigraner Metallständer): Anfangs liegt 1 Holz darin, Platz für bis zu 4.
 ## [E] Holz herausnehmen, [R] Holz aus dem Rucksack hineinlegen. Füllstand ist Teil des Spielstands.
 
 const MAX := 4
@@ -11,15 +11,44 @@ var _logs: Array[Node3D] = []
 func _ready() -> void:
 	add_to_group("persistent")
 	add_to_group("wood_basket")
-	var staves := BuildKit.tex_mat("planks_v", 0.4, Color(0.8, 0.7, 0.6))
-	BuildKit.cylinder(self, 0.25, 0.3, Vector3(0, 0.15, 0), staves, true, Vector3.ZERO, 0.22, 10)
-	# Boden innen dunkel, damit ein leerer Korb auch leer aussieht
-	BuildKit.cylinder(self, 0.21, 0.01, Vector3(0, 0.05, 0), BuildKit.color_mat(Color(0.18, 0.13, 0.09), 0.9), false, Vector3.ZERO, -1.0, 10)
+	# Filigraner Metallkorb (Kaminholzständer): dünne Eisenstäbe, man sieht die Scheite
+	var iron := BuildKit.color_mat(Color(0.09, 0.09, 0.1), 0.45, 0.8)
+	const L := 0.52     # Länge (x)
+	const D := 0.40     # Tiefe (z)
+	const T := 0.012    # Stabstärke
+	# Bodenrahmen + Querstreben, auf denen die Scheite liegen
+	for sz: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(L, T, T), Vector3(0, 0.035, sz * D * 0.5), iron, false)
+	for sx: float in [-0.17, 0.0, 0.17]:
+		BuildKit.box(self, Vector3(T, T, D), Vector3(sx, 0.035, 0), iron, false)
+	# Stirnseiten: U-Bügel mit Mittelstab
+	for sx: float in [-1.0, 1.0]:
+		var x := sx * L * 0.5
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(self, Vector3(T, 0.36, T), Vector3(x, 0.18, sz * D * 0.5), iron, false)
+		BuildKit.box(self, Vector3(T, T, D + T), Vector3(x, 0.36, 0), iron, false)
+		BuildKit.box(self, Vector3(T, 0.32, T), Vector3(x, 0.19, 0), iron, false)
+		# kleine Füße
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(self, Vector3(0.04, 0.03, 0.04), Vector3(x, 0.015, sz * D * 0.5), iron, false)
+	# niedrige Längsstäbe an den Seiten halten die Scheite
+	for sz: float in [-1.0, 1.0]:
+		BuildKit.box(self, Vector3(L, T, T), Vector3(0, 0.17, sz * D * 0.5), iron, false)
+	# Scheite: 3 unten nebeneinander, 1 oben in der Mulde – liegen auf den Streben, nichts steckt im Metall
 	var bark := BuildKit.tex_mat("logs", 0.5)
-	var spots := [Vector3(-0.07, 0.12, 0), Vector3(0.07, 0.12, 0), Vector3(-0.0, 0.22, 0.02), Vector3(0.0, 0.22, -0.06)]
+	var spots := [Vector3(0, 0.103, -0.125), Vector3(0, 0.103, 0.0), Vector3(0, 0.103, 0.125), Vector3(0, 0.21, -0.062)]
 	for i in MAX:
-		var l := BuildKit.cylinder(self, 0.06, 0.48, spots[i], bark, false, Vector3(90, 25 * i - 20, 0), -1.0, 6)
+		var l := BuildKit.cylinder(self, 0.056, 0.46, spots[i], bark, false, Vector3(0, 0, 90), -1.0, 7)
 		_logs.append(l)
+	# fester Körper, damit man nicht hindurchläuft (unsichtbar)
+	var body := StaticBody3D.new()
+	var bcs := CollisionShape3D.new()
+	var bsh := BoxShape3D.new()
+	bsh.size = Vector3(L, 0.36, D)
+	bcs.shape = bsh
+	bcs.position = Vector3(0, 0.18, 0)
+	body.add_child(bcs)
+	add_child(body)
 	# zum Anvisieren: etwas größer als der Korb
 	var area := Area3D.new()
 	var cs := CollisionShape3D.new()

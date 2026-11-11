@@ -79,6 +79,8 @@ func get_prompt(_p: Node) -> String:
 				return "Hochbeet: %s  (heute gegossen)" % info
 			if Inventory.count("watering_can") <= 0:
 				return "Hochbeet: %s  – braucht Wasser (Gießkanne)" % info
+			if Inventory.equipped() != "watering_can":
+				return "Hochbeet: %s  – Gießkanne in die Hand nehmen (Schnellplatz)" % info
 			if Supplies.can_water <= 0:
 				return "Hochbeet: %s  – Gießkanne leer, an Regentonne/Wasserhahn füllen (R)" % info
 			return "Hochbeet: %s  [E] gießen  (Kanne %d/%d)" % [info, Supplies.can_water, Supplies.config.watering_can_charges]

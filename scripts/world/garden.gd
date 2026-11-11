@@ -175,7 +175,7 @@ func _build_props() -> void:
 
 
 ## Regentonne aus Holzdauben mit Eisenreifen, Zapfhahn, Wasser mit Laub,
-## halbem Deckel, Schöpfkelle und Gießkanne daneben.
+## halbem Deckel und Schöpfkelle (die Gießkanne steht bei den Hochbeeten).
 func _build_rain_barrel(at: Vector3) -> void:
 	var root := Node3D.new()
 	root.name = "RainBarrelModel"
@@ -271,18 +271,6 @@ func _build_rain_barrel(at: Vector3) -> void:
 	for k in 7:
 		var a := _rng.randf() * TAU
 		BuildKit.sphere(root, 0.07, Vector3(cos(a) * 0.38, y0 + 0.02, sin(a) * 0.38), BuildKit.tex_mat("moss", 0.3), Vector3(1.2, 0.5, 1.0), 6)
-	# Verzinkte Gießkanne daneben
-	var can := Node3D.new()
-	can.position = Vector3(0.62, 0.0, 0.35)
-	can.rotation_degrees.y = 35.0
-	root.add_child(can)
-	var zinc := BuildKit.tex_mat("metal", 0.25, Color(1.35, 1.4, 1.4), 0.5)
-	BuildKit.lathe(can, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.13, 0.0), Vector2(0.14, 0.02), Vector2(0.13, 0.3), Vector2(0.1, 0.33), Vector2(0.0, 0.34)]), Vector3.ZERO, zinc, 14)
-	BuildKit.cylinder(can, 0.015, 0.4, Vector3(0.22, 0.2, 0), zinc, false, Vector3(0, 0, -55), 0.025, 8)
-	BuildKit.cylinder(can, 0.045, 0.04, Vector3(0.38, 0.32, 0), zinc, false, Vector3(0, 0, -55), 0.05, 10)
-	BuildKit.box(can, Vector3(0.24, 0.02, 0.02), Vector3(-0.02, 0.43, 0), zinc, false)
-	BuildKit.box(can, Vector3(0.02, 0.12, 0.02), Vector3(-0.13, 0.37, 0), zinc, false)
-	BuildKit.box(can, Vector3(0.02, 0.1, 0.02), Vector3(0.09, 0.38, 0), zinc, false)
 
 
 func _garden_tree(pos: Vector3, s: float) -> void:

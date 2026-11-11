@@ -78,6 +78,10 @@ func _visual(p: ItemPickup, item: String, loose: bool) -> void:
 	var glow := CrashSite.glow_material()
 	var grey := BuildKit.color_mat(Color(0.42, 0.4, 0.43), 0.6)
 	match item:
+		"bottle_empty":
+			# alte grüne Glasflasche im Laub
+			BuildKit.cylinder(v, 0.035, 0.2, Vector3(0, 0.035, 0), _glass(Color(0.25, 0.45, 0.25, 0.75)), false, Vector3(90, 0, 0), -1.0, 8)
+			BuildKit.cylinder(v, 0.013, 0.07, Vector3(0, 0.035, 0.13), _glass(Color(0.25, 0.45, 0.25, 0.75)), false, Vector3(90, 0, 0), -1.0, 6)
 		"creature_shed":
 			for k in 3:
 				BuildKit.box(v, Vector3(0.35 - k * 0.08, 0.01, 0.22), Vector3(k * 0.05, 0.01 + k * 0.012, k * 0.03), BuildKit.color_mat(Color(0.55, 0.52, 0.48), 0.8), false, Vector3(0, k * 25.0, 4.0))

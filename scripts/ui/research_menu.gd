@@ -13,6 +13,8 @@ var _station: String = "device"
 var _note: String = ""
 var _last_result: String = ""
 var _tick: float = 0.0
+var _exp_running: String = ""   ## laufendes Experiment (ID)
+var _exp_left: float = 0.0
 
 
 func _ready() -> void:
@@ -124,6 +126,10 @@ func close() -> void:
 
 
 func _process(delta: float) -> void:
+	if _exp_running != "":
+		_exp_left -= delta
+		if _exp_left <= 0.0 or _mode != "station":
+			_finish_experiment()
 	if _mode in ["station", "lab"]:
 		_tick -= delta
 		if _tick <= 0.0:
@@ -200,8 +206,12 @@ func _fill_station() -> void:
 				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				row.add_child(l)
 				var blocker := Research.experiment_blocker(exp, st)
-				if blocker != "":
+				if _exp_running == eid:
+					row.add_child(_text("läuft … %d s" % int(ceil(_exp_left)), 16, Color(1.0, 0.85, 0.5)))
+				elif blocker != "":
 					row.add_child(_text(blocker, 16, Color(0.85, 0.55, 0.45)))
+				elif _exp_running != "":
+					row.add_child(_text("warten …", 16, Color(0.6, 0.6, 0.55)))
 				else:
 					var b := _button("Durchführen")
 					b.pressed.connect(_on_experiment.bind(eid))
@@ -209,11 +219,15 @@ func _fill_station() -> void:
 			_list.add_child(row)
 		if _last_result != "":
 			_list.add_child(_text(_last_result, 18, Color(1.0, 0.9, 0.6)))
-		var out := _button("Herausnehmen")
+		var finished := Research.done.has(id)
+		var out := _button("Fund herausnehmen" if finished else "Herausnehmen")
 		out.pressed.connect(func() -> void: Research.take_out(st))
 		_list.add_child(out)
-	else:
-		_list.add_child(_text("Frei.", 22, Color(0.85, 1.0, 1.0)))
+		if finished:
+			_list.add_child(_text("Fertig untersucht. Der Fund liegt noch im Gerät – legst du etwas Neues ein, kommt er zurück in den Rucksack.", 16, Color(0.6, 0.85, 0.7)))
+	if id == "" or Research.done.has(id):
+		if id == "":
+			_list.add_child(_text("Frei.", 22, Color(0.85, 1.0, 1.0)))
 		var avail := Research.available_projects(st)
 		var any := false
 		for pid: String in avail:
@@ -273,13 +287,13 @@ static func _effect_hint(effect: String) -> String:
 
 func _add_send_button() -> void:
 	# Ergebnisse werden nicht hier gelesen, sondern aufs Tablet geschickt
-	var unsent := Research.unsent_results().size()
+	var unsent := Research.unsent_count()
 	if unsent > 0:
 		var send := _button("Ergebnisse ans Tablet senden (%d)" % unsent)
 		send.custom_minimum_size = Vector2(320, 42)
 		send.pressed.connect(func() -> void:
 			if Research.send_results() > 0:
-				_last_result = "Gesendet. Nachlesen auf dem Tablet (Couch) im Alien-Archiv."
+				_last_result = "Gesendet. Nachlesen auf dem Tablet (Couch) im Archiv."
 				SoundBank.play_ui(self, "signal", -10.0, 1.8)
 			_refresh())
 		_list.add_child(send)
@@ -293,7 +307,19 @@ func _on_insert(pid: String) -> void:
 		SoundBank.play_ui(self, "menu_click", -4.0)
 
 
+## Ein Experiment dauert einen kurzen Moment (research.json lab.experiment_seconds), dann liegt das Ergebnis vor.
 func _on_experiment(eid: String) -> void:
+	if _exp_running != "":
+		return
+	_exp_running = eid
+	_exp_left = float(Research.lab_def().get("experiment_seconds", 3.0))
+	SoundBank.play_ui(self, "static", -14.0, 1.2)
+	_refresh()
+
+
+func _finish_experiment() -> void:
+	var eid := _exp_running
+	_exp_running = ""
 	var r := Research.run_experiment(eid, _station)
 	if r != "":
 		_last_result = "Experiment durchgeführt – das Ergebnis kann ans Tablet gesendet werden."
@@ -400,13 +426,14 @@ static func signature_bar(sig: float) -> String:
 
 # --- Archiv -------------------------------------------------------------
 
-## Alien-Archiv (für das Tablet): nur Ergebnisse, die vom Analysegerät gesendet wurden.
+## Archiv (für das Tablet): nur Ergebnisse, die vom Analysegerät gesendet wurden.
 static func fill_archive(list: VBoxContainer) -> void:
 	var total := (Research.data().get("analyses", {}) as Dictionary).size()
 	var sent_done := Research.done.filter(func(id: String) -> bool: return Research.is_sent(id)).size()
 	list.add_child(_text("Analysen %d / %d     Erkenntnisse %d / %d     Gerät: %s" % [sent_done, total,
 		Research.links_done.size(), (Research.data().get("links", {}) as Dictionary).size(), Research.device_name()], 16, Color(0.6, 0.7, 0.75)))
 	var analyses: Dictionary = Research.data().get("analyses", {})
+	var listed_finds := {}   # Funde, die schon als „noch nicht untersucht“ dastehen (keine Doppelten)
 	for area: String in Research.data().get("areas", []):
 		list.add_child(_text(area, 22, Color(0.7, 0.95, 1.0)))
 		var any := false
@@ -431,9 +458,12 @@ static func fill_archive(list: VBoxContainer) -> void:
 			elif Research.running_at(id) != "" or not sent_exp.is_empty() or Research.done.has(id):
 				var state := "Analyse fertig – Ergebnis noch am Analysegerät" if Research.done.has(id) else "wird untersucht (%d %%)" % int(Research.progress_of(id) * 100.0)
 				col.add_child(_text("◐ %s – %s" % [a.get("name", id), state], 17, Color(0.8, 0.85, 0.7)))
-			elif Research.seen.has(find):
+			elif Research.seen.has(find) and Research.requirements_met(id) and not listed_finds.has(find + "/" + str(a.get("requires", []).is_empty())):
+				# Folgeprojekte (mit Voraussetzung) erst, wenn sie möglich sind – und unter eigenem Namen
+				listed_finds[find + "/" + str(a.get("requires", []).is_empty())] = true
 				var pr := Research.progress_of(id)
-				col.add_child(_text("○ Fund: %s – noch nicht untersucht%s" % [Inventory.display_name(find), (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
+				var title := ("Fund: %s" % Inventory.display_name(find)) if (a.get("requires", []) as Array).is_empty() else ("%s (%s)" % [a.get("name", id), Inventory.display_name(find)])
+				col.add_child(_text("○ %s – noch nicht untersucht%s" % [title, (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
 			else:
 				continue
 			any = true
@@ -450,6 +480,15 @@ static func fill_archive(list: VBoxContainer) -> void:
 				tr.custom_minimum_size = Vector2(210, 210) if revealed else Vector2(90, 90)
 				tr.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 				tr.modulate = Color.WHITE if revealed else Color(0.25, 0.27, 0.3)
+				if revealed:
+					# anklicken = groß ansehen
+					tr.mouse_filter = Control.MOUSE_FILTER_STOP
+					tr.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+					tr.tooltip_text = "Anklicken: groß ansehen"
+					var title2 := String(a.get("name", id))
+					tr.gui_input.connect(func(ev: InputEvent) -> void:
+						if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+							show_big_picture(tr, pic, title2))
 				row.add_child(tr)
 			row.add_child(col)
 			list.add_child(row)
@@ -458,6 +497,7 @@ static func fill_archive(list: VBoxContainer) -> void:
 	# Verknüpfungen und Hypothesen
 	list.add_child(_text("Verknüpfungen und Hypothesen", 22, Color(1.0, 0.85, 0.55)))
 	var links: Dictionary = Research.data().get("links", {})
+	var hidden_q := 0
 	for lid in links:
 		var l: Dictionary = links[lid]
 		if Research.links_done.has(lid):
@@ -475,11 +515,56 @@ static func fill_archive(list: VBoxContainer) -> void:
 			row.add_child(b)
 			list.add_child(row)
 		else:
+			# nur Fragen zeigen, zu denen man schon eine Spur hat
 			var parts: PackedStringArray = []
+			var known := 0
 			for n: String in l.get("needs", []):
 				var a := Research.analysis(n)
-				parts.append(String(a.get("name", "?")) if Research.done.has(n) and Research.is_sent(n) else "???")
-			list.add_child(_text("? Offene Frage – braucht: %s" % ", ".join(parts), 16, Color(0.6, 0.6, 0.55)))
+				if Research.done.has(n) and Research.is_sent(n):
+					known += 1
+					parts.append(String(a.get("name", "?")))
+				else:
+					parts.append("???")
+			if known > 0:
+				list.add_child(_text("? Offene Frage – braucht: %s" % ", ".join(parts), 16, Color(0.6, 0.6, 0.55)))
+			else:
+				hidden_q += 1
+	if hidden_q > 0:
+		list.add_child(_text("… und %d weitere Fragen, zu denen dir noch jede Spur fehlt." % hidden_q, 15, Color(0.5, 0.52, 0.5)))
+
+
+## Forschungsbild groß über dem Tablet (Klick oder Esc schließt).
+static func show_big_picture(from: Control, pic: Texture2D, title: String) -> void:
+	var layer: Node = from
+	while layer and not (layer is CanvasLayer):
+		layer = layer.get_parent()
+	if layer == null:
+		return
+	var over := Control.new()
+	over.name = "BigPicture"
+	over.set_anchors_preset(Control.PRESET_FULL_RECT)
+	over.mouse_filter = Control.MOUSE_FILTER_STOP
+	var bg := ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.88)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	over.add_child(bg)
+	var tr := TextureRect.new()
+	tr.texture = pic
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.offset_top = 60
+	tr.offset_bottom = -60
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	over.add_child(tr)
+	var l := _text("%s      (Klicken oder Esc: schließen)" % title, 22, Color(0.9, 0.9, 0.85))
+	l.position = Vector2(40, 18)
+	over.add_child(l)
+	over.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed:
+			over.queue_free())
+	layer.add_child(over)
 
 
 ## Bild zum Fund aus assets/research/<id>.jpg|png (KI-Bilder von Christian), sonst null.
