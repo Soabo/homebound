@@ -345,6 +345,28 @@ func _t_more() -> void:
 	await _t_forest_steps()
 	await _t_terrain_steps()
 	_t_tasks_saved()
+	await _t_seeker_house()
+
+
+## Der Sucher lief an der Hütte durch die Wände hinein und schlug den Spieler im Haus (Christian, 11.11.).
+func _t_seeker_house() -> void:
+	var p := _player()
+	p.global_position = Vector3(-2.0, Cabin.FLOOR_Y + 0.1, 1.0)
+	Tasks.flags.erase("seeker_struck")
+	var sk := Seeker.spawn_for(_scene(), Vector3.ZERO)
+	sk.global_position = Mauler._ground(Vector3(0, 0, 30))
+	sk._investigate(p.global_position)
+	var was_inside := false
+	for i in 900:
+		await get_tree().process_frame
+		was_inside = was_inside or Cabin.is_inside(sk.global_position)
+		if not is_instance_valid(sk):
+			break
+	_ok("Sucher: kommt nicht in die Hütte", not was_inside)
+	_ok("Sucher: schlägt niemanden im Haus", not Tasks.flags.has("seeker_struck"))
+	if is_instance_valid(sk):
+		sk.queue_free()
+	await _frames(2)
 
 
 ## Beim allerersten Hinsetzen nach dem Laden gab es eine Fehlermeldung (kein vorheriges Hinsetzen gemerkt).

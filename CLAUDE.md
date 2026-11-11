@@ -201,6 +201,7 @@
   Dürr, ~2,7 m, Augenschlitz mit vielen kleinen Lichtern. Erscheint, beobachtet lange, sucht ab; reagiert auf Licht
   (Uhr, Licht im Zelt, Feuer), Geräusche (`noise_made`) und W-17 (`Inventory "w17"`).
   Findet er dich: Schlag bzw. Zelt aufreißen (nie unter `min_health`), dann Teleporterblitz. Test: `--night-test=camp`.
+  In Hütte und Schuppen kommt er nicht (`Seeker.outside`, Umweg um die Wände); wer drinnen ist, wird nicht geschlagen.
 - Tests: `--night-test=map` (Rechenzeit, Nachladen), `--night-test=places` (alle Orte, Funde, Mechaniken).
 
 ## Prüfrunde „runder und fehlerfreier“ (11/2026)

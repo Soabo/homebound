@@ -63,7 +63,27 @@ func _ground(p: Vector3) -> Vector3:
 func _go(points: Array) -> void:
 	_path.clear()
 	for q: Vector3 in points:
-		_path.append(q)
+		_path.append(outside(q))
+
+
+## In Hütte und Schuppen kommt er nicht: Punkte darin werden nach draußen vor die Wand geschoben.
+static func outside(p: Vector3) -> Vector3:
+	var q := p
+	for c: Vector3 in [Vector3.ZERO, Shed.ORIGIN]:
+		var guard := 0
+		while (Cabin.is_inside(q) or Shed.is_inside(q)) and guard < 40:
+			var dir := Vector3(q.x - c.x, 0, q.z - c.z)
+			if dir.length() < 0.1:
+				dir = Vector3(0, 0, 1)
+			q += dir.normalized() * 0.5
+			guard += 1
+	if q != p:
+		q.y = Terrain.height_at(q.x, q.z)
+	return q
+
+
+static func _blocked(p: Vector3) -> bool:
+	return Cabin.is_inside(p) or Shed.is_inside(p)
 
 
 # --- Aussehen ------------------------------------------------------------------
@@ -175,6 +195,16 @@ func _move(delta: float) -> void:
 		return
 	var step := to.normalized() * _speed() * delta
 	var p := global_position + step
+	if _blocked(p):
+		# um die Hütte / den Schuppen herum statt hindurch
+		var c := Shed.ORIGIN if Shed.is_inside(p) else Vector3.ZERO
+		var out := Vector3(global_position.x - c.x, 0, global_position.z - c.z).normalized()
+		var tan := Vector3(-out.z, 0, out.x)
+		if tan.dot(to) < 0.0:
+			tan = -tan
+		p = global_position + tan * _speed() * delta
+		if _blocked(p):
+			p = global_position + out * _speed() * delta
 	p.y = Terrain.height_at(p.x, p.z)
 	global_position = p
 	_face(goal, delta)
@@ -299,7 +329,7 @@ func _investigate_done() -> void:
 		_hold = 5.0
 		_start_search()
 		return
-	if camp == null and d < 2.2 and not _player.is_hidden():
+	if camp == null and d < 2.2 and not _player.is_hidden() and not _blocked(_player.global_position):
 		_strike(null)
 		return
 	_start_search()
