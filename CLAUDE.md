@@ -180,7 +180,10 @@
   (Flucht vor hellem Licht, `MaulerConfig.tooth_chance`, 1× pro Tag; dazu morgens im Wald, drops after „mauler“),
   `seeker_ash` (wo der Sucher im Blitz verschwindet: nach einem Schlag immer, beim Abziehen `SeekerConfig.ash_leave_chance`;
   er verschwindet jetzt auch beim Abziehen mit einem Blitz).
-- Nachgeholt am 12.11.: `tools/run_tests.sh` komplett gelaufen (Godot 4.7.2 von GitHub geladen: Godot_v4.7.2-stable_linux.x86_64.zip).
+- Nachgeholt am 12.11. (Godot 4.7.2 von GitHub geladen: Godot_v4.7.2-stable_linux.x86_64.zip): alle Nacht-, Lauf-, Daten-,
+  Rückfall- und Bildraten-Tests ohne Fehler. OFFEN im 15-Tage-Durchlauf: „Nach der Nacht von Tag 11 ist Tag 13“ (Zeltnacht,
+  zwei Zeltnacht-Planungen hintereinander) – noch nicht untersucht, ob das am langsamen Workspace liegt oder echt ist.
+  Die Meldung „Lambda capture … was freed“ nach dem Neuladen kam aus `SoundBank.play_at` (Aufräum-Timer für Klangschleifen) – behoben.
 
 ## Große Welt (Open World, ca. 2,2 x 2,2 km)
 - Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,

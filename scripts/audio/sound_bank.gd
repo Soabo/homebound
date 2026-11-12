@@ -151,9 +151,8 @@ static func play_stream_at(parent: Node, stream: AudioStream, pos: Vector3, volu
 	var loops := (stream is AudioStreamWAV and (stream as AudioStreamWAV).loop_mode != AudioStreamWAV.LOOP_DISABLED) \
 			or (stream is AudioStreamOggVorbis and (stream as AudioStreamOggVorbis).loop)
 	if loops:
-		p.get_tree().create_timer(1.2).timeout.connect(func() -> void:
-			if is_instance_valid(p):
-				p.queue_free())
+		# direkt an den Spieler gebunden: ist er schon weg (Szene neu geladen), passiert einfach nichts
+		p.get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
 
 ## Spielt einen Klang ohne Position (z. B. Herzschlag, Benutzeroberfläche).
