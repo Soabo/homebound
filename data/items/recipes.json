@@ -1,5 +1,5 @@
 {
-  "_info": "Werkbank-Rezepte (GDD 6/7.2/12.7). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand, requires = nötige Forschung (Verknüpfung aus data/research/research.json), blueprint = nötiger Bauplan (in der Welt gefunden).",
+  "_info": "Werkbank-Rezepte (GDD 6/7.2/12.7). needs = Zutaten, gives = Ergebnis, special = Sonderwirkung statt Gegenstand, requires = nötige Forschung (Verknüpfung aus data/research/research.json), blueprint = nötiger Bauplan (in der Welt gefunden). Baupläne mit Freischalt-Auslösern und grauem Hinweis: data/research/blueprints.json.",
   "recipes": [
     {
       "id": "planks",
@@ -37,7 +37,8 @@
       },
       "gives": {
         "spike_barricade": 1
-      }
+      },
+      "blueprint": "bp_spikes"
     },
     {
       "id": "stone_wall",
@@ -46,7 +47,8 @@
       },
       "gives": {
         "stone_wall": 1
-      }
+      },
+      "blueprint": "bp_stone"
     },
     {
       "id": "bear_trap",
@@ -56,7 +58,8 @@
       },
       "gives": {
         "bear_trap": 1
-      }
+      },
+      "blueprint": "bp_traps"
     },
     {
       "id": "snare",
@@ -66,7 +69,8 @@
       },
       "gives": {
         "snare": 2
-      }
+      },
+      "blueprint": "bp_traps"
     },
     {
       "id": "gasifier_kit",
@@ -79,7 +83,8 @@
       },
       "gives": {
         "gasifier_kit": 1
-      }
+      },
+      "blueprint": "bp_gasifier"
     },
     {
       "id": "cell_adapter",
@@ -192,7 +197,8 @@
       },
       "gives": {
         "can_alarm": 1
-      }
+      },
+      "blueprint": "bp_cans"
     },
     {
       "id": "motion_light",
@@ -203,7 +209,8 @@
       },
       "gives": {
         "motion_light": 1
-      }
+      },
+      "blueprint": "bp_motion"
     },
     {
       "id": "analyzer_improvised",
@@ -250,7 +257,8 @@
       },
       "gives": {
         "water_filter": 1
-      }
+      },
+      "blueprint": "bp_filter"
     },
     {
       "id": "signal_jammer",
@@ -337,7 +345,8 @@
       },
       "gives": {
         "sleeping_bag": 1
-      }
+      },
+      "blueprint": "bp_wool"
     },
     {
       "id": "campfire",
@@ -347,7 +356,8 @@
       },
       "gives": {
         "campfire": 1
-      }
+      },
+      "blueprint": "bp_stone"
     },
     {
       "id": "candle_light",
@@ -357,7 +367,8 @@
       },
       "gives": {
         "candles": 3
-      }
+      },
+      "blueprint": "bp_wax"
     },
     {
       "id": "door_upgrade",
@@ -367,7 +378,8 @@
         "planks": 4,
         "nails": 12
       },
-      "special": "door_upgrade"
+      "special": "door_upgrade",
+      "blueprint": "bp_secure"
     },
     {
       "id": "mind_dampener",

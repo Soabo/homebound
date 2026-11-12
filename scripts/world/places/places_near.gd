@@ -153,6 +153,8 @@ static func _imkerei(root: Node3D) -> void:
 	BuildKit.box(h, Vector3(1.4, 0.8, 0.7), Vector3(1.6, 0.4, -1.5), PlaceKit.mat("wood_h"), true)
 	BuildKit.box(h, Vector3(0.4, 0.3, 0.3), Vector3(1.4, 0.95, -1.5), PlaceKit.mat("tin"), false)
 	PlaceKit.note(h, "imkerei_notiz", Vector3(0.4, 1.2, 2.06), true)
+	# Bauplan: Leuchte mit Bewegungsmelder (Brandl schützte so die Bienenstöcke)
+	PlaceKit.blueprint(h, "bp_motion", "Bewegungsmelder-Leuchte", Vector3(1.95, 0.81, -1.4))
 	BuildKit.box(h, Vector3(0.25, 0.32, 0.01), Vector3(0.4, 1.3, 2.08), PlaceKit.mat("paper"), false)
 	var sign := Label3D.new()
 	sign.text = "IMKEREI BRANDL\nHonig vom Waldrand"

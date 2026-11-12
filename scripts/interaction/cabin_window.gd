@@ -131,6 +131,8 @@ func get_prompt(_player: Node) -> String:
 
 
 func get_secondary_prompt(_player: Node) -> String:
+	if barricade <= 0.0 and not Research.blueprints.has("bp_secure"):
+		return ""   # erst nach der ersten unruhigen Nacht (Christian)
 	if barricade <= 0.0:
 		return "[R] Verbarrikadieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	if barricade < max_barricade:
@@ -140,6 +142,8 @@ func get_secondary_prompt(_player: Node) -> String:
 
 func secondary_interact(_player: Node) -> void:
 	var need := 2 if barricade <= 0.0 else 1
+	if barricade <= 0.0 and not Research.blueprints.has("bp_secure"):
+		return
 	if barricade >= max_barricade:
 		return
 	if not Inventory.remove_all({"planks": need, "nails": need * 2}):

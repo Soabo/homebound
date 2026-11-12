@@ -29,7 +29,7 @@ func interact(_player: Node) -> void:
 static func craft(recipe: Dictionary, scene_tree: SceneTree) -> String:
 	var needs: Dictionary = recipe.get("needs", {})
 	if not Research.recipe_unlocked(recipe):
-		return "Dafür fehlt dir noch eine Erkenntnis aus der Forschung."
+		return "Dafür fehlt dir noch der Bauplan."
 	if not Inventory.has_all(needs):
 		return "Dir fehlen Materialien."
 	var special: String = recipe.get("special", "")

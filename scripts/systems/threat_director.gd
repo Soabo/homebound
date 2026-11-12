@@ -105,6 +105,11 @@ func _on_phase_changed(is_night: bool) -> void:
 	# Morgengrauen: Kreatur verschwindet, Spuren der Nacht bleiben, nächste Nacht wird geplant.
 	if is_instance_valid(creature):
 		creature.call("leave")
+	# Merker für Baupläne: erste unruhige Nacht, erster Besuch der Kreatur am Haus
+	if _activity_tonight:
+		Tasks.flag("unrest_night")
+		if _kinds_tonight.has("creature") and night_kind in ["visit", "hunt"] and not far_from_home():
+			Tasks.flag("creature_visited")
 	if scene and _activity_tonight and _rng.randf() < config.night_change_chance:
 		get_tree().call_group("night_changes", "morning", _rng.randi_range(config.night_change_count.x, config.night_change_count.y), config.night_change_days)
 		_kinds_tonight.append("change")

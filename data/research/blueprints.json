@@ -1,0 +1,51 @@
+{
+  "_info": "Baupläne, die nach und nach freigeschaltet werden (Christian 12.11.2026). Rezepte in data/items/recipes.json verweisen mit \"blueprint\" auf eine ID hier. on = Auslöser: item (Gegenstand zum ersten Mal im Rucksack, auch Liste), flag (Tasks.flag, z. B. unrest_night = Morgen nach der ersten Nacht mit Alien-Aktivität, creature_visited = Kreatur war am Haus, radio_day_N = Funkmeldung von Tag N gehört), fuel_below (Dieseltank in Prozent). Ohne on = Bauplan muss in der Welt gefunden werden (PlaceKit.blueprint). hint = graue Zeile an der Werkbank, text = Meldung beim Freischalten. Holzsachen (Bretter, Nägel, Holzzaun) brauchen keinen Bauplan.",
+  "bp_stone": {
+    "on": {"item": "stone"},
+    "hint": "Dafür fehlen noch Steine.",
+    "text": "Steine! Damit lassen sich eine Feuerstelle und ein Steinwall bauen. (Werkbank)"
+  },
+  "bp_cans": {
+    "on": {"item": "cans"},
+    "hint": "Mit alten Blechdosen ließe sich etwas basteln …",
+    "text": "Blechdosen – aufgefädelt klappern die herrlich laut. Neuer Bauplan: Dosenalarm. (Werkbank)"
+  },
+  "bp_wax": {
+    "on": {"item": "wax"},
+    "hint": "Kerzen – aber woraus?",
+    "text": "Bienenwachs. Daraus kann ich Kerzen ziehen. (Werkbank)"
+  },
+  "bp_wool": {
+    "on": {"item": ["wool", "sheepskin"]},
+    "hint": "Für einen Schlafsack bräuchte man Wolle und ein Fell.",
+    "text": "Wolle und Fell – damit ließe sich ein Schlafsack nähen. (Werkbank)"
+  },
+  "bp_secure": {
+    "on": {"flag": "unrest_night"},
+    "hint": "Noch fühlt sich die Hütte sicher an.",
+    "text": "Nach dieser Nacht: Die Hütte muss sicherer werden. Neu: Haustür verstärken (Werkbank) und Fenster verbarrikadieren (am Fenster R)."
+  },
+  "bp_spikes": {
+    "on": {"flag": "creature_visited"},
+    "hint": "Wozu? Bis jetzt ist nichts bis ans Haus gekommen.",
+    "text": "Es war am Haus. Wenn es wiederkommt, soll es sich wehtun. Neuer Bauplan: Spießbarrikade. (Werkbank)"
+  },
+  "bp_traps": {
+    "hint": "Ein Förster wüsste, wie man Fallen baut.",
+    "text": "Georg Wendts Anleitung: Bärenfalle und Kleintierschlinge. (Werkbank)"
+  },
+  "bp_filter": {
+    "on": {"flag": "radio_day_7", "item": "water_tainted"},
+    "hint": "Solange das Wasser sauber ist, braucht man keinen Filter.",
+    "text": "Das Wasser im Tal ist nicht mehr sicher. Ein Filter aus Holzkohle und Dosen müsste helfen. (Werkbank)"
+  },
+  "bp_motion": {
+    "hint": "Eine Leuchte mit Bewegungsmelder – irgendwo draußen hat sicher jemand so etwas.",
+    "text": "Anleitung für eine Leuchte mit Bewegungsmelder. (Werkbank)"
+  },
+  "bp_gasifier": {
+    "on": {"fuel_below": 20},
+    "hint": "Solange Diesel da ist, denkt man nicht daran.",
+    "text": "Der Diesel wird knapp. Im Schuppen lag doch das alte Handbuch für einen Holzvergaser … (Werkbank)"
+  }
+}

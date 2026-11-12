@@ -33,6 +33,9 @@ signal screen_shake(strength: float)
 ## Der Spieler wurde verletzt (für Bildschirm-Effekte).
 signal player_hurt(amount: float)
 
+## Ein Aufgaben-Merker wurde gesetzt (Tasks.flag) – z. B. für Baupläne, die sich durch Ereignisse freischalten.
+signal flag_set(name: String)
+
 
 func notify(text: String, duration: float = 3.0) -> void:
 	notification_requested.emit(text, duration)

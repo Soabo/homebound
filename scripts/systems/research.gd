@@ -57,6 +57,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_rng.randomize()
 	Inventory.changed.connect(_on_inventory_changed)
+	EventBus.flag_set.connect(func(_n: String) -> void: check_unlocks())
+	PowerManager.fuel_changed.connect(func(_f: float) -> void: check_unlocks())
 
 
 func data() -> Dictionary:
@@ -100,6 +102,54 @@ func _on_inventory_changed() -> void:
 			if id != "alien_analyzer":
 				EventBus.notify("Neuer Fund: %s – im Archiv auf dem Tablet vermerkt" % Inventory.display_name(id), 3.5)
 			changed.emit()
+	check_unlocks()
+
+
+# --- Baupläne nach und nach (data/research/blueprints.json) ---------------
+
+func blueprint_defs() -> Dictionary:
+	return DataDB.load_json("res://data/research/blueprints.json")
+
+
+## Grauer Hinweis an der Werkbank für ein noch gesperrtes Rezept ("" = kein Hinweis, z. B. Forschung).
+func blueprint_hint(recipe: Dictionary) -> String:
+	var bp := String(recipe.get("blueprint", ""))
+	if bp == "" or blueprints.has(bp) or String(recipe.get("requires", "")) != "" and not links_done.has(String(recipe["requires"])):
+		return ""
+	return String(blueprint_defs().get(bp, {}).get("hint", ""))
+
+
+## Prüft alle Auslöser (Gegenstand gefunden, Ereignis, Tank fast leer) und schaltet Baupläne frei.
+func check_unlocks() -> void:
+	var defs := blueprint_defs()
+	for id: String in defs:
+		if id.begins_with("_") or blueprints.has(id):
+			continue
+		var on: Dictionary = defs[id].get("on", {})
+		if on.is_empty():
+			continue   # muss gefunden werden
+		var hit := false
+		if on.has("item"):
+			var list: Array = on["item"] if on["item"] is Array else [on["item"]]
+			for it: String in list:
+				hit = hit or Inventory.count(it) > 0
+		if on.has("flag"):
+			hit = hit or Tasks.flags.has(String(on["flag"]))
+		if on.has("fuel_below"):
+			hit = hit or PowerManager.fuel < float(on["fuel_below"])
+		if hit:
+			unlock_blueprint(id)
+
+
+## Bauplan freischalten, mit Meldung aus blueprints.json.
+func unlock_blueprint(id: String) -> bool:
+	if not learn_blueprint(id):
+		return false
+	var text := String(blueprint_defs().get(id, {}).get("text", ""))
+	if text != "":
+		EventBus.notify(text, 5.0)
+	SoundBank.play_ui(self, "pickup", -10.0, 1.3)
+	return true
 
 
 func now() -> float:

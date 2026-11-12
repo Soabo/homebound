@@ -5,6 +5,9 @@ extends Node3D
 ##  leere Flaschen auf der Küchenarbeitsplatte, Samen und Motoröl im Schuppenregal, Gießkanne bei den Hochbeeten.
 ## Alle Positionen in Weltkoordinaten (Hütte im Ursprung).
 
+## Alte Kühlbox mit den Blechdosen, im Wald westlich vom Grundstück
+const COOLER_XZ := Vector2(-27.0, -7.5)
+
 var _y := Cabin.FLOOR_Y
 
 
@@ -21,6 +24,7 @@ func _ready() -> void:
 	_oil_can("MotorOil", so + Vector3(1.62, 0.43, 0.35))
 	_spark_plug("SparePlug", so + Vector3(1.62, 0.43, -0.35))
 	_watering_can("WateringCan", Vector3(-12.25, 0.0, 7.75))
+	_cooler_box("CoolerCans", COOLER_XZ)
 
 
 func _pickup(n: String, item: String, amount: int, per_take: int, collider: Vector3, at: Vector3) -> ItemPickup:
@@ -122,6 +126,69 @@ func _spark_plug(n: String, at: Vector3) -> void:
 	BuildKit.box(v, Vector3(0.1, 0.05, 0.06), at + Vector3(0, 0.025, 0), BuildKit.color_mat(Color(0.75, 0.2, 0.15), 0.6), false)
 	BuildKit.cylinder(v, 0.008, 0.07, at + Vector3(0.0, 0.07, 0), BuildKit.color_mat(Color(0.9, 0.9, 0.88), 0.3), false, Vector3.ZERO, -1.0, 6)
 	p.visuals.append(v)
+
+
+## Freihalten für Bäume/Felsen um die Kühlbox.
+static func near_cooler(x: float, z: float, r: float) -> bool:
+	return Vector2(x, z).distance_to(COOLER_XZ) < r
+
+
+## Alte Kühlbox im Wald westlich vom Grundstück: hat jemand verloren, schon halb im Gras eingewachsen.
+## Darin die leeren Blechdosen (gibt es im Haus nicht).
+func _cooler_box(n: String, xz: Vector2) -> void:
+	var g := Terrain.height_at(xz.x, xz.y)
+	var at := Vector3(xz.x, g - 0.06, xz.y)   # etwas eingesunken
+	var yaw := 28.0
+	var root := Node3D.new()
+	root.name = n + "Box"
+	root.position = at
+	root.rotation_degrees = Vector3(3.0, yaw, -4.0)   # steht schief im Boden
+	add_child(root)
+	var shell := BuildKit.color_mat(Color(0.62, 0.66, 0.6), 0.75)     # verblichenes Blau-Grau
+	var dirt := BuildKit.color_mat(Color(0.3, 0.27, 0.2), 1.0)
+	var white := BuildKit.color_mat(Color(0.78, 0.77, 0.72), 0.8)
+	# Wanne (offen, man sieht hinein): Boden + vier Wände
+	BuildKit.box(root, Vector3(0.56, 0.03, 0.36), Vector3(0, 0.015, 0), white, false)
+	for s: float in [-1.0, 1.0]:
+		BuildKit.box(root, Vector3(0.6, 0.32, 0.03), Vector3(0, 0.16, s * 0.19), shell, false)
+		BuildKit.box(root, Vector3(0.03, 0.32, 0.38), Vector3(s * 0.29, 0.16, 0), shell, false)
+	# Griffe und Deckel, der halb offen zur Seite gekippt am Scharnier hängt
+	for s: float in [-1.0, 1.0]:
+		BuildKit.box(root, Vector3(0.03, 0.04, 0.16), Vector3(s * 0.315, 0.27, 0), white, false)
+	BuildKit.box(root, Vector3(0.62, 0.04, 0.4), Vector3(0, 0.36, -0.33), shell, false, Vector3(-62.0, 0, 0))
+	# Dreck und Laub am Rand
+	BuildKit.box(root, Vector3(0.66, 0.05, 0.44), Vector3(0, 0.01, 0), dirt, false)
+	# fester Körper
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(0.6, 0.32, 0.38)
+	cs.shape = sh
+	cs.position = Vector3(0, 0.16, 0)
+	body.add_child(cs)
+	root.add_child(body)
+	# Gras wächst um und über die Kanten
+	var grass := BuildKit.color_mat(Color(0.32, 0.42, 0.18), 0.95)
+	var grass2 := BuildKit.color_mat(Color(0.42, 0.48, 0.22), 0.95)
+	var r := RandomNumberGenerator.new()
+	r.seed = 4711
+	for k in 34:
+		var a := r.randf() * TAU
+		var d := r.randf_range(0.2, 0.5)
+		var p := Vector3(cos(a) * d * 1.3, 0.0, sin(a) * d)
+		var h := r.randf_range(0.18, 0.42)
+		BuildKit.box(root, Vector3(0.012, h, 0.035), p + Vector3(0, h * 0.5, 0), grass if k % 2 == 0 else grass2, false,
+				Vector3(r.randf_range(-25, 25), r.randf() * 180.0, r.randf_range(-25, 25)))
+	# Inhalt: Blechdosen (verschwinden beim Mitnehmen)
+	var p := _pickup(n, "cans", 8, 4, Vector3(0.62, 0.4, 0.42), at)
+	p.label = "Blechdosen (alte Kühlbox)"
+	var tin := BuildKit.tex_mat("metal", 0.2, Color(1.3, 1.25, 1.15), 0.5)
+	for i in 4:
+		var v := Node3D.new()
+		p.add_child(v)
+		var off := Basis.from_euler(Vector3(0, deg_to_rad(yaw), 0)) * Vector3(-0.17 + i * 0.11, 0.0, (i % 2) * 0.08 - 0.04)
+		BuildKit.cylinder(v, 0.037, 0.11, at + off + Vector3(0, 0.09, 0), tin, false, Vector3(0 if i < 3 else 80.0, 0, 0), -1.0, 9)
+		p.visuals.append(v)
 
 
 func _watering_can(n: String, at: Vector3) -> void:

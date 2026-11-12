@@ -80,6 +80,8 @@ func _ready() -> void:
 	# Georg Wendts Diktiergerät und sein alter Laptop (Forschung: Aufnahmen, Auswertungsplatz)
 	_pickup("TowerDictaphone", "dictaphone", 1, Vector3(0.35, DECK + 0.06, 0.55))
 	_pickup("TowerLaptop", "old_laptop", 1, Vector3(-0.85, DECK + 0.06, -0.35))
+	# Georg Wendts Fallen-Anleitung (Bauplan: Bärenfalle + Kleintierschlinge)
+	PlaceKit.blueprint(self, "bp_traps", "Fallen-Anleitung", Vector3(0.25, DECK + 0.07, -1.05))
 	var diary := ResearchNote.new()
 	diary.name = "TowerDiary"
 	diary.note_id = "ranger_note2"

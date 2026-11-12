@@ -72,7 +72,7 @@
     {
       "id": "snare",
       "title": "Schlingen auslegen",
-      "text": "Stell an der Werkbank Kleintierschlingen her und lege sie im Wald aus. Morgens nachsehen, ob etwas gefangen wurde.",
+      "text": "Für Schlingen fehlt dir noch eine Anleitung – vielleicht hat der Förster am Hochsitz eine. Dann an der Werkbank Kleintierschlingen herstellen, im Wald auslegen und morgens nachsehen, ob etwas gefangen wurde.",
       "unlock": [
         "day>=2"
       ],
@@ -196,7 +196,7 @@
       "title": "Das Haus sichern",
       "text": "Verbarrikadiere Fenster und Türen mit Brettern (R) und baue Hindernisse und Fallen rund ums Haus.",
       "unlock": [
-        "day>=3"
+        "flag:unrest_night"
       ],
       "done": [
         "flag:barricaded"

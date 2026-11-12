@@ -46,7 +46,8 @@ func interact(_player: Node) -> void:
 	Research.learn_blueprint(bp_id)
 	Tasks.flag("bp_" + bp_id)
 	SoundBank.play_ui(self, "pickup", -6.0)
-	EventBus.notify("Bauplan gefunden: %s – jetzt an der Werkbank baubar." % label, 4.0)
+	var text := String(Research.blueprint_defs().get(bp_id, {}).get("text", ""))
+	EventBus.notify(("Bauplan gefunden: " + text) if text != "" else "Bauplan gefunden: %s – jetzt an der Werkbank baubar." % label, 5.0)
 
 
 func persist_key() -> String:

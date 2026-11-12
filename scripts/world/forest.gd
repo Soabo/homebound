@@ -25,7 +25,7 @@ func _ready() -> void:
 static func _tree_allowed(x: float, z: float) -> bool:
 	if Terrain.yard_distance(x, z) < 2.5:
 		return false
-	if CrashSite.is_near(x, z, 10.0):
+	if CrashSite.is_near(x, z, 10.0) or SupplyProps.near_cooler(x, z, 2.0):
 		return false
 	if AlienStructure.is_near(x, z, 12.0) or RangerTower.is_near(x, z, 5.0) or StreamCave.is_near(x, z, 13.0):
 		return false
@@ -139,7 +139,7 @@ func _build_rocks() -> void:
 		var near_stream := placed < 60
 		var z := _rng.randf_range(-LIMIT, LIMIT)
 		var x := Terrain.stream_x_at(z) + _rng.randf_range(-3.5, 3.5) if near_stream else _rng.randf_range(-LIMIT, LIMIT)
-		if Terrain.yard_distance(x, z) < 1.5 or Terrain.road_distance(x, z) < 3.0:
+		if Terrain.yard_distance(x, z) < 1.5 or Terrain.road_distance(x, z) < 3.0 or SupplyProps.near_cooler(x, z, 1.5):
 			continue
 		var g := Terrain.height_at(x, z)
 		var s := _rng.randf_range(0.25, 0.8) if near_stream else _rng.randf_range(0.3, 1.5)

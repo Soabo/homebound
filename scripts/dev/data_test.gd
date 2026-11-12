@@ -95,7 +95,12 @@ static func run(tree: SceneTree) -> int:
 			elif not (links[req].get("unlocks", []) as Array).has(rid):
 				errs.append("Rezept %s: Verknüpfung %s nennt es nicht als Bauplan (Spieler erfährt nie davon)" % [rid, req])
 		var bp := String(r.get("blueprint", ""))
-		if bp != "" and not code.contains("\"%s\"" % bp):
+		var bp_defs := Research.blueprint_defs()
+		if bp != "" and bp_defs.has(bp) and String(bp_defs[bp].get("hint", "")) == "":
+			errs.append("Rezept %s: Bauplan %s hat keinen Hinweis (blueprints.json hint)" % [rid, bp])
+		# frei über einen Auslöser (blueprints.json on) oder als Bauplan irgendwo in der Welt
+		var by_trigger := bp_defs.has(bp) and not (bp_defs[bp].get("on", {}) as Dictionary).is_empty()
+		if bp != "" and not by_trigger and not code.contains("\"%s\"" % bp):
 			errs.append("Rezept %s: Bauplan %s liegt nirgends in der Welt" % [rid, bp])
 
 	# --- Forschung

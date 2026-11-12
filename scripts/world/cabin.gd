@@ -792,7 +792,7 @@ func _build_storage() -> void:
 		BuildKit.cylinder(b, 0.018, 0.03, bp + Vector3(0, 0.245, 0), cap_mat, false, Vector3.ZERO, -1.0, 8)
 		BuildKit.cylinder(b, 0.0455, 0.07, bp + Vector3(0, 0.1, 0), BuildKit.color_mat(Color(0.85, 0.9, 0.95), 0.6), false, Vector3.ZERO, -1.0, 10)
 		water.visuals.append(b)
-	_pickup("EmptyCans", "cans", 8, 4, Vector3(1.45, y + 0.8, -1.6), Vector3(0.4, 0.2, 0.4), BuildKit.tex_mat("metal", 0.2, Color(1.5, 1.5, 1.5), 0.4))
+	# Leere Blechdosen gibt es nicht mehr im Haus – sie liegen in der alten Kühlbox im Wald (SupplyProps._cooler_box)
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.3), sack, Vector3(1.0, 0.8, 0.8), 10)
 	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.85), sack, Vector3(0.9, 0.8, 0.9), 10)

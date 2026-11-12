@@ -347,6 +347,45 @@ func _t_more() -> void:
 	_t_tasks_saved()
 	await _t_seeker_house()
 	_t_list_nov11()
+	_t_blueprints()
+
+
+## Baupläne nach und nach (12.11.): Holz frei, Stein/Dosen beim ersten Fund, Sichern nach unruhiger Nacht.
+func _t_blueprints() -> void:
+	var keep: Array = Research.blueprints.duplicate()
+	var keep_flags: Dictionary = Tasks.flags.duplicate()
+	var keep_inv: Dictionary = Inventory.items.duplicate()
+	Research.blueprints.clear()
+	for f: String in ["unrest_night", "creature_visited", "radio_day_7"]:
+		Tasks.flags.erase(f)
+	for it: String in ["stone", "cans", "wax", "wool", "sheepskin", "water_tainted"]:
+		Inventory.items.erase(it)
+	var rec := {}
+	for r: Dictionary in DataDB.recipes():
+		rec[r["id"]] = r
+	_ok("Baupläne: Holzsachen von Anfang an", Research.recipe_unlocked(rec["planks"]) and Research.recipe_unlocked(rec["fence_panel"]))
+	_ok("Baupläne: Lagerfeuer/Steinwall/Stachelwand/Falle gesperrt", not Research.recipe_unlocked(rec["campfire"])
+		and not Research.recipe_unlocked(rec["stone_wall"]) and not Research.recipe_unlocked(rec["spike_barricade"])
+		and not Research.recipe_unlocked(rec["bear_trap"]) and not Research.recipe_unlocked(rec["door_upgrade"]))
+	_ok("Baupläne: gesperrt mit grauem Hinweis", Research.blueprint_hint(rec["campfire"]) != "" and Research.blueprint_hint(rec["bear_trap"]) != "")
+	var win: Node = null
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow and (w as CabinWindow).barricade <= 0.0:
+			win = w
+	if win:
+		_ok("Fenster: Verbarrikadieren erst nach unruhiger Nacht", String(win.call("get_secondary_prompt", _player())) == "")
+	Inventory.add("stone", 1)
+	_ok("Baupläne: erster Stein schaltet Lagerfeuer + Steinwall frei", Research.recipe_unlocked(rec["campfire"]) and Research.recipe_unlocked(rec["stone_wall"]))
+	Tasks.flag("unrest_night")
+	_ok("Baupläne: unruhige Nacht schaltet Tür + Fenster frei", Research.recipe_unlocked(rec["door_upgrade"]) and Research.blueprints.has("bp_secure"))
+	Tasks.flag("creature_visited")
+	_ok("Baupläne: Besuch der Kreatur schaltet Spießbarrikade frei", Research.recipe_unlocked(rec["spike_barricade"]))
+	_ok("Dosen: keine im Haus, Kühlbox im Wald", _scene().find_child("EmptyCans", true, false) == null
+		and _scene().find_child("CoolerCans", true, false) != null)
+	Research.blueprints = keep
+	Tasks.flags = keep_flags
+	Inventory.items = keep_inv
+	Inventory.changed.emit()
 
 
 ## Änderungsliste 11.11.: Sendezähler, Speis-Kisten, Lagerfeuer, Generator.

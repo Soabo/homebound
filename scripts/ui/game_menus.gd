@@ -355,11 +355,20 @@ func _fill_crafting() -> void:
 	_info.text = ("Zubereiten dauert ein wenig Zeit.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
 		"Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
 	var locked := 0
+	var hints_shown := {}   # gleicher Bauplan für mehrere Rezepte (z. B. Steine) nur einmal grau zeigen
 	for r: Dictionary in DataDB.recipes():
 		if String(r.get("station", "workbench")) != _station:
 			continue
 		if not Research.recipe_unlocked(r):
-			locked += 1
+			var hint := Research.blueprint_hint(r)
+			if hint == "":
+				locked += 1
+			elif not hints_shown.has(hint):
+				hints_shown[hint] = true
+				var grey := VBoxContainer.new()
+				grey.add_child(_text("Unbekannter Bauplan", 22, Color(0.45, 0.45, 0.47)))
+				grey.add_child(_text(hint, 16, Color(0.52, 0.52, 0.55)))
+				_list.add_child(grey)
 			continue
 		if r.get("special", "") == "build_analyzer" and Research.tier >= 1:
 			continue

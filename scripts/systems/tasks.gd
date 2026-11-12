@@ -41,7 +41,10 @@ func task_day() -> int:
 
 
 func flag(name: String) -> void:
+	var fresh := not flags.has(name)
 	flags[name] = task_day()
+	if fresh:
+		EventBus.flag_set.emit(name)
 
 
 func _on_inventory() -> void:

@@ -265,6 +265,17 @@
 - Wucherung: Schaden mit rotem Aufblitzen + Stöhnen. Holzkorb am Kamin = Metallständer. Glas: kaum Glanz.
   Wegweiser stehen am Wegrand (`WorldTrails.roadside`), schwarze Schrift auf hellem Brett. Hochsitz-Streben von Pfosten zu Pfosten.
 
+## Baupläne nach und nach (Christian, 12.11.2026)
+- Daten `data/research/blueprints.json` (Auslöser `on`: item | flag | fuel_below, `hint` = graue Zeile „Unbekannter Bauplan“
+  an der Werkbank, `text` = Meldung). Rezepte verweisen mit `"blueprint"`. `Research.check_unlocks()` (Rucksack, `EventBus.flag_set`
+  aus `Tasks.flag`, Tank), `unlock_blueprint`, `blueprint_hint`.
+- Frei von Anfang an: Bretter, Nägel, Holzzaun. Erster Stein → Lagerfeuer + Steinwall; Dosen → Dosenalarm; Wachs → Kerzen;
+  Wolle/Fell → Schlafsack. Morgen nach der ersten unruhigen Nacht (`unrest_night`, ThreatDirector) → Haustür verstärken +
+  Fenster verbarrikadieren (`bp_secure`). Erster Besuch der Kreatur am Haus (`creature_visited`) → Spießbarrikade.
+  Gefunden: Fallen-Anleitung am Hochsitz (Bärenfalle + Schlinge), Bewegungsmelder-Leuchte in der Imkerei.
+  Funkmeldung Tag 7 (`radio_day_7`) oder erstes verseuchtes Wasser → Wasserfilter. Tank < 20 % → Holzvergaser. Zelt liegt im Ferienlager.
+- Leere Blechdosen nicht im Haus: alte Kühlbox im Wald westlich (`SupplyProps.COOLER_XZ`, CoolerCans, 8 Dosen, im Gras eingewachsen).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

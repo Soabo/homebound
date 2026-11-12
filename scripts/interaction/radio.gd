@@ -201,6 +201,7 @@ func set_on(v: bool, night_event: bool = false) -> void:
 				EventBus.notify("Im Radio: " + again + msg, 8.0)
 				message_until_msec = Time.get_ticks_msec() + int(float(_data.get("play_seconds", 20.0)) * 1000.0)
 				heard_day = TimeManager.day
+				Tasks.flag("radio_day_%d" % TimeManager.day)   # z. B. Bauplan Wasserfilter nach der Wasser-Warnung (Tag 7)
 				if msg == String(_data.get("crash_hint", "")):
 					_hint_given = true
 		_fade_out_later(_play_id)
