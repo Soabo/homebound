@@ -1252,6 +1252,74 @@
           "text": "„M4 weiter stabil. Beobachter fehlt. Nachsorge Familie M4 offen.“"
         }
       ]
+    },
+    "an_mauler_tooth": {
+      "find": "mauler_tooth",
+      "name": "Reißzahn",
+      "area": "Spezies und Verhalten",
+      "station": "microscope",
+      "hours": 8,
+      "summary": "Ein Zahn, lang wie ein Daumen, gebogen und an der Innenseite gesägt. Die Wurzel ist glatt – er ist nicht ausgebrochen, er wurde abgestoßen.",
+      "experiments": [
+        {
+          "id": "cut",
+          "label": "Wurzel aufschneiden",
+          "needs": "light",
+          "text": "In der Wurzel sitzt schon der nächste Zahn, fertig geformt. Dahinter noch einer. Er verliert sie, weil ständig neue nachschieben."
+        },
+        {
+          "id": "power",
+          "label": "Schwachen Strom anlegen",
+          "needs": "power",
+          "text": "An der Bruchstelle tritt ein Tropfen aus: zäh, grün, mit feinen Fäden darin. Dasselbe Grün habe ich schon einmal gesehen."
+        }
+      ]
+    },
+    "an_mauler_film": {
+      "find": "mauler_film",
+      "name": "Schwarze Augenhaut",
+      "area": "Spezies und Verhalten",
+      "station": "bench",
+      "hours": 6,
+      "summary": "Ein hauchdünner, schwarzer Film, groß wie eine Handfläche. Er lag dort, wo der Zerfleischer vor dem Licht der Uhr kehrtgemacht hat.",
+      "experiments": [
+        {
+          "id": "light",
+          "label": "Mit der Lampe anleuchten",
+          "needs": "light",
+          "text": "Der Film zieht sich im Licht zusammen und wird undurchsichtig wie Ruß. Nach ein paar Sekunden reißt er. Seine Augen haben keinen anderen Schutz."
+        },
+        {
+          "id": "night",
+          "label": "Im Dunkeln beobachten",
+          "needs": "night",
+          "text": "Im Dunkeln wird der Film klar wie Glas und sammelt jedes bisschen Restlicht. Für ihn ist die Nacht taghell."
+        }
+      ]
+    },
+    "an_seeker_ash": {
+      "find": "seeker_ash",
+      "name": "Blitzasche",
+      "area": "Energie und Physik",
+      "station": "shield",
+      "hours": 12,
+      "signature": 0.2,
+      "summary": "Feiner, grauer Staub von der Stelle, an der der Sucher im Lichtblitz verschwunden ist. Er fühlt sich kälter an als die Luft.",
+      "experiments": [
+        {
+          "id": "power",
+          "label": "Strom anlegen",
+          "needs": "power",
+          "text": "Die Körner sind für einen Wimpernschlag weg und liegen dann eine Handbreit weiter. Nicht gerollt. Versetzt.",
+          "effect": "drain"
+        },
+        {
+          "id": "alien",
+          "label": "Neben das Metallfragment legen",
+          "needs": "alien",
+          "text": "Die Asche ordnet sich zu einem Ring um das Metall. Sie will irgendwo ankommen."
+        }
+      ]
     }
   },
   "links": {
@@ -1613,6 +1681,63 @@
       ],
       "text": "Alle Linien und alle Energie laufen zum alten Brunnen neben deiner Hütte. Dort unten ist etwas, das sie suchen.",
       "unlocks": []
+    },
+    "link_brood": {
+      "name": "Eine Brut",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_blood",
+        "an_mauler_tooth"
+      ],
+      "text": "Im Reißzahn steckt dasselbe grüne Blut mit denselben Fäden wie am Spieß. Kreatur und Zerfleischer sind keine zwei Arten. Es ist eine Brut, für zwei Aufgaben gewachsen: Die eine prüft, der andere jagt. Der Nervenfühler schlägt ab jetzt auch auf den Zerfleischer an.",
+      "unlocks": [],
+      "grants": [
+        "alarm_mauler"
+      ]
+    },
+    "link_blind": {
+      "name": "Schwarze Lider",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_tissue_culture",
+        "an_mauler_film"
+      ],
+      "text": "Die Gewebekultur bildet unter der Lampe denselben schwarzen Film wie die Augen des Zerfleischers. Es ist ein Lid gegen Licht, aber es hält nur Sekunden. Gebündeltes Licht reißt es sofort auf – ein Aufsatz für die Uhr vertreibt ihn aus größerer Entfernung und in einem breiteren Kegel.",
+      "unlocks": [
+        "glare_lens"
+      ]
+    },
+    "link_tether": {
+      "name": "Angebunden",
+      "area": "Biologie",
+      "needs": [
+        "an_antler",
+        "an_seeker_thread"
+      ],
+      "text": "Die Fäden im Geweih sind dieselben wie die Fadenspur des Suchers. Er hat das Reh nicht getötet, er hat es angebunden. Die Tiere im Wald sind seine Fühler. Ein Stück seines Fadens, frei aufgehängt, spannt sich, wenn er in der Nähe ist.",
+      "unlocks": [
+        "seeker_alarm"
+      ]
+    },
+    "link_gardener": {
+      "name": "Der Gärtner",
+      "area": "Zusammenhänge",
+      "needs": [
+        "an_plant_growth",
+        "an_seeker_lens"
+      ],
+      "text": "Die Pflanze im Topf dreht ihre Blätter nicht zur Sonne. Sie dreht sie zum Lichtersplitter. Der Sucher sucht nicht nur. Er geht nachts die Beete ab und sieht nach, was gewachsen ist.",
+      "unlocks": []
+    },
+    "link_jump": {
+      "name": "Der Sprung",
+      "area": "Energie und Physik",
+      "needs": [
+        "an_probe_open",
+        "an_seeker_ash"
+      ],
+      "text": "Die Blitzasche und die Erde in der Sondenkapsel tragen dieselben Körner. Der Sucher verschwindet nicht ins Nichts. Er springt von Sonde zu Sonde, und der Ton pro Stunde ist sein Leuchtfeuer. Wo ein Kern offen liegt, kann er ankommen.",
+      "unlocks": []
     }
   },
   "notes": {
@@ -1943,6 +2068,12 @@
       "chance": 0.15,
       "where": "patch",
       "stage": 2
+    },
+    {
+      "item": "mauler_tooth",
+      "after": "mauler",
+      "chance": 0.4,
+      "where": "forest"
     }
   ],
   "gadgets": {
@@ -1980,6 +2111,13 @@
     "dictaphone": {
       "range": 70.0,
       "radio_from_day": 5
+    },
+    "glare_lens": {
+      "led_range_factor": 1.6,
+      "led_cone_factor": 1.5
+    },
+    "seeker_alarm": {
+      "range": 60.0
     }
   }
 }

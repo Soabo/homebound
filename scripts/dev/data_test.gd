@@ -11,7 +11,7 @@ const KNOWN_OPEN := ["Gegenstand alien_seeds: Pflanze „alien“ gibt es nicht 
 const NEED_KINDS := ["", "power", "light", "alien", "heat", "night", "day", "water"]
 const EFFECTS := ["", "drain", "noise", "signal", "hurt", "escape"]
 const ESCAPES := ["crawl", "spread", "call", "bloom"]
-const DROP_AFTER := ["any", "creature", "drone", "manipulator", "seeker", "change"]
+const DROP_AFTER := ["any", "creature", "drone", "manipulator", "seeker", "mauler", "change"]
 const DROP_WHERE := ["yard", "window", "porch", "garden", "forest", "stream", "patch", "player"]
 const HAND_KINDS := ["axe", "tin_snips", "food", "water", "watering_can", "dictaphone"]
 const TASK_VALUES := ["day", "cameras", "tier", "analyses", "stage", "fuel", "gencond"]
@@ -152,7 +152,7 @@ static func run(tree: SceneTree) -> int:
 			elif String(recipe_ids[u].get("requires", "")) != l:
 				errs.append("Verknüpfung %s: nennt Rezept %s, aber das Rezept verlangt etwas anderes" % [l, u])
 		for g: String in ld.get("grants", []):
-			if not g in ["forecast", "charger"]:
+			if not g in ["forecast", "charger", "alarm_mauler"]:
 				errs.append("Verknüpfung %s: unbekannte Fähigkeit %s" % [l, g])
 	# alles erreichbar? (Voraussetzungen der Reihe nach auflösen)
 	var reach := {}

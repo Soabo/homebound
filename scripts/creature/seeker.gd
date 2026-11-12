@@ -235,6 +235,9 @@ func _arrived() -> void:
 		State.INVESTIGATE:
 			_investigate_done()
 		State.LEAVE:
+			# zieht er von selbst ab, verschwindet er ebenfalls im Blitz – manchmal mit Asche
+			Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0))
+			_drop_ash(cfg.ash_leave_chance)
 			queue_free()
 
 
@@ -358,7 +361,15 @@ func _strike(camp: TentCamp) -> void:
 	await get_tree().create_timer(0.8).timeout
 	if is_inside_tree():
 		Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0), true)
+		_drop_ash(1.0)
 		queue_free()
+
+
+## Wo er im Blitz verschwindet, bleibt Asche zurück (Forschung).
+func _drop_ash(chance: float) -> void:
+	var drops := AlienDrops.get_for(get_tree())
+	if drops and _rng.randf() < chance:
+		drops.spawn("seeker_ash", _ground(global_position) + Vector3(0, 0.02, 0))
 
 
 func _leave() -> void:

@@ -145,9 +145,9 @@
 - Christians Entscheidungen: Alien-Technik macht sichtbarer, bringt nützliche Werkzeuge gegen die Wesen / fürs Leben,
   keine Waffen. Labor im Bad (Waschtisch). Lebende Proben verderben nicht, dürfen aber ausbrechen. Voller Umfang mit
   Querverweisen, Technologiebaum und verschiedenen Tests.
-- Inhalte: `data/research/research.json` – 51 Projekte (`analyses`: find, station, hours bis 72, requires, living/escape/
+- Inhalte: `data/research/research.json` – 54 Projekte (`analyses`: find, station, hours bis 72, requires, living/escape/
   escape_per_day, signature, experiments mit needs power|light|alien|heat|night|day|water|item:X|built:X, effect
-  drain|noise|signal|escape|hurt), 32 Verknüpfungen (`links`: unlocks = Rezepte, grants = forecast|charger),
+  drain|noise|signal|escape|hurt), 37 Verknüpfungen (`links`: unlocks = Rezepte, grants = forecast|charger|alarm_mauler),
   `lab` (unlock Tag 4 + 3 gesendete Ergebnisse, Material, Stationen, Ladeschale), `drops` (Funde nach Nächten), `gadgets` (Werte).
 - `Research` (Autoload): `stations` (device + bench/microscope/terrarium/shield/screen, alle parallel; `slot` = stations["device"]),
   `insert_project`, `available_projects`, `run_experiment(exp, station)`, `escape`, `build_lab/build_station/build_charger`,
@@ -169,6 +169,19 @@
 - Tablet: Reiter „Forschungsbaum“ (`ResearchTree`, Bänder je Gebiet, Spalten = Stufen), Vorhersage in „Aufgaben“ (grant forecast).
 - Tests: `--night-test=lab` (Daten, Labor, Parallelbetrieb, Ausbrüche, Signatur, Werkzeuge, Funde, Baum, Spielstand),
   `--walk-test --lab` (ausgebautes Labor verstellt nichts).
+
+## Forschung: Sackgassen geschlossen (Christian, 12.11.2026)
+- Jetzt 54 Projekte, 37 Verknüpfungen. Die fünf Projekte ohne Verknüpfung hängen jetzt an Teilen von Sucher und Zerfleischer:
+  `link_brood` (Blutprobe + Reißzahn → grant `alarm_mauler`: Nervenfühler schlägt auch beim Zerfleischer an),
+  `link_blind` (Gewebekultur + Schwarze Augenhaut → Blendaufsatz `glare_lens`: LED der Uhr reicht weiter/breiter, Werte in gadgets),
+  `link_tether` (Geweih + Fadenspur → Fadenpendel `seeker_alarm`, Anzeige `GadgetHud.seeker_text`),
+  `link_gardener` (Fremdpflanze im Topf + Lichtersplitter, nur Erkenntnis), `link_jump` (Sondenkern öffnen + Blitzasche, nur Erkenntnis).
+- Neue Funde: `mauler_film` (Zerfleischer mit der Uhr-LED vertrieben, 1× pro Tag, `Mauler._drop_find`), `mauler_tooth`
+  (Flucht vor hellem Licht, `MaulerConfig.tooth_chance`, 1× pro Tag; dazu morgens im Wald, drops after „mauler“),
+  `seeker_ash` (wo der Sucher im Blitz verschwindet: nach einem Schlag immer, beim Abziehen `SeekerConfig.ash_leave_chance`;
+  er verschwindet jetzt auch beim Abziehen mit einem Blitz).
+- OFFEN: Diese Änderung wurde ohne Godot geschrieben (im Workspace nicht verfügbar) – nur Syntaxprüfung mit gdparse.
+  Vor dem Zusammenführen `tools/run_tests.sh` laufen lassen (mindestens data, lab, mauler, camp).
 
 ## Große Welt (Open World, ca. 2,2 x 2,2 km)
 - Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,

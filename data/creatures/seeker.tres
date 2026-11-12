@@ -12,6 +12,7 @@ search_points = Vector2i(4, 7)
 search_radius = 11.0
 search_hold = Vector2(2.5, 6)
 stay_time = 220.0
+ash_leave_chance = 0.5
 light_range = 45.0
 fire_range = 70.0
 hearing = 1.3

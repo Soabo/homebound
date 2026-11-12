@@ -521,6 +521,30 @@
       "gives": {
         "light_lure": 1
       }
+    },
+    {
+      "id": "glare_lens",
+      "requires": "link_blind",
+      "needs": {
+        "mauler_film": 1,
+        "bottle_empty": 1,
+        "scrap": 1
+      },
+      "gives": {
+        "glare_lens": 1
+      }
+    },
+    {
+      "id": "seeker_alarm",
+      "requires": "link_tether",
+      "needs": {
+        "seeker_thread": 1,
+        "wool": 1,
+        "scrap": 1
+      },
+      "gives": {
+        "seeker_alarm": 1
+      }
     }
   ]
 }

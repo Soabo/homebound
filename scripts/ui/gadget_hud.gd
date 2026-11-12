@@ -2,7 +2,9 @@ class_name GadgetHud
 extends CanvasLayer
 ## Kleine Anzeigen für die Forschung 2.0 (oben rechts):
 ##  - Fremde Signatur: wie stark du gerade für sie „leuchtest“ (nur sichtbar, wenn > 0)
-##  - Nervenfühler: zuckt, wenn die Kreatur in der Nähe ist (mit grober Richtung)
+##  - Nervenfühler: zuckt, wenn die Kreatur in der Nähe ist (mit grober Richtung);
+##    nach der Verknüpfung „Eine Brut“ (grant alarm_mauler) auch beim Zerfleischer
+##  - Fadenpendel: spannt sich, wenn der Sucher in der Nähe ist
 ##  - Geruchstarnung: wie lange sie noch wirkt
 
 var _label: Label
@@ -48,6 +50,10 @@ func _process(delta: float) -> void:
 			if _twitch <= 0.0:
 				_twitch = 2.5
 				SoundBank.play_ui(self, "static", -18.0, 2.2)
+	if Inventory.count("seeker_alarm") > 0:
+		var s := seeker_text(_player.global_position, _player.camera.global_transform.basis)
+		if s != "":
+			lines.append(s)
 	if Research.buff_active("scent"):
 		lines.append("Geruchstarnung  noch %d Std." % int(ceil(float(Research.buffs.get("scent", 0.0)) - Research.now())))
 	_label.text = "\n".join(lines)
@@ -58,7 +64,10 @@ static func alarm_text(at: Vector3, view: Basis) -> String:
 	var range_m := float(Research.gadget("creature_alarm", "range", 45.0))
 	var best: Node3D = null
 	var best_d := range_m
-	for c: Variant in [ThreatDirector.creature]:
+	var targets: Array = [ThreatDirector.creature]
+	if Research.has_grant("alarm_mauler"):
+		targets.append_array((Engine.get_main_loop() as SceneTree).get_nodes_in_group("mauler"))
+	for c: Variant in targets:
 		var n := c as Node3D if is_instance_valid(c) else null
 		if n and n.visible:
 			var d := n.global_position.distance_to(at)
@@ -67,16 +76,37 @@ static func alarm_text(at: Vector3, view: Basis) -> String:
 				best = n
 	if best == null:
 		return ""
-	var to := best.global_position - at
+	return "Nervenfühler zuckt – etwas Großes, %s (~%d m)" % [_direction(at, view, best.global_position), int(round(best_d / 5.0) * 5.0)]
+
+
+## Fadenpendel: „spannt sich – etwas Hohes, rechts (~40 m)“, oder "" wenn kein Sucher in Reichweite ist.
+static func seeker_text(at: Vector3, view: Basis) -> String:
+	var best: Node3D = null
+	var best_d := float(Research.gadget("seeker_alarm", "range", 60.0))
+	for c in (Engine.get_main_loop() as SceneTree).get_nodes_in_group("seeker"):
+		var n := c as Node3D
+		if n == null:
+			continue
+		var d := n.global_position.distance_to(at)
+		if d < best_d:
+			best_d = d
+			best = n
+	if best == null:
+		return ""
+	return "Fadenpendel spannt sich – etwas Hohes, %s (~%d m)" % [_direction(at, view, best.global_position), int(round(best_d / 5.0) * 5.0)]
+
+
+## Grobe Richtung eines Ziels aus Sicht des Spielers.
+static func _direction(at: Vector3, view: Basis, target: Vector3) -> String:
+	var to := target - at
 	to.y = 0.0
 	var fwd := -view.z
 	fwd.y = 0.0
 	var ang := rad_to_deg(fwd.normalized().signed_angle_to(to.normalized(), Vector3.UP))
-	var dir := "vorn"
 	if absf(ang) > 135.0:
-		dir = "hinter dir"
-	elif ang > 45.0:
-		dir = "links"
-	elif ang < -45.0:
-		dir = "rechts"
-	return "Nervenfühler zuckt – etwas Großes, %s (~%d m)" % [dir, int(round(best_d / 5.0) * 5.0)]
+		return "hinter dir"
+	if ang > 45.0:
+		return "links"
+	if ang < -45.0:
+		return "rechts"
+	return "vorn"

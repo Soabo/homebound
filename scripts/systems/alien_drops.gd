@@ -106,6 +106,15 @@ func _visual(p: ItemPickup, item: String, loose: bool) -> void:
 		"seeker_thread", "manip_membrane":
 			BuildKit.box(v, Vector3(0.3, 0.004, 0.2), Vector3(0, 0.02, 0), _glass(Color(0.8, 0.82, 0.9, 0.4)), false)
 			BuildKit.sphere(v, 0.015, Vector3(0.1, 0.03, 0), glow, Vector3.ONE, 5)
+		"mauler_tooth":
+			var bone := BuildKit.color_mat(Color(0.78, 0.74, 0.62), 0.35)
+			BuildKit.box(v, Vector3(0.035, 0.03, 0.09), Vector3(0, 0.02, 0), bone, false)
+			BuildKit.box(v, Vector3(0.022, 0.02, 0.05), Vector3(0, 0.03, 0.06), bone, false, Vector3(-25, 0, 0))
+		"mauler_film":
+			BuildKit.box(v, Vector3(0.2, 0.004, 0.14), Vector3(0, 0.02, 0), BuildKit.color_mat(Color(0.03, 0.03, 0.04), 0.15), false, Vector3(0, 0, 3.0))
+		"seeker_ash":
+			BuildKit.sphere(v, 0.14, Vector3(0, 0.015, 0), BuildKit.color_mat(Color(0.3, 0.3, 0.33), 0.95), Vector3(1.2, 0.12, 1.0), 8)
+			BuildKit.sphere(v, 0.012, Vector3(0.04, 0.035, -0.02), glow, Vector3.ONE, 5)
 		"seeker_lens":
 			BuildKit.sphere(v, 0.04, Vector3(0, 0.03, 0), BuildKit.emissive_mat(Color(1.0, 0.85, 0.6), 2.0), Vector3(1.3, 0.5, 1.0), 6)
 		"drone_lens", "drone_memory":

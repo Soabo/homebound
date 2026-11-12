@@ -904,5 +904,39 @@
     "category": "Bauteil",
     "build": "light_lure",
     "signature": 0.05
+  },
+  "mauler_tooth": {
+    "name": "Reißzahn",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.03
+  },
+  "mauler_film": {
+    "name": "Schwarze Augenhaut",
+    "weight": 0.05,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.02
+  },
+  "seeker_ash": {
+    "name": "Blitzasche",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.1
+  },
+  "glare_lens": {
+    "name": "Blendaufsatz",
+    "weight": 0.1,
+    "stack": 1,
+    "category": "Werkzeug"
+  },
+  "seeker_alarm": {
+    "name": "Fadenpendel",
+    "weight": 0.2,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.05
   }
 }

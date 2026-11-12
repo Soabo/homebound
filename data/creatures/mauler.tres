@@ -24,4 +24,5 @@ led_time = 0.35
 flee_time = Vector2(45, 90)
 return_chance = 0.45
 bright_radius = 9.0
+tooth_chance = 0.5
 cue_interval = Vector2(3, 7)

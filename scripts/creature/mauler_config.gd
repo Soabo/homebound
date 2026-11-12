@@ -60,6 +60,8 @@ static func get_default() -> MaulerConfig:
 @export var return_chance: float = 0.45
 ## Helle Lichtquellen (Feuer, Scheinwerfer, Laternen, Lichtköder): Radius, den er meidet (m)
 @export var bright_radius: float = 9.0
+## Chance, dass er auf der Flucht vor hellem Licht einen Reißzahn verliert (höchstens einer pro Tag)
+@export var tooth_chance: float = 0.5
 
 @export_group("Geräusche")
 ## Abstand der Warnzeichen beim Heranschleichen (Äste, Hecheln) in Sekunden

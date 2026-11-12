@@ -338,7 +338,27 @@ func _flee(why: String, from: Vector3 = Vector3.INF) -> void:
 	CreatureSounds.play(self, "recoil", global_position + Vector3(0, 1.5, 0), 0.0, 0.85, 50.0)
 	if why == "led":
 		Tasks.flag("mauler_repelled")
+	_drop_find(why)
 	_enter(State.FLEE)
+
+
+## Vom Licht vertrieben lässt er etwas für die Forschung zurück (je einmal pro Tag):
+## im LED-Kegel der Uhr reißt die schwarze Augenhaut ab, vor hellem Licht verliert er manchmal einen Reißzahn.
+static var _film_day: int = -1
+static var _tooth_day: int = -1
+
+
+func _drop_find(why: String) -> void:
+	var drops := AlienDrops.get_for(get_tree())
+	if drops == null:
+		return
+	var at := _ground(global_position) + Vector3(0, 0.02, 0)
+	if why == "led" and _film_day != TimeManager.day:
+		_film_day = TimeManager.day
+		drops.spawn("mauler_film", at)
+	elif why == "bright" and _tooth_day != TimeManager.day and _rng.randf() < cfg.tooth_chance:
+		_tooth_day = TimeManager.day
+		drops.spawn("mauler_tooth", at)
 
 
 func _day_hunt_ok() -> bool:
@@ -350,11 +370,15 @@ func _day_hunt_ok() -> bool:
 
 ## Trifft ihn gerade der LED-Kegel der Uhr (nicht das weiße Display)?
 func _led_on_me(dist: float) -> bool:
-	if dist > cfg.led_range or not _player.light_shining() or _player.hands.screen_mode:
+	# Blendaufsatz (Forschung): die LED reicht weiter und streut breiter
+	var lens := Inventory.count("glare_lens") > 0
+	var reach := cfg.led_range * (float(Research.gadget("glare_lens", "led_range_factor", 1.6)) if lens else 1.0)
+	var cone := cfg.led_cone * (float(Research.gadget("glare_lens", "led_cone_factor", 1.5)) if lens else 1.0)
+	if dist > reach or not _player.light_shining() or _player.hands.screen_mode:
 		return false
 	var cam := _player.camera.global_transform
 	var to := (global_position + Vector3(0, 1.3, 0)) - cam.origin
-	if rad_to_deg((-cam.basis.z).angle_to(to.normalized())) > cfg.led_cone:
+	if rad_to_deg((-cam.basis.z).angle_to(to.normalized())) > cone:
 		return false
 	return _clear_line()
 

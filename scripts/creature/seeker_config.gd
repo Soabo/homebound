@@ -30,6 +30,8 @@ static func get_default() -> SeekerConfig:
 @export var search_hold: Vector2 = Vector2(2.5, 6.0)
 ## Wie lange er insgesamt bleibt, bevor er abzieht
 @export var stay_time: float = 220.0
+## Chance auf Blitzasche, wenn er von selbst abzieht (nach einem Schlag bleibt immer welche)
+@export var ash_leave_chance: float = 0.5
 
 @export_group("Wahrnehmung")
 ## Licht (Uhr, Feuer, Licht im Zelt) sieht er aus dieser Entfernung
