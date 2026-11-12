@@ -29,6 +29,7 @@ func _process(delta: float) -> void:
 	if _check_t > 0.0:
 		return
 	_check_t = 2.0
+	_check_beats()
 	var next := phase_def(phase + 1)
 	if next.is_empty():
 		return
@@ -36,6 +37,21 @@ func _process(delta: float) -> void:
 		if condition(c):
 			set_phase(phase + 1)
 			return
+
+
+## Einmalige Story-Hinweise (story.json "beats"), z. B. der hohle Boden in Stefanies Büro.
+func _check_beats() -> void:
+	for b: Dictionary in data().get("beats", []):
+		var flag := String(b.get("flag", "beat_" + String(b.get("id", ""))))
+		if Tasks.flags.has(flag) or not condition(String(b.get("when", ""))):
+			continue
+		if TimeManager.hour < float(b.get("hour", 0.0)) or TimeManager.is_night():
+			continue
+		Tasks.flag(flag)
+		if String(b.get("note", "")) != "":
+			Research.read_note(String(b["note"]))
+		if String(b.get("text", "")) != "":
+			EventBus.notify(String(b["text"]), 6.0)
 
 
 ## Bedingungen: flag:X (Tasks), link:X (Forschung), day>=N

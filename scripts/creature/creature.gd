@@ -19,9 +19,10 @@ const OBSERVE_SPOTS := [
 	Vector3(2.0, 0, -23.0), Vector3(24.0, 0, 21.0), Vector3(-23.0, 0, -18.0),
 ]
 ## Ring ums Haus zwischen Hütte und Zaun (für Wege um die Hütte herum)
+## Weg rund ums Haus (mit Büro im Norden und Kinderzimmer im Nordwesten)
 const RING := [
-	Vector3(-8.5, 0, -7.0), Vector3(0.0, 0, -8.0), Vector3(8.5, 0, -7.0), Vector3(9.0, 0, 0.0),
-	Vector3(8.5, 0, 8.0), Vector3(0.5, 0, 9.5), Vector3(-8.5, 0, 8.5), Vector3(-9.0, 0, 0.0),
+	Vector3(-10.2, 0, -9.9), Vector3(0.5, 0, -9.9), Vector3(8.5, 0, -7.0), Vector3(9.0, 0, 0.0),
+	Vector3(8.5, 0, 8.0), Vector3(0.5, 0, 9.5), Vector3(-8.5, 0, 8.5), Vector3(-10.2, 0, 0.5),
 ]
 
 var mode: String = "observe"
@@ -501,7 +502,7 @@ func _on_noise(pos: Vector3, radius: float) -> void:
 		return
 	# Neugierig: schaut nach, woher das Geräusch kam
 	var goal := _ground(pos + (global_position - pos).normalized() * 3.0)
-	if Cabin.is_inside(goal) or absf(goal.x) < 7.0 and absf(goal.z) < 5.5:
+	if Cabin.is_inside(goal) or Cabin.in_footprint(goal.x, goal.z, 1.0):
 		_choose_entry()
 	else:
 		_go([goal], cfg.prowl_speed)
@@ -519,18 +520,35 @@ func _go(points: Array, speed: float) -> void:
 
 ## Die Kreatur betritt das Haus nicht: Ziele im Grundriss werden nach draußen geschoben.
 static func _outside_house(p: Vector3) -> Vector3:
-	var hx := Cabin.HALF_X + 0.9
-	var hz := Cabin.HALF_Z + 0.9
-	if absf(p.x) >= hx or absf(p.z) >= hz:
-		return p
 	# Veranda ist erlaubt (dort stehen Tür und Wohnzimmerfenster)
 	if p.z > Cabin.HALF_Z + 0.1 and p.x > -5.8 and p.x < 1.4:
 		return p
-	var dx := hx - absf(p.x)
-	var dz := hz - absf(p.z)
-	if dx < dz:
-		return Vector3(signf(p.x) * hx, p.y, p.z)
-	return Vector3(p.x, p.y, signf(p.z) * hz)
+	var main := Rect2(-Cabin.HALF_X, -Cabin.HALF_Z, Cabin.HALF_X * 2.0, Cabin.HALF_Z * 2.0)
+	for _i in 3:
+		var moved := false
+		for r: Rect2 in [main, Cabin.OFFICE, Cabin.KIDS]:
+			var g := r.grow(0.9)
+			var q := Vector2(p.x, p.z)
+			if not g.has_point(q):
+				continue
+			# zur nächsten Kante dieses Rechtecks hinausschieben
+			var d_l := q.x - g.position.x
+			var d_r := g.end.x - q.x
+			var d_t := q.y - g.position.y
+			var d_b := g.end.y - q.y
+			var m := minf(minf(d_l, d_r), minf(d_t, d_b))
+			if m == d_l:
+				p.x = g.position.x - 0.01
+			elif m == d_r:
+				p.x = g.end.x + 0.01
+			elif m == d_t:
+				p.z = g.position.y - 0.01
+			else:
+				p.z = g.end.y + 0.01
+			moved = true
+		if not moved:
+			break
+	return p
 
 
 func _follow_path(delta: float) -> bool:

@@ -305,9 +305,16 @@ func _build_planting() -> void:
 	for i in 6:
 		spots.append(Vector2(-5.4 + i * 0.25, 7.0))
 		spots.append(Vector2(-1.6 + i * 0.45, 7.0))
+	# entlang der Anbauten (Kinderzimmer West, Büro Nord)
+	for i in 9:
+		spots.append(Vector2(-9.85, -4.1 + i * 0.55))
+	for i in 7:
+		spots.append(Vector2(-1.8 + i * 0.75, -8.85))
 	for p in spots:
 		if absf(p.x + 7.0) < 0.6 and p.y > 0.9 and p.y < 2.6:
 			continue  # Schornstein
+		if Cabin.in_footprint(p.x, p.y, 0.35):
+			continue  # dort stehen jetzt Kinderzimmer und Büro
 		var s := _rng.randf_range(0.45, 0.8)
 		shrubs.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s, s * 0.95, s)),
 				Vector3(p.x + _rng.randf_range(-0.15, 0.15), -0.03, p.y + _rng.randf_range(-0.15, 0.15))))

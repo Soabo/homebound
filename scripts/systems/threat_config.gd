@@ -43,6 +43,17 @@ extends Resource
 @export var traces_after_hints: float = 0.5
 @export var traces_after_visit: float = 0.85
 
+@export_group("Dachboden")
+## In Nächten mit Besuch/Jagd: Chance, dass etwas über das Dach in den Dachboden kommt (Schritte, Kratzen an der Luke).
+@export var attic_chance: float = 0.45
+## Ab dieser Nacht kann es über die heruntergelassene Leiter ins Haus kommen.
+@export var attic_from_night: int = 4
+## Steht die Leiter unten, kommt es in Besuchsnächten fast sicher hinein.
+@export var attic_ladder_down_chance: float = 0.9
+## Ab dieser Nacht verletzt es dich, wenn du in der Nähe der Leiter bist (Schaden).
+@export var attic_hurt_from_night: int = 6
+@export var attic_damage: float = 25.0
+
 @export_group("Kreatur im Haus nach dem Aufwachen")
 @export var inside_from_day: int = 3
 ## Mindestabstand in Tagen zwischen zwei solchen Auftritten.

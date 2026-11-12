@@ -1872,6 +1872,26 @@
     "lab_decision": {
       "name": "Notiz: Das Labor",
       "text": "Der Funktisch reicht nicht mehr. Das Bad hat Wasser, Licht und eine Tür, die man abschließen kann. Ich baue den Waschtisch zum Labor um."
+    },
+    "buero_kalender": {
+      "name": "Wandkalender",
+      "text": "Ein Wandkalender, aufgeschlagen beim Monat des Umzugs. Ein Tag ist dick rot umkreist: »Schlüssel! Endlich!« Darunter, kleiner, in Stefanies Schrift: »Keller ausmessen. Warum ist er nicht im Plan?«"
+    },
+    "keller_hinweis": {
+      "name": "Hohler Boden",
+      "text": "Heute Morgen in Stefanies Büro: Unter dem Teppich klingt der Boden hohl. Ihr Kalender fällt mir ein – »Keller ausmessen«. Laut Bauplan hat die Hütte gar keinen Keller."
+    },
+    "keller_mauer": {
+      "name": "Zugemauerte Stelle",
+      "text": "Eine zugemauerte Stelle in der Ostwand. Die Ziegel sind jünger als der Rest des Kellers. Aus den Fugen wachsen dünne, graue Wurzeln – sie fühlen sich warm an, als hätten sie Fieber. Auf einem Ziegel ein verblasster Stempel: WW · MP4. Die Wurzeln kommen aus der Richtung des alten Brunnens."
+    },
+    "kinder_bild": {
+      "name": "Kinderzeichnung",
+      "text": "Eine Zeichnung mit Wachsmalkreide: ein Haus zwischen großen Bäumen, vier Strichmännchen davor, das kleinste hält einen Bären. Darüber in krummen Buchstaben: UNSER WALDHAUS. Unten rechts: LENA."
+    },
+    "dachboden_liste": {
+      "name": "Zettel am Karton",
+      "text": "In Stefanies Schrift, mit Klebeband an den Karton geklebt: »Kinderzimmer: Grün für Lena (sie will »Waldgrün«), Sterne an die Decke für Ben. Christians Unterlagen NICHT hier oben lassen – zu feucht.«"
     }
   },
   "lab": {

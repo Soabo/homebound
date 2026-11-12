@@ -1,11 +1,42 @@
 {
-  "_info": "Story-Gerüst (Story-Bibel: 5 Phasen). Eine Phase beginnt, sobald EINE ihrer Bedingungen erfüllt ist (begins_any). Bedingungen wie in tasks.json: flag:X, link:X, day>=N. VORLÄUFIG: Die genauen Auslöser legt Christian beim Story-Bau fest.",
+  "_info": "Story-Gerüst (Story-Bibel: 5 Phasen). Eine Phase beginnt, sobald EINE ihrer Bedingungen erfüllt ist (begins_any). Bedingungen wie in tasks.json: flag:X, link:X, day>=N. VORLÄUFIG: Die genauen Auslöser legt Christian beim Story-Bau fest. beats = einmalige Story-Hinweise: when = Bedingung (wie oben), hour = frühestens ab dieser Uhrzeit, flag = Tasks-Merker, der danach gesetzt ist, note = Notiz (research.json) fürs Tablet, text = Meldung.",
   "phases": [
-    {"id": 1, "name": "Zusammenbruch"},
-    {"id": 2, "name": "Das Gebiet unter dem Wald", "begins_any": ["link:link_core_map", "flag:w17_carried", "flag:shaft_b_open", "day>=10"],
-     "text": "Es ist nicht nur etwas im Wald. Es ist etwas unter dem Wald. Und seit gestern Nacht jagt dort draußen etwas Neues."},
-    {"id": 3, "name": "Menschliche Beteiligung"},
-    {"id": 4, "name": "Die Wahrheit über die Familie"},
-    {"id": 5, "name": "Die Saat"}
+    {
+      "id": 1,
+      "name": "Zusammenbruch"
+    },
+    {
+      "id": 2,
+      "name": "Das Gebiet unter dem Wald",
+      "begins_any": [
+        "link:link_core_map",
+        "flag:w17_carried",
+        "flag:shaft_b_open",
+        "day>=10"
+      ],
+      "text": "Es ist nicht nur etwas im Wald. Es ist etwas unter dem Wald. Und seit gestern Nacht jagt dort draußen etwas Neues."
+    },
+    {
+      "id": 3,
+      "name": "Menschliche Beteiligung"
+    },
+    {
+      "id": 4,
+      "name": "Die Wahrheit über die Familie"
+    },
+    {
+      "id": 5,
+      "name": "Die Saat"
+    }
+  ],
+  "beats": [
+    {
+      "id": "cellar_hint",
+      "when": "day>=4",
+      "hour": 8.0,
+      "flag": "cellar_hint",
+      "note": "keller_hinweis",
+      "text": "In Stefanies Büro klingt der Boden unter dem Teppich hohl …"
+    }
   ]
 }

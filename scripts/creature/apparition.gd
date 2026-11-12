@@ -78,6 +78,13 @@ static func spawn(scene: Node, what: String) -> Apparition:
 			pos = best[randi() % best.size()]
 			look_at_pos = BEDROOM_DOOR
 			a.lifetime = 120.0
+		"ladder":
+			# kam über die heruntergelassene Dachbodenleiter: steht an ihrem Fuß, sonst wie "inside"
+			pos = AtticHatch.FOOT + Vector3(0, 0, 0.35)
+			look_at_pos = BEDROOM_DOOR
+			a.lifetime = 90.0
+			a.kind = "inside"
+			what = "inside"
 	scene.add_child(a)
 	a.global_position = pos
 	var tgt := Vector3(look_at_pos.x, pos.y, look_at_pos.z)

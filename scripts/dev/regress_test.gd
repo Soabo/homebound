@@ -349,7 +349,69 @@ func _t_more() -> void:
 	_t_list_nov11()
 	_t_blueprints()
 	_t_nov12_evening()
+	await _t_rooms()
 	await _t_hands()
+
+
+## Anbauten (13.11.): Büro, Kinderzimmer, Dachboden mit Zugleiter, Keller unter dem Teppich.
+func _t_rooms() -> void:
+	var p := _player()
+	_ok("Haus: Büro, Kinderzimmer, Dachboden und Keller zählen als drinnen",
+		Cabin.is_inside(Vector3(0.5, 0.6, -6.5)) and Cabin.is_inside(Vector3(-7.5, 0.6, -2.0))
+		and Cabin.is_inside(Vector3(0.0, Cabin.WALL_TOP + 0.3, 0.0)) and Cabin.is_inside(Vector3(0.5, Cabin.CELLAR_FLOOR + 0.2, -4.0)))
+	_ok("Gelände unter dem Keller abgesenkt, daneben nicht", Terrain.height_at(0.0, -5.0) < Cabin.CELLAR_FLOOR and Terrain.height_at(-3.0, -6.0) > -0.5)
+	var ah := _scene().find_child("AtticHatch", true, false) as AtticHatch
+	var ch := _scene().find_child("CellarHatch", true, false) as CellarHatch
+	_ok("Dachbodenluke und Kellerluke vorhanden", ah != null and ch != null)
+	if ah == null or ch == null:
+		return
+	var keep_pos := p.global_position
+	# Dachboden: Leiter herunterziehen, hochklettern, oben ankommen, wieder runter, Leiter hoch
+	ah.set_down(false)
+	p.global_position = AtticHatch.FOOT + Vector3(0, 0, 0.5)
+	ah.interact(p)
+	_ok("Dachbodenleiter lässt sich herunterziehen", ah.down and AtticHatch.down_now)
+	await get_tree().create_timer(0.8).timeout
+	ah.interact(p)
+	await get_tree().create_timer(6.0).timeout
+	_ok("Auf den Dachboden geklettert", p.global_position.y > Cabin.WALL_TOP and Cabin.is_inside(p.global_position) and not p.input_locked,
+		"Position %s" % p.global_position)
+	ah.interact(p)
+	await get_tree().create_timer(6.0).timeout
+	_ok("Vom Dachboden wieder herunter", p.global_position.y < 1.0 and not p.input_locked, "Position %s" % p.global_position)
+	ah.secondary_interact(p)
+	_ok("Leiter hochgeschoben", not ah.down and not AtticHatch.down_now)
+	# Keller: ohne Hinweis lässt sich der Teppich nicht wegziehen
+	var had_hint := Tasks.flags.has(CellarHatch.HINT_FLAG)
+	Tasks.flags.erase(CellarHatch.HINT_FLAG)
+	ch.rug_moved = false
+	ch.open = false
+	ch._apply(false)
+	p.global_position = ch.global_position + Vector3(0.0, 0.0, 1.0)
+	_ok("Teppich: ohne Story-Hinweis nichts zu sehen", ch.get_prompt(p) == "")
+	ch.interact(p)
+	_ok("Teppich bleibt ohne Hinweis liegen", not ch.rug_moved)
+	Tasks.flag(CellarHatch.HINT_FLAG)
+	ch.interact(p)
+	ch.interact(p)
+	_ok("Mit Hinweis: Teppich weg, Luke offen", ch.rug_moved and ch.open)
+	await get_tree().create_timer(0.7).timeout
+	ch.interact(p)
+	await get_tree().create_timer(7.0).timeout
+	_ok("In den Keller gestiegen", Cabin.in_cellar(p.global_position) and not p.input_locked, "Position %s" % p.global_position)
+	ch.interact(p)
+	await get_tree().create_timer(7.0).timeout
+	_ok("Aus dem Keller wieder hinauf", p.global_position.y > 0.3 and not p.input_locked, "Position %s" % p.global_position)
+	ch.secondary_interact(p)
+	if not had_hint:
+		Tasks.flags.erase(CellarHatch.HINT_FLAG)
+	p.global_position = keep_pos
+	# Bett warnt bei heruntergelassener Leiter
+	ah.set_down(true)
+	var bed := _scene().find_child("Bed", true, false)
+	if bed and TimeManager.can_sleep():
+		_ok("Bett warnt bei heruntergelassener Leiter", String(bed.call("get_prompt", p)).contains("Dachbodenleiter"))
+	ah.set_down(false)
 
 
 ## 12.11. abends: Holzkorb 6, Licht im Versteck, Aufgabenname.

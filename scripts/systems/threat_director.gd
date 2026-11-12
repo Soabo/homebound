@@ -35,7 +35,7 @@ var _arc_day: int = -1
 var _activity_tonight: bool = false
 var _kinds_tonight: Array = []   ## welche Wesen heute Nacht da waren (für AlienDrops)
 const ACTIVITY_EVENTS := ["creature", "sighting", "drone", "manipulator", "phantom", "signal", "music_box", "knock_door",
-		"rattle", "handprint", "roof", "scratch", "breath_wall", "photo"]
+		"rattle", "handprint", "roof", "scratch", "breath_wall", "photo", "attic"]
 var _forest_day_done: int = -1
 var _forest_check: float = 30.0
 
@@ -158,6 +158,9 @@ func plan_night(night_day: int) -> void:
 				_add(start + _rng.randf_range(1.0, night_len - 1.0), "phantom")
 		"visit", "hunt":
 			_add(start + _rng.randf_range(1.0, 3.5), "creature")
+			# Über das Dach in den Dachboden (zweiter Weg ins Haus, wenn die Leiter unten ist)
+			if night_day >= config.attic_from_night and _rng.randf() < config.attic_chance:
+				_add(start + _rng.randf_range(2.0, night_len - 1.5), "attic")
 			if night_kind == "hunt" and _rng.randf() < config.outage_chance:
 				_add(start + _rng.randf_range(2.5, 6.0), "outage")
 	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht) – nicht in ruhigen Nächten
@@ -223,6 +226,36 @@ func force_event(type: String, delay_hours: float) -> void:
 
 func _add(at: float, type: String) -> void:
 	events.append({"at": at, "type": type, "done": false})
+
+
+## Etwas ist auf dem Dachboden: Schritte über der Decke, Kratzen an der Luke. Steht die Leiter unten
+## (oder ist sie heruntergelassen worden), kommt es herunter: Gestalt am Leiterfuß, Schlammspur, Weckruf.
+func _attic_event(scene: Node, player: Node3D) -> void:
+	var hatch_pos := Vector3(AtticHatch.FOOT.x, Cabin.WALL_TOP + 0.4, AtticHatch.HOLE.get_center().y)
+	for k in 3:
+		get_tree().create_timer(k * 2.2).timeout.connect(func() -> void:
+			if is_instance_valid(scene):
+				SoundBank.play_at(scene, "roof_steps", hatch_pos + Vector3(_rng.randf_range(-3.0, 1.0), 0.3, _rng.randf_range(-1.0, 1.0)), -2.0, 0.8))
+	SoundBank.play_at(scene, "scratch", hatch_pos, 0.0, 0.8)
+	var down := AtticHatch.down_now
+	if not down or TimeManager.day < config.attic_from_night or _rng.randf() > config.attic_ladder_down_chance:
+		# Leiter oben: es kratzt nur an der Luke – morgens Schlamm oben auf dem Dachboden
+		get_tree().create_timer(5.0).timeout.connect(func() -> void:
+			if is_instance_valid(scene):
+				SoundBank.play_at(scene, "knock", hatch_pos, -2.0, 0.7))
+		return
+	# Leiter unten: es kommt herunter
+	SoundBank.play_at(scene, "floor_creak", AtticHatch.FOOT + Vector3(0, 1.5, -0.5), 2.0, 0.7)
+	Tasks.flag("creature_visited")
+	get_tree().create_timer(3.0).timeout.connect(func() -> void:
+		if not is_instance_valid(scene):
+			return
+		Apparition.spawn(scene, "ladder")
+		CreatureSounds.play(scene, "breath", AtticHatch.FOOT + Vector3(0, 1.6, 0), -4.0, 0.9)
+		var pl := get_tree().get_first_node_in_group("player") as Player
+		if pl and TimeManager.day >= config.attic_hurt_from_night and pl.global_position.distance_to(AtticHatch.FOOT) < 3.5:
+			pl.take_damage(config.attic_damage, AtticHatch.FOOT + Vector3(0, 1.2, 0))
+			EventBus.screen_shake.emit(0.6))
 
 
 ## Gegen 23–1 Uhr wird der Spieler müde – wenn bis dahin nichts passiert ist, sagt er es.
@@ -337,7 +370,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -382,6 +415,8 @@ func _fire(type: String) -> void:
 			get_tree().call_group("nature_ambience", "silence_for", _rng.randf_range(20.0, 45.0))
 		"scratch":
 			SoundBank.play_at(scene, "scratch", _random_wall_point(), 0.0, _rng.randf_range(0.85, 1.1))
+		"attic":
+			_attic_event(scene, player)
 		"roof":
 			# Schritte auf dem Dach – wenn du drin bist, genau über dir
 			var rp := Vector3(_rng.randf_range(-5.0, 5.0), Cabin.WALL_TOP + 1.2, _rng.randf_range(-3.0, 3.0))
@@ -587,7 +622,7 @@ func far_from_home() -> bool:
 ## Ersatz für Ereignisse, die nur an der Hütte Sinn ergeben. "" = entfällt.
 func _far_variant(type: String) -> String:
 	match type:
-		"scratch", "roof", "knock_door", "rattle", "breath_wall":
+		"scratch", "roof", "knock_door", "rattle", "breath_wall", "attic":
 			return "steps" if _rng.randf() < 0.6 else "twig"
 		"handprint", "photo", "flicker", "radio", "outage":
 			return ""

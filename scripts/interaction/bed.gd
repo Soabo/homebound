@@ -32,6 +32,8 @@ func get_prompt(_player: Node) -> String:
 	if why != "" and TimeManager.can_sleep():
 		return "Bett – " + why
 	if TimeManager.can_sleep():
+		if AtticHatch.down_now:
+			return "[E] Schlafen (bis %02d:00) – die Dachbodenleiter ist noch unten!" % int(TimeManager.config.wake_up_hour)
 		return "[E] Schlafen (bis %02d:00)" % int(TimeManager.config.wake_up_hour)
 	return "Bett – noch zu früh zum Schlafen"
 
@@ -44,4 +46,6 @@ func interact(_player: Node) -> void:
 	if why != "":
 		EventBus.notify(why, 2.5)
 		return
+	if AtticHatch.down_now:
+		EventBus.notify("Die Dachbodenleiter ist noch unten … hoffentlich kommt da nichts herunter.", 3.0)
 	EventBus.sleep_requested.emit(TimeManager.config.wake_up_hour)

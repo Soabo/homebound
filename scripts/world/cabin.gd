@@ -3,12 +3,15 @@ extends Node3D
 ## Die Blockhütte (GDD 3.3). Grundfläche 12 x 9 m, Eingang nach Süden (+z).
 ##
 ## Raumaufteilung (Draufsicht, Norden oben = -z):
-##   +-------------+---------+-----------+
-##   | Schlafzimmer| Vorrat  | Bad       |   z -4.5 .. -1
-##   +-------------+---------+-----------+
-##   |  Wohnzimmer + Küche   | Werkstatt |   z -1 .. 4.5
-##   +----[Tür]--------------+-----------+
-##   x -6        -1         2           6
+##                  +-----------------+
+##                  | Büro (Stefanie) |                   z -8 .. -4.5  (Anbau, Keller darunter)
+##   +------+-------+-----+-[ ]-+-------+-----------+
+##   |Kinder| Schlafzimmer| Vorrat  | Bad       |   z -4.5 .. -1
+##   |zimmer+-------------+---------+-----------+
+##   |(Anbau)[ ] Wohnzimmer + Küche | Werkstatt |   z -1 .. 4.5   (Dachbodenluke in der Werkstatt)
+##   +------+    +----[Tür]---------+-----------+
+##   x -9  -6         -1         2           6
+## Anbauten, Dachboden und Keller baut CabinRooms (scripts/world/cabin_rooms.gd).
 ##
 ## Außen liegen echte Rundholz-Stämme mit Eckköpfen; die Kollision kommt von
 ## unsichtbaren Wandkörpern, innen sind die Wände mit Brettern verkleidet.
@@ -23,6 +26,10 @@ const HALF_Z := 4.5
 const LOG_R := 0.155
 const CLAD := 0.14  ## Abstand der Innenverkleidung von der Wandmitte
 const ROOF_RISE := 2.2
+## Dachbodenfenster in den Giebeln (über der Decke gemessen)
+const ATTIC_WIN_SILL := 0.35
+const ATTIC_WIN_H := 0.8
+const ATTIC_WIN_W := 0.7
 
 const WINDOW_NAMES := {
 	"WindowLiving": "Wohnzimmerfenster",
@@ -30,7 +37,20 @@ const WINDOW_NAMES := {
 	"WindowBedroom": "Schlafzimmerfenster",
 	"WindowTechnical": "Badfenster",
 	"WindowWorkshopEast": "Werkstattfenster Ost",
+	"WindowOffice": "Bürofenster",
+	"WindowOfficeWest": "Bürofenster West",
+	"WindowKids": "Kinderzimmerfenster",
+	"WindowKidsNorth": "Kinderzimmerfenster Nord",
+	"WindowAtticWest": "Dachfenster West",
+	"WindowAtticEast": "Dachfenster Ost",
 }
+
+## Grundriss der Anbauten (Wandmitten): Büro hinter der Speis, Kinderzimmer im Nordwesten
+const OFFICE := Rect2(-2.2, -8.0, 5.5, 3.5)    # x -2.2 .. 3.3, z -8 .. -4.5
+const KIDS := Rect2(-9.0, -4.5, 3.0, 5.1)      # x -9 .. -6, z -4.5 .. 0.6
+## Keller unter Büro und Speis (Wandmitten), Boden auf CELLAR_FLOOR
+const CELLAR := Rect2(-0.7, -6.8, 2.4, 4.5)    # x -0.7 .. 1.7, z -6.8 .. -2.3
+const CELLAR_FLOOR := -2.1
 
 var front_door: Door
 var switches: Dictionary = {}
@@ -49,9 +69,35 @@ var m_iron: Material
 var m_fabric: Material
 
 
-## Für Atmosphäre/Sound: steht ein Punkt in der Hütte?
+## Für Atmosphäre/Sound: steht ein Punkt in der Hütte (mit Anbauten, Dachboden und Keller)?
 static func is_inside(p: Vector3) -> bool:
-	return absf(p.x) < HALF_X and absf(p.z) < HALF_Z and p.y > FLOOR_Y - 0.3 and p.y < WALL_TOP + 0.5
+	var flat := Vector2(p.x, p.z)
+	if absf(p.x) < HALF_X and absf(p.z) < HALF_Z and p.y > FLOOR_Y - 0.3 and p.y < WALL_TOP + ROOF_RISE + 0.5:
+		return true
+	if (OFFICE.has_point(flat) or KIDS.has_point(flat)) and p.y > FLOOR_Y - 0.3 and p.y < WALL_TOP + 0.3:
+		return true
+	return in_cellar(p)
+
+
+static func in_cellar(p: Vector3) -> bool:
+	return CELLAR.has_point(Vector2(p.x, p.z)) and p.y > CELLAR_FLOOR - 0.4 and p.y < FLOOR_Y - 0.25
+
+
+## Liegt ein Punkt (Draufsicht) im Grundriss des ganzen Hauses, plus Rand? (für Gegner-Wege, Pflanzen)
+static func in_footprint(x: float, z: float, margin: float = 0.0) -> bool:
+	var main := Rect2(-HALF_X, -HALF_Z, HALF_X * 2.0, HALF_Z * 2.0)
+	for r: Rect2 in [main, OFFICE, KIDS]:
+		if r.grow(margin).has_point(Vector2(x, z)):
+			return true
+	return false
+
+
+## Gelände unter dem Keller tief absenken (sonst stünde der Boden mitten im Kellerraum).
+## Nur Gitterpunkte, die ganz unter Büro/Speis liegen – von außen sieht man davon nichts.
+static func cellar_dip(x: float, z: float, h: float) -> float:
+	if x > -1.001 and x < 2.001 and z > -7.001 and z < -1.999:
+		return minf(h, CELLAR_FLOOR - 0.5)
+	return h
 
 
 func _ready() -> void:
@@ -80,6 +126,7 @@ func _ready() -> void:
 	_build_storage()
 	_build_bathroom()
 	_build_workshop()
+	CabinRooms.build(self)   # Büro, Kinderzimmer, Dachboden, Keller
 	_build_reflection_probe()
 	# Staub in der Luft (sichtbar im Licht) und Rauch aus dem Schornstein
 	var dust := ParticlesKit.dust(Vector3(HALF_X - 0.4, WALL_H * 0.45, HALF_Z - 0.4))
@@ -99,11 +146,12 @@ func _build_shell() -> void:
 	var hz := HALF_Z - EXT_T * 0.5
 	# Öffnungen: Vector4(mitte entlang der Wand, breite, unterkante, oberkante)
 	var front := [Vector4(3.0, 1.0, 0.0, 2.1), Vector4(6.0, 1.3, 0.9, 2.0), Vector4(10.0, 1.0, 1.0, 1.9)]
-	var back := [Vector4(2.5, 1.0, 1.0, 1.9), Vector4(10.5, 0.6, 1.5, 2.0)]
+	var back := [Vector4(2.5, 1.0, 1.0, 1.9), Vector4(10.5, 0.6, 1.5, 2.0), Vector4(6.5, 0.9, 0.0, 2.05)]  # + Tür Speis → Büro
+	var west_door := 4.45   # Tür Wohnzimmer → Kinderzimmer bei z = -0.05 (Abstand vom Wandanfang z = -4.5)
 	# Unsichtbare Kollision
 	BuildKit.wall(self, Vector2(-HALF_X, HALF_Z), Vector2(HALF_X, HALF_Z), FLOOR_Y, WALL_H, EXT_T, null, front, "WallFront")
 	BuildKit.wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(HALF_X, -HALF_Z), FLOOR_Y, WALL_H, EXT_T, null, back, "WallBack")
-	BuildKit.wall(self, Vector2(-HALF_X, -hz), Vector2(-HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, null, [], "WallWest")
+	BuildKit.wall(self, Vector2(-HALF_X, -hz), Vector2(-HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, null, [Vector4(west_door - (HALF_Z - hz), 0.9, 0.0, 2.05)], "WallWest")
 	BuildKit.wall(self, Vector2(HALF_X, -hz), Vector2(HALF_X, hz), FLOOR_Y, WALL_H, EXT_T, null, [Vector4(2.0 + hz, 1.0, 1.0, 1.9)], "WallEast")
 
 	# Außen: Rundholz-Stämme. Vorder-/Rückwand und Seiten um eine halbe Lage versetzt.
@@ -116,7 +164,8 @@ func _build_shell() -> void:
 		return r
 	BuildKit.log_wall(self, Vector2(-HALF_X, HALF_Z), Vector2(HALF_X, HALF_Z), low, WALL_TOP, LOG_R, 0.38, m_logs, to_world.call(front, FLOOR_Y))
 	BuildKit.log_wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(HALF_X, -HALF_Z), low, WALL_TOP, LOG_R, 0.38, m_logs, to_world.call(back, FLOOR_Y))
-	BuildKit.log_wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(-HALF_X, HALF_Z), low + step * 0.5, WALL_TOP, LOG_R, 0.38, m_logs, [])
+	BuildKit.log_wall(self, Vector2(-HALF_X, -HALF_Z), Vector2(-HALF_X, HALF_Z), low + step * 0.5, WALL_TOP, LOG_R, 0.38, m_logs,
+			to_world.call([Vector4(west_door, 0.9, 0.0, 2.05)], FLOOR_Y))
 	BuildKit.log_wall(self, Vector2(HALF_X, -HALF_Z), Vector2(HALF_X, HALF_Z), low + step * 0.5, WALL_TOP, LOG_R, 0.38, m_logs,
 			to_world.call([Vector4(2.0 + HALF_Z, 1.0, 1.0, 1.9)], FLOOR_Y))
 
@@ -132,7 +181,7 @@ func _build_shell() -> void:
 		back_in.append(Vector4(o.x - shift, o.y, o.z, o.w))
 	BuildKit.wall(self, Vector2(-ix, iz), Vector2(ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, front_in, "CladFront")
 	BuildKit.wall(self, Vector2(-ix, -iz), Vector2(ix, -iz), FLOOR_Y, WALL_H, 0.03, m_wall, back_in, "CladBack")
-	BuildKit.wall(self, Vector2(-ix, -iz), Vector2(-ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, [], "CladWest")
+	BuildKit.wall(self, Vector2(-ix, -iz), Vector2(-ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, [Vector4(west_door - (HALF_Z - iz), 0.9, 0.0, 2.05)], "CladWest")
 	BuildKit.wall(self, Vector2(ix, -iz), Vector2(ix, iz), FLOOR_Y, WALL_H, 0.03, m_wall, [Vector4(2.0 + iz, 1.0, 1.0, 1.9)], "CladEast")
 
 	# Innenwände
@@ -148,10 +197,20 @@ func _build_shell() -> void:
 	for x: float in [-2.5, 0.5, 4.0]:
 		_door_trim(Vector3(x, FLOOR_Y, -1.0), 0.0, 0.9, 2.05, INT_T)
 	_door_trim(Vector3(2.0, FLOOR_Y, 1.5), 90.0, 1.0, 2.05, INT_T)
+	# Türen zu den Anbauten (Büro hinter der Speis, Kinderzimmer neben dem Kamin)
+	_door_trim(Vector3(0.5, FLOOR_Y, -HALF_Z), 0.0, 0.9, 2.05, 0.36)
+	_door_trim(Vector3(-HALF_X, FLOOR_Y, -0.05), 90.0, 0.9, 2.05, 0.36)
 
-	# Decke und Balken
-	BuildKit.box_mm(self, Vector3(-HALF_X, WALL_TOP, -HALF_Z), Vector3(HALF_X, WALL_TOP + 0.1, HALF_Z),
-			BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55)), false, "Ceiling")
+	# Decke und Balken – mit Loch für die Dachbodenluke in der Werkstatt; die Decke ist zugleich der Dachboden-Boden
+	var ceil_mat := BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55))
+	var hole := AtticHatch.HOLE
+	var pieces := [
+		[Vector3(-HALF_X, WALL_TOP, -HALF_Z), Vector3(hole.position.x, WALL_TOP + 0.1, HALF_Z)],
+		[Vector3(hole.end.x, WALL_TOP, -HALF_Z), Vector3(HALF_X, WALL_TOP + 0.1, HALF_Z)],
+		[Vector3(hole.position.x, WALL_TOP, -HALF_Z), Vector3(hole.end.x, WALL_TOP + 0.1, hole.position.y)],
+		[Vector3(hole.position.x, WALL_TOP, hole.end.y), Vector3(hole.end.x, WALL_TOP + 0.1, HALF_Z)]]
+	for i in pieces.size():
+		BuildKit.box_mm(self, pieces[i][0], pieces[i][1], ceil_mat, true, "Ceiling" if i == 0 else "Ceiling_%d" % i)
 	for x: float in [-4.6, -2.2, 0.2, 2.6, 4.9]:
 		BuildKit.box(self, Vector3(0.22, 0.24, HALF_Z * 2.0 - 0.3), Vector3(x, WALL_TOP - 0.12, 0), m_beam, false)
 	# Fußleisten
@@ -220,7 +279,8 @@ func _build_roof() -> void:
 	var center_y := WALL_TOP + ROOF_RISE - center_z * slope + 0.25
 	var roof_len := HALF_X * 2.0 + overhang * 2.0
 	for side: float in [1.0, -1.0]:
-		BuildKit.box(self, Vector3(roof_len, 0.2, length), Vector3(0, center_y, center_z * side), shingles, false, Vector3(angle * side, 0, 0))
+		# fest: unter dem Dach liegt der Dachboden
+		BuildKit.box(self, Vector3(roof_len, 0.2, length), Vector3(0, center_y, center_z * side), shingles, true, Vector3(angle * side, 0, 0))
 		# Traufbrett
 		var eave_y := WALL_TOP + ROOF_RISE - run * slope + 0.18
 		BuildKit.box(self, Vector3(roof_len + 0.05, 0.22, 0.06), Vector3(0, eave_y, run * side), m_wood_dark, false, Vector3(angle * side, 0, 0))
@@ -229,14 +289,50 @@ func _build_roof() -> void:
 			BuildKit.box(self, Vector3(0.06, 0.28, length), Vector3(x, center_y - 0.04, center_z * side), m_wood_dark, false, Vector3(angle * side, 0, 0))
 	# Firstbalken als Stamm
 	BuildKit.cylinder(self, 0.16, roof_len + 0.1, Vector3(0, WALL_TOP + ROOF_RISE + 0.32, 0), m_logs, false, Vector3(0, 0, 90), -1.0, 8)
-	# Giebel aus kürzer werdenden Stämmen, dahinter eine Bretterfüllung
+	# Giebel aus kürzer werdenden Stämmen, dahinter eine Bretterfüllung – mit je einem Dachbodenfenster (West/Ost)
+	var win_lo := WALL_TOP + ATTIC_WIN_SILL
+	var win_hi := win_lo + ATTIC_WIN_H
+	var win_half := ATTIC_WIN_W * 0.5
 	for sx: float in [-HALF_X, HALF_X]:
 		var y := WALL_TOP + LOG_R
 		while y < WALL_TOP + ROOF_RISE:
 			var half := HALF_Z * (1.0 - (y - WALL_TOP) / ROOF_RISE) + 0.15
-			BuildKit.cylinder(self, LOG_R * 0.95, half * 2.0, Vector3(sx, y, 0), m_logs, false, Vector3(90, 0, 0), -1.0, 8)
+			if y > win_lo - LOG_R * 0.6 and y < win_hi + LOG_R * 0.6:
+				# Lage am Fenster unterbrechen
+				for zs: float in [-1.0, 1.0]:
+					var a := win_half + 0.02
+					BuildKit.cylinder(self, LOG_R * 0.95, half - a, Vector3(sx, y, zs * (a + half) * 0.5), m_logs, false, Vector3(90, 0, 0), -1.0, 8)
+			else:
+				BuildKit.cylinder(self, LOG_R * 0.95, half * 2.0, Vector3(sx, y, 0), m_logs, false, Vector3(90, 0, 0), -1.0, 8)
 			y += LOG_R * 1.85
-		BuildKit.gable(self, HALF_Z * 2.0, ROOF_RISE, 0.05, Vector3(sx - signf(sx) * 0.12, WALL_TOP, 0), 90.0, m_wall)
+		# Bretterfüllung in waagrechten Streifen, am Fenster ausgespart
+		var px := sx - signf(sx) * 0.12
+		var sy := 0.0
+		while sy < ROOF_RISE - 0.05:
+			var top := minf(sy + 0.1, ROOF_RISE)
+			var hw := HALF_Z * (1.0 - top / ROOF_RISE)
+			var y0 := WALL_TOP + sy
+			var y1 := WALL_TOP + top
+			if y1 > win_lo and y0 < win_hi:
+				for zs: float in [-1.0, 1.0]:
+					BuildKit.box_mm(self, Vector3(px - 0.025, y0, zs * win_half), Vector3(px + 0.025, y1, zs * hw), m_wall, false)
+			else:
+				BuildKit.box_mm(self, Vector3(px - 0.025, y0, -hw), Vector3(px + 0.025, y1, hw), m_wall, false)
+			sy = top
+		# fest, damit man auf dem Dachboden nicht hinausläuft
+		BuildKit.collider_box(self, Vector3(0.12, ROOF_RISE, HALF_Z * 2.0), Vector3(sx - signf(sx) * 0.15, WALL_TOP + ROOF_RISE * 0.5, 0))
+		var gw := CabinWindow.new()
+		gw.name = "WindowAtticWest" if sx < 0.0 else "WindowAtticEast"
+		gw.window_name = WINDOW_NAMES[gw.name]
+		gw.width = ATTIC_WIN_W
+		gw.height = ATTIC_WIN_H
+		gw.wall_thickness = 0.34
+		gw.position = Vector3(sx, win_lo, 0.0)
+		gw.rotation_degrees.y = -90.0 if sx < 0.0 else 90.0
+		add_child(gw)
+		# Dachfenster sind kein Zugang für die Kreatur von unten (der Dachboden-Weg läuft über ThreatDirector "attic")
+		gw.remove_from_group("entry_point")
+		gw.add_to_group("attic_window")
 	# Schornstein mit Abdeckplatte
 	var cx0 := -HALF_X - 0.85
 	var cx1 := -HALF_X - 0.15
@@ -454,7 +550,7 @@ func _build_fireplace() -> void:
 func _build_lights() -> void:
 	var living := _lamp(Vector3(-2.2, WALL_TOP - 0.24, 1.75), 1.5, 8.5, true)
 	var dining := _lamp(Vector3(-0.2, WALL_TOP, 3.0), 0.9, 5.0, false)
-	var lantern_a := _lantern(Vector3(-HALF_X + CLAD + 0.02, FLOOR_Y + 1.85, 0.6), 90.0)
+	var lantern_a := _lantern(Vector3(-HALF_X + CLAD + 0.02, FLOOR_Y + 1.85, 0.68), 90.0)
 	var lantern_b := _lantern(Vector3(-HALF_X + CLAD + 0.02, FLOOR_Y + 1.85, 2.9), 90.0)
 	var bedroom := _lamp(Vector3(-3.5, WALL_TOP, -2.75), 1.0, 5.5, true)
 	var storage := _lamp(Vector3(0.5, WALL_TOP, -2.75), 0.8, 4.0, false)
@@ -570,7 +666,7 @@ func _build_living_room() -> void:
 	BuildKit.box(clock, Vector3(0.012, 0.1, 0.005), Vector3(0.02, 0.04, -0.03), BuildKit.color_mat(Color(0.05, 0.05, 0.05)), false, Vector3(0, 0, -30))
 	BuildKit.box(clock, Vector3(0.012, 0.07, 0.005), Vector3(-0.025, -0.01, -0.03), BuildKit.color_mat(Color(0.05, 0.05, 0.05)), false, Vector3(0, 0, 110))
 	# Pflanzen in Tontöpfen
-	_plant(Vector3(-5.45, y, 0.3), 1.0)
+	_plant(Vector3(-6.5, y, -1.5), 1.0)   # im Kinderzimmer an der Hauswand
 	_plant(Vector3(0.95, y, 4.1), 0.8)
 	_plant(Vector3(-5.5, y, 4.0), 1.2)
 
@@ -749,35 +845,38 @@ func _build_bedroom() -> void:
 
 func _build_storage() -> void:
 	var y := FLOOR_Y
-	_shelf(Vector3(-0.85, y, -4.35), Vector3(1.85, y + 2.1, -3.9), 5, false)
+	# Regal an der linken Wand (West), damit man zur Bürotür im Norden durchgehen kann
+	var sx := -1.0 + INT_T * 0.5 + 0.02
+	var scx := sx + 0.22   # Mitte des Regals
+	_shelf(Vector3(sx, y, -4.3), Vector3(sx + 0.45, y + 2.1, -1.55), 5, false)
 	var colors := [Color(0.6, 0.5, 0.3), Color(0.4, 0.45, 0.3), Color(0.7, 0.3, 0.2), Color(0.5, 0.5, 0.55), Color(0.75, 0.7, 0.55)]
 	for level in 5:
 		var sy := y + 0.05 + level * (2.05 / 5.0)
-		var x := -0.75
-		while x < 1.7:
+		var z := -4.2
+		while z < -1.7:
 			# Platz für die beschrifteten Kisten (Konserven, Wasser) auf der mittleren Ebene
-			if level == 2 and ((x > -0.12 and x < 0.48) or (x > 0.95 and x < 1.45)):
-				x += 0.05
+			if level == 2 and ((z > -3.9 and z < -3.3) or (z > -2.9 and z < -2.4)):
+				z += 0.05
 				continue
 			var c: Color = colors[_rng.randi() % colors.size()]
 			if _rng.randf() < 0.5:
-				BuildKit.cylinder(self, 0.05, 0.13, Vector3(x, sy + 0.065, -4.12), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
-				x += 0.13
+				BuildKit.cylinder(self, 0.05, 0.13, Vector3(scx, sy + 0.065, z), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
+				z += 0.13
 			else:
 				var w := _rng.randf_range(0.15, 0.3)
-				BuildKit.box(self, Vector3(w, _rng.randf_range(0.12, 0.3), 0.3), Vector3(x + w * 0.5, sy + 0.1, -4.12), BuildKit.color_mat(c), false)
-				x += w + 0.05
+				BuildKit.box(self, Vector3(0.3, _rng.randf_range(0.12, 0.3), w), Vector3(scx, sy + 0.1, z + w * 0.5), BuildKit.color_mat(c), false)
+				z += w + 0.05
 	# Vorräte zum Mitnehmen: Konserven, Wasserflaschen, leere Dosen
 	# Konserven in einer Kiste mit "FOOD"-Etikett, Wasserflaschen in einer Kiste mit Tropfen-Symbol
-	var food := _crate_pickup("FoodShelf", "food", 6, 1, Vector3(0.2, y + 0.9, -4.12), Vector3(0.44, 0.08, 0.27), "food", Vector3(0, 0, 1))
+	var food := _crate_pickup("FoodShelf", "food", 6, 1, Vector3(scx, y + 0.9, -3.6), Vector3(0.27, 0.08, 0.44), "food", Vector3(1, 0, 0))
 	food.restock = true   # Vorrat: Konserven lassen sich wieder hineinstellen
 	food.label = "Konservenkiste"
 	for i in 6:
 		var c := Node3D.new()
 		food.add_child(c)
-		Icons.food_can(c, Vector3(0.2 - 0.14 + (i % 3) * 0.14, y + 0.915, -4.12 - 0.06 + (i / 3) * 0.12))
+		Icons.food_can(c, Vector3(scx - 0.06 + (i / 3) * 0.12, y + 0.915, -3.6 - 0.14 + (i % 3) * 0.14))
 		food.visuals.append(c)
-	var water := _crate_pickup("WaterBottles", "water", 4, 1, Vector3(1.2, y + 0.9, -4.12), Vector3(0.36, 0.08, 0.26), "water", Vector3(0, 0, 1))
+	var water := _crate_pickup("WaterBottles", "water", 4, 1, Vector3(scx, y + 0.9, -2.65), Vector3(0.26, 0.08, 0.36), "water", Vector3(1, 0, 0))
 	water.restock = true  # Vorrat: volle Wasserflaschen lassen sich wieder hineinstellen
 	water.label = "Wasserkiste"
 	var bottle_mat := BuildKit.color_mat(Color(0.45, 0.65, 0.8), 0.1)
@@ -785,7 +884,7 @@ func _build_storage() -> void:
 	for i in 4:
 		var b := Node3D.new()
 		water.add_child(b)
-		var bp := Vector3(1.2 - 0.08 + (i % 2) * 0.16, y + 0.915, -4.12 - 0.055 + (i / 2) * 0.11)
+		var bp := Vector3(scx - 0.055 + (i / 2) * 0.11, y + 0.915, -2.65 - 0.08 + (i % 2) * 0.16)
 		var bm := BuildKit.lathe(b, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.95, 0.0), Vector2(1.0, 0.05), Vector2(1.0, 0.62),
 				Vector2(0.45, 0.82), Vector2(0.35, 0.9), Vector2(0.0, 0.9)]), bp, bottle_mat, 10)
 		bm.scale = Vector3(0.045, 0.26, 0.045)
@@ -793,9 +892,7 @@ func _build_storage() -> void:
 		BuildKit.cylinder(b, 0.0455, 0.07, bp + Vector3(0, 0.1, 0), BuildKit.color_mat(Color(0.85, 0.9, 0.95), 0.6), false, Vector3.ZERO, -1.0, 10)
 		water.visuals.append(b)
 	# Leere Blechdosen gibt es nicht mehr im Haus – sie liegen in der alten Kühlbox im Wald (SupplyProps._cooler_box)
-	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
-	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.3), sack, Vector3(1.0, 0.8, 0.8), 10)
-	BuildKit.sphere(self, 0.28, Vector3(-0.55, y + 0.22, -2.85), sack, Vector3(0.9, 0.8, 0.9), 10)
+	# (Die Säcke stehen jetzt im Keller)
 	var crate := BuildKit.tex_mat("planks_h", 0.5, Color(1.1, 1.05, 0.95))
 	BuildKit.box_mm(self, Vector3(1.1, y, -1.9), Vector3(1.8, y + 0.45, -1.3), crate, true)
 	BuildKit.box_mm(self, Vector3(1.2, y + 0.45, -1.85), Vector3(1.75, y + 0.8, -1.35), crate, true)

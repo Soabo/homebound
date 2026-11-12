@@ -87,6 +87,14 @@ const SHOTS := [
 	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true},
 	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
 	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
+	{"name": "80_anbau_nordwest", "hour": 15.0, "pos": Vector3(-15.0, 0.0, -14.0), "look": Vector3(-3.0, 1.8, -3.0)},
+	{"name": "81_anbau_nord", "hour": 15.0, "pos": Vector3(6.0, 0.0, -16.0), "look": Vector3(-1.0, 1.8, -5.0)},
+	{"name": "82_buero", "hour": 14.0, "pos": Vector3(0.5, 0.45, -4.3), "look": Vector3(0.5, 1.0, -8.0), "lights": true},
+	{"name": "83_kinderzimmer", "hour": 14.0, "pos": Vector3(-6.4, 0.45, 0.2), "look": Vector3(-8.8, 0.9, -3.0), "lights": true},
+	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
+	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
+	{"name": "86_keller", "hour": 14.0, "pos": Vector3(0.2, -2.1, -2.6), "look": Vector3(1.6, -1.3, -3.6), "lights": true, "cellar_open": true},
+	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -151,8 +159,22 @@ func _run() -> void:
 		if shot.has("equip"):
 			Inventory.add(shot["equip"], 1)
 			Inventory.select(Inventory.slot_of(shot["equip"]))
+		if shot.get("lights", false):
+			PowerManager.add_fuel(30.0)
+			PowerManager.start_generator()   # Generator läuft seit 11/2026 beim Start nicht mehr
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.switch_to(shot.get("lights", false))
+		if shot.get("attic_down", false):
+			var ah := get_tree().get_first_node_in_group("attic_hatch") as AtticHatch
+			if ah:
+				ah.down = true
+				ah._apply(false)
+		if shot.get("cellar_open", false):
+			var ch := get_tree().get_first_node_in_group("cellar_hatch") as CellarHatch
+			if ch:
+				ch.rug_moved = true
+				ch.open = true
+				ch._apply(false)
 		if shot.get("lab", false):
 			# Forschung 2.0: Labor voll ausgebaut, einiges erforscht, Probe im Terrarium
 			PowerManager.add_fuel(100.0)

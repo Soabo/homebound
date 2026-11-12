@@ -174,7 +174,7 @@ static func height_at(x: float, z: float) -> float:
 		var bank := bed + BANK_HEIGHT * smoothstep(0.6, 2.4, sd)
 		if h < bank:
 			h = lerpf(h, bank, (1.0 - smoothstep(2.4, 4.8, sd)) * smoothstep(STREAM_START - 4.0, STREAM_START + 4.0, z))
-	return h
+	return Cabin.cellar_dip(x, z, h)   # unter dem Keller (nur unter Büro/Speis, unsichtbar)
 
 
 ## Rohhöhe inkl. Höhle: im Bereich der Höhle liegt das Gelände nie über ihrem Boden.
