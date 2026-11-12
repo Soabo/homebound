@@ -269,7 +269,7 @@ func _garden(day: int) -> void:
 			"growing":
 				if Supplies.can_water <= 0 and barrel:
 					barrel.secondary_interact(p)
-				bed.interact(p)
+				bed.finish_watering()   # entspricht Linksklick halten mit der Kanne
 			_:
 				bed.interact(p)
 

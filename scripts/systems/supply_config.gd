@@ -18,6 +18,8 @@ extends Resource
 @export var alien_spoil_chance: PackedFloat32Array = PackedFloat32Array([0.0, 0.03, 0.08, 0.18, 0.35])
 ## Gießkanne: so viele Beete pro Füllung
 @export var watering_can_charges: int = 4
+## So lange muss Wasser aufs Beet laufen (Sekunden, Linksklick halten), bis es als gegossen zählt
+@export var water_pour_seconds: float = 1.6
 
 @export_group("Kochen")
 ## So viele Spielstunden brennt der Küchenofen mit einem Holz

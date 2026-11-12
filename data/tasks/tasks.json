@@ -492,7 +492,7 @@
     },
     {
       "id": "d_water",
-      "title": "Trinkwasser vorrätig (2 Flaschen)",
+      "title": "Trinkwasser aufnehmen (2 Flaschen)",
       "unlock": [
         "got:bottle_empty"
       ],

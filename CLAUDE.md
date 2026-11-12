@@ -319,6 +319,14 @@
   (`--mode=item --item=axe` zeigt ein Modell von vier Seiten, `--mode=rig --pose=grip:0.017` die Hand allein).
 - Prüfungen: `RegressTest._t_hands` (Modelle, Kompass, Gießkanne links/rechts).
 
+## Feinschliff 12.11. abends (Christian)
+- Nachschwingen der Hände wieder sichtbar: `_avoid_walls` verrechnet jetzt Feder (`_sway`) + Wippen (`_bob_pos`) statt sie zu überschreiben.
+- Gießen: Linksklick halten, erst nach `SupplyConfig.water_pour_seconds` Wasser aufs Beet ist es gegossen (`PlayerHands._update_bed_pour`,
+  `GardenBed.needs_water/finish_watering`); E am Beet gießt nicht mehr.
+- Im Schrank/Spind: Uhrlicht an/aus und LED/Display wechseln geht, Hände werden dort kaum zurückgezogen (Gegenstände wechseln sichtbar).
+- Monitor ohne Strom: schwarz und stumm (Shader `cctv` Parameter `dark`), nicht eingebaute Kamera = Rauschen.
+- Holzkorb am Kamin: 6 Scheite (data/house/house.json `wood_basket`). Aufgabe d_water heißt „Trinkwasser aufnehmen (2 Flaschen)“.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

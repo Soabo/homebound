@@ -348,7 +348,30 @@ func _t_more() -> void:
 	await _t_seeker_house()
 	_t_list_nov11()
 	_t_blueprints()
+	_t_nov12_evening()
 	await _t_hands()
+
+
+## 12.11. abends: Holzkorb 6, Licht im Versteck, Aufgabenname.
+func _t_nov12_evening() -> void:
+	var basket := _scene().get_node_or_null("Cabin/WoodBasket") as WoodBasket
+	_ok("Holzkorb: Platz für 6 Scheite", basket != null and basket.max_wood == 6 and basket._logs.size() == 6)
+	var p := _player()
+	var spot: Node = null
+	for h in get_tree().get_nodes_in_group("hide_spot"):
+		spot = h
+	var keep: Node = p.hidden_in
+	p.hidden_in = spot if spot else p
+	var was: bool = p.flashlight.visible
+	p.set_flashlight(true)
+	_ok("Versteck: Uhrlicht lässt sich drinnen einschalten", p.flashlight.visible)
+	p.set_flashlight(was)
+	p.hidden_in = keep
+	var title := ""
+	for t: Dictionary in DataDB.load_json("res://data/tasks/tasks.json").get("daily", []):
+		if t.get("id", "") == "d_water":
+			title = String(t.get("title", ""))
+	_ok("Aufgabe heißt „Trinkwasser aufnehmen“", title.begins_with("Trinkwasser aufnehmen"), title)
 
 
 ## Baupläne nach und nach (12.11.): Holz frei, Stein/Dosen beim ersten Fund, Sichern nach unruhiger Nacht.
@@ -654,7 +677,12 @@ func _t_hands() -> void:
 		h._action = ""
 		h._cooldown = 0.0
 		h._primary()
-		_ok("Gießkanne: Linksklick am Beet gießt", bool(Supplies.beds[0]["watered"]) and h._action == "pour" and h._pour_wet,
+		_ok("Gießkanne: kurzer Klick am Beet gießt noch nicht", not bool(Supplies.beds[0]["watered"]) and h._action == "pour" and h._pour_wet)
+		# Wasser läuft lange genug aufs Beet (Linksklick halten)
+		h._flowing = true
+		for k in 4:   # erster Aufruf merkt sich das Beet, danach zählt die Zeit
+			h._update_bed_pour(Supplies.config.water_pour_seconds * 0.4)
+		_ok("Gießkanne: Linksklick halten am Beet gießt", bool(Supplies.beds[0]["watered"]),
 				"gegossen %s, Bewegung %s" % [Supplies.beds[0]["watered"], h._action])
 	h._action = ""
 	h._stop_pour()

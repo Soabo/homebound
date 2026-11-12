@@ -1,9 +1,10 @@
 class_name WoodBasket
 extends Interactable
-## Holzkorb vor dem Kamin (filigraner Metallständer): Anfangs liegt 1 Holz darin, Platz für bis zu 4.
+## Holzkorb vor dem Kamin (filigraner Metallständer): Anfangs liegt 1 Holz darin, Platz für bis zu 6
+## (Werte: data/house/house.json "wood_basket").
 ## [E] Holz herausnehmen, [R] Holz aus dem Rucksack hineinlegen. Füllstand ist Teil des Spielstands.
 
-const MAX := 4
+var max_wood: int = 6
 var count: int = 1
 var _logs: Array[Node3D] = []
 
@@ -11,6 +12,9 @@ var _logs: Array[Node3D] = []
 func _ready() -> void:
 	add_to_group("persistent")
 	add_to_group("wood_basket")
+	var cfg: Dictionary = DataDB.load_json("res://data/house/house.json").get("wood_basket", {})
+	max_wood = clampi(int(cfg.get("max", 6)), 1, 6)
+	count = clampi(int(cfg.get("start", 1)), 0, max_wood)
 	# Filigraner Metallkorb (Kaminholzständer): dünne Eisenstäbe, man sieht die Scheite
 	var iron := BuildKit.color_mat(Color(0.09, 0.09, 0.1), 0.45, 0.8)
 	const L := 0.52     # Länge (x)
@@ -34,10 +38,11 @@ func _ready() -> void:
 	# niedrige Längsstäbe an den Seiten halten die Scheite
 	for sz: float in [-1.0, 1.0]:
 		BuildKit.box(self, Vector3(L, T, T), Vector3(0, 0.17, sz * D * 0.5), iron, false)
-	# Scheite: 3 unten nebeneinander, 1 oben in der Mulde – liegen auf den Streben, nichts steckt im Metall
+	# Scheite: 3 unten nebeneinander, 2 in den Mulden darüber, 1 obenauf – liegen auf den Streben, nichts steckt im Metall
 	var bark := BuildKit.tex_mat("logs", 0.5)
-	var spots := [Vector3(0, 0.103, -0.125), Vector3(0, 0.103, 0.0), Vector3(0, 0.103, 0.125), Vector3(0, 0.21, -0.062)]
-	for i in MAX:
+	var spots := [Vector3(0, 0.103, -0.125), Vector3(0, 0.103, 0.0), Vector3(0, 0.103, 0.125),
+			Vector3(0, 0.205, -0.0625), Vector3(0, 0.205, 0.0625), Vector3(0, 0.305, 0.0)]
+	for i in max_wood:
 		var l := BuildKit.cylinder(self, 0.056, 0.46, spots[i], bark, false, Vector3(0, 0, 90), -1.0, 7)
 		_logs.append(l)
 	# fester Körper, damit man nicht hindurchläuft (unsichtbar)
@@ -69,12 +74,12 @@ func _update() -> void:
 
 func get_prompt(_p: Node) -> String:
 	if count > 0:
-		return "Holzkorb (%d/%d)  [E] Holz nehmen" % [count, MAX]
+		return "Holzkorb (%d/%d)  [E] Holz nehmen" % [count, max_wood]
 	return "Holzkorb (leer)"
 
 
 func get_secondary_prompt(_p: Node) -> String:
-	if count < MAX and Inventory.count("wood") > 0:
+	if count < max_wood and Inventory.count("wood") > 0:
 		return "[R] Holz hineinlegen"
 	return ""
 
@@ -89,7 +94,7 @@ func interact(_p: Node) -> void:
 
 
 func secondary_interact(_p: Node) -> void:
-	if count >= MAX or Inventory.count("wood") <= 0:
+	if count >= max_wood or Inventory.count("wood") <= 0:
 		return
 	if Inventory.remove("wood", 1):
 		count += 1
@@ -106,6 +111,6 @@ func get_state() -> Dictionary:
 
 
 func set_state(s: Dictionary) -> void:
-	count = clampi(int(s.get("count", 1)), 0, MAX)
+	count = clampi(int(s.get("count", 1)), 0, max_wood)
 	if is_inside_tree():
 		_update()

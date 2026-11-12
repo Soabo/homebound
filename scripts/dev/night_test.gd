@@ -1078,7 +1078,7 @@ func _supplies_test() -> void:
 	var tap := scene.get_node("Cabin/KitchenTap") as WaterSource
 	tap.secondary_interact(player)
 	print("KANNE gefüllt: %d" % Supplies.can_water)
-	bed.interact(player)
+	bed.finish_watering()   # entspricht Linksklick halten mit der Kanne
 	print("BEET gegossen: %s, Kanne %d" % [Supplies.beds[0]["watered"], Supplies.can_water])
 	var days := int(Supplies.config.crops[Supplies.beds[0]["crop"]]["days"])
 	for d in days:

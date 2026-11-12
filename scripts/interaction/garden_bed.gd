@@ -83,7 +83,7 @@ func get_prompt(_p: Node) -> String:
 				return "Hochbeet: %s  – Gießkanne in die Hand nehmen (Schnellplatz)" % info
 			if Supplies.can_water <= 0:
 				return "Hochbeet: %s  – Gießkanne leer, an Regentonne/Wasserhahn füllen (Rechtsklick)" % info
-			return "Hochbeet: %s  [Linksklick] gießen  (Kanne %d/%d)" % [info, Supplies.can_water, Supplies.config.watering_can_charges]
+			return "Hochbeet: %s  [Linksklick halten] gießen  (Kanne %d/%d)" % [info, Supplies.can_water, Supplies.config.watering_can_charges]
 		"ripe":
 			return "Hochbeet: %s reif  [E] ernten" % crop.get("name", "")
 		"withered":
@@ -111,18 +111,28 @@ func interact(_p: Node) -> void:
 				Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.05, 0), "dirt", Vector3.UP, 0.6)
 				EventBus.notify("Gesät. Jeden Tag gießen!", 2.5)
 		"growing":
-			if Supplies.water_bed(index):
-				# die Hand kippt die Kanne (Wasserstrahl und Geräusch kommen von dort), kurz darauf spritzt es im Beet
-				var pl := _p as Player
-				if pl and pl.hands:
-					pl.hands.start_pour(true)
-				_splash_later()
+			# gegossen wird mit der Kanne in der Hand per Linksklick halten (PlayerHands._update_bed_pour)
+			if needs_water() and Inventory.equipped() == "watering_can":
+				EventBus.notify("Zum Gießen Linksklick gedrückt halten.", 2.0)
 		"ripe", "withered":
 			var msg := Supplies.harvest(index)
 			if msg != "":
 				Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.1, 0), "dirt", Vector3.UP)
 				SoundBank.play_ui(self, "pickup", -6.0)
 				EventBus.notify(msg, 3.0)
+
+
+## Braucht das Beet heute noch Wasser (und hat man eine gefüllte Kanne in der Hand)?
+func needs_water() -> bool:
+	return Supplies.bed_state(index) == "growing" and not bool(_bed()["watered"]) \
+		and Inventory.equipped() == "watering_can" and Supplies.can_water > 0
+
+
+## Lange genug gegossen: Beet zählt als gegossen.
+func finish_watering() -> void:
+	if Supplies.water_bed(index):
+		Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.3, 0), "water", Vector3.DOWN, 1.2)
+		EventBus.notify("Gegossen.", 1.5)
 
 
 func _splash_later() -> void:

@@ -28,6 +28,7 @@ seeds_back = Vector2i(0, 2)
 dry_days_to_wither = 2
 alien_spoil_chance = PackedFloat32Array(0, 0.03, 0.08, 0.18, 0.35)
 watering_can_charges = 4
+water_pour_seconds = 1.6
 stove_burn_hours = 2.0
 sick_damage = 6.0
 sick_drain_factor = 2.0

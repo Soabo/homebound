@@ -170,7 +170,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_f_used = false
 	elif event.is_action_released("flashlight") and _f_down:
 		_f_down = false
-		if not _f_used and hidden_in == null:
+		if not _f_used:
 			set_flashlight(not flashlight.visible)
 			PlayerSounds.play(self, "flashlight", -6.0, randf_range(0.95, 1.05))
 
@@ -195,9 +195,7 @@ func _building() -> bool:
 
 
 func set_flashlight(on: bool) -> void:
-	if on and hidden_in != null:
-		return  # im Schrank geht kein Licht an
-	hands.set_watch(on)
+	hands.set_watch(on)   # auch im Schrank/Spind (Christian 12.11.: drinnen alles normal)
 
 
 ## F gedrückt halten: zwischen LED und weißem Display umschalten (nur wenn die Uhr leuchtet).
@@ -208,7 +206,7 @@ func _update_light_hold(delta: float) -> void:
 		_f_down = false
 		return
 	_f_held += delta
-	if _f_held >= LIGHT_MODE_HOLD and flashlight.visible and hidden_in == null:
+	if _f_held >= LIGHT_MODE_HOLD and flashlight.visible:
 		_f_used = true
 		hands.toggle_screen_mode()
 		PlayerSounds.play(self, "flashlight", -10.0, 1.3)

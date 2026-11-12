@@ -4,6 +4,8 @@ shader_type canvas_item;
 uniform float glitch = 0.0;
 uniform float no_signal = 0.0;
 uniform float noise_amount = 0.08;
+// 1 = kein Strom: Bild bleibt schwarz (kein Störbild)
+uniform float dark = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -26,5 +28,6 @@ void fragment() {
 	vec2 v = UV - 0.5;
 	col *= 1.0 - dot(v, v) * 1.2;
 	col = mix(col, vec3(n * 0.6), clamp(glitch * 0.7 + no_signal, 0.0, 1.0));
+	col = mix(col, vec3(0.0), dark);
 	COLOR = vec4(col, 1.0);
 }

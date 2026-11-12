@@ -87,11 +87,15 @@ var _block_amount: float = 0.0
 var _time: float = 0.0
 ## Gießkanne: läuft beim Gießen Wasser (war die Kanne gefüllt)? Wasserstrahl aus der Brause.
 var _pour_wet: bool = false
+var _flowing: bool = false          # läuft gerade Wasser aus der Kanne?
+var _bed_pour: float = 0.0          # wie lange schon Wasser auf das anvisierte Beet läuft
+var _bed_pour_target: Node = null
 var _pour_fx: CPUParticles3D
 var _hint_cooldown: float = 0.0
 
 var _sway := Vector2.ZERO
 var _sway_vel := Vector2.ZERO
+var _bob_pos := Vector3.ZERO   # Wippen beim Gehen (wird in _avoid_walls mit dem Zurückziehen verrechnet)
 var _last_yaw: float = 0.0
 var _last_pitch: float = 0.0
 
@@ -526,11 +530,8 @@ func _primary() -> void:
 			_start_action("eat", EAT_TIME)
 			_cooldown = EAT_TIME + 0.1
 		"watering_can":
-			# Linksklick gießt. Über einem Beet wird es dabei gegossen (kostet Wasser), sonst läuft nur etwas heraus.
-			var t := player.current_interactable
+			# Linksklick gießt. Über einem Beet muss man kurz draufhalten (water_pour_seconds), dann ist es gegossen.
 			start_pour()
-			if t is GardenBed:
-				t.interact(player)
 
 
 ## Rechtsklick mit der Gießkanne: an Regentonne, Wasserhahn oder Bach füllen.
@@ -564,6 +565,34 @@ func start_pour(wet: bool = false) -> void:
 	if not _pour_wet and _hint_cooldown <= 0.0:
 		_hint_cooldown = 2.5
 		EventBus.notify("Die Gießkanne ist leer – mit Rechtsklick an Regentonne, Wasserhahn oder Bach füllen.", 3.0)
+
+
+## Gießen: solange Wasser auf ein durstiges Beet läuft, zählt die Zeit; erst dann ist es gegossen.
+func _update_bed_pour(delta: float) -> void:
+	var t: Node = player.current_interactable if player else null
+	if not is_instance_valid(t):
+		t = null
+	if not is_instance_valid(_bed_pour_target):
+		_bed_pour_target = null
+	var thirsty := t is GardenBed and (t as GardenBed).needs_water()
+	if not thirsty or t != _bed_pour_target:
+		if _bed_pour > 0.15 and _bed_pour_target is GardenBed and (_bed_pour_target as GardenBed).needs_water() and _hint_cooldown <= 0.0:
+			_hint_cooldown = 2.5
+			EventBus.notify("Etwas länger gießen – Linksklick gedrückt halten.", 2.0)
+		_bed_pour = 0.0
+		_bed_pour_target = t if thirsty else null
+		return
+	if not _flowing:
+		if _action != "pour" and _bed_pour > 0.15 and _hint_cooldown <= 0.0:
+			_hint_cooldown = 2.5
+			EventBus.notify("Etwas länger gießen – Linksklick gedrückt halten.", 2.0)
+		if _action != "pour":
+			_bed_pour = 0.0
+		return
+	_bed_pour += delta
+	if _bed_pour >= Supplies.config.water_pour_seconds:
+		_bed_pour = 0.0
+		(t as GardenBed).finish_watering()
 
 
 ## Füll-Bewegung: Kanne nach vorn ins Wasser tauchen (wird vom Wasser aufgerufen, wenn gefüllt wurde).
@@ -703,6 +732,7 @@ func _process(delta: float) -> void:
 
 	_update_sway(delta)
 	_pose_right(delta)
+	_update_bed_pour(delta)
 	_pose_left(delta)
 	_avoid_walls(delta)
 
@@ -729,9 +759,12 @@ func _avoid_walls(delta: float) -> void:
 		if not hit.is_empty():
 			nearest = minf(nearest, origin.distance_to(hit["position"]))
 	var want := clampf((0.8 - nearest) / 0.55, 0.0, 1.0)
+	if player and player.hidden_in != null:
+		want = minf(want, 0.15)   # im Schrank/Spind: Hände bleiben sichtbar, man kann Licht und Gegenstände benutzen
 	_wall_push = move_toward(_wall_push, want, delta * 6.0)
-	position = Vector3(0.0, -0.1 * _wall_push, 0.3 * _wall_push)
-	rotation_degrees = Vector3(-28.0 * _wall_push, 0.0, 0.0)
+	# zusammen mit Nachschwingen und Wippen (vorher hat das hier beides überschrieben – Hände ohne Verzögerung)
+	position = _bob_pos + Vector3(0.0, -0.1 * _wall_push, 0.3 * _wall_push)
+	rotation = Vector3(_sway.y + deg_to_rad(-28.0 * _wall_push), _sway.x, _sway.x * 0.6)
 
 
 ## Nachschwingen: die Hände bleiben beim Umsehen etwas zurück und federn nach.
@@ -759,12 +792,11 @@ func _update_sway(delta: float) -> void:
 	if clamped.y != _sway.y:
 		_sway_vel.y = 0.0
 	_sway = clamped
-	rotation = Vector3(_sway.y, _sway.x, _sway.x * 0.6)
 	# Wippen beim Gehen
 	var t: float = player._bob_time
 	var moving := Vector2(player.velocity.x, player.velocity.z).length() > 0.3 and player.is_on_floor()
 	var target := Vector3(sin(t * 0.5) * 0.012, -absf(cos(t * 0.5)) * 0.01, 0.0) if moving else Vector3.ZERO
-	position = position.lerp(target, clampf(delta * 10.0, 0.0, 1.0))
+	_bob_pos = _bob_pos.lerp(target, clampf(delta * 10.0, 0.0, 1.0))
 
 
 ## Für die Vorschau (scenes/dev/hands_preview.tscn): eine Aktion an einem festen Zeitpunkt einfrieren.
@@ -991,6 +1023,7 @@ func _animate_dictaphone(delta: float) -> void:
 
 ## Wasserstrahl aus der Brause an- und abstellen. Die Tropfen fallen in der Welt (nicht an der Hand hängend).
 func _set_pour(on: bool) -> void:
+	_flowing = on
 	if not on:
 		if _pour_fx:
 			_pour_fx.emitting = false

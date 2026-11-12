@@ -1,4 +1,5 @@
 {
-  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden.",
-  "fireplace": {"burn_hours": 12, "fade_hours": 6, "wood": 1}
+  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden. wood_basket: Holzkorb am Kamin, max = Platz (höchstens 6), start = Holz beim Spielstart.",
+  "fireplace": {"burn_hours": 12, "fade_hours": 6, "wood": 1},
+  "wood_basket": {"max": 6, "start": 1}
 }

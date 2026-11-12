@@ -467,9 +467,11 @@ func _update_monitor(_delta: float) -> void:
 		return
 	var power := PowerManager.has_power()
 	var cam_ok := sv.installed(sv.active_index)
-	_monitor_mat.set_shader_parameter("no_signal", 0.0 if power and cam_ok else 1.0)
-	_monitor_mat.set_shader_parameter("glitch", 1.0 if sv.is_glitching() else 0.0)
-	_static_player.volume_db = -6.0 if sv.is_glitching() or not power else -22.0
+	# ohne Strom bleibt das Bild schwarz und stumm (kein Störbild); nicht eingebaute Kamera = Rauschen
+	_monitor_mat.set_shader_parameter("dark", 0.0 if power else 1.0)
+	_monitor_mat.set_shader_parameter("no_signal", 0.0 if cam_ok else 1.0)
+	_monitor_mat.set_shader_parameter("glitch", 1.0 if sv.is_glitching() and power else 0.0)
+	_static_player.volume_db = -80.0 if not power else (-6.0 if sv.is_glitching() else -22.0)
 	var blink := "REC" if fmod(Time.get_ticks_msec() / 1000.0, 1.0) < 0.5 else "      "
 	_monitor_label.text = "%s   CAM %d – %s        Tag %d  %s" % [blink, sv.active_index + 1, sv.active_name(), TimeManager.day, TimeManager.get_clock_text()]
 	if not power:
