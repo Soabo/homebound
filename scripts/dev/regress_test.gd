@@ -348,6 +348,7 @@ func _t_more() -> void:
 	await _t_seeker_house()
 	_t_list_nov11()
 	_t_blueprints()
+	await _t_hands()
 
 
 ## Baupläne nach und nach (12.11.): Holz frei, Stein/Dosen beim ersten Fund, Sichern nach unruhiger Nacht.
@@ -588,3 +589,76 @@ func _t_tasks_saved() -> void:
 	_ok("Aufgaben: frisch Erledigtes steht schon im Spielstand", (saved["done"] as Array).has("dictaphone"))
 	Tasks.set_state(before)
 	Tasks.set_process(true)
+
+
+## Neue Hände (12.11.): jedes Ding für die Hand hat ein Modell und einen Griff, der Kompass zeigt nach Norden,
+## Gießkanne: Rechtsklick füllt, Linksklick gießt.
+func _t_hands() -> void:
+	var p := _player()
+	var h := p.hands
+	var holder := Node3D.new()
+	add_child(holder)
+	var bad: Array = []
+	var all := DataDB.items()
+	for id: String in all:
+		if not (all[id] is Dictionary) or not (all[id] as Dictionary).has("hand"):
+			continue
+		var it := HandItems.build(holder, HandItems.model_of(id))
+		if it.get_child_count() == 0 or float(it.get_meta("grip", 0.0)) <= 0.0:
+			bad.append(id)
+	holder.queue_free()
+	_ok("Hände: jeder Hand-Gegenstand hat ein Modell mit Griff", bad.is_empty(), str(bad))
+	# Kompass: Nadel zeigt in der Welt nach Norden (-z), egal wohin man schaut
+	var old_yaw := p.rotation.y
+	p.set_flashlight(true)
+	h._left.visible = true
+	var worst := 0.0
+	for yaw: float in [0.0, 1.2, -2.0, 3.0]:
+		p.rotation.y = yaw
+		p.force_update_transform()
+		h._update_compass(0.0)
+		var dir := -h._compass.global_transform.basis.z
+		dir.y = 0.0
+		worst = maxf(worst, rad_to_deg(dir.normalized().angle_to(Vector3(0, 0, -1))))
+	_ok("Uhr: Kompassnadel zeigt nach Norden", worst < 12.0, "Abweichung %.1f°" % worst)
+	p.rotation.y = old_yaw
+	p.set_flashlight(false)
+	# Gießkanne in der Hand: Rechtsklick am Wasser füllt, Linksklick am Beet gießt
+	Inventory.add("watering_can", 1)
+	Inventory.select(Inventory.slot_of("watering_can"))
+	for i in 60:
+		await _frames(1)
+		if h.current_kind() == "watering_can" and h._right_out <= 0.01:
+			break
+	_ok("Gießkanne liegt in der Hand", h.current_kind() == "watering_can")
+	var tap := _scene().get_node_or_null("Cabin/KitchenTap") as WaterSource
+	if tap == null:
+		for w in _scene().find_children("*", "WaterSource", true, false):
+			tap = w as WaterSource
+			break
+	var can_before := Supplies.can_water
+	var beds_before: Array = Supplies.beds.duplicate(true)
+	Supplies.can_water = 0
+	var old_target := p.current_interactable
+	p.current_interactable = tap
+	h._action = ""
+	h._secondary()
+	_ok("Gießkanne: Rechtsklick am Wasser füllt", Supplies.can_water == Supplies.config.watering_can_charges and h._action == "fill",
+			"Füllung %d, Bewegung %s" % [Supplies.can_water, h._action])
+	var bed := _scene().get_node_or_null("Garden/GardenBed1") as GardenBed
+	if bed:
+		Inventory.add("seeds_radish", 1)
+		Supplies.beds[0] = Supplies._empty_bed()
+		Supplies.plant(0, "seeds_radish")
+		p.current_interactable = bed
+		h._action = ""
+		h._cooldown = 0.0
+		h._primary()
+		_ok("Gießkanne: Linksklick am Beet gießt", bool(Supplies.beds[0]["watered"]) and h._action == "pour" and h._pour_wet,
+				"gegossen %s, Bewegung %s" % [Supplies.beds[0]["watered"], h._action])
+	h._action = ""
+	h._stop_pour()
+	p.current_interactable = old_target
+	Supplies.beds = beds_before
+	Supplies.can_water = can_before
+	Supplies.changed.emit()

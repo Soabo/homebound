@@ -41,7 +41,7 @@ func get_prompt(_player: Node) -> String:
 	return "[E] %s – trinken  (Durst %d%%)" % [label, int(Survival.thirst)]
 
 
-## [R] Gießkanne füllen (wenn nicht voll) oder eine leere Flasche abfüllen.
+## [Rechtsklick] (oder R) Gießkanne füllen (wenn nicht voll), [R] eine leere Flasche abfüllen.
 ## Gießkanne zuerst, wenn sie leer ist (oder keine leere Flasche dabei); sonst Flaschen.
 func _fill_can_first() -> bool:
 	# nur mit der Gießkanne in der Hand (Christian)
@@ -50,7 +50,7 @@ func _fill_can_first() -> bool:
 
 func get_secondary_prompt(_player: Node) -> String:
 	if _fill_can_first():
-		return "[R] Gießkanne füllen"
+		return "[Rechtsklick] Gießkanne füllen"
 	var n := Inventory.count("bottle_empty")
 	if n > 0:
 		return "[R] Flasche füllen (%d leer)" % n
@@ -61,6 +61,10 @@ func secondary_interact(_player: Node) -> void:
 	if _fill_can_first():
 		Supplies.fill_can(_dirty())
 		_splash()
+		# die Hand taucht die Kanne ins Wasser
+		var pl := _player as Player
+		if pl and pl.hands:
+			pl.hands.start_fill()
 		EventBus.notify("Gießkanne gefüllt.", 1.5)
 		return
 	if Inventory.count("bottle_empty") <= 0:

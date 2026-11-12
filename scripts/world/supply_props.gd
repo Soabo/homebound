@@ -195,13 +195,7 @@ func _watering_can(n: String, at: Vector3) -> void:
 	var g := Terrain.height_at(at.x, at.z)
 	var pos := Vector3(at.x, g, at.z)
 	var p := _pickup(n, "watering_can", 1, 1, Vector3(0.5, 0.4, 0.3), pos)
-	var v := Node3D.new()
-	p.add_child(v)
-	v.position = pos
-	v.rotation_degrees.y = 30.0
-	var zinc := BuildKit.tex_mat("metal", 0.25, Color(1.2, 1.25, 1.25), 0.6)
-	BuildKit.cylinder(v, 0.12, 0.25, Vector3(0, 0.125, 0), zinc, false, Vector3.ZERO, 0.11, 12)
-	BuildKit.cylinder(v, 0.015, 0.36, Vector3(0.2, 0.2, 0), zinc, false, Vector3(0, 0, -55), 0.012, 6)
-	BuildKit.cylinder(v, 0.035, 0.04, Vector3(0.34, 0.31, 0), zinc, false, Vector3(0, 0, -55), 0.02, 8)
-	BuildKit.box(v, Vector3(0.02, 0.02, 0.2), Vector3(-0.02, 0.33, 0), zinc, false)
+	# dieselbe Kanne wie in der Hand
+	var v := HandItems.place(p, "watering_can", pos, 120.0)
+	HandItems.can_level(v.get_child(0), 0.0)
 	p.visuals.append(v)

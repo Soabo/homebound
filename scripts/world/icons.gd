@@ -75,21 +75,9 @@ static func decal(parent: Node, kind: String, size: float, pos: Vector3, normal:
 
 
 ## Konservendose mit umlaufendem Etikett (Drehkörper, Etikett über die UVs).
-static func food_can(parent: Node, pos: Vector3, radius: float = 0.042, height: float = 0.11) -> MeshInstance3D:
-	var key := "can_mat"
-	if not _mats.has(key):
-		var m := StandardMaterial3D.new()
-		m.albedo_texture = texture("can")
-		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-		m.uv1_scale = Vector3(1, -1, 1)
-		m.uv1_offset = Vector3(0, 1, 0)
-		m.roughness = 0.5
-		m.metallic = 0.3
-		_mats[key] = m
-	var mi := BuildKit.lathe(parent, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.93, 0.0), Vector2(1.0, 0.03),
-			Vector2(1.0, 0.97), Vector2(0.93, 1.0), Vector2(0.0, 1.0)]), pos, _mats[key], 12)
-	mi.scale = Vector3(radius, height, radius)
-	return mi
+static func food_can(parent: Node, pos: Vector3, radius: float = 0.042, height: float = 0.11) -> Node3D:
+	# dieselbe Dose wie in der Hand (Rillen, Etikett ringsum)
+	return HandItems.can_body(parent, pos, radius, height)
 
 
 # --- Zeichnen -----------------------------------------------------------

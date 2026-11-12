@@ -28,11 +28,11 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 | Leertaste | Springen |
 | Y / X | Nach links / rechts lehnen (um Ecken schauen) |
 | E | Benutzen (Türen, Lichtschalter, Bett); im Schrank/Spind: Tür auf/zu; Bärenfalle neu spannen |
-| Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit der Blechschere zustechen, mit Axt Holz hacken, Konserve essen, Flasche trinken |
-| Rechtsklick (halten) | Blocken mit Faust, Axt oder Blechschere |
+| Linksklick | Gegenstand in der rechten Hand: Faust/Axt schlagen, mit der Blechschere zustechen, mit Axt Holz hacken, Konserve essen, Flasche trinken, mit der Gießkanne gießen, mit dem Diktiergerät aufnehmen (halten) |
+| Rechtsklick (halten) | Blocken mit Faust, Axt oder Blechschere; mit der Gießkanne: an Wasserhahn, Regentonne oder Bach füllen |
 | 1–9 / Mausrad | Schnellplatz wählen (leer = Faust) |
 | R | Im Schrank/Spind: heraustreten; Tür ab-/aufschließen, Fenster verbarrikadieren, Tür reparieren, Benzin nachfüllen |
-| F | Uhrlicht am linken Arm an/aus – gedrückt halten: zwischen LED-Lampe und weißem Display (schwaches Umgebungslicht) wechseln |
+| F | Uhrlicht am linken Arm an/aus – gedrückt halten: zwischen LED-Lampe und weißem Display (schwaches Umgebungslicht) wechseln. Im Display sitzt ein Kompass: die rote Nadelspitze zeigt nach Norden |
 | Q (halten) | Mit dem Fernglas heranzoomen (wenn du eins gefunden hast) |
 | M | Wanderkarte (wenn du sie gefunden hast) |
 | T (halten) | Zeit vorspulen – nur zum Testen |
@@ -162,7 +162,7 @@ Beides wird bei jeder Änderung automatisch neu gebaut.
 
 - **Aufgaben** stehen auf dem Tablet (Couch, Reiter „Aufgaben“): Tagesroutine für heute und Ziele, die nach und nach dazukommen.
 - **Hochbeete:** E sät (R wechselt die Samenart), gießt und erntet. Samen im Schuppenregal, Saatkartoffeln im Sack am Boden,
-  die Gießkanne steht bei den Beeten (an Wasserhahn, Regentonne oder Bach mit R füllen). Ungegossen wächst nichts, nach 2 Tagen vertrocknet es.
+  die Gießkanne steht bei den Beeten (an Wasserhahn, Regentonne oder Bach mit Rechtsklick füllen, mit Linksklick gießen). Ungegossen wächst nichts, nach 2 Tagen vertrocknet es.
 - **Wasser:** Leere Flaschen (Küche) mit R füllen. Hahn = Trinkwasser, Regentonne/Bach = Rohwasser – lieber am Ofen abkochen.
 - **Küchenofen:** E zündet ihn mit Holz an, dann E = kochen (braten, Suppe, Eintopf), R legt Holz nach. Auch über dem Kaminfeuer (R).
 - **Schlinge** (Werkbank): im Wald aufstellen, morgens nachsehen – manchmal hängt ein Hase darin.

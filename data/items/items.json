@@ -1,5 +1,5 @@
 {
-  "_info": "Gegenstände (GDD 6.2/6.3). weight = kg pro Stück, stack = max. Anzahl, use = Wirkung beim Benutzen, hand = Modell für die rechte Hand (Schnellplätze 1-9).",
+  "_info": "Gegenstände (GDD 6.2/6.3). weight = kg pro Stück, stack = max. Anzahl, use = Wirkung beim Benutzen, hand = Art in der rechten Hand (Schnellplätze 1-9, bestimmt die Bewegungen), hand_model = eigenes Modell dazu (HandItems, sonst das der Art).",
   "wood": {
     "name": "Holz",
     "weight": 1.5,
@@ -91,7 +91,8 @@
       "returns": "bottle_empty",
       "sick": 0.35
     },
-    "hand": "water"
+    "hand": "water",
+    "hand_model": "bottle_raw"
   },
   "water_tainted": {
     "name": "Flasche verfärbtes Wasser",
@@ -104,7 +105,8 @@
       "sick": 1.0,
       "damage": 12
     },
-    "hand": "water"
+    "hand": "water",
+    "hand_model": "bottle_tainted"
   },
   "seeds_radish": {
     "name": "Radieschensamen",
@@ -136,7 +138,8 @@
       "hunger": 8,
       "thirst": 3
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "radish"
   },
   "carrot": {
     "name": "Karotte",
@@ -146,7 +149,8 @@
     "use": {
       "hunger": 10
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "carrot"
   },
   "potato": {
     "name": "Kartoffel",
@@ -157,7 +161,8 @@
       "hunger": 4,
       "sick": 0.25
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "potato"
   },
   "meat_raw": {
     "name": "Rohes Hasenfleisch",
@@ -168,7 +173,8 @@
       "hunger": 10,
       "sick": 0.6
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "meat_raw"
   },
   "meat_cooked": {
     "name": "Gebratenes Fleisch",
@@ -178,7 +184,8 @@
     "use": {
       "hunger": 40
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "meat_cooked"
   },
   "baked_potato": {
     "name": "Bratkartoffeln",
@@ -188,7 +195,8 @@
     "use": {
       "hunger": 25
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "mug_potato"
   },
   "veg_soup": {
     "name": "Gemüsesuppe",
@@ -199,7 +207,8 @@
       "hunger": 35,
       "thirst": 25
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "mug_soup"
   },
   "stew": {
     "name": "Hasen-Eintopf",
@@ -210,7 +219,8 @@
       "hunger": 65,
       "thirst": 15
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "mug_stew"
   },
   "motor_oil": {
     "name": "Motoröl",
@@ -499,7 +509,8 @@
     "use": {
       "hunger": 18
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "honey"
   },
   "wax": {
     "name": "Bienenwachs",
@@ -516,7 +527,8 @@
       "hunger": 45,
       "thirst": 5
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "ration"
   },
   "medkit": {
     "name": "Verbandskasten",
@@ -645,7 +657,8 @@
       "thirst": 10,
       "sick": 0.15
     },
-    "hand": "food"
+    "hand": "food",
+    "hand_model": "alien_fruit"
   },
   "hull_sample": {
     "name": "Hüllenprobe",

@@ -2,7 +2,7 @@ class_name GardenBed
 extends Interactable
 ## Ein Hochbeet (Versorgungs-Manager, Supplies.beds[index]).
 ##  leer:       [E] säen (gewählte Samen), [R] andere Samen wählen
-##  wächst:     [E] gießen (Gießkanne, einmal am Tag) – ungegossen wächst nichts, nach zwei Tagen vertrocknet es
+##  wächst:     [Linksklick] oder [E] gießen (Gießkanne in der Hand, einmal am Tag) – ungegossen wächst nichts, nach zwei Tagen vertrocknet es
 ##  reif:       [E] ernten
 ##  vertrocknet:[E] abräumen
 ## Unter fremdem Einfluss werden die Blätter grau – die Ernte ist dann verdorben.
@@ -82,8 +82,8 @@ func get_prompt(_p: Node) -> String:
 			if Inventory.equipped() != "watering_can":
 				return "Hochbeet: %s  – Gießkanne in die Hand nehmen (Schnellplatz)" % info
 			if Supplies.can_water <= 0:
-				return "Hochbeet: %s  – Gießkanne leer, an Regentonne/Wasserhahn füllen (R)" % info
-			return "Hochbeet: %s  [E] gießen  (Kanne %d/%d)" % [info, Supplies.can_water, Supplies.config.watering_can_charges]
+				return "Hochbeet: %s  – Gießkanne leer, an Regentonne/Wasserhahn füllen (Rechtsklick)" % info
+			return "Hochbeet: %s  [Linksklick] gießen  (Kanne %d/%d)" % [info, Supplies.can_water, Supplies.config.watering_can_charges]
 		"ripe":
 			return "Hochbeet: %s reif  [E] ernten" % crop.get("name", "")
 		"withered":
@@ -112,14 +112,23 @@ func interact(_p: Node) -> void:
 				EventBus.notify("Gesät. Jeden Tag gießen!", 2.5)
 		"growing":
 			if Supplies.water_bed(index):
-				SoundBank.play_at(self, "faucet", global_position + Vector3(0, 0.6, 0), -14.0, 1.3)
-				Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.3, 0), "water", Vector3.DOWN, 1.2)
+				# die Hand kippt die Kanne (Wasserstrahl und Geräusch kommen von dort), kurz darauf spritzt es im Beet
+				var pl := _p as Player
+				if pl and pl.hands:
+					pl.hands.start_pour(true)
+				_splash_later()
 		"ripe", "withered":
 			var msg := Supplies.harvest(index)
 			if msg != "":
 				Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.1, 0), "dirt", Vector3.UP)
 				SoundBank.play_ui(self, "pickup", -6.0)
 				EventBus.notify(msg, 3.0)
+
+
+func _splash_later() -> void:
+	await get_tree().create_timer(0.55).timeout
+	if is_inside_tree():
+		Fx.burst(get_parent(), global_position + Vector3(0, size.y + 0.3, 0), "water", Vector3.DOWN, 1.2)
 
 
 func secondary_interact(_p: Node) -> void:

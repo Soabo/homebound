@@ -10,7 +10,7 @@ const AMBER := Color(1.0, 0.78, 0.48)
 const CONTROLS := [
 	["W A S D", "Gehen"], ["Shift (halten)", "Rennen"], ["Alt (halten)", "Langsam und leise gehen"], ["C / Strg", "Ducken"],
 	["Leertaste", "Springen"], ["Maus", "Umsehen"], ["E", "Benutzen, aufheben, öffnen"], ["R", "Zweite Aktion (z. B. hineinlegen, hinsetzen)"],
-	["Linksklick", "Werkzeug in der Hand benutzen, schlagen"], ["Rechtsklick", "Blocken"], ["1 – 9 / Mausrad", "Schnellplatz wählen"],
+	["Linksklick", "Werkzeug in der Hand benutzen, schlagen"], ["Rechtsklick", "Blocken (Gießkanne: füllen)"], ["1 – 9 / Mausrad", "Schnellplatz wählen"],
 	["F (kurz)", "Uhrlicht an/aus"], ["F (halten)", "Uhrlicht: LED oder weißes Display"], ["Tab / I", "Rucksack und Werkbank"],
 	["B", "Bauen"], ["Q (halten)", "Fernglas"], ["M", "Wanderkarte"], ["Esc", "Pause"], ["F1", "Hilfe ein/aus"],
 	["F2", "Retro-Bild ein/aus"], ["F11", "Vollbild"],

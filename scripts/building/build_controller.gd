@@ -111,6 +111,7 @@ func _camera_place() -> void:
 		return
 	Supplies.install_camera(idx, _cam_pos, _cam_normal, _cam_yaw)
 	SoundBank.hammer_series(get_tree().current_scene, _cam_pos, 3)
+	_hammer_taps(3)
 	EventBus.notify("%s angebracht. Das Bild siehst du am Monitor im Wohnzimmer." % Inventory.display_name(type), 3.0)
 	_cam_yaw = 0.0
 	var items := _buildable_items()
@@ -270,6 +271,7 @@ func _place() -> void:
 	var build_type: String = DataDB.item(type).get("build", type)
 	Builder.place(build_type, _pos, _rot)
 	SoundBank.play_at(get_tree().current_scene, "place", _pos + Vector3(0, 0.5, 0), 0.0)
+	_hammer_taps(1)
 	EventBus.noise_made.emit(_pos, 14.0)
 	if Inventory.count(type) <= 0:
 		var items := _buildable_items()
@@ -277,3 +279,10 @@ func _place() -> void:
 			stop()
 		else:
 			start(items[0])
+
+
+## Die linke Hand schlägt mit dem Bauhammer zu.
+func _hammer_taps(hits: int) -> void:
+	var p := get_tree().get_first_node_in_group("player") as Player
+	if p and p.hands:
+		p.hands.hammer_taps(hits)

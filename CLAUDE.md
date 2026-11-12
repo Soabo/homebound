@@ -180,8 +180,7 @@
   (Flucht vor hellem Licht, `MaulerConfig.tooth_chance`, 1× pro Tag; dazu morgens im Wald, drops after „mauler“),
   `seeker_ash` (wo der Sucher im Blitz verschwindet: nach einem Schlag immer, beim Abziehen `SeekerConfig.ash_leave_chance`;
   er verschwindet jetzt auch beim Abziehen mit einem Blitz).
-- OFFEN: Diese Änderung wurde ohne Godot geschrieben (im Workspace nicht verfügbar) – nur Syntaxprüfung mit gdparse.
-  Vor dem Zusammenführen `tools/run_tests.sh` laufen lassen (mindestens data, lab, mauler, camp).
+- Nachgeholt am 12.11.: `tools/run_tests.sh` komplett gelaufen (Godot 4.7.2 von GitHub geladen: Godot_v4.7.2-stable_linux.x86_64.zip).
 
 ## Große Welt (Open World, ca. 2,2 x 2,2 km)
 - Daten: `data/world/map.json` (Berge, Seen, Mulden, Moor, Lichtungen, Orte mit `ring` near|day|multi, Wege, Wegweiser,
@@ -288,6 +287,34 @@
   Gefunden: Fallen-Anleitung am Hochsitz (Bärenfalle + Schlinge), Bewegungsmelder-Leuchte in der Imkerei.
   Funkmeldung Tag 7 (`radio_day_7`) oder erstes verseuchtes Wasser → Wasserfilter. Tank < 20 % → Holzvergaser. Zelt liegt im Ferienlager.
 - Leere Blechdosen nicht im Haus: alte Kühlbox im Wald westlich (`SupplyProps.COOLER_XZ`, CoolerCans, 8 Dosen, im Gras eingewachsen).
+
+## Neue Hände und Hand-Gegenstände (Christian, 12.11.2026)
+- Drei neue Bausteine unter `scripts/player/`: `HandKit` (Formen: `loft` = Schlauch entlang einer Linie für Stiele, Henkel,
+  Finger; `extrude` = ausgeschnittenes Blech mit Keilform; `arc`, `tube`, `disc`), `HandRig` (Hand mit beweglichen Fingern:
+  `grip(radius)` legt Finger und Daumen um eine Stange, `grip_center(radius)` = wo sie in der Faust liegt, Haltungen
+  `FIST`/`RELAXED`/`OPEN`, `mix` zum Überblenden) und `HandItems` (alle Modelle: `build(parent, modell)`, Ursprung = Griffstelle,
+  +y oben, -z vorn; Meta `grip`, `tight`, `up`, `tilt`, `parts` für bewegliche Teile, `base` zum Hinstellen: `HandItems.place`).
+- Welches Modell: items.json `hand` = Art (bestimmt die Bewegungen: fist, axe, tin_snips, food, water, dictaphone, watering_can),
+  `hand_model` = eigenes Modell dazu (bottle_raw, bottle_tainted, radish, carrot, potato, meat_raw, meat_cooked, mug_soup,
+  mug_stew, mug_potato, honey, ration, alien_fruit). Neuer Gegenstand für die Hand = Modell in `HandItems` + Eintrag in items.json.
+- `PlayerHands`: Ruhelagen je Art in `REST` (Ort, Drehung, Handgelenk; z = -90 heißt Daumen oben). Bewegungen in `_pose_right`:
+  punch, swing/chop, stab, snip (Backen und Finger drücken zu), drink (Deckel klappt auf, Wasserstand sinkt), eat (Dosendeckel
+  geht auf), pour, fill; Diktiergerät: Linksklick halten hebt es an, Spulen drehen, Leuchte blinkt. Bauhammer: `hammer_taps(n)`
+  (ruft der BuildController). Hände liegen nur auf ihrer eigenen Sichtebene (`HANDS_LAYER`) – Uhr-LED und Display-Licht
+  beleuchten sie nicht (sonst grell weiß).
+- Gießkanne: Linksklick gießt (`start_pour`, über einem Beet wird es gegossen und kostet Wasser; daneben läuft nur der Strahl,
+  kostet nichts; halten = weitergießen), Rechtsklick füllt an Wasserhahn/Regentonne/Bach (`_secondary` → `start_fill`). E am Beet
+  und R am Wasser gehen weiterhin. Wasserstand ist in der Kanne zu sehen (`HandItems.can_level`).
+- Uhr: Kompass im Display (`_build_compass`, `_update_compass`): rote Nadelspitze zeigt nach Norden (Welt -z), pendelt nach,
+  dreht durch, solange die Kreatur die Uhr stört (`_compass_jam`). Sichtbar wie die Uhr selbst nur bei eingeschaltetem Licht (F)
+  oder im Baumodus.
+- Dieselben Modelle liegen in der Welt: Gießkanne bei den Beeten, Diktiergerät und Flasche am Hochsitz, Konserven (`Icons.food_can`
+  → `HandItems.can_body`), Blechschere an der Werkzeugwand (`PlayerHands.snips_model`).
+- Schnelle Vorschau (Sekunden): `scenes/dev/hands_preview.tscn` (`scripts/dev/hands_preview.gd`), z. B.
+  `VK_ICD_FILENAMES=/opt/lavapipe/lvp_icd.json xvfb-run -a godot --path . --rendering-driver vulkan --resolution 1280x720
+  res://scenes/dev/hands_preview.tscn -- --out=BILD.png --mode=fp --item=watering_can --action=pour --p=0.5 --retro`
+  (`--mode=item --item=axe` zeigt ein Modell von vier Seiten, `--mode=rig --pose=grip:0.017` die Hand allein).
+- Prüfungen: `RegressTest._t_hands` (Modelle, Kompass, Gießkanne links/rechts).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

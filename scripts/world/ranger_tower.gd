@@ -131,13 +131,13 @@ func _pickup(n: String, item: String, amount: int, at: Vector3) -> void:
 		"food":
 			Icons.food_can(v, at, 0.042, 0.11)
 		"water":
-			BuildKit.cylinder(v, 0.045, 0.26, at + Vector3(0, 0.13, 0), BuildKit.color_mat(Color(0.45, 0.65, 0.8), 0.1), false, Vector3.ZERO, -1.0, 10)
+			HandItems.place(v, "bottle", at)
 		"old_laptop":
 			var dark := BuildKit.color_mat(Color(0.12, 0.12, 0.13), 0.5)
 			BuildKit.box(v, Vector3(0.34, 0.025, 0.24), at + Vector3(0, 0.012, 0), dark, false)
 			BuildKit.box(v, Vector3(0.34, 0.22, 0.015), at + Vector3(0, 0.12, -0.115), dark, false, Vector3(-15, 0, 0))
 		"dictaphone":
-			BuildKit.box(v, Vector3(0.05, 0.11, 0.025), at + Vector3(0, 0.012, 0), BuildKit.color_mat(Color(0.2, 0.2, 0.22), 0.4), false, Vector3(-90, 30, 0))
+			HandItems.place(v, "dictaphone", at, 30.0, true)
 		_:
 			BuildKit.box(v, Vector3(0.12, 0.08, 0.07), at + Vector3(0, 0.04, 0), BuildKit.color_mat(Color(0.15, 0.15, 0.15)), false)
 	p.visuals.append(v)
