@@ -358,6 +358,25 @@
   (`UnderBedEyes`), Vogel prallt ans Fenster, Kleiderschranktür geht auf, neue Kinderzeichnung mit fünfter Gestalt (einmalig,
   Notiz kinder_bild2). Wecken: gap_hand, knock_walk, music_box, tap_run. Prüfung `RegressTest._t_omens`, Tour-Bilder 88/89.
 
+## Belagerungsnächte à la FNAF (Christian, 13.11.2026)
+- Christians Entscheidungen: alle vier Raum-Aufgaben, Tod möglich, ab Nacht 5 etwa jede 4. Nacht, Babyfon + Monitor im Büro.
+- ThreatDirector: `night_kind` "siege" (ThreatConfig `siege_from_night/every`, `last_siege_day`, `siege_count`, `siege_done_day`,
+  im Spielstand), Ereignis "siege" um `siege_start_hour` startet `SiegeNight` (scripts/systems/siege_night.gd, Kind der Szene,
+  `SiegeNight.current`), Ende `siege_end_hour` → `EventBus.siege_finished`. Kein Schlaf (`siege_tonight`, Bett + `sleep_blocker`),
+  17-Uhr-Hinweis wird zur Warnung. Erste Belagerung `siege_tasks_first` Aufgaben, jede weitere eine mehr; Keller nur, wenn gefunden.
+- Aufgaben (Druck 0..1, Werte `siege_*`): **music** – `MusicBox` (Bens Spieluhr auf der Spielzeugkiste) läuft ab, E aufziehen;
+  sonst Kinderstimmen (Untertitel + `CreatureSounds` "child", falls Aufnahmen da) und Verzerrung (`Player.mind_extra`, ohne
+  Schaden), dann geht man zur Haustür. **attic** – Schübe gegen die Luke (`AtticHatch.bump`), E zuhalten, R zunageln (2 Bretter,
+  nur für die Nacht), Leiter unten = 3× schneller. **cellar** – `CellarBrace` an der zugemauerten Stelle, Wurzeln wachsen, E mit
+  1 Brett abstützen. **window** – Kreatur steht vor einem Fenster (CreatureModel + schwaches Gegenlicht), kratzt; Uhr-LED
+  hineinleuchten (`siege_light_range`) vertreibt sie; Bretter verlangsamen (sie reißt daran).
+- Fehlschläge: 1. = Schaden `siege_hit_damage`; ab 2. „Es ist im Haus“: `siege_hide_seconds` Zeit für Versteck (HideSpot, Keller
+  mit geschlossener Luke, Dachboden mit hochgezogener Leiter – `SiegeNight.is_safe`), sonst Tod; versteckt → zieht ab, Strikes = 1.
+  Draußen länger als `siege_outside_seconds` = Fehlschlag.
+- Übersicht: `Babyfon` (Empfänger auf Stefanies Schreibtisch, Balken Kind/Dach/Keller, braucht Strom; Sender in den drei Räumen)
+  und zweiter Monitor `OfficeMonitorStation` (MonitorStation hat jetzt `screen_rot_y`, `chair_feet`, `face_dir`).
+- Prüfung `RegressTest._t_siege` (inkl. Echtzeit-Lauf mit schnellen Werten).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

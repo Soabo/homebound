@@ -67,6 +67,11 @@ func _ready() -> void:
 	_ladder_cs = LadderClimb.guard_box(_ladder, Vector3(0.5, length, 0.1), Vector3(0, -length * 0.5, 0))
 	_apply(false)
 	GameState.restore(self)
+	# zugenagelt nur für eine Belagerungsnacht
+	EventBus.siege_finished.connect(func(_ok: bool) -> void:
+		var n := get_node_or_null("Nailed")
+		if n:
+			n.queue_free())
 
 
 func persist_key() -> String:
@@ -102,16 +107,44 @@ func _up_there(p: Node3D) -> bool:
 	return p.global_position.y > Cabin.WALL_TOP - 0.2
 
 
+## Belagerungsnacht: etwas drückt von oben gegen die Luke
+func _siege_attic() -> bool:
+	return SiegeNight.current != null and SiegeNight.current.active("attic") and not SiegeNight.current.nailed
+
+
+func bump() -> void:
+	var tw := create_tween()
+	tw.tween_property(_lid, "rotation_degrees:x", -6.0, 0.08)
+	tw.tween_property(_lid, "rotation_degrees:x", -100.0 if down else 0.0, 0.2)
+	SoundBank.play_at(get_parent(), "thud", global_position, -2.0, 0.7)
+	Fx.burst(get_parent(), global_position + Vector3(0, -0.05, 0), "dust", Vector3.DOWN, 0.5)
+
+
+func show_nailed() -> void:
+	if get_node_or_null("Nailed"):
+		return
+	var n := Node3D.new()
+	n.name = "Nailed"
+	add_child(n)
+	var plank := BuildKit.tex_mat("planks_h", 0.6, Color(0.8, 0.7, 0.55))
+	for s: float in [-0.25, 0.25]:
+		BuildKit.box(n, Vector3(1.05, 0.03, 0.14), Vector3(0, -0.04, s), plank, false, Vector3(0, 12.0 * signf(s), 0))
+
+
 func get_prompt(player: Node) -> String:
 	var p := player as Node3D
 	if p == null:
 		return ""
+	if _siege_attic() and not _up_there(p) and not down:
+		return "Es drückt gegen die Luke (%d %%)  [E] zuhalten" % int(SiegeNight.current.pressure("attic") * 100.0)
 	if _up_there(p):
 		return "[E] Hinunterklettern" if down else "[E] Leiter herunterlassen"
 	return "[E] Auf den Dachboden klettern" if down else "Dachbodenluke  [E] Leiter herunterziehen"
 
 
 func get_secondary_prompt(player: Node) -> String:
+	if _siege_attic() and player and not _up_there(player as Node3D) and not down:
+		return "[R] zunageln (2 Bretter)"
 	if not down or player == null:
 		return ""
 	return "[R] Leiter hochziehen" if _up_there(player as Node3D) else "[R] Leiter hochschieben"
@@ -121,7 +154,14 @@ func interact(player: Node) -> void:
 	var p := player as Player
 	if p == null:
 		return
+	if _siege_attic() and not _up_there(p) and not down:
+		SiegeNight.current.attic_hold()
+		bump()
+		return
 	if not down:
+		if SiegeNight.current and SiegeNight.current.nailed:
+			EventBus.notify("Die Luke ist zugenagelt.", 2.0)
+			return
 		set_down(true)
 		return
 	var hole := Vector3(global_position.x, Cabin.WALL_TOP + 0.11, global_position.z + 0.1)
@@ -135,7 +175,13 @@ func interact(player: Node) -> void:
 		Tasks.flag("attic_visited")
 
 
-func secondary_interact(_player: Node) -> void:
+func secondary_interact(player: Node) -> void:
+	if _siege_attic() and player and not _up_there(player as Node3D) and not down:
+		if SiegeNight.current.attic_nail():
+			show_nailed()
+		else:
+			EventBus.notify("Dafür brauchst du 2 Bretter.", 2.0)
+		return
 	if down:
 		set_down(false)
 

@@ -164,14 +164,30 @@ func _office_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 		for lz: float in [iz0 + 0.05, iz0 + 0.65]:
 			BuildKit.box(c, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), dark, false)
 	BuildKit.box_mm(c, Vector3(2.45, y + 0.1, iz0 + 0.05), Vector3(2.95, y + 0.7, iz0 + 0.65), dark, true)
-	c._chair(Vector3(2.1, y, iz0 + 1.05), 180.0)
+	c._chair(Vector3(2.6, y, iz0 + 1.05), 180.0)
 	var desk_lamp := BuildKit.color_mat(Color(0.15, 0.3, 0.22), 0.4, 0.4)
 	BuildKit.cylinder(c, 0.07, 0.02, Vector3(1.8, y + 0.77, iz0 + 0.2), desk_lamp, false, Vector3.ZERO, -1.0, 10)
 	BuildKit.cylinder(c, 0.01, 0.32, Vector3(1.8, y + 0.93, iz0 + 0.2), desk_lamp, false, Vector3(0, 0, 10), -1.0, 6)
 	BuildKit.cylinder(c, 0.09, 0.1, Vector3(1.86, y + 1.08, iz0 + 0.25), desk_lamp, false, Vector3(35, 0, 0), 0.04, 10)
 	var paper := BuildKit.color_mat(Color(0.9, 0.88, 0.82), 0.9)
 	for i in 5:
-		BuildKit.box(c, Vector3(0.21, 0.004, 0.29), Vector3(2.3 + _rng.randf_range(-0.2, 0.3), y + 0.764 + i * 0.004, iz0 + 0.35), paper, false, Vector3(0, _rng.randf_range(-25, 25), 0))
+		BuildKit.box(c, Vector3(0.21, 0.004, 0.29), Vector3(2.0 + _rng.randf_range(-0.08, 0.08), y + 0.764 + i * 0.004, iz0 + 0.3), paper, false, Vector3(0, _rng.randf_range(-25, 25), 0))
+	# zweiter Überwachungsmonitor (Belagerungsnächte: hier sitzt man) und Babyfon-Empfänger
+	var plastic := BuildKit.color_mat(Color(0.62, 0.6, 0.55), 0.6)
+	BuildKit.box_mm(c, Vector3(2.37, y + 0.76, iz0 + 0.04), Vector3(2.83, y + 1.16, iz0 + 0.4), plastic, false, "OfficeMonitor")
+	BuildKit.box_mm(c, Vector3(2.4, y + 0.79, iz0 + 0.4), Vector3(2.8, y + 1.13, iz0 + 0.405), BuildKit.color_mat(Color(0.05, 0.07, 0.06), 0.1), false)
+	var station := MonitorStation.new()
+	station.name = "OfficeMonitorStation"
+	station.screen_center = Vector3(2.6, y + 0.96, iz0 + 0.41)
+	station.screen_size = Vector2(0.36, 0.27)
+	station.screen_rot_y = 0.0
+	station.chair_feet = Vector3(2.6, y, iz0 + 1.0)
+	station.face_dir = Vector3(0, 0, -1)
+	c.add_child(station)
+	var bf := Babyfon.new()
+	bf.name = "Babyfon"
+	bf.position = Vector3(1.62, y + 0.762, iz0 + 0.55)
+	c.add_child(bf)
 	# Aktenschrank in der Nordwestecke
 	BuildKit.box_mm(c, Vector3(ix0, y, iz0), Vector3(ix0 + 0.5, y + 1.3, iz0 + 0.55), BuildKit.color_mat(Color(0.42, 0.45, 0.42), 0.5, 0.5), true, "FileCabinet")
 	for k in 3:
@@ -287,6 +303,13 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 		lab.rotation_degrees.y = -90.0
 		lab.position = Vector3(-0.252, 0.03, 0)
 		box.add_child(lab)
+	# Bens Spieluhr auf der Spielzeugkiste, daneben der Babyfon-Sender
+	var mb := MusicBox.new()
+	mb.name = "MusicBox"
+	mb.position = Vector3(-6.72, y + 0.8, -2.8)
+	mb.rotation_degrees.y = -90.0
+	c.add_child(mb)
+	Babyfon.sender(c, Vector3(-6.75, y + 0.8, -2.5), -90.0)
 	# Zeichnung auf Lenas Bett (Notiz)
 	var drawing := ResearchNote.new()
 	drawing.name = "KidsDrawing"
@@ -312,6 +335,7 @@ func _attic() -> void:
 	var bulb := c._lamp(Vector3(0.0, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.7, 6.5, true)
 	var bulb2 := c._lamp(Vector3(4.6, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.5, 4.5, false)
 	BuildKit.box(c, Vector3(0.1, Cabin.ROOF_RISE, 0.1), Vector3(3.0, y + Cabin.ROOF_RISE * 0.5 - 0.05, 0.7), c.m_beam, true)
+	Babyfon.sender(c, Vector3(3.3, y, 0.75), 90.0)
 	c._switch("attic", "Licht Dachboden", Vector3(3.06, y + 1.2, 0.7), 90.0, [bulb, bulb2])
 	# Gerümpel: alte Truhe, Stuhl, Kartons von Stefanie, Wiege
 	var card := BuildKit.tex_mat("fabric", 0.3, Color(1.3, 1.1, 0.8))
@@ -392,6 +416,7 @@ func _cellar() -> void:
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(c, 0.28, Vector3(0.0, fy + 0.22, -3.0), sack, Vector3(1.0, 0.8, 0.8), 10)
 	BuildKit.sphere(c, 0.28, Vector3(-0.1, fy + 0.22, -2.6), sack, Vector3(0.9, 0.8, 0.9), 10)
+	Babyfon.sender(c, Vector3(shelf_x + 0.2, fy + 1.33, -5.25), 90.0)
 	# Die zugemauerte Stelle an der Ostwand (Richtung alter Brunnen): jüngere Ziegel, Wurzeln in den Fugen
 	_bricked_wall(x1 - t * 0.5, fy)
 	# kühle, feuchte Luft
@@ -440,6 +465,11 @@ func _bricked_wall(wx: float, fy: float) -> void:
 	lab.rotation_degrees.y = -90.0
 	lab.position = Vector3(face - 0.055, fy + 1.05, zc + 0.15)
 	c.add_child(lab)
+	# Belagerungsnacht: hier drücken die Wurzeln, hier stützt man ab
+	var brace := CellarBrace.new()
+	brace.name = "CellarBrace"
+	brace.position = Vector3(face, fy, zc)
+	c.add_child(brace)
 	var note := ResearchNote.new()
 	note.name = "CellarWallNote"
 	note.note_id = "keller_mauer"

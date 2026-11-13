@@ -43,6 +43,36 @@ extends Resource
 @export var traces_after_hints: float = 0.5
 @export var traces_after_visit: float = 0.85
 
+@export_group("Belagerungsnacht (SiegeNight)")
+## Ab Nacht … und dann frühestens alle … Nächte
+@export var siege_from_night: int = 5
+@export var siege_every: int = 4
+## Von … bis … Uhr durchhalten (Spielzeit)
+@export var siege_start_hour: float = 21.0
+@export var siege_end_hour: float = 5.0
+## Wie viele Aufgaben in der ersten Belagerung laufen (jede weitere eine mehr, höchstens alle vier)
+@export var siege_tasks_first: int = 2
+## Spieluhr: so viele Sekunden, bis sie abgelaufen ist; Aufziehen bringt so viel; Gnadenfrist danach (Sekunden)
+@export var siege_music_seconds: float = 45.0
+@export var siege_music_wind: float = 0.6
+@export var siege_music_grace: float = 10.0
+## Dachboden: Sekunden Druck bis zum Durchbruch (Leiter unten = dreimal so schnell), Dauer der Schübe, Pausen dazwischen
+@export var siege_attic_seconds: float = 22.0
+@export var siege_attic_burst: Vector2 = Vector2(10.0, 18.0)
+@export var siege_attic_pause: Vector2 = Vector2(25.0, 45.0)
+## Keller: Sekunden, bis die Mauer nachgibt
+@export var siege_cellar_seconds: float = 75.0
+## Fenster: Anschleichen, Sekunden bis zum Durchbruch, Pause nach dem Vertreiben, Reichweite der Uhr-LED, Schaden an Brettern
+@export var siege_window_approach: Vector2 = Vector2(8.0, 16.0)
+@export var siege_window_seconds: float = 20.0
+@export var siege_window_pause: Vector2 = Vector2(12.0, 25.0)
+@export var siege_light_range: float = 6.0
+@export var siege_barricade_hit: float = 15.0
+## Fehlschläge: Schaden beim ersten, Sekunden zum Verstecken danach, Sekunden draußen bis zum Angriff
+@export var siege_hit_damage: float = 30.0
+@export var siege_hide_seconds: float = 14.0
+@export var siege_outside_seconds: float = 8.0
+
 @export_group("Nächtliche Vorkommnisse (NightOmens)")
 ## Wie viele pro Nacht: ruhige Nacht / alle anderen
 @export var omen_count_quiet: Vector2i = Vector2i(1, 2)

@@ -351,7 +351,130 @@ func _t_more() -> void:
 	_t_nov12_evening()
 	await _t_rooms()
 	await _t_omens()
+	await _t_siege()
 	await _t_hands()
+
+
+## Belagerungsnacht (13.11.): Aufgaben, Gegenmittel, Fehlschläge, Verstecken, Ende.
+func _t_siege() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_rot := p.rotation
+	var td := ThreatDirector
+	var keep_kind: String = td.night_kind
+	var keep_last: int = td.last_siege_day
+	# Planung: ab Nacht 5 und dann alle 4 Nächte
+	_ok("Belagerung: erste ab Nacht %d, dann alle %d Nächte" % [td.config.siege_from_night, td.config.siege_every],
+		td.config.siege_from_night == 5 and td.config.siege_every == 4)
+	td.night_kind = "siege"
+	td.siege_done_day = -1
+	var keep_hour := TimeManager.hour
+	TimeManager.hour = 22.0
+	_ok("Belagerung: kein Schlaf", td.siege_tonight() and td.sleep_blocker() != "")
+	TimeManager.hour = keep_hour
+	var ch := _scene().find_child("CellarHatch", true, false) as CellarHatch
+	var keep_rug := ch.rug_moved
+	ch.rug_moved = true
+	var s := SiegeNight.new()
+	s.cfg = td.config
+	s.index = 9
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	s.set_process(false)
+	_ok("Belagerung: alle vier Aufgaben laufen", s.active("music") and s.active("attic") and s.active("cellar") and s.active("window"))
+	var bf := _scene().find_child("Babyfon", true, false)
+	_ok("Babyfon und Büromonitor stehen bereit", bf != null and _scene().find_child("OfficeMonitorStation", true, false) != null)
+	# Spieluhr
+	s.wind = 0.1
+	s._update_music(0.5)
+	_ok("Spieluhr fast abgelaufen: Verzerrung", p.mind_extra > 0.1)
+	var mb := _scene().find_child("MusicBox", true, false) as MusicBox
+	mb.interact(p)
+	_ok("Spieluhr aufgezogen", s.wind >= 0.6 and p.mind_extra == 0.0)
+	# Dachboden
+	s._attic_burst = 20.0
+	for k in 10:
+		s._update_attic(1.0)
+	var ap := s.pressure("attic")
+	s.attic_hold()
+	_ok("Dachboden: Druck steigt, Zuhalten senkt ihn", ap > 0.2 and s.pressure("attic") < ap)
+	Inventory.add("planks", 3)
+	_ok("Dachboden: mit 2 Brettern zugenagelt", s.attic_nail() and s.nailed)
+	# Keller
+	for k in 30:
+		s._update_cellar(1.0)
+	var cp := s.pressure("cellar")
+	_ok("Keller: Abstützen mit einem Brett", cp > 0.3 and s.cellar_brace() and s.pressure("cellar") == 0.0)
+	# Fenster: hineinleuchten vertreibt sie
+	var win: CabinWindow = null
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow and w.name == "WindowLivingSouth":
+			win = w
+	if win == null:
+		for w in get_tree().get_nodes_in_group("entry_point"):
+			if w is CabinWindow:
+				win = w
+	s._window = win
+	s._stalker_phase = "work"
+	s._show_stalker()
+	s._set_p("window", 0.5)
+	var wpos := win.global_position + Vector3(0, win.height * 0.5, 0)
+	p.global_position = win.inside_point() + (win.inside_point() - win.global_position).normalized() * 1.5
+	p.global_position.y = Cabin.FLOOR_Y
+	await get_tree().physics_frame
+	p.look_at(Vector3(wpos.x, p.global_position.y + 1.0, wpos.z), Vector3.UP)
+	p.rotation.x = 0.0
+	p.head.rotation.x = 0.0
+	p.set_flashlight(true)
+	await get_tree().process_frame
+	s._update_window(0.1)
+	_ok("Fenster: mit der Uhr hineinleuchten vertreibt sie", s._stalker_phase == "away" and s.pressure("window") == 0.0,
+		"Phase %s, Druck %.2f" % [s._stalker_phase, s.pressure("window")])
+	p.set_flashlight(false)
+	# Fehlschläge: erster = Verletzung, zweiter = es ist im Haus → im Keller mit geschlossener Luke sicher
+	var hp := p.health
+	s._strike("test", p.global_position + Vector3(0, 1, 1))
+	_ok("Erster Fehlschlag verletzt", p.health < hp and s.strikes == 1)
+	p.health = 100.0
+	s._strike("test", Vector3(-3.0, 1.0, 3.6))
+	_ok("Zweiter Fehlschlag: es kommt herein", s._intrusion >= 0.0)
+	ch.open = false
+	p.global_position = Vector3(0.3, Cabin.CELLAR_FLOOR + 0.05, -3.2)
+	await get_tree().physics_frame
+	_ok("Im Keller mit geschlossener Luke ist man sicher", s.is_safe(p))
+	s._update_intrusion(td.config.siege_hide_seconds + 9.0)
+	_ok("Versteckt: es zieht wieder ab, man lebt", s._intrusion < 0.0 and s.strikes == 1 and p.health > 0.0 and not GameState.dead)
+	# Echtzeit-Lauf mit schnellen Werten: Fenster + Keller drücken, man sitzt im Keller (sicher) – keine Abstürze
+	s.set_process(true)
+	var fast := td.config.duplicate() as ThreatConfig
+	fast.siege_window_approach = Vector2(0.5, 1.0)
+	fast.siege_window_seconds = 3.0
+	fast.siege_cellar_seconds = 4.0
+	fast.siege_hide_seconds = 2.0
+	s.cfg = fast
+	s.tasks["music"]["on"] = false
+	s.tasks["attic"]["on"] = false
+	s._stalker_phase = "away"
+	s._stalker_t = 0.2
+	await get_tree().create_timer(14.0).timeout
+	_ok("Echtzeit: Fehlschläge passieren, im Versteck überlebt", s.strikes >= 1 and not GameState.dead and p.health > 0.0,
+		"Fehlschläge %d, Gesundheit %.0f" % [s.strikes, p.health])
+	s.cfg = td.config
+	p.health = 100.0
+	var survived := [false]
+	var cb := func(ok: bool) -> void: survived[0] = ok
+	EventBus.siege_finished.connect(cb)
+	s.finish(true)
+	await get_tree().process_frame
+	EventBus.siege_finished.disconnect(cb)
+	_ok("Morgengrauen: Belagerung überstanden", survived[0] and SiegeNight.current == null and Tasks.flags.has("siege_survived"))
+	ch.rug_moved = keep_rug
+	td.night_kind = keep_kind
+	td.last_siege_day = keep_last
+	p.global_position = keep
+	p.rotation = keep_rot
+	p.head.rotation = Vector3.ZERO
+	await get_tree().create_timer(2.0).timeout   # Kompassnadel kommt zur Ruhe
 
 
 ## Nächtliche Vorkommnisse (13.11.): alle Arten einmal auslösen, ein paar Ergebnisse prüfen.

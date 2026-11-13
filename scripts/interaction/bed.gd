@@ -31,6 +31,8 @@ func get_prompt(_player: Node) -> String:
 	var why := ThreatDirector.sleep_blocker()
 	if why != "" and TimeManager.can_sleep():
 		return "Bett – " + why
+	if ThreatDirector.siege_tonight():
+		return "Heute Nacht kann ich nicht schlafen. Sie kommen."
 	if TimeManager.can_sleep():
 		if AtticHatch.down_now:
 			return "[E] Schlafen (bis %02d:00) – die Dachbodenleiter ist noch unten!" % int(TimeManager.config.wake_up_hour)
@@ -39,6 +41,9 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(_player: Node) -> void:
+	if ThreatDirector.siege_tonight():
+		EventBus.notify("Heute Nacht kann ich nicht schlafen. Sie kommen.", 2.5)
+		return
 	if not TimeManager.can_sleep():
 		EventBus.notify("Ich bin noch nicht müde.", 2.0)
 		return

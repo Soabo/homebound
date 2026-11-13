@@ -41,6 +41,10 @@ var _forest_check: float = 30.0
 
 var _planned_for_day: int = -1
 var _rng := RandomNumberGenerator.new()
+## Belagerungsnächte (SiegeNight): wann die letzte war, wie viele es schon gab, welche Nacht schon überstanden ist
+var last_siege_day: int = -100
+var siege_count: int = 0
+var siege_done_day: int = -1
 
 
 func _ready() -> void:
@@ -51,6 +55,7 @@ func _ready() -> void:
 	_rng.randomize()
 	TimeManager.phase_changed.connect(_on_phase_changed)
 	EventBus.sleep_finished.connect(_on_woke_up)
+	EventBus.siege_finished.connect(func(_ok: bool) -> void: siege_done_day = _planned_for_day)
 	_plan_if_needed.call_deferred()
 
 
@@ -66,7 +71,8 @@ func current_night() -> int:
 func get_state() -> Dictionary:
 	return {"night_kind": night_kind, "nights_since": nights_since_appearance, "quiet_left": quiet_left,
 		"arc_day": _arc_day, "last_inside_day": _last_inside_day, "forest_day": _forest_day_done,
-		"scared_until": scared_until, "blocked": blocked_memory.duplicate(), "mauler_until": mauler_until}
+		"scared_until": scared_until, "blocked": blocked_memory.duplicate(), "mauler_until": mauler_until,
+		"last_siege": last_siege_day, "siege_count": siege_count, "siege_done": siege_done_day}
 
 
 func set_state(s: Dictionary) -> void:
@@ -78,6 +84,9 @@ func set_state(s: Dictionary) -> void:
 	_forest_day_done = int(s.get("forest_day", -1))
 	scared_until = float(s.get("scared_until", -1.0))
 	mauler_until = float(s.get("mauler_until", -1.0))
+	last_siege_day = int(s.get("last_siege", -100))
+	siege_count = int(s.get("siege_count", 0))
+	siege_done_day = int(s.get("siege_done", -1))
 	blocked_memory = (s.get("blocked", {}) as Dictionary).duplicate()
 
 
@@ -144,23 +153,31 @@ func plan_night(night_day: int) -> void:
 	if night_day != _arc_day:
 		_arc_day = night_day
 		night_kind = _choose_night_kind(night_day)
-	night_intensity = int({"quiet": 0, "hints": 1, "sighting": 1, "visit": 2, "hunt": 3}[night_kind])
+		# Belagerungsnacht: ab siege_from_night, frühestens alle siege_every Nächte
+		if night_day >= config.siege_from_night and night_day - last_siege_day >= config.siege_every:
+			night_kind = "siege"
+			last_siege_day = night_day
+			siege_count += 1
+	night_intensity = int({"quiet": 0, "hints": 1, "sighting": 1, "visit": 2, "hunt": 3, "siege": 3}[night_kind])
 	_appeared_tonight = false
 	events.clear()
 	var start := float(night_day - 1) * 24.0 + TimeManager.config.night_start_hour
 	var night_len := TimeManager.get_night_length_hours()
 	# Kleine, mehrdeutige Ereignisse (GDD 2.3) – in ruhigen Nächten nur ganz wenige
-	var n := 1 if night_kind == "quiet" else _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + mini(night_intensity, 2)
+	var n := 1 if night_kind in ["quiet", "siege"] else _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + mini(night_intensity, 2)
 	var pool := _event_pool(night_intensity)
 	for i in n:
 		_add(start + _rng.randf_range(0.6, night_len - 1.0), pool[_rng.randi() % pool.size()])
 	# Nächtliche Vorkommnisse (NightOmens): Hände, wandernde Dinge, Lichter und Sichtungen im Wald …
-	var oc := config.omen_count_quiet if night_kind == "quiet" else config.omen_count_busy
+	var oc := config.omen_count_quiet if night_kind in ["quiet", "siege"] else config.omen_count_busy
 	for i in _rng.randi_range(oc.x, oc.y):
 		var kind := _pick_omen(night_day)
 		if kind != "":
 			_add(start + _rng.randf_range(0.3, night_len - 0.8), "omen:" + kind)
 	match night_kind:
+		"siege":
+			# die ganze Nacht über: Belagerung (SiegeNight), keine anderen Auftritte
+			_add(float(night_day - 1) * 24.0 + config.siege_start_hour, "siege")
 		"sighting":
 			_add(start + _rng.randf_range(1.0, night_len - 2.0), "sighting")
 			if _rng.randf() < config.sighting_phantom_chance:
@@ -225,6 +242,14 @@ func _event_pool(intensity: int) -> Array[String]:
 	if intensity >= 2:
 		pool.append_array(["knock_door", "rattle", "music_box", "handprint", "photo", "scratch", "roof"])
 	return pool
+
+
+## Ist heute Nacht Belagerung (und noch nicht überstanden)? Dann gibt es keinen Schlaf.
+func siege_tonight() -> bool:
+	if night_kind != "siege" or siege_done_day == _planned_for_day:
+		return false
+	var h := TimeManager.hour
+	return h >= 16.0 or h < config.siege_end_hour
 
 
 ## Welches Vorkommnis heute Nacht möglich ist (mit Tagesgrenzen), Draußen-Dinge etwas häufiger.
@@ -342,6 +367,10 @@ func _check_evening() -> void:
 		return
 	if TimeManager.hour >= cfg.evening_warning_hour and TimeManager.hour < cfg.night_start_hour:
 		_evening_warned = TimeManager.day
+		if siege_tonight():
+			EventBus.notify("Etwas stimmt nicht. Heute Nacht kommen sie – kein Schlaf. Bereite die Hütte vor: Holz, Diesel, Bretter.", 7.0)
+			SoundBank.play_ui(self, "sting_dusk", -4.0)
+			return
 		EventBus.notify(cfg.evening_warning_text, 4.0)
 		SoundBank.play_ui(self, "menu_click", -10.0, 0.7)
 	elif TimeManager.hour < cfg.evening_warning_hour and TimeManager.hour > 6.0:
@@ -396,6 +425,8 @@ var scared_until: float = -1.0
 
 ## Warum gerade nicht geschlafen werden kann ("" = Schlafen erlaubt).
 func sleep_blocker() -> String:
+	if siege_tonight():
+		return "Heute Nacht kann ich nicht schlafen. Sie kommen."
 	if TimeManager.get_total_hours() < scared_until:
 		return "Du bist viel zu aufgewühlt, um wieder einzuschlafen."
 	var player := get_tree().get_first_node_in_group("player") as Node3D
@@ -413,7 +444,7 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 		if e["done"]:
 			continue
 		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic",
-				"omen:gap_hand", "omen:knock_walk", "omen:music_box", "omen:tap_run"] and e["at"] > from_total and e["at"] < to_total:
+				"omen:gap_hand", "omen:knock_walk", "omen:music_box", "omen:tap_run", "siege"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -423,6 +454,17 @@ func _fire(type: String) -> void:
 	if scene == null:
 		return
 	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if type == "siege":
+		_kinds_tonight.append_array(["creature", "manipulator"])
+		_activity_tonight = true
+		if far_from_home() or SiegeNight.current != null:
+			return
+		var s := SiegeNight.new()
+		s.cfg = config
+		s.index = siege_count
+		s.end_total = float(_planned_for_day) * 24.0 + config.siege_end_hour
+		scene.add_child(s)
+		return
 	if type.begins_with("omen:"):
 		var kind := type.substr(5)
 		# Dinge am Haus nur, wenn man zuhause ist; Wald-Dinge überall um einen herum

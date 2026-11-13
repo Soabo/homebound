@@ -6,6 +6,10 @@ extends Interactable
 
 @export var screen_center: Vector3 = Vector3.ZERO
 @export var screen_size: Vector2 = Vector2(0.45, 0.3)
+## Drehung des Bildschirms (Grad um y) und wo man sitzt / wohin man schaut – für einen zweiten Monitor (Büro)
+@export var screen_rot_y: float = -90.0
+@export var chair_feet: Vector3 = Vector3(0.92, Cabin.FLOOR_Y, 3.62)
+@export var face_dir: Vector3 = Vector3(1, 0, 0)
 
 var _screen: MeshInstance3D
 ## Füße auf dem Stuhl vor dem Monitor (Hüttenkoordinaten), Blick zum Bildschirm (+x)
@@ -23,7 +27,7 @@ func _ready() -> void:
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(0.5, 0.45, 0.7)
 	cs.shape = shape
-	cs.position = screen_center + Vector3(0.2, 0, 0)
+	cs.position = screen_center + Basis(Vector3.UP, deg_to_rad(screen_rot_y + 90.0)) * Vector3(0.2, 0, 0)
 	body.add_child(cs)
 	add_child(body)
 	_screen = MeshInstance3D.new()
@@ -31,7 +35,7 @@ func _ready() -> void:
 	q.size = screen_size
 	_screen.mesh = q
 	_screen.position = screen_center
-	_screen.rotation_degrees.y = -90.0
+	_screen.rotation_degrees.y = screen_rot_y
 	add_child(_screen)
 	_black = BuildKit.color_mat(Color(0.02, 0.03, 0.03), 0.1)
 	_screen.material_override = _black
@@ -72,7 +76,7 @@ func interact(_player: Node) -> void:
 		return
 	_seated = true
 	_back = p.global_position
-	var tw := Seat.sit_down(self, p, CHAIR_FEET, Vector3(1, 0, 0), 1.15, false)
+	var tw := Seat.sit_down(self, p, chair_feet, face_dir, 1.15, false)
 	tw.chain().tween_callback(func() -> void: get_tree().call_group("hud", "open_monitor"))
 
 

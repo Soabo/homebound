@@ -375,6 +375,8 @@ func _update_breathing(sprinting: bool) -> void:
 ## --- Blick der Kreatur ins Hirn -------------------------------------------
 ## Die Kreatur ruft mind_gaze() in jedem Physik-Schritt, solange der Spieler sie ansieht.
 var mind: float = 0.0
+## Zusätzliche Verzerrung ohne Schaden (z. B. Kinderstimmen in der Belagerungsnacht)
+var mind_extra: float = 0.0
 var _gazed: bool = false
 var _mind_audio: AudioStreamPlayer
 var _mind_shown: float = -1.0
@@ -402,10 +404,11 @@ func _update_mind(delta: float) -> void:
 	# Sichtfeld pumpt leicht mit; Fernglas (Q halten) zoomt heran
 	var zooming := not input_locked and Input.is_action_pressed("zoom") and Inventory.count("binoculars") > 0
 	_zoom = move_toward(_zoom, 1.0 if zooming else 0.0, delta * 4.0)
-	camera.fov = lerpf(75.0, 16.0, _zoom * _zoom * (3.0 - 2.0 * _zoom)) + sin(Time.get_ticks_msec() * 0.007) * 5.0 * mind
-	if absf(mind - _mind_shown) > 0.005:
-		_mind_shown = mind
-		get_tree().call_group("retro_filter", "set_mind", mind)
+	var shown := maxf(mind, mind_extra)
+	camera.fov = lerpf(75.0, 16.0, _zoom * _zoom * (3.0 - 2.0 * _zoom)) + sin(Time.get_ticks_msec() * 0.007) * 5.0 * shown
+	if absf(shown - _mind_shown) > 0.005:
+		_mind_shown = shown
+		get_tree().call_group("retro_filter", "set_mind", shown)
 	if _mind_audio == null:
 		var st := CreatureSounds.pick("mind")
 		if st == null:
@@ -417,10 +420,10 @@ func _update_mind(delta: float) -> void:
 		_mind_audio.stream = st
 		_mind_audio.volume_db = -60.0
 		add_child(_mind_audio)
-	if mind > 0.01:
+	if shown > 0.01:
 		if not _mind_audio.playing:
 			_mind_audio.play()
-		_mind_audio.volume_db = linear_to_db(clampf(mind * 1.2, 0.001, 1.0)) + 2.0
+		_mind_audio.volume_db = linear_to_db(clampf(shown * 1.2, 0.001, 1.0)) + 2.0
 	elif _mind_audio.playing:
 		_mind_audio.stop()
 
