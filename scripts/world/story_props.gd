@@ -87,8 +87,9 @@ func _cable(c: Dictionary) -> void:
 		BuildKit.box(root, Vector3(0.9, 0.25, 0.9), Vector3(start.x, g + 0.08, start.y), _concrete, true)
 		BuildKit.box(root, Vector3(0.7, 0.04, 0.7), Vector3(start.x, g + 0.22, start.y), BuildKit.color_mat(Color(0.25, 0.26, 0.27), 0.5, 0.7), false)
 		var lab := Label3D.new()
-		lab.text = "ReZort Industries · Kabelschacht"
-		lab.font_size = 22
+		# zweizeilig und kleiner, damit die Schrift auf dem Deckel bleibt
+		lab.text = "ReZort Industries\nKabelschacht"
+		lab.font_size = 15
 		lab.pixel_size = 0.003
 		lab.modulate = Color(0.1, 0.1, 0.1)
 		lab.outline_size = 0

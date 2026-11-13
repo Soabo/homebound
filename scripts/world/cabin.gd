@@ -1413,22 +1413,34 @@ func _chair(pos: Vector3, rot_y: float) -> void:
 func _shelf(from: Vector3, to: Vector3, levels: int, books: bool) -> void:
 	var lo := Vector3(minf(from.x, to.x), from.y, minf(from.z, to.z))
 	var hi := Vector3(maxf(from.x, to.x), to.y, maxf(from.z, to.z))
-	BuildKit.box_mm(self, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x + 0.04, hi.y, hi.z), m_wood_dark, true)
-	BuildKit.box_mm(self, Vector3(hi.x - 0.04, lo.y, lo.z), Vector3(hi.x, hi.y, hi.z), m_wood_dark, true)
+	# Seitenwände an die Enden der langen Seite (Regal an Ost-/Westwand ist in z lang)
+	var along_z := (hi.z - lo.z) > (hi.x - lo.x)
+	if along_z:
+		BuildKit.box_mm(self, Vector3(lo.x, lo.y, lo.z), Vector3(hi.x, hi.y, lo.z + 0.04), m_wood_dark, true)
+		BuildKit.box_mm(self, Vector3(lo.x, lo.y, hi.z - 0.04), Vector3(hi.x, hi.y, hi.z), m_wood_dark, true)
+	else:
+		BuildKit.box_mm(self, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x + 0.04, hi.y, hi.z), m_wood_dark, true)
+		BuildKit.box_mm(self, Vector3(hi.x - 0.04, lo.y, lo.z), Vector3(hi.x, hi.y, hi.z), m_wood_dark, true)
+	var a0 := lo.z if along_z else lo.x
+	var a1 := hi.z if along_z else hi.x
+	var depth := (hi.x - lo.x) if along_z else (hi.z - lo.z)
 	for i in levels:
 		var sy := lo.y + 0.05 + i * ((hi.y - lo.y - 0.05) / float(levels))
 		BuildKit.box_mm(self, Vector3(lo.x, sy - 0.03, lo.z), Vector3(hi.x, sy, hi.z), m_wood, true)
 		if books:
-			var x := lo.x + 0.06
-			while x < hi.x - 0.12:
+			var t := a0 + 0.06
+			while t < a1 - 0.12:
 				var w := _rng.randf_range(0.03, 0.07)
 				var h := _rng.randf_range(0.18, 0.3)
 				var c := Color.from_hsv(_rng.randf(), _rng.randf_range(0.3, 0.6), _rng.randf_range(0.2, 0.45))
 				var tilt := _rng.randf_range(-8, 8) if _rng.randf() < 0.15 else 0.0
-				BuildKit.box(self, Vector3(w, h, (hi.z - lo.z) * 0.8), Vector3(x + w * 0.5, sy + h * 0.5, (lo.z + hi.z) * 0.5), BuildKit.color_mat(c), false, Vector3(0, 0, tilt))
-				x += w + 0.006
+				if along_z:
+					BuildKit.box(self, Vector3(depth * 0.8, h, w), Vector3((lo.x + hi.x) * 0.5, sy + h * 0.5, t + w * 0.5), BuildKit.color_mat(c), false, Vector3(tilt, 0, 0))
+				else:
+					BuildKit.box(self, Vector3(w, h, depth * 0.8), Vector3(t + w * 0.5, sy + h * 0.5, (lo.z + hi.z) * 0.5), BuildKit.color_mat(c), false, Vector3(0, 0, tilt))
+				t += w + 0.006
 				if _rng.randf() < 0.08:
-					x += 0.15
+					t += 0.15
 
 
 func _photo(pos: Vector3, rot_y: float, w: float, h: float) -> Node3D:

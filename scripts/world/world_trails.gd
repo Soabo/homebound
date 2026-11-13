@@ -210,6 +210,14 @@ func _bridge(at: Vector2, dir: Vector2, width: float, kind: int) -> void:
 				var z := -span * 0.42 + k * span * 0.84 / (posts - 1)
 				BuildKit.cylinder(root, 0.045, 0.95, Vector3(sx * (w * 0.5 - 0.05), 0.45, z), _dark, false, Vector3.ZERO, -1.0, 6)
 			BuildKit.cylinder(root, 0.04, span * 0.86, Vector3(sx * (w * 0.5 - 0.05), 0.9, 0), _dark, false, Vector3(90, 0, 0), -1.0, 6)
+			# Geländer ist fest: man kann nicht seitlich vom Steg laufen
+			var rail_cs := CollisionShape3D.new()
+			rail_cs.name = "RailCollision_%s" % ("L" if sx < 0.0 else "R")
+			var rail_shape := BoxShape3D.new()
+			rail_shape.size = Vector3(0.1, 1.0, span * 0.86)
+			rail_cs.shape = rail_shape
+			rail_cs.position = Vector3(sx * (w * 0.5 - 0.05), 0.5, 0)
+			root.add_child(rail_cs)
 		# Joche: Pfähle bis ins Bachbett, wo der Steg hoch über dem Wasser liegt
 		for zl: float in [-1.2, 1.2]:
 			var world := root.global_transform * Vector3(0, 0, zl) if root.is_inside_tree() else root.transform * Vector3(0, 0, zl)
@@ -492,11 +500,11 @@ func _board() -> void:
 		var sq := BuildKit.box(root, Vector3(0.08, 0.08, 0.01), Vector3(-0.64, y, 0.03), BuildKit.color_mat(Color(str(t.get("mark", "#ffffff"))), 0.6), false)
 		sq.name = "Mark_" + str(t["id"])
 		var km := ("%.1f km" % (_length(t) / 1000.0)).replace(".", ",")
-		var lab := _label(root, "%s  (%s)\n%s" % [t.get("name", t["id"]), km, t["board"]], Vector3(-0.56 + 560 * 0.0021 * 0.5, y, 0.03), 22)
+		# Zeile beginnt links neben der Farbmarke (linksbündig ab dem Ankerpunkt)
+		var lab := _label(root, "%s  (%s)\n%s" % [t.get("name", t["id"]), km, t["board"]], Vector3(-0.56, y, 0.03), 20)
 		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		lab.width = 560
-		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lab.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lab.offset = Vector2.ZERO
 		y -= 0.16
 	var foot := _label(root, "Bitte auf den Wegen bleiben.", Vector3(0, 0.88, 0.03), 20)
 	foot.modulate = Color(0.2, 0.2, 0.2)

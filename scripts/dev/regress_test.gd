@@ -549,6 +549,33 @@ func _old_mails_ok() -> bool:
 
 ## Waldwege (13.11.): sichtbar und vertieft auch im Tal, keine Bäume darauf, Stege von Ufer zu Ufer, Ausstattung.
 func _t_trails() -> void:
+	# Stege: Geländer ist fest (13.11.: man konnte hindurchlaufen)
+	var railed := 0
+	var bridges_with_rail := 0
+	var wt := _scene().find_child("WorldTrails", true, false)
+	if wt:
+		for c in wt.get_children():
+			if String(c.name).begins_with("Bridge_"):
+				var has := c.find_child("RailCollision_L", false, false) != null and c.find_child("RailCollision_R", false, false) != null
+				if c.find_child("RailCollision*", false, false) != null:
+					bridges_with_rail += 1
+				if has:
+					railed += 1
+	_ok("Stege: Geländer hat auf beiden Seiten einen festen Körper", railed > 0 and railed == bridges_with_rail, "%d" % railed)
+	# Wandertafel: Zeilen beginnen links auf der Tafel und laufen nicht über den Rand
+	var board := _scene().find_child("TrailBoard", true, false)
+	var inside := true
+	if board:
+		for c in board.get_children():
+			if c is Label3D and (c as Label3D).horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT:
+				var lab := c as Label3D
+				var longest := 0
+				for line in lab.text.split("\n"):
+					longest = maxi(longest, line.length())
+				var right := lab.position.x + longest * lab.font_size * 0.55 * lab.pixel_size
+				if lab.position.x < -0.7 or right > 0.74:
+					inside = false
+	_ok("Wandertafel: Schrift bleibt auf der Tafel", board != null and inside)
 	var on_path := Vector2(5.0, -40.0)   # Nordweg kurz hinter dem Gartentor
 	var dip := Terrain.trail_dip(on_path.x, on_path.y, WorldMap.trail_info(on_path.x, on_path.y), 20.0)
 	_ok("Weg im Tal liegt tiefer als der Waldboden", dip > 0.1, "%.2f m" % dip)
@@ -762,6 +789,23 @@ func _t_omens() -> void:
 
 ## Anbauten (13.11.): Büro, Kinderzimmer, Dachboden mit Zugleiter, Keller unter dem Teppich.
 func _t_rooms() -> void:
+	# Regale an Ost-/Westwänden (Speis, Büro) liegen längs der Wand (13.11.: um 90° verdreht)
+	var cabin := _scene().find_child("Cabin", true, false) as Cabin
+	if cabin:
+		var probe := Node3D.new()
+		cabin.add_child(probe)
+		var before := cabin.get_child_count()
+		cabin._shelf(Vector3(1.0, 0.5, 1.0), Vector3(1.4, 2.0, 2.6), 3, false)
+		var side_ok := false
+		for i in range(before, cabin.get_child_count()):
+			var n := cabin.get_child(i)
+			var mi := n as MeshInstance3D
+			if mi and mi.get_aabb().size.z < 0.1 and mi.get_aabb().size.y > 1.0:
+				side_ok = true
+		for i in range(cabin.get_child_count() - 1, before - 1, -1):
+			cabin.get_child(i).queue_free()
+		probe.queue_free()
+		_ok("Regal an der Seitenwand: Seitenbretter quer, Fächer zum Raum offen", side_ok)
 	var p := _player()
 	_ok("Haus: Büro, Kinderzimmer, Dachboden und Keller zählen als drinnen",
 		Cabin.is_inside(Vector3(0.5, 0.6, -6.5)) and Cabin.is_inside(Vector3(-7.5, 0.6, -2.0))
