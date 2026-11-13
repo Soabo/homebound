@@ -51,12 +51,21 @@ func _process(delta: float) -> void:
 	if _recorded:
 		_t += delta
 		var g := smoothstep(0.45, 0.9, _noise.get_noise_1d(_t * 4.0) * 0.5 + 0.5)
+		var strength := 0.3
+		var w := Wind.current
+		var player := get_tree().get_first_node_in_group("player") as Node3D
+		if w and player:
+			# Wind-Knoten: Wetter + Böenwelle genau an deinem Ort (die Bäume um dich wiegen sich im selben Takt)
+			strength = w.strength
+			g = smoothstep(0.35, 0.95, w.gust_at(player.global_position))
 		var inside := _player_indoors()
 		var night := 3.0 if TimeManager.is_night() else 0.0
 		var damp := -14.0 if inside else 0.0
-		volume_db = lerpf(volume_db, -17.0 + night + damp, delta)
+		var base := lerpf(-26.0, -10.0, clampf(strength, 0.0, 1.0))
+		volume_db = lerpf(volume_db, base + night + damp, delta)
 		if _gusts:
-			_gusts.volume_db = lerpf(_gusts.volume_db, linear_to_db(maxf(g, 0.0001)) - 14.0 + night + damp, delta * 2.0)
+			var gl := linear_to_db(maxf(g * clampf(strength * 1.6, 0.05, 1.0), 0.0001)) - 12.0
+			_gusts.volume_db = lerpf(_gusts.volume_db, gl + night + damp, delta * 2.0)
 		return
 	if _playback == null:
 		return

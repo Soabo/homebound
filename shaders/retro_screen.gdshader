@@ -11,6 +11,11 @@ uniform float grain_strength = 0.018;
 uniform float enabled = 1.0;
 // Blick der Kreatur ins Hirn (0 = nichts, 1 = volle Stärke): Wabern, Doppelbilder, Farbsäume, Rot und Dunkel
 uniform float mind = 0.0;
+// Farbabstimmung je Tageszeit (DayNightEnvironment): Farbe multiplizieren, Schatten anheben, Sättigung, Kontrast
+uniform vec3 grade_tint = vec3(1.0);
+uniform vec3 grade_lift = vec3(0.0);
+uniform float grade_sat = 1.0;
+uniform float grade_contrast = 1.0;
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -48,6 +53,12 @@ void fragment() {
 	} else {
 		c = textureLod(screen_tex, uv, 0.0).rgb;
 	}
+	// Farbabstimmung wie bei einem Film
+	float lum = dot(c, vec3(0.299, 0.587, 0.114));
+	c = mix(vec3(lum), c, grade_sat);
+	c = (c - 0.5) * grade_contrast + 0.5;
+	c = c * grade_tint + grade_lift * (1.0 - clamp(lum * 2.0, 0.0, 1.0));
+	c = max(c, vec3(0.0));
 	if (enabled > 0.5) {
 		int bi = int(mod(cell.x, 4.0)) + int(mod(cell.y, 4.0)) * 4;
 		float d = (BAYER[bi] / 16.0 - 0.5) * dither_strength;

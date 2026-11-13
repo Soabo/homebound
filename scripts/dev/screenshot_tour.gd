@@ -108,6 +108,11 @@ const SHOTS := [
 	{"name": "99_kabeltrasse", "hour": 14.0, "pos": Vector3(-9.0, 0.0, -30.0), "look": Vector3(-3.0, 0.5, -41.0)},
 	{"name": "A0_wald_tal", "hour": 11.0, "pos": Vector3(-70.0, 0.0, -66.0), "look": Vector3(-92.0, 2.0, -84.0)},
 	{"name": "A1_wald_weit", "hour": 11.0, "pos": Vector3(-168.0, 0.0, 125.0), "look": Vector3(-200.0, 3.0, 146.0)},
+	{"name": "B0_mond", "hour": 3.8, "pos": Vector3(-12.0, 0.0, 14.0), "look_moon": true},
+	{"name": "B1_mond_wolken", "hour": 4.3, "weather": "cloudy", "pos": Vector3(-12.0, 0.0, 14.0), "look_moon": true},
+	{"name": "B2_morgennebel", "hour": 7.2, "pos": Vector3(4.6, 0.0, -14.0), "look": Vector3(5.5, 1.0, -40.0)},
+	{"name": "B3_regen", "hour": 14.0, "weather": "rain", "wet": 1.0, "pos": Vector3(-3.5, 0.0, 26.5), "look": Vector3(-30.0, 0.5, 30.0)},
+	{"name": "B4_abendsonne", "hour": 18.3, "pos": Vector3(-63.4, 0.0, 32.0), "look": Vector3(-63.5, 1.5, 5.0)},
 	{"name": "89_hand_spalte", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 3.4), "look": Vector3(-2.0, 0.6, 2.0), "lights": true, "omens": ["hand_at"]},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
@@ -137,6 +142,16 @@ func _run() -> void:
 		if not only.is_empty() and not (String(shot["name"]).left(2) in only):
 			continue
 		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
+		WorldState.set_weather(String(shot.get("weather", "clear")), 10.0)
+		WorldState.wetness = float(shot.get("wet", 0.0))
+		var wfx := get_tree().current_scene.find_child("WeatherFx", true, false)
+		if wfx:
+			# Regen sofort in voller Stärke (sonst blendet er 20 s ein)
+			var rain_now := 1.0 if String(shot.get("weather", "clear")) in ["rain", "storm"] else 0.0
+			wfx.set("_rain_amount", rain_now)
+		var dn := DayNightEnvironment.current
+		if dn:
+			dn.call("_apply", TimeManager.hour, 0.0)   # Wetter sofort, ohne Überblenden
 		WorldState._check_stage()
 		var pos: Vector3 = shot.get("pos", Vector3.ZERO)
 		var look: Vector3 = shot.get("look", Vector3.ZERO)
@@ -183,6 +198,12 @@ func _run() -> void:
 		player.velocity = Vector3.ZERO
 		var eye := pos + Vector3(0, Player.STAND_HEIGHT - Player.EYE_OFFSET, 0)
 		var d := (look - eye).normalized()
+		if shot.has("look_dir"):
+			d = (shot["look_dir"] as Vector3).normalized()
+		if shot.get("look_moon", false) and DayNightEnvironment.current:
+			# zum Mond schauen, etwas darunter, damit Wald und Mond im Bild sind
+			var md := DayNightEnvironment.current.moon.global_transform.basis.z
+			d = (md - Vector3(0, 0.18, 0)).normalized()
 		player.rotation.y = atan2(-d.x, -d.z)
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
 		player.set_flashlight(shot.get("flashlight", false))

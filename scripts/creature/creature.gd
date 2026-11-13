@@ -11,6 +11,7 @@ extends Node3D
 enum State { ARRIVE, OBSERVE, PROWL, GO_ENTRY, HIT_ENTRY, REACH, CHASE, RECOIL, LEAVE }
 
 ## Werte (Tempo, Schaden, Entdecken, Klang) in data/creatures/creature.tres
+var _last_rustle_pos := Vector3.ZERO
 var cfg: CreatureConfig = CreatureConfig.get_default()
 
 ## Beobachtungsplätze am Waldrand (Blick aufs Haus)
@@ -63,6 +64,7 @@ static func build_model(root: Node3D) -> Dictionary:
 func _ready() -> void:
 	_rng.randomize()
 	_parts = build_model(self)
+	add_to_group("creature")
 	_player = get_tree().get_first_node_in_group("player") as Player
 	EventBus.noise_made.connect(_on_noise)
 
@@ -99,6 +101,11 @@ func leave() -> void:
 # --- Hauptschleife ------------------------------------------------------
 
 func _physics_process(delta: float) -> void:
+	# Wer sich durchs Gebüsch bewegt, bringt es zum Rascheln (Wind-Knoten: Pflanzen wackeln, „ist das nur der Wind?“)
+	var _moved := global_position.distance_to(_last_rustle_pos)
+	if _moved > 0.02:
+		Wind.disturb(global_position + Vector3(0, 0.6, 0), clampf(_moved / maxf(delta, 0.001) / 4.0, 0.0, 1.0) * 0.7)
+	_last_rustle_pos = global_position
 	if _player == null or GameState.dead:
 		return
 	_timer -= delta

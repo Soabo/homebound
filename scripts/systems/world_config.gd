@@ -65,3 +65,34 @@ extends Resource
 @export var cover_stand_height: float = 1.9
 ## Wer sich schneller bewegt, raschelt und ist nicht getarnt (m/s).
 @export var cover_max_speed: float = 1.3
+
+@export_group("Wetter und Wind")
+## Wie oft welches Wetter kommt (Gewichte). Morgens zwischen 4 und 9 Uhr ist Nebel häufiger (fog_morning_factor).
+@export var weather_clear: float = 0.38
+@export var weather_cloudy: float = 0.27
+@export var weather_rain: float = 0.15
+@export var weather_fog: float = 0.12
+@export var weather_storm: float = 0.08
+@export var fog_morning_factor: float = 3.0
+## Wie lange ein Wetter anhält (Spielstunden)
+@export var weather_hours: Vector2 = Vector2(3.0, 9.0)
+## Windstärke je Wetter (0..1), dazu Böen
+@export var wind_clear: float = 0.22
+@export var wind_cloudy: float = 0.38
+@export var wind_rain: float = 0.45
+@export var wind_fog: float = 0.06
+@export var wind_storm: float = 0.95
+## Bewölkung je Wetter (0..1, Wolken vor dem Mond dämpfen sein Licht)
+@export var clouds_clear: float = 0.15
+@export var clouds_cloudy: float = 0.6
+@export var clouds_rain: float = 0.85
+@export var clouds_fog: float = 0.5
+@export var clouds_storm: float = 0.95
+## Draußen im Regen wird man nass (kälter)
+@export var rain_wets: bool = true
+## Gewitter: Abstand zwischen Blitzen (s), Wetterleuchten in klaren Nächten (Chance pro Minute)
+@export var lightning_seconds: Vector2 = Vector2(14.0, 45.0)
+@export var heat_lightning_chance: float = 0.12
+## Wie schnell Boden und Pflanzen nass werden bzw. trocknen (pro Spielstunde)
+@export var wet_per_hour: float = 1.5
+@export var dry_per_hour: float = 0.35

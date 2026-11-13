@@ -321,6 +321,9 @@ func _physics_process(delta: float) -> void:
 		if signf(before) != signf(sin(_bob_time)):
 			_footstep(horizontal, crouching)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
+	# Leichtes Wiegen beim Gehen (Kopf neigt sich mit jedem Schritt ein wenig zur Seite)
+	var sway := cos(_bob_time * 0.5) * 0.006 * clampf(horizontal / walk_speed, 0.0, 1.5)
+	camera.rotation.z = lerpf(camera.rotation.z, sway, clampf(delta * 6.0, 0.0, 1.0))
 	_update_lean(delta)
 
 	if global_position.y < Terrain.height_at(global_position.x, global_position.z) - 25.0:
@@ -447,6 +450,15 @@ func _update_mind(delta: float) -> void:
 	_zoom = move_toward(_zoom, 1.0 if zooming else 0.0, delta * 4.0)
 	var shown := maxf(mind, mind_extra)
 	camera.fov = lerpf(75.0, 16.0, _zoom * _zoom * (3.0 - 2.0 * _zoom)) + sin(Time.get_ticks_msec() * 0.007) * 5.0 * shown
+	# Fernglas: Nahes verschwimmt, der Blick in die Ferne bleibt scharf
+	if _zoom > 0.05 or (camera.attributes and (camera.attributes as CameraAttributesPractical).dof_blur_near_enabled):
+		if camera.attributes == null:
+			camera.attributes = CameraAttributesPractical.new()
+		var ca := camera.attributes as CameraAttributesPractical
+		ca.dof_blur_near_enabled = _zoom > 0.05
+		ca.dof_blur_near_distance = 18.0
+		ca.dof_blur_near_transition = 10.0
+		ca.dof_blur_amount = 0.12 * _zoom
 	if absf(shown - _mind_shown) > 0.005:
 		_mind_shown = shown
 		get_tree().call_group("retro_filter", "set_mind", shown)

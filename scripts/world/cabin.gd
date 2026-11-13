@@ -128,6 +128,7 @@ func _ready() -> void:
 	_build_workshop()
 	CabinRooms.build(self)   # Büro, Kinderzimmer, Dachboden, Keller
 	_build_reflection_probe()
+	_build_wear()
 	# Staub in der Luft (sichtbar im Licht) und Rauch aus dem Schornstein
 	var dust := ParticlesKit.dust(Vector3(HALF_X - 0.4, WALL_H * 0.45, HALF_Z - 0.4))
 	dust.position = Vector3(0, FLOOR_Y + WALL_H * 0.5, 0)
@@ -449,8 +450,8 @@ func _build_openings() -> void:
 	_shutters(Vector3(4.0, FLOOR_Y + 1.0, HALF_Z + 0.2), 0.0, 1.0, 0.9)
 	_shutters(Vector3(-3.5, FLOOR_Y + 1.0, -HALF_Z - 0.2), 180.0, 1.0, 0.9)
 	# Vorhänge innen
-	_curtains(Vector3(0.0, FLOOR_Y + 2.15, HALF_Z - CLAD - 0.08), 0.0, 1.3, BuildKit.tex_mat("fabric", 0.6, Color(1.5, 1.3, 0.95)))
-	_curtains(Vector3(-3.5, FLOOR_Y + 2.05, -HALF_Z + CLAD + 0.08), 180.0, 1.0, BuildKit.tex_mat("fabric_red", 0.6))
+	_curtains(Vector3(0.0, FLOOR_Y + 2.15, HALF_Z - CLAD - 0.08), 0.0, 1.3, BuildKit.tex_mat("fabric", 0.6, Color(1.5, 1.3, 0.95)), "WindowLiving")
+	_curtains(Vector3(-3.5, FLOOR_Y + 2.05, -HALF_Z + CLAD + 0.08), 180.0, 1.0, BuildKit.tex_mat("fabric_red", 0.6), "WindowBedroom")
 
 
 func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) -> void:
@@ -478,8 +479,10 @@ func _shutters(pos: Vector3, rot_y: float, w: float, h: float) -> void:
 		BuildKit.box(n, Vector3(w * 0.45, 0.06, 0.02), Vector3(x, h * 0.75, 0.03), m_wood_dark, false)
 
 
-func _curtains(rod_pos: Vector3, rot_y: float, w: float, mat: Material) -> void:
-	var n := Node3D.new()
+func _curtains(rod_pos: Vector3, rot_y: float, w: float, mat: Material, window_node: String = "") -> void:
+	var n := CurtainDraft.new()
+	n.name = "Curtain_" + window_node
+	n.window_path = NodePath("../" + window_node)
 	n.position = rod_pos
 	n.rotation_degrees.y = rot_y
 	add_child(n)
@@ -487,7 +490,71 @@ func _curtains(rod_pos: Vector3, rot_y: float, w: float, mat: Material) -> void:
 	for side: float in [-1.0, 1.0]:
 		for f in 3:
 			var x := side * (w * 0.5 + 0.05 + f * 0.09)
-			BuildKit.box(n, Vector3(0.1, 1.4, 0.02), Vector3(x, -0.72, -0.02 + (f % 2) * 0.03), mat, false)
+			# Drehpunkt an der Stange, damit der Stoff unten ausschwingt
+			var pivot := Node3D.new()
+			pivot.position = Vector3(x, 0.0, -0.02 + (f % 2) * 0.03)
+			n.add_child(pivot)
+			BuildKit.box(pivot, Vector3(0.1, 1.4, 0.02), Vector3(0, -0.72, 0), mat, false)
+			n.panels.append(pivot)
+
+
+# --- Abnutzung: ausgetretene Laufwege, Flecken, Wasserränder, Ruß --------
+
+static var _stain_tex: Texture2D
+
+static func stain_texture() -> Texture2D:
+	if _stain_tex:
+		return _stain_tex
+	var img := Image.create(128, 128, false, Image.FORMAT_RGBA8)
+	var nz := FastNoiseLite.new()
+	nz.seed = 77
+	nz.frequency = 0.045
+	nz.fractal_octaves = 4
+	for y in 128:
+		for x in 128:
+			var d := Vector2(x - 63.5, y - 63.5).length() / 64.0
+			var n := nz.get_noise_2d(x, y) * 0.5 + 0.5
+			var a := clampf((1.0 - d) * 1.6 - 0.35 + (n - 0.5) * 0.9, 0.0, 1.0)
+			# dunklerer Rand wie bei eingetrockneten Flecken
+			var rim := clampf(1.0 - absf(a - 0.25) * 5.0, 0.0, 1.0) * 0.35
+			img.set_pixel(x, y, Color(1, 1, 1, clampf(a * 0.55 + rim, 0.0, 1.0)))
+	_stain_tex = ImageTexture.create_from_image(img)
+	return _stain_tex
+
+
+func _stain(pos: Vector3, size: Vector3, col: Color, rot_deg: Vector3 = Vector3.ZERO, n: String = "") -> Decal:
+	var d := Decal.new()
+	if n != "":
+		d.name = n
+	d.texture_albedo = stain_texture()
+	d.modulate = col
+	d.size = size
+	d.position = pos
+	d.rotation_degrees = rot_deg
+	d.upper_fade = 0.2
+	d.lower_fade = 0.2
+	d.cull_mask = 1
+	add_child(d)
+	return d
+
+
+func _build_wear() -> void:
+	var y := FLOOR_Y
+	var trail := Color(0.32, 0.26, 0.18, 0.55)
+	# Laufweg von der Haustür in den Wohnraum und zur Küche (ausgetretenes Holz)
+	_stain(Vector3(-3.5, y, 3.6), Vector3(1.1, 0.3, 1.6), trail)
+	_stain(Vector3(-2.6, y, 2.6), Vector3(1.0, 0.3, 1.5), trail, Vector3(0, 35, 0))
+	_stain(Vector3(-1.2, y, 1.9), Vector3(1.2, 0.3, 1.3), Color(0.32, 0.26, 0.18, 0.4), Vector3(0, 70, 0))
+	# Schmutz an der Schwelle, Fußmatten-Rand
+	_stain(Vector3(-3.5, y, 4.15), Vector3(1.3, 0.3, 0.6), Color(0.22, 0.18, 0.12, 0.7))
+	# Ruß und Asche vor dem Kamin
+	_stain(Vector3(-4.6, y, 1.75), Vector3(0.9, 0.3, 1.4), Color(0.08, 0.07, 0.06, 0.6))
+	# Alte Wasserflecken auf dem Boden (Küche) und unter dem Werkbank-Fenster
+	_stain(Vector3(-1.4, y, -0.15), Vector3(0.8, 0.3, 0.6), Color(0.3, 0.27, 0.2, 0.45), Vector3(0, 20, 0))
+	_stain(Vector3(5.3, y, 2.0), Vector3(0.8, 0.3, 0.9), Color(0.28, 0.24, 0.17, 0.5))
+	# Wasserränder an der Decke-Wand-Kante (undichtes Dach) und Schimmelschatten in einer Ecke
+	_stain(Vector3(HALF_X - CLAD - 0.02, y + WALL_H - 0.35, -1.2), Vector3(0.3, 0.9, 1.3), Color(0.35, 0.3, 0.2, 0.45), Vector3(0, 0, 90))
+	_stain(Vector3(-HALF_X + CLAD + 0.02, y + 0.35, -HALF_Z + CLAD + 0.4), Vector3(0.3, 0.8, 0.9), Color(0.18, 0.22, 0.15, 0.45), Vector3(0, 0, 90))
 
 
 # --- Kamin --------------------------------------------------------------

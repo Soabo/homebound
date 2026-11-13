@@ -44,12 +44,20 @@ func _ready() -> void:
 	rock.rings = 4
 	_meshes = {"trunk": trunk, "trunk_lod": trunk_lod, "cone": Forest._fir_layer_mesh(11), "cone_lod": Forest._fir_layer_mesh(5),
 		"crown": Forest._leaf_cluster_mesh(), "cross": Forest._cross_quad_mesh(), "rock": rock,
-		"bush0": Forest.bush_mesh(300), "bush1": Forest.bush_mesh(307), "bush2": Forest.bush_mesh(314)}
-	var needles := _textured("needles", 0.9)
-	needles.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_mats = {"bark": _textured("bark", 1.5), "birch": _textured("birch_bark", 1.2), "smooth": _textured("smooth_bark", 1.6), "needles": needles, "leaves": BuildKit.cutout_mat("leaves"),
-		"grass": BuildKit.cutout_mat("grass_blades"), "fern": BuildKit.cutout_mat("fern"), "stone": _textured("stone", 1.2),
-		"log": BuildKit.tex_mat("bark", 1.0), "moss": BuildKit.tex_mat("moss", 0.6)}
+		"bush0": Forest.bush_mesh(300), "bush1": Forest.bush_mesh(307), "bush2": Forest.bush_mesh(314),
+		"mushroom": Forest.mushroom_mesh()}
+	var needles := Forest.plant_mat("needles")
+	_mats = {"bark": _textured("bark", 1.5), "birch": _textured("birch_bark", 1.2), "smooth": _textured("smooth_bark", 1.6), "needles": needles, "leaves": Forest.plant_mat("crowns"),
+		"grass": Forest.plant_mat("grass"), "fern": Forest.plant_mat("fern"), "stone": _textured("stone", 1.2),
+		"log": BuildKit.tex_mat("bark", 1.0), "moss": BuildKit.tex_mat("moss", 0.6), "moss_tri": _textured("moss", 0.7),
+		"mushroom": _vertex_mat()}
+
+
+func _vertex_mat() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.roughness = 0.9
+	return m
 
 
 func _textured(kind: String, repeat_m: float) -> StandardMaterial3D:
@@ -175,6 +183,7 @@ class GroundParts:
 	var rocks: Array[Transform3D] = []
 	var rock_cols: Array[Color] = []
 	var cover: Array[Vector4] = []   ## dichte Büsche zum Verstecken (x, z, Radius, Höhe)
+	var moss: Array[Transform3D] = []      ## Moospolster auf Felsen
 
 
 func _drop_job() -> void:
@@ -431,7 +440,11 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			if ti.x < rs * 1.7 + 0.3:   # Felsen nicht auf oder direkt am Weg
 				continue
 			var sc := Vector3(rs * rng.randf_range(1.0, 1.7), rs * rng.randf_range(0.5, 0.85), rs * rng.randf_range(1.0, 1.5))
-			gp.rocks.append(Transform3D(Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4)).scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
+			var rb := Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4))
+			gp.rocks.append(Transform3D(rb.scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
+			# Moos oben und an der Nordseite
+			if rng.randf() < 0.65:
+				gp.moss.append(Transform3D(rb.scaled(Vector3(sc.x * 0.93, sc.y * 0.55, sc.z * 0.93)), Vector3(x, g + sc.y * 0.62, z - sc.z * 0.12)))
 			gp.rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))
 			if rs > 0.7:
 				var cs := CollisionShape3D.new()
@@ -482,6 +495,40 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 	for c: Vector4 in gp.cover:
 		Cover.add(key, c.x, c.y, c.z, c.w)
 	_mm(root, "Rocks", _meshes["rock"], gp.rocks, gp.rock_cols, _mats["stone"], true)
+	var mc: Array[Color] = []
+	for i in gp.moss.size():
+		mc.append(Color(0.7, 0.85, 0.55) * rng.randf_range(0.8, 1.1))
+	_mm(root, "RockMoss", _meshes["rock"], gp.moss, mc, _mats["moss_tri"], false)
+	# Waldboden: dürre Zweige und Pilzgruppen
+	var twigs: Array[Transform3D] = []
+	var twig_cols: Array[Color] = []
+	var shrooms: Array[Transform3D] = []
+	var shroom_cols: Array[Color] = []
+	for k in 70:
+		var x := x0 + rng.randf() * CHUNK
+		var z := z0 + rng.randf() * CHUNK
+		var g := Terrain.height_at(x, z)
+		var ok := maxf(absf(x), absf(z)) > INNER and WorldMap.tree_density(x, z, g) > 0.4 and WorldMap.trail_info(x, z).x > 0.5 \
+			and Terrain.water_level_at(x, z) < g - 0.1
+		var roll := rng.randf()
+		var yaw := rng.randf() * TAU
+		var len := rng.randf_range(0.6, 2.2)
+		if not ok:
+			continue
+		if roll < 0.75:
+			var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, PI * 0.5 + rng.randf_range(-0.1, 0.1))
+			twigs.append(Transform3D(b.scaled(Vector3(rng.randf_range(0.025, 0.05), len, rng.randf_range(0.025, 0.05))), Vector3(x, g + 0.03, z)))
+			twig_cols.append(Color(0.75, 0.68, 0.6) * rng.randf_range(0.7, 1.0))
+		else:
+			var cap := Color(0.7, 0.35, 0.2) if rng.randf() < 0.4 else Color(0.85, 0.72, 0.5)
+			for m in rng.randi_range(3, 7):
+				var mx := x + rng.randf_range(-0.4, 0.4)
+				var mz := z + rng.randf_range(-0.4, 0.4)
+				var s := rng.randf_range(0.6, 1.3)
+				shrooms.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)), Vector3(mx, Terrain.height_at(mx, mz) - 0.01, mz)))
+				shroom_cols.append(cap * rng.randf_range(0.85, 1.1))
+	_mm(root, "Twigs", _meshes["trunk_lod"], twigs, twig_cols, _mats["bark"], false)
+	_mm(root, "Mushrooms", _meshes["mushroom"], shrooms, shroom_cols, _mats["mushroom"], false)
 	root.add_child(gp.body)
 
 

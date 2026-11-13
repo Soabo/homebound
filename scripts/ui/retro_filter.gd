@@ -56,3 +56,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mat.set_shader_parameter("enabled", 1.0 if enabled else 0.0)
 		_apply_render_scale()
 		EventBus.notify("Retro-Filter %s" % ("an" if enabled else "aus"), 1.5)
+
+
+## Farbabstimmung je Tageszeit (ruft DayNightEnvironment jedes Bild).
+func set_grade(tint: Color, lift: Color, saturation: float, contrast: float) -> void:
+	_mat.set_shader_parameter("grade_tint", Vector3(tint.r, tint.g, tint.b))
+	_mat.set_shader_parameter("grade_lift", Vector3(lift.r, lift.g, lift.b))
+	_mat.set_shader_parameter("grade_sat", saturation)
+	_mat.set_shader_parameter("grade_contrast", contrast)

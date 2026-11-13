@@ -104,6 +104,16 @@ static func get_generated(id: String) -> AudioStreamWAV:
 			s = _radio()
 			loop = true
 		"clatter": s = _clatter()
+		"rustle":
+			s = _rustle()
+			loop = true
+		"rain":
+			s = _rain(false)
+			loop = true
+		"rain_roof":
+			s = _rain(true)
+			loop = true
+		"thunder": s = _thunder()
 		_: s = PackedFloat32Array([0.0])
 	var wav := _to_wav(s, loop)
 	_cache[id] = wav
@@ -170,6 +180,73 @@ static func play_ui(parent: Node, id: String, volume_db: float = 0.0, pitch: flo
 
 
 # --- Klang-Rezepte ------------------------------------------------------
+
+## Laubrascheln: gefiltertes Rauschen in unregelmäßigen Stößen, dazwischen kleine Knackser (Schleife, 3 s).
+static func _rustle() -> PackedFloat32Array:
+	var b := _buf(3.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 404
+	var lp := 0.0
+	var hp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var n := r.randf() * 2.0 - 1.0
+		lp += (n - lp) * 0.35
+		hp = lp - hp * 0.2
+		var env := 0.35 + 0.65 * pow(absf(sin(t * 5.3) * sin(t * 2.1 + 1.0)), 1.5)
+		b[i] = hp * env * 0.55
+		if r.randf() < 0.0006:
+			for k in 60:
+				if i + k < b.size():
+					b[i + k] += (r.randf() * 2.0 - 1.0) * 0.5 * exp(-k * 0.08)
+	# weiche Naht am Schleifenende
+	for k in 600:
+		var f := float(k) / 600.0
+		b[k] *= f
+		b[b.size() - 1 - k] *= f
+	return b
+
+
+## Regen: dichtes Rauschen mit vielen kleinen Tropfen (auf dem Dach dumpfer und mit Prasseln). Schleife, 4 s.
+static func _rain(roof: bool) -> PackedFloat32Array:
+	var b := _buf(4.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 909 if roof else 808
+	var lp := 0.0
+	var k := 0.12 if roof else 0.45
+	for i in b.size():
+		var n := r.randf() * 2.0 - 1.0
+		lp += (n - lp) * k
+		b[i] = lp * (0.5 if roof else 0.32)
+		if r.randf() < (0.004 if roof else 0.002):
+			var f := r.randf_range(1800.0, 4200.0) * (0.5 if roof else 1.0)
+			for j in 180:
+				if i + j < b.size():
+					b[i + j] += sin(TAU * f * float(j) / RATE) * 0.25 * exp(-j * 0.04)
+	for j in 800:
+		var f2 := float(j) / 800.0
+		b[j] *= f2
+		b[b.size() - 1 - j] *= f2
+	return b
+
+
+## Donner: tiefes, rollendes Grollen mit einem Krachen am Anfang (6 s).
+static func _thunder() -> PackedFloat32Array:
+	var b := _buf(6.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 1212
+	var lp := 0.0
+	var lp2 := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var n := r.randf() * 2.0 - 1.0
+		lp += (n - lp) * 0.04
+		lp2 += (lp - lp2) * 0.08
+		var crack := exp(-t * 9.0) * (r.randf() * 2.0 - 1.0) * 0.6
+		var roll := lp2 * 6.0 * (exp(-t * 0.55) * (0.6 + 0.4 * sin(t * 3.1) * sin(t * 1.3)))
+		b[i] = clampf(roll + crack, -1.0, 1.0)
+	return b
+
 
 static func _buf(seconds: float) -> PackedFloat32Array:
 	var b := PackedFloat32Array()

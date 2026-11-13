@@ -89,9 +89,8 @@ func _build_trees() -> void:
 	var bark_mat := _textured("bark", 1.5)
 	var birch_mat := _textured("birch_bark", 1.2)
 	var smooth_mat := _textured("smooth_bark", 1.6)
-	var needle_mat := _textured("needles", 0.9)
-	needle_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	var leaf_mat := BuildKit.cutout_mat("leaves")
+	var needle_mat := plant_mat("needles")
+	var leaf_mat := plant_mat("crowns")
 	_add_multimesh("Trunks", trunk_mesh, p.trunks, p.trunk_cols, bark_mat, true)
 	_add_multimesh("BirchTrunks", trunk_mesh, p.birch, p.birch_cols, birch_mat, true)
 	_add_multimesh("BeechTrunks", trunk_mesh, p.smooth, p.smooth_cols, smooth_mat, true)
@@ -107,6 +106,8 @@ func _build_rocks() -> void:
 	rock_mesh.rings = 4
 	var rocks: Array[Transform3D] = []
 	var cols: Array[Color] = []
+	var moss: Array[Transform3D] = []
+	var moss_cols: Array[Color] = []
 	var body := StaticBody3D.new()
 	body.name = "RockColliders"
 	add_child(body)
@@ -131,6 +132,11 @@ func _build_rocks() -> void:
 			placed += 1   # zählt mit, damit der Zufall danach gleich bleibt
 			continue
 		cols.append(Color(0.75, 0.75, 0.72) * _rng.randf_range(0.8, 1.1) if not mossy else Color(0.45, 0.6, 0.32) * _rng.randf_range(0.8, 1.1))
+		if mossy:
+			# Moospolster oben, etwas zur Nordseite
+			var rt := rocks[rocks.size() - 1]
+			moss.append(Transform3D(rt.basis.scaled(Vector3(0.93, 0.55, 0.93)), rt.origin + Vector3(0, scale.y * 0.37, -scale.z * 0.12)))
+			moss_cols.append(Color(0.7, 0.85, 0.55) * randf_range(0.8, 1.1))
 		if s > 0.7 and not near_stream and Terrain.stream_distance(x, z) > 4.5:
 			var cs := CollisionShape3D.new()
 			var shape := SphereShape3D.new()
@@ -140,6 +146,7 @@ func _build_rocks() -> void:
 			body.add_child(cs)
 		placed += 1
 	_add_multimesh("Rocks", rock_mesh, rocks, cols, _textured("stone", 1.2), true)
+	_add_multimesh("RockMoss", rock_mesh, moss, moss_cols, _textured("moss", 0.7), false)
 
 
 func _build_ground_plants() -> void:
@@ -245,8 +252,8 @@ func _build_ground_plants() -> void:
 			flowers.append(Transform3D(Basis().scaled(Vector3(0.035, 0.025, 0.035)), Vector3(x, g + _rng.randf_range(0.12, 0.25), z)))
 			flower_cols.append(Color(0.95, 0.95, 0.88) if _rng.randf() < 0.75 else Color(0.95, 0.8, 0.25))
 
-	var grass_mat := BuildKit.cutout_mat("grass_blades")
-	var fern_mat := BuildKit.cutout_mat("fern")
+	var grass_mat := plant_mat("grass")
+	var fern_mat := plant_mat("fern")
 	_add_multimesh("Grass", cross, grass, grass_cols, grass_mat, false)
 	_add_multimesh("Ferns", cross, ferns, fern_cols, fern_mat, false)
 	# Drei Buschformen im Wechsel
@@ -357,7 +364,7 @@ func _build_forest_details() -> void:
 			var lh := h * 0.5
 			saplings.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(lr, lh, lr)), Vector3(x, g + h * f * 0.55, z)))
 			sap_cols.append(Color(0.1, 0.2, 0.09) * _rng.randf_range(0.9, 1.3))
-	_add_multimesh("Saplings", _fir_layer_mesh(8), saplings, sap_cols, _textured("needles", 0.6), true)
+	_add_multimesh("Saplings", _fir_layer_mesh(8), saplings, sap_cols, plant_mat("needles_small"), true)
 
 	# Schilf und hohe Gräser am Bachufer
 	var reeds: Array[Transform3D] = []
@@ -372,7 +379,7 @@ func _build_forest_details() -> void:
 		var s := _rng.randf_range(0.7, 1.3)
 		reeds.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 0.7, s * 1.6, s * 0.7)), Vector3(x, g - 0.05, z)))
 		reed_cols.append(Color(0.95, 1.1, 0.65) * _rng.randf_range(0.8, 1.1))
-	_add_multimesh("Reeds", _cross_quad_mesh(), reeds, reed_cols, BuildKit.cutout_mat("grass_blades"), false)
+	_add_multimesh("Reeds", _cross_quad_mesh(), reeds, reed_cols, plant_mat("reeds"), false)
 	_build_stream_spots()
 
 
@@ -431,19 +438,27 @@ func _add_col_cylinder(body: StaticBody3D, r: float, h: float, pos: Vector3) -> 
 static func _fir_layer_mesh(branches: int) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r := RandomNumberGenerator.new()
+	r.seed = branches * 31
 	var apex := Vector3(0, 1, 0)
-	var under := Vector3(0, 0.22, 0)
+	var under := Vector3(0, 0.26, 0)
 	var rim: Array[Vector3] = []
 	for i in branches * 2:
-		var a := TAU * float(i) / float(branches * 2)
+		var a := TAU * float(i) / float(branches * 2) + r.randf_range(-0.06, 0.06)
 		var tip := i % 2 == 0
-		var rad := 1.0 if tip else 0.5
-		var y := 0.0 if tip else 0.2
+		var rad := r.randf_range(0.9, 1.08) if tip else 0.45
+		# Zweigspitzen hängen nach unten, die Kerben dazwischen liegen höher
+		var y := r.randf_range(-0.12, 0.0) if tip else 0.22
 		rim.append(Vector3(cos(a) * rad, y, sin(a) * rad))
 	for i in rim.size():
 		var a := rim[i]
 		var b := rim[(i + 1) % rim.size()]
-		for v: Vector3 in [apex, a, b, under, b, a]:
+		# oben: hell zur Spitze, unten an der Unterseite dunkel (Schatten im Inneren)
+		for v: Vector3 in [apex, a, b]:
+			st.set_color(Color(1, 1, 1) * (1.0 if v == apex else 0.85))
+			st.add_vertex(v)
+		for v: Vector3 in [under, b, a]:
+			st.set_color(Color(0.45, 0.45, 0.45))
 			st.add_vertex(v)
 	st.generate_normals()
 	return st.commit()
@@ -454,19 +469,24 @@ static func _leaf_cluster_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var uvs := [Vector2(0, 1), Vector2(1, 1), Vector2(1, 0), Vector2(0, 0)]
-	for k in 3:
-		var a := PI * float(k) / 3.0
+	for k in 5:
+		var a := PI * float(k) / 5.0 + 0.2
 		var d := Vector3(cos(a), 0, sin(a)) * 0.5
-		var pts := [-d - Vector3(0, 0.5, 0), d - Vector3(0, 0.5, 0), d + Vector3(0, 0.5, 0), -d + Vector3(0, 0.5, 0)]
+		var tilt := Vector3(0, 0, 0.12) if k % 2 == 0 else Vector3(0.12, 0, 0)
+		var pts := [-d - Vector3(0, 0.5, 0) - tilt, d - Vector3(0, 0.5, 0) - tilt, d + Vector3(0, 0.5, 0) + tilt, -d + Vector3(0, 0.5, 0) + tilt]
 		for idx: int in [0, 2, 1, 0, 3, 2]:
-			st.set_normal(Vector3.UP)
+			st.set_normal((Vector3.UP + (pts[idx] as Vector3) * 0.8).normalized())
+			st.set_color(Color(1, 1, 1) * lerpf(0.7, 1.05, (pts[idx] as Vector3).y + 0.5))
 			st.set_uv(uvs[idx])
 			st.add_vertex(pts[idx])
-	var flat := [Vector3(-0.5, 0, -0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, 0, 0.5), Vector3(-0.5, 0, 0.5)]
-	for idx: int in [0, 1, 2, 0, 2, 3]:
-		st.set_normal(Vector3.UP)
-		st.set_uv(uvs[idx])
-		st.add_vertex(flat[idx])
+	for hy: float in [0.15, -0.2]:
+		var s := 0.5 if hy > 0.0 else 0.42
+		var flat := [Vector3(-s, hy, -s), Vector3(s, hy, -s), Vector3(s, hy, s), Vector3(-s, hy, s)]
+		for idx: int in [0, 1, 2, 0, 2, 3]:
+			st.set_normal(Vector3.UP)
+			st.set_color(Color(1, 1, 1) * (1.0 if hy > 0.0 else 0.7))
+			st.set_uv(uvs[idx])
+			st.add_vertex(flat[idx])
 	return st.commit()
 
 
@@ -525,14 +545,7 @@ static func bush_mesh(seed_value: int) -> ArrayMesh:
 				st.set_uv(Vector2(v.x, v.y))
 				st.add_vertex(v)
 	st.commit(mesh)
-	var core := StandardMaterial3D.new()
-	core.albedo_texture = TextureFactory.get_texture("moss")
-	core.albedo_color = Color(0.75, 0.95, 0.65)
-	core.vertex_color_use_as_albedo = true
-	core.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-	core.uv1_scale = Vector3(2.0, 2.0, 2.0)
-	core.roughness = 1.0
-	mesh.surface_set_material(0, core)
+	mesh.surface_set_material(0, plant_mat("bush_core"))
 	# Blattbüschel
 	var lt := SurfaceTool.new()
 	lt.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -559,8 +572,55 @@ static func bush_mesh(seed_value: int) -> ArrayMesh:
 			lt.set_uv(uvs[idx])
 			lt.add_vertex(v)
 	lt.commit(mesh)
-	mesh.surface_set_material(1, BuildKit.cutout_mat("leaves"))
+	mesh.surface_set_material(1, plant_mat("bush_leaves"))
 	return mesh
+
+
+## Pilz (Fuß bei y = 0, ca. 8 cm): heller Stiel, Hut in der Instanzfarbe (Unterseite dunkler).
+static func mushroom_mesh() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var seg := 6
+	for i in seg:
+		var a0 := TAU * float(i) / seg
+		var a1 := TAU * float(i + 1) / seg
+		var r := 0.012
+		var p0 := Vector3(cos(a0) * r, 0, sin(a0) * r)
+		var p1 := Vector3(cos(a1) * r, 0, sin(a1) * r)
+		for v: Vector3 in [p0, p1 + Vector3(0, 0.06, 0), p1, p0, p0 + Vector3(0, 0.06, 0), p1 + Vector3(0, 0.06, 0)]:
+			st.set_color(Color(1.3, 1.25, 1.15))
+			st.set_normal(Vector3(v.x, 0, v.z).normalized())
+			st.add_vertex(v)
+		# Hut
+		var top := Vector3(0, 0.085, 0)
+		var c0 := Vector3(cos(a0) * 0.04, 0.055, sin(a0) * 0.04)
+		var c1 := Vector3(cos(a1) * 0.04, 0.055, sin(a1) * 0.04)
+		for v: Vector3 in [top, c1, c0]:
+			st.set_color(Color(1, 1, 1))
+			st.set_normal((v - Vector3(0, 0.03, 0)).normalized())
+			st.add_vertex(v)
+		for v: Vector3 in [Vector3(0, 0.058, 0), c0, c1]:
+			st.set_color(Color(0.55, 0.5, 0.45))
+			st.set_normal(Vector3.DOWN)
+			st.add_vertex(v)
+	return st.commit()
+
+
+## Materialien der Pflanzen im Wind (für Tal und großen Wald gleich).
+static func plant_mat(kind: String) -> ShaderMaterial:
+	match kind:
+		"grass": return BuildKit.foliage_mat("grass_blades", 0.2, 1.0, 0.0, true, false, 1.0, 0.05)
+		"reeds": return BuildKit.foliage_mat("grass_blades", 0.3, 1.0, 0.0, true, false, 1.0, 0.06)
+		"fern": return BuildKit.foliage_mat("fern", 0.15, 1.0, 0.0, true, false, 1.0, 0.04)
+		"crowns": return BuildKit.foliage_mat("leaves", 0.3, 1.0, 1.0, true, false, 1.0, 0.06)
+		"needles": return BuildKit.foliage_mat("needles", 0.22, 1.0, 0.55, false, true, 1.0 / 0.9, 0.01)
+		"needles_small": return BuildKit.foliage_mat("needles", 0.12, 1.0, 0.3, false, true, 1.0 / 0.6, 0.01)
+		"bush_leaves": return BuildKit.foliage_mat("leaves", 0.12, 1.2, 0.0, true, false, 1.0, 0.05)
+		"bush_core":
+			var m := BuildKit.foliage_mat("moss", 0.07, 1.2, 0.0, false, false, 2.0, 0.0)
+			m.set_shader_parameter("tint", Color(0.75, 0.95, 0.65))
+			return m
+	return BuildKit.foliage_mat("leaves", 0.1)
 
 
 ## Keine Pflanzen auf Wegen, im Haus, im Schuppen oder im Wasser.

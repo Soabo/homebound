@@ -175,3 +175,18 @@ extends Resource
 @export var scared_awake_hours: float = 1.0
 ## Kein Schlaf, solange die Kreatur näher ist als (m).
 @export var no_sleep_creature_distance: float = 60.0
+
+@export_group("Rascheln im Wald (Wind oder etwas anderes?)")
+## Abstand zwischen zwei Raschel-Ereignissen draußen (Spielminuten), tags und nachts
+@export var rustle_minutes_day: Vector2 = Vector2(6.0, 14.0)
+@export var rustle_minutes_night: Vector2 = Vector2(3.0, 8.0)
+## Anteil, bei dem es ganz sicher nur der Wind ist (in einer Böe, in Windrichtung)
+@export var rustle_wind_share: float = 0.45
+## So weit weg beginnt das Rascheln (m), so lange dauert es (s)
+@export var rustle_distance: Vector2 = Vector2(9.0, 18.0)
+@export var rustle_seconds: Vector2 = Vector2(3.0, 8.0)
+## Schaut man direkt hin, verstummt es (Grad) – dann schweigen die Vögel so lange (s)
+@export var rustle_look_angle: float = 22.0
+@export var rustle_silence_seconds: float = 18.0
+## Danach knackt manchmal ein Ast hinter dir
+@export var rustle_twig_chance: float = 0.35

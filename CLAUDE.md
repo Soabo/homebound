@@ -419,6 +419,26 @@
   einen dann nur ganz nah wahr, die Drohne gar nicht. Wer rennt, raschelt (Geräusch 9 m). W-17/Signatur lockt den Sucher trotzdem.
 - Prüfung `RegressTest._t_cover`, Tour-Bilder A0/A1.
 
+## Stimmung: Wind, Wetter, Himmel, Mond (Christian, 13.11.2026)
+- Christian: Retro-Look bleibt; wichtig sind ein toller Mond und bedrohliches Wehen im Wald („ist es der Wind, oder lauert was?“).
+- Shader-Globale (project.godot `[shader_globals]`): wind_strength, wind_dir, wind_time, rustle (xyz Ort, w Stärke), wetness.
+  Gesetzt von `Wind` (scripts/world/wind.gd, `Wind.current`). Werte zur Laufzeit über `Wind.current` lesen (global_shader_parameter_get liefert null).
+- Pflanzen wiegen sich: `shaders/foliage.gdshader` (`BuildKit.foliage_mat`, `Forest.plant_mat(kind)`), Böen-Welle identisch in Shader
+  und `Wind.gust_at`. Böen hört man kommen (Aufnahme „gusts“, läuft mit der Welle). Rascheln: ThreatConfig `rustle_*` – mal Böe in
+  Windrichtung, mal „etwas“ quer/hinter dir, verstummt beim Hinsehen, Vögel schweigen, manchmal Ast knackt. Gegner rascheln echt
+  (`Wind.disturb` in Creature/Mauler/Seeker).
+- Wetter in `WorldState` (weather, weather_until, wetness, `set_weather`, im Spielstand), Gewichte/Wind/Wolken/Blitze: WorldConfig
+  `weather_*`, `wind_*`, `clouds_*`, `lightning_*`. `WeatherFx` (Regen, Tropfen, Regen aufs Dach, Gewitter, Wetterleuchten, nass),
+  `AirFx` (Pollen, Mücken am Bach, Glühwürmchen, Blätter, Atemwolken, Dunst überm Bach morgens/abends).
+- Himmel `shaders/sky.gdshader` + `DayNightEnvironment` (`current`): Sterne, Milchstraße, Mond mit Mondmeeren/Kratern/Phase/Hof,
+  Wolken ziehen vorm Mond vorbei (dimmen das Mondlicht, CPU-Abfrage `_cloud_cover`), Blitz, grüner Schimmer bei Aliens.
+  Farbstimmung je Tageszeit über `RetroFilter.set_grade`, Bodennebel morgens/abends, Augen-Anpassung beim Rein-/Rausgehen.
+- Boden (`shaders/ground.gdshader`): Laubstreu, nass dunkler, Pfützen auf Wegen. Wald: Moos auf Steinen, Pilze, Äste, Wurzelanläufe.
+  Wasser `shaders/water.gdshader` (Fließen, Glitzern, Regenringe, Schaum am Ufer).
+- Hütte: Vorhänge wehen (`CurtainDraft`, stark bei zerbrochenem Fenster), Laufwege/Flecken/Ruß als Decals (`Cabin._build_wear`).
+- Kamera: Fernglas mit Tiefenunschärfe, leichtes Schwanken beim Gehen. Tour-Bilder B0–B4 (Mond, Wolken, Morgennebel, Regen, Abendsonne).
+- Prüfung `RegressTest._t_atmosphere`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

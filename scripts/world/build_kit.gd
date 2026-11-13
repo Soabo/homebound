@@ -153,6 +153,27 @@ static func cutout_mat(kind: String, tint: Color = Color.WHITE) -> StandardMater
 	return m
 
 
+## Pflanzen-Material, das sich im Wind wiegt (shaders/foliage.gdshader).
+## sway = Ausschlag in m bei vollem Wind, height_ref = lokale Höhe für vollen Ausschlag, rigid 1 = ganzes Teil bewegt sich gleich.
+static func foliage_mat(kind: String, sway: float, height_ref: float = 1.0, rigid: float = 0.0, alpha: bool = true,
+		triplanar: bool = false, tex_scale: float = 1.0, flutter: float = 0.03) -> ShaderMaterial:
+	var key := "fol_%s_%.2f_%.2f_%.2f_%s_%s_%.2f_%.2f" % [kind, sway, height_ref, rigid, alpha, triplanar, tex_scale, flutter]
+	if _materials.has(key):
+		return _materials[key]
+	var m := ShaderMaterial.new()
+	m.shader = load("res://shaders/foliage.gdshader")
+	m.set_shader_parameter("albedo_tex", TextureFactory.get_texture(kind))
+	m.set_shader_parameter("sway", sway)
+	m.set_shader_parameter("height_ref", height_ref)
+	m.set_shader_parameter("rigid", rigid)
+	m.set_shader_parameter("use_alpha", alpha)
+	m.set_shader_parameter("triplanar", triplanar)
+	m.set_shader_parameter("tex_scale", tex_scale)
+	m.set_shader_parameter("flutter", flutter)
+	_materials[key] = m
+	return m
+
+
 # --- Grundformen --------------------------------------------------------
 
 static func box(parent: Node, size: Vector3, pos: Vector3, mat: Material, collide: bool = true,

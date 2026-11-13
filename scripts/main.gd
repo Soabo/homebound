@@ -38,6 +38,9 @@ func _ready() -> void:
 	player.position = PLAYER_SPAWN + Vector3(0, Terrain.height_at(PLAYER_SPAWN.x, PLAYER_SPAWN.z) + 0.05, 0)
 	add_child(player)
 
+	add_child(Wind.new())
+	add_child(WeatherFx.new())
+	add_child(AirFx.new())
 	add_child(WindAmbience.new())
 	add_child(NatureAmbience.new())
 	add_child(RetroFilter.new())

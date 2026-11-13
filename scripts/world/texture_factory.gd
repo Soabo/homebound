@@ -33,6 +33,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"metal": img = _metal()
 		"grass_ground": img = _ground()
 		"path_ground": img = _path_ground()
+		"litter": img = _litter()
 		"fern": img = _fern()
 		"grass_blades": img = _grass_blades()
 		"water": img = _water()
@@ -141,10 +142,45 @@ static func _bark() -> Image:
 		cols.append(r.randf_range(0.7, 1.25))
 	for y in SIZE:
 		for x in SIZE:
-			var crack := 0.55 if (x + int(sin(float(y) * 0.2) * 2.0)) % 7 == 0 else 1.0
-			var c := base * cols[x] * crack * (1.0 + (r.randf() - 0.5) * 0.15)
+			var wob := int(sin(float(y) * 0.2) * 2.0 + sin(float(y) * 0.07 + float(x)) * 1.5)
+			var crack := 0.4 if (x + wob) % 7 == 0 else (0.7 if (x + wob) % 7 == 1 else 1.0)
+			# Borkenplatten: oben heller (Licht), unten an der Kante dunkler
+			var plate := 1.12 if (y + x * 3) % 11 < 2 else 1.0
+			var c := base * cols[x] * crack * plate * (1.0 + (r.randf() - 0.5) * 0.18)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
+	return img
+
+
+## Waldstreu: Laubblätter (rotbraun, gelb), Nadeln und kleine Zweige auf durchsichtigem Grund.
+static func _litter() -> Image:
+	var img := Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var r := _rng(61)
+	var cols := [Color(0.42, 0.24, 0.1), Color(0.5, 0.36, 0.12), Color(0.32, 0.2, 0.1), Color(0.55, 0.45, 0.2), Color(0.25, 0.18, 0.1)]
+	for i in 90:
+		var cx := r.randi_range(0, SIZE - 1)
+		var cy := r.randi_range(0, SIZE - 1)
+		var c: Color = cols[r.randi() % cols.size()] * r.randf_range(0.8, 1.15)
+		c.a = 1.0
+		var ang := r.randf() * TAU
+		var len := r.randi_range(2, 4)
+		for t in range(-len, len + 1):
+			for w in range(-1, 2):
+				var x := cx + int(round(cos(ang) * t - sin(ang) * w * 0.8))
+				var y := cy + int(round(sin(ang) * t + cos(ang) * w * 0.8))
+				if absf(w) * len > len - absf(t) + 1:
+					continue
+				img.set_pixel(posmod(x, SIZE), posmod(y, SIZE), c)
+	# Nadeln und Zweige: dünne Striche
+	for i in 70:
+		var cx := r.randi_range(0, SIZE - 1)
+		var cy := r.randi_range(0, SIZE - 1)
+		var ang := r.randf() * TAU
+		var c := Color(0.36, 0.26, 0.14) * r.randf_range(0.7, 1.1)
+		c.a = 1.0
+		for t in r.randi_range(3, 8):
+			img.set_pixel(posmod(cx + int(cos(ang) * t), SIZE), posmod(cy + int(sin(ang) * t), SIZE), c)
 	return img
 
 

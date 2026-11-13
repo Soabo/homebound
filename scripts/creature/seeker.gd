@@ -8,6 +8,7 @@ extends Node3D
 
 enum State { ARRIVE, WATCH, SEARCH, INVESTIGATE, STRIKE, LEAVE }
 
+var _last_rustle_pos := Vector3.ZERO
 var cfg: SeekerConfig
 var target: Vector3          ## Lager oder Hütte
 var state: State = State.ARRIVE
@@ -147,6 +148,11 @@ func _build_model() -> void:
 # --- Verhalten -----------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	# Wer sich durchs Gebüsch bewegt, bringt es zum Rascheln (Wind-Knoten: Pflanzen wackeln, „ist das nur der Wind?“)
+	var _moved := global_position.distance_to(_last_rustle_pos)
+	if _moved > 0.02:
+		Wind.disturb(global_position + Vector3(0, 0.6, 0), clampf(_moved / maxf(delta, 0.001) / 4.0, 0.0, 1.0) * 0.5)
+	_last_rustle_pos = global_position
 	_life += delta
 	_click_t -= delta
 	if _click_t <= 0.0:

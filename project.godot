@@ -56,3 +56,26 @@ lights_and_shadows/directional_shadow/soft_shadow_filter_quality=2
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=2
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
+
+[shader_globals]
+
+wind_strength={
+"type": "float",
+"value": 0.25
+}
+wind_dir={
+"type": "vec2",
+"value": Vector2(0.8, 0.6)
+}
+wind_time={
+"type": "float",
+"value": 0.0
+}
+rustle={
+"type": "vec4",
+"value": Vector4(0, -1000, 0, 0)
+}
+wetness={
+"type": "float",
+"value": 0.0
+}

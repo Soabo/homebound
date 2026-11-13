@@ -310,7 +310,8 @@ var _chunks: Dictionary = {}          ## Vector2i -> Node3D
 var _job: Dictionary = {}             ## laufendes Nachladen
 var _ground_mat: ShaderMaterial
 var _far_mat: ShaderMaterial
-var _water_mat: StandardMaterial3D
+var _water_mat: ShaderMaterial
+var _lake_mat: ShaderMaterial
 var _flow: float = 0.0
 static var _indices: PackedInt32Array
 var _born: int = 0
@@ -326,6 +327,7 @@ func _ready() -> void:
 	_ground_mat.shader = load("res://shaders/ground.gdshader")
 	_ground_mat.set_shader_parameter("grass_tex", TextureFactory.get_texture("grass_ground"))
 	_ground_mat.set_shader_parameter("path_tex", TextureFactory.get_texture("path_ground"))
+	_ground_mat.set_shader_parameter("litter_tex", TextureFactory.get_texture("litter"))
 	_build_water_material()
 	# Das Tal sofort (Spieler, Garten und Hütte stehen darauf)
 	for cz in range(-CORE_CHUNKS, CORE_CHUNKS):
@@ -366,12 +368,15 @@ func _in_world(key: Vector2i) -> bool:
 func _process(delta: float) -> void:
 	# Wasser fließt langsam nach Süden
 	if _water_mat:
-		_flow += delta * 0.25
-		_water_mat.uv1_offset = Vector3(0, -_flow, 0)
 		# Terraforming Stufe 3+: das Wasser verfärbt sich rostig-violett
 		var dirty := WorldState.water_contaminated()
 		var target := Color(0.62, 0.42, 0.55, 0.9) if dirty else Color(0.65, 0.78, 0.72, 0.85)
-		_water_mat.albedo_color = _water_mat.albedo_color.lerp(target, clampf(delta * 0.5, 0.0, 1.0))
+		var c: Color = _water_mat.get_shader_parameter("color")
+		c = c.lerp(target, clampf(delta * 0.5, 0.0, 1.0))
+		var rain := 1.0 if WorldState.weather == "storm" else (0.6 if WorldState.weather == "rain" else 0.0)
+		for m: ShaderMaterial in [_water_mat, _lake_mat]:
+			m.set_shader_parameter("color", c)
+			m.set_shader_parameter("rain", rain)
 	var focus := _focus()
 	if _far_mat:
 		_far_mat.set_shader_parameter("player_pos", focus)
@@ -705,16 +710,18 @@ void fragment() {
 	add_child(mi)
 
 
+## Wasser-Shader (shaders/water.gdshader): Bach fließt nach Süden, Seen kräuseln sich im Wind.
 func _build_water_material() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_texture = TextureFactory.get_texture("water")
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
-	mat.albedo_color = Color(0.65, 0.78, 0.72, 0.85)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.roughness = 0.3
-	mat.metallic_specular = 0.35
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_water_mat = mat
+	for lake: bool in [false, true]:
+		var mat := ShaderMaterial.new()
+		mat.shader = load("res://shaders/water.gdshader")
+		mat.set_shader_parameter("water_tex", TextureFactory.get_texture("water"))
+		mat.set_shader_parameter("color", Color(0.65, 0.78, 0.72, 0.85))
+		mat.set_shader_parameter("flow", 0.0 if lake else 0.25)
+		if lake:
+			_lake_mat = mat
+		else:
+			_water_mat = mat
 
 
 ## Wasserband entlang des Bachs, folgt dem Bachbett.
@@ -731,15 +738,22 @@ func _build_stream() -> void:
 		var y := stream_bed_height(z) + WATER_LEVEL
 		var l := Vector3(cx - half_w, y, z)
 		var r := Vector3(cx + half_w, y, z)
+		var m := Vector3(cx, y, z)
 		if not first:
-			for vv: Vector3 in [prev_l, prev_r, r, prev_l, r, l]:
-				st.set_uv(Vector2(vv.x, vv.z) * 0.5)
-				st.add_vertex(vv)
+			var pm := (prev_l + prev_r) * 0.5
+			# Farbe Alpha = Nähe zum Ufer (für den Schaum)
+			for tri: Array in [[prev_l, pm, m], [prev_l, m, l], [pm, prev_r, r], [pm, r, m]]:
+				for vv: Vector3 in tri:
+					var edge := 0.0 if vv.is_equal_approx(m) or vv.is_equal_approx(pm) else 1.0
+					st.set_color(Color(1, 1, 1, edge))
+					st.set_uv(Vector2(vv.x, vv.z) * 0.5)
+					st.add_vertex(vv)
 		prev_l = l
 		prev_r = r
 		first = false
 		z += 1.0
 	st.generate_normals()
+	st.generate_tangents()
 	var mesh := st.commit()
 	mesh.surface_set_material(0, _water_mat)
 	var mi := MeshInstance3D.new()
@@ -772,8 +786,9 @@ func _water_disc(n: String, center: Vector3, radius: float) -> void:
 			st.set_normal(Vector3.UP)
 			st.set_uv((p + Vector2(center.x, center.z)) * 0.3)
 			st.add_vertex(Vector3(p.x, 0, p.y))
+	st.generate_tangents()
 	var mesh := st.commit()
-	mesh.surface_set_material(0, _water_mat)
+	mesh.surface_set_material(0, _lake_mat)
 	var mi := MeshInstance3D.new()
 	mi.name = n
 	mi.mesh = mesh

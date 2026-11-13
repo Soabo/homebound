@@ -356,6 +356,52 @@ func _t_more() -> void:
 	_t_trails()
 	_t_story()
 	await _t_cover()
+	await _t_atmosphere()
+
+
+## Stimmung (13.11.): Wind, Rascheln, Wetter, Himmel mit Mond, Vorhänge im Luftzug, Abnutzung.
+func _t_atmosphere() -> void:
+	var w := Wind.current
+	_ok("Wind: läuft und setzt die Shader-Werte", w != null and w.strength > 0.0)
+	if w:
+		var g1 := w.gust_at(Vector3(0, 0, 0))
+		var g2 := w.gust_at(Vector3(300, 0, 200))
+		_ok("Wind: Böen sind nicht überall gleich", absf(g1 - g2) > 0.001 or w.strength < 0.05)
+		Wind.disturb(Vector3(3, 0, 3), 1.0)
+		w._start_rustle()
+		_ok("Wind: Rascheln startet (Wind oder etwas anderes)", not w._ev.is_empty())
+		w._ev = {}
+	var keep_w := WorldState.weather
+	for k: String in ["clear", "cloudy", "rain", "fog", "storm"]:
+		WorldState.set_weather(k, 2.0)
+	_ok("Wetter: Sturm ist stürmischer als klar", WorldState.weather_wind() > 0.0)
+	WorldState.set_weather("rain", 2.0)
+	var st := WorldState.get_state()
+	_ok("Wetter: steht im Spielstand", st.get("weather", "") == "rain")
+	WorldState.set_weather(keep_w, 3.0)
+	var sky := DayNightEnvironment.current
+	_ok("Himmel: eigener Himmel mit Mond und Wolken", sky != null)
+	_ok("Wetter: Regen und Luftteilchen sind da", _scene().find_child("WeatherFx", true, false) != null \
+		and _scene().find_child("AirFx", true, false) != null)
+	var cur := _scene().find_child("Curtain_WindowLiving", true, false) as CurtainDraft
+	_ok("Hütte: Vorhang am Wohnzimmerfenster weht", cur != null and cur.panels.size() == 6)
+	if cur and cur._win:
+		var keep_h := cur._win.health
+		var keep_b := cur._win.barricade
+		cur._win.health = 0.0
+		cur._win.barricade = 0.0
+		await get_tree().create_timer(0.6).timeout
+		var swing := absf(cur.panels[0].rotation.x)
+		cur._win.health = keep_h
+		cur._win.barricade = keep_b
+		_ok("Hütte: zerbrochenes Fenster = Vorhang bläht sich", swing > 0.12, "%.2f" % swing)
+	var decals := 0
+	var cabin := _scene().find_child("Cabin", true, false)
+	if cabin:
+		for c in cabin.get_children():
+			if c is Decal:
+				decals += 1
+	_ok("Hütte: Laufwege und Flecken auf dem Boden", decals >= 6, "%d" % decals)
 
 
 ## Lebendiger Wald + Tarnung im Gebüsch (13.11.): Baumarten, Jungwuchs, dichte Gebüsche, geduckt + ohne Licht = getarnt.

@@ -31,6 +31,14 @@ var next_patch_id: int = 0
 var drone_part_dropped: bool = false
 var last_stage: int = 0
 var spread_day: int = 0
+## Wetter: clear | cloudy | rain | fog | storm (Werte in WorldConfig weather_*), bis wann (Gesamtstunden)
+var weather: String = "clear"
+var weather_until: float = 20.0
+## Wie nass Boden und Pflanzen sind (0..1)
+var wetness: float = 0.0
+var _weather_rng := RandomNumberGenerator.new()
+var _wet_last: float = 0.0
+signal weather_changed(kind: String)
 
 
 func _ready() -> void:
@@ -40,6 +48,56 @@ func _ready() -> void:
 		config = WorldConfig.new()
 	TimeManager.day_changed.connect(_on_day_changed)
 	Research.changed.connect(_check_stage)
+	_weather_rng.randomize()
+
+
+func _process(_delta: float) -> void:
+	var now := TimeManager.get_total_hours()
+	if now >= weather_until:
+		_next_weather(now)
+	# Nässe: steigt im Regen, trocknet sonst langsam (auch über Schlaf und Zeitsprünge hinweg)
+	var hours := clampf(now - _wet_last, 0.0, 12.0)
+	_wet_last = now
+	if weather in ["rain", "storm"]:
+		wetness = minf(1.0, wetness + config.wet_per_hour * hours)
+	else:
+		wetness = maxf(0.0, wetness - config.dry_per_hour * hours * (0.4 if weather == "fog" else 1.0))
+
+
+func _next_weather(now: float) -> void:
+	var h := fmod(now, 24.0)
+	var w := {"clear": config.weather_clear, "cloudy": config.weather_cloudy, "rain": config.weather_rain,
+		"fog": config.weather_fog * (config.fog_morning_factor if h >= 4.0 and h < 9.0 else 1.0), "storm": config.weather_storm}
+	# nicht zweimal hintereinander dasselbe Unwetter
+	if weather in ["storm", "rain"]:
+		w["storm"] = float(w["storm"]) * 0.3
+	var total := 0.0
+	for k: String in w:
+		total += float(w[k])
+	var roll := _weather_rng.randf() * total
+	var pick := "clear"
+	for k: String in w:
+		roll -= float(w[k])
+		if roll <= 0.0:
+			pick = k
+			break
+	set_weather(pick, _weather_rng.randf_range(config.weather_hours.x, config.weather_hours.y))
+
+
+## Wetter setzen (für Tests und Bildschirmfotos auch direkt): kind und Dauer in Spielstunden.
+func set_weather(kind: String, hours: float) -> void:
+	weather = kind
+	weather_until = TimeManager.get_total_hours() + hours
+	weather_changed.emit(kind)
+
+
+## Windstärke und Bewölkung des aktuellen Wetters (0..1).
+func weather_wind() -> float:
+	return float(config.get("wind_" + weather))
+
+
+func weather_clouds() -> float:
+	return float(config.get("clouds_" + weather))
 
 
 ## Terraforming-Wert: ~0.13 pro Tag (halb so viel, wenn die Struktur abgeschaltet ist) + Forschung.
@@ -200,7 +258,7 @@ func shut_down_structure() -> void:
 func get_state() -> Dictionary:
 	return {"structure_off": structure_off, "pylons_off": pylons_off.duplicate(), "source_alive": source_alive,
 		"patches": patches.duplicate(true), "next_patch_id": next_patch_id, "drone_part": drone_part_dropped,
-		"last_stage": last_stage, "spread_day": spread_day}
+		"last_stage": last_stage, "spread_day": spread_day, "weather": weather, "weather_until": weather_until, "wetness": wetness}
 
 
 func set_state(s: Dictionary) -> void:
@@ -212,4 +270,8 @@ func set_state(s: Dictionary) -> void:
 	drone_part_dropped = bool(s.get("drone_part", false))
 	last_stage = int(s.get("last_stage", 0))
 	spread_day = int(s.get("spread_day", 0))
+	weather = String(s.get("weather", "clear"))
+	weather_until = float(s.get("weather_until", TimeManager.get_total_hours() + 4.0))
+	wetness = float(s.get("wetness", 0.0))
+	_wet_last = TimeManager.get_total_hours()
 	changed.emit()

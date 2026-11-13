@@ -10,6 +10,7 @@ extends Node3D
 
 enum State { STALK, WARN, CHARGE, STRIKE, RETREAT, CIRCLE, FLEE, PROWL, LEAVE }
 
+var _last_rustle_pos := Vector3.ZERO
 var cfg: MaulerConfig
 var state: State = State.STALK
 var hits: int = 0                  ## Treffer in dieser Jagd (für Tests)
@@ -184,6 +185,11 @@ func _limb(parent: Node3D, a: Vector3, b: Vector3, r0: float, r1: float, mat: Ma
 # --- Verhalten -----------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	# Wer sich durchs Gebüsch bewegt, bringt es zum Rascheln (Wind-Knoten: Pflanzen wackeln, „ist das nur der Wind?“)
+	var _moved := global_position.distance_to(_last_rustle_pos)
+	if _moved > 0.02:
+		Wind.disturb(global_position + Vector3(0, 0.6, 0), clampf(_moved / maxf(delta, 0.001) / 4.0, 0.0, 1.0) * 0.9)
+	_last_rustle_pos = global_position
 	if _player == null or not is_instance_valid(_player):
 		queue_free()
 		return

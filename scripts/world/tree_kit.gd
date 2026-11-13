@@ -156,6 +156,28 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 			_trunk(p.trunks, p.trunk_cols, x, z, g, 0.035, h * 0.8, yaw, rng, 0.08, Color(1.0, 0.9, 0.8))
 			_crown(p, x, z, g + h * 0.75, rng, 3 if near else 1, Vector2(0.7, 1.15), Vector3(0.6, 0.5, 0.6),
 					Color(0.7, 0.88, 0.5), Color(0.9, 1.0, 0.6), near)
+	# Wurzelanläufe am Stammfuß (nur nah) und dürre Aststummel unten an Fichten
+	if near and r > 0.15 and kind != "birch":
+		var bark_col := Color(0.85, 0.8, 0.75) if kind != "beech" else Color(1.1, 1.08, 1.0)
+		var arr := p.smooth if kind == "beech" else p.trunks
+		var cols := p.smooth_cols if kind == "beech" else p.trunk_cols
+		for i in rng.randi_range(3, 5):
+			var a := yaw + TAU * float(i) / 4.0 + rng.randf_range(-0.4, 0.4)
+			var v := Vector3(cos(a) * 0.93, -0.36, sin(a) * 0.93).normalized()
+			var len := r * rng.randf_range(3.0, 5.0)
+			var bx := v.cross(Vector3.UP).normalized()
+			var bz := bx.cross(v).normalized()
+			var b := Basis(bx, v, bz).scaled(Vector3(r * 0.42, len, r * 0.42))
+			arr.append(Transform3D(b, Vector3(x, g + 0.12, z) + v * len * 0.42))
+			cols.append(bark_col * rng.randf_range(0.85, 1.05))
+	if near and kind == "spruce":
+		for i in rng.randi_range(3, 6):
+			var a := rng.randf() * TAU
+			var ay := g + h * rng.randf_range(0.12, 0.3)
+			var len := rng.randf_range(0.4, 1.0)
+			var b := Basis(Vector3.UP, a) * Basis(Vector3.RIGHT, rng.randf_range(1.3, 1.7))
+			p.trunks.append(Transform3D(b.scaled(Vector3(0.025, len, 0.025)), Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)))
+			p.trunk_cols.append(Color(0.6, 0.56, 0.52))
 	if body and r > 0.06:
 		var cs := CollisionShape3D.new()
 		var shape := CylinderShape3D.new()
