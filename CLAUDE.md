@@ -95,7 +95,7 @@
   Verknüpfen geht erst, wenn die Analysen gesendet sind. Test: `--night-test=tablet`.
 - Bewegte Teile (Werkzeuge in der Hand, Türen, Schranktüren) mit `BuildKit.localize_materials` (Textur am Objekt).
 - Hände/Werkzeuge ziehen sich vor Wänden zurück (`PlayerHands._avoid_walls`).
-- Holzkorb `WoodBasket` (Cabin/WoodBasket, 1 Holz Start, max 4, E nehmen/R hineinlegen). Tankanzeige `FuelGauge`
+- Holzkorb `WoodBasket` (Cabin/WoodBasket, 1 Holz Start, max 6, E nehmen/R hineinlegen). Tankanzeige `FuelGauge`
   (Cabin/FuelGauge über dem Funktisch, `PowerManager.hours_left`). Traglast-Anzeige im HUD (`Hud._update_weight`).
 - Verstecke (11/2026 neu): nur E = Tür auf/zu. Man geht selbst hinein und schließt von innen; drinnen + Tür zu = versteckt
   (`HideSpot._player_inside`). Drinnen alles normal (lehnen, Licht, ducken), kein Einsteigen per R mehr.
@@ -326,6 +326,24 @@
 - Im Schrank/Spind: Uhrlicht an/aus und LED/Display wechseln geht, Hände werden dort kaum zurückgezogen (Gegenstände wechseln sichtbar).
 - Monitor ohne Strom: schwarz und stumm (Shader `cctv` Parameter `dark`), nicht eingebaute Kamera = Rauschen.
 - Holzkorb am Kamin: 6 Scheite (data/house/house.json `wood_basket`). Aufgabe d_water heißt „Trinkwasser aufnehmen (2 Flaschen)“.
+
+## Anbauten, Dachboden, Keller (Christian, 12./13.11.2026)
+- `CabinRooms` (scripts/world/cabin_rooms.gd) baut in die Hütte: **Büro** (Stefanie) hinter der Speis (`Cabin.OFFICE`, Fenster Nord +
+  West, Tür in der Speis-Nordwand; Speis-Regal steht jetzt an der Westwand), **Kinderzimmer** im Nordwesten (`Cabin.KIDS`, Tür vom
+  Wohnzimmer zwischen Schlafzimmerwand und Kamin, Fenster West + Nord, Betten Lena/Ben, Kisten, halb gestrichene Wand),
+  Pultdächer (`ROOF_HI/LO`). `Cabin.is_inside` umfasst Anbauten, Dachboden und Keller; `Cabin.in_footprint` für Gegner-Wege
+  (Creature `RING`, `_outside_house`) und Pflanzen.
+- **Dachboden**: Decke ist fest (Dachboden-Boden), Dach fest; zwei Giebelfenster (`WindowAtticWest/East`, Gruppe attic_window, kein
+  entry_point). `AtticHatch` in der Werkstattdecke (E Leiter herunterziehen/klettern, R hochschieben/-ziehen), Klettern über
+  `LadderClimb.climb`. Bett warnt bei unten gelassener Leiter (`AtticHatch.down_now`). ThreatDirector-Ereignis „attic“ (Besuchs-/
+  Jagdnächte, ThreatConfig `attic_*`): Schritte/Kratzen oben; Leiter unten → kommt herunter (Apparition „ladder“, Schaden ab
+  `attic_hurt_from_night`, Merker creature_visited).
+- **Keller** (`Cabin.CELLAR`, Boden `CELLAR_FLOOR`) unter Büro und Speis; Gelände dort per `Cabin.cellar_dip` abgesenkt (nur unter
+  dem Haus). `CellarHatch` im Büro: Teppich erst nach Story-Hinweis wegziehbar (story.json `beats`: cellar_hint ab Tag 4, 8 Uhr,
+  Notiz keller_hinweis), dann Luke auf/zu, Leiter. Weckgläser (restock), Säcke, **zugemauerte Stelle** an der Ostwand Richtung
+  alter Brunnen (Wurzeln, Stempel „WW · MP4“, Notiz keller_mauer) – Durchbruch erst beim Story-Bau Phase 5 (Weg bleibt Brunnen + Winde).
+- Notizen: buero_kalender, kinder_bild, dachboden_liste, keller_hinweis, keller_mauer. Tour-Bilder 80–87. Prüfung `RegressTest._t_rooms`,
+  Lauftest „Vorratsraum -> Büro“, „Wohnzimmer -> Kinderzimmer“.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

@@ -208,8 +208,12 @@ static func run(tree: SceneTree) -> int:
 		if String(items[id].get("category", "")) == "Fund" and not finds.has(id) and not id in ["alien_analyzer", "w17"]:
 			errs.append("Fund %s: kein Forschungsprojekt dazu" % id)
 	# Notizen: im Code benutzte gibt es, vorhandene werden benutzt
+	# Notizen aus Story-Hinweisen (story.json "beats") zählen auch
+	var beat_notes := []
+	for b: Dictionary in DataDB.load_json("res://data/story/story.json").get("beats", []):
+		beat_notes.append(String(b.get("note", "")))
 	for n: String in notes:
-		if not code.contains("\"%s\"" % n):
+		if not code.contains("\"%s\"" % n) and not beat_notes.has(n):
 			errs.append("Notiz %s: wird nirgends in der Welt abgelegt" % n)
 
 	# --- Aufgaben

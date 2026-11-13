@@ -63,7 +63,7 @@ func _annex_wall(a: Vector2, b: Vector2, top: float, inner: Vector2, openings: A
 	var in_ops := []
 	for o: Vector4 in openings:
 		in_ops.append(Vector4(o.x - Cabin.CLAD, o.y, o.z, o.w))
-	BuildKit.wall(c, ia, ib, y, top - y - 0.12, 0.03, c.m_wall, in_ops, wall_name + "Clad")
+	BuildKit.wall(c, ia, ib, y, top - y + 0.12, 0.03, c.m_wall, in_ops, wall_name + "Clad")   # bis unter die Dachschräge
 
 
 func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) -> void:
@@ -131,7 +131,7 @@ func _lean_to_z(xa: float, xb: float, z_out: float, z_house: float, roof_at: Cal
 	BuildKit.box(c, Vector3(xb - xa, 0.18, len), mid, shingles, false, Vector3(-rad_to_deg(slope), 0, 0))
 	# Innen: schräge Bretterdecke
 	var ceil_mat := BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55))
-	BuildKit.box(c, Vector3(xb - xa - 0.9, 0.04, len - 0.6), mid + Vector3(0, -0.22, 0.3), ceil_mat, false, Vector3(-rad_to_deg(slope), 0, 0))
+	BuildKit.box(c, Vector3(xb - xa, 0.04, len), mid + Vector3(0, -0.12, 0), ceil_mat, false, Vector3(-rad_to_deg(slope), 0, 0))
 	# Traufbrett
 	BuildKit.box(c, Vector3(xb - xa + 0.05, 0.2, 0.05), Vector3(mid.x, y_out + 0.05, z_out), c.m_wood_dark, false)
 
@@ -147,7 +147,7 @@ func _lean_to_x(x_out: float, x_house: float, za: float, zb: float, roof_at: Cal
 	var mid := Vector3((x_out + x_house) * 0.5, (y_out + y_in) * 0.5 + 0.1, (za + zb) * 0.5)
 	BuildKit.box(c, Vector3(len, 0.18, zb - za), mid, shingles, false, Vector3(0, 0, rad_to_deg(slope)))
 	var ceil_mat := BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55))
-	BuildKit.box(c, Vector3(len - 0.6, 0.04, zb - za - 0.9), mid + Vector3(0.3, -0.22, 0), ceil_mat, false, Vector3(0, 0, rad_to_deg(slope)))
+	BuildKit.box(c, Vector3(len, 0.04, zb - za), mid + Vector3(0, -0.12, 0), ceil_mat, false, Vector3(0, 0, rad_to_deg(slope)))
 	BuildKit.box(c, Vector3(0.05, 0.2, zb - za + 0.05), Vector3(x_out, y_out + 0.05, mid.z), c.m_wood_dark, false)
 
 
@@ -321,8 +321,8 @@ func _attic() -> void:
 	c._switch("attic", "Licht Dachboden", Vector3(3.06, y + 1.2, 0.7), 90.0, [bulb, bulb2])
 	# Gerümpel: alte Truhe, Stuhl, Kartons von Stefanie, Wiege
 	var card := BuildKit.tex_mat("fabric", 0.3, Color(1.3, 1.1, 0.8))
-	BuildKit.box_mm(c, Vector3(-5.6, y, -0.5), Vector3(-4.8, y + 0.55, 0.4), BuildKit.tex_mat("planks_h", 0.5, Color(0.6, 0.4, 0.28)), true, "AtticTrunk")
-	BuildKit.box_mm(c, Vector3(-5.62, y + 0.5, -0.52), Vector3(-4.78, y + 0.58, 0.42), c.m_iron, false)
+	BuildKit.box_mm(c, Vector3(-5.5, y, 0.75), Vector3(-4.7, y + 0.55, 1.6), BuildKit.tex_mat("planks_h", 0.5, Color(0.6, 0.4, 0.28)), true, "AtticTrunk")
+	BuildKit.box_mm(c, Vector3(-5.52, y + 0.5, 0.73), Vector3(-4.68, y + 0.58, 1.62), c.m_iron, false)
 	for b: Array in [[Vector3(-3.6, y, 0.9), 0.0], [Vector3(-3.1, y, 1.0), 14.0], [Vector3(-3.4, y + 0.4, 0.95), -6.0], [Vector3(1.2, y, -1.0), 5.0], [Vector3(1.8, y, -1.05), -9.0]]:
 		BuildKit.box(c, Vector3(0.5, 0.4, 0.45), (b[0] as Vector3) + Vector3(0, 0.2, 0), card, (b[0] as Vector3).y < y + 0.1, Vector3(0, b[1], 0))
 	c._chair(Vector3(-1.5, y, -0.9), 30.0)
@@ -370,7 +370,7 @@ func _cellar() -> void:
 	for bz: float in [-6.2, -4.6, -3.0]:
 		BuildKit.box(c, Vector3(x1 - x0, 0.16, 0.14), Vector3((x0 + x1) * 0.5, -0.14, bz), c.m_beam, false)
 	# Licht (nackte Birne) mit Schalter an der Leiter
-	var bulb := c._lamp(Vector3(0.5, -0.3, -4.2), 0.6, 5.0, true)
+	var bulb := c._lamp(Vector3(0.1, -0.02, -3.6), 0.6, 5.0, true)
 	c._switch("cellar", "Licht Keller", Vector3(x0 + 0.12, fy + 1.35, -4.6), 90.0, [bulb])
 	# Vorratsregal an der Westwand: Weckgläser (zum Mitnehmen), Säcke aus der Speis
 	var shelf_x := x0 + 0.1
@@ -408,7 +408,7 @@ func _cellar() -> void:
 
 func _bricked_wall(wx: float, fy: float) -> void:
 	var brick := BuildKit.color_mat(Color(0.48, 0.3, 0.24), 0.9)
-	var mortar := BuildKit.color_mat(Color(0.62, 0.6, 0.55), 1.0)
+	var mortar := BuildKit.color_mat(Color(0.36, 0.34, 0.3), 1.0)
 	var face := wx - 0.005
 	var zc := -3.35
 	var w := 1.1
@@ -424,7 +424,7 @@ func _bricked_wall(wx: float, fy: float) -> void:
 			var bw := minf(0.24, zc + w * 0.5 - bz)
 			var tone := _rng.randf_range(0.85, 1.15)
 			BuildKit.box_mm(c, Vector3(face - 0.05, by, bz + 0.01), Vector3(face - 0.015, by + 0.075, bz + bw - 0.01),
-					BuildKit.color_mat(Color(0.48 * tone, 0.3 * tone, 0.24 * tone), 0.9), false)
+					BuildKit.color_mat(Color(0.33 * tone, 0.21 * tone, 0.17 * tone), 0.95), false)
 			bz += bw
 		by += 0.085
 		row += 1
@@ -440,7 +440,7 @@ func _bricked_wall(wx: float, fy: float) -> void:
 	lab.text = "WW · MP4"
 	lab.font_size = 22
 	lab.pixel_size = 0.0018
-	lab.modulate = Color(0.12, 0.1, 0.1, 0.55)
+	lab.modulate = Color(0.75, 0.72, 0.65, 0.6)   # verblasste helle Farbe auf dunklem Ziegel
 	lab.outline_size = 0
 	lab.double_sided = false
 	lab.rotation_degrees.y = -90.0

@@ -287,6 +287,14 @@ func _build_roof() -> void:
 		# Ortgangbretter an den Giebelseiten
 		for x: float in [-roof_len * 0.5, roof_len * 0.5]:
 			BuildKit.box(self, Vector3(0.06, 0.28, length), Vector3(x, center_y - 0.04, center_z * side), m_wood_dark, false, Vector3(angle * side, 0, 0))
+	# Innen (Dachboden): Bretterschalung unter den Schindeln, dazu ein paar Sparren
+	var lining := BuildKit.tex_mat("planks_h", 1.4, Color(0.55, 0.48, 0.42))
+	var in_len := HALF_Z / cos(atan(slope))
+	for side: float in [1.0, -1.0]:
+		var ly := WALL_TOP + ROOF_RISE * 0.5 + 0.25 - 0.13
+		BuildKit.box(self, Vector3(HALF_X * 2.0 - 0.3, 0.03, in_len), Vector3(0, ly, HALF_Z * 0.5 * side), lining, false, Vector3(angle * side, 0, 0))
+		for rx: float in [-4.6, -2.2, 0.2, 2.6, 4.9]:
+			BuildKit.box(self, Vector3(0.1, 0.12, in_len), Vector3(rx, ly - 0.07, HALF_Z * 0.5 * side), m_beam, false, Vector3(angle * side, 0, 0))
 	# Firstbalken als Stamm
 	BuildKit.cylinder(self, 0.16, roof_len + 0.1, Vector3(0, WALL_TOP + ROOF_RISE + 0.32, 0), m_logs, false, Vector3(0, 0, 90), -1.0, 8)
 	# Giebel aus kürzer werdenden Stämmen, dahinter eine Bretterfüllung – mit je einem Dachbodenfenster (West/Ost)
