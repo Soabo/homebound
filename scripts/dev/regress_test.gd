@@ -350,7 +350,67 @@ func _t_more() -> void:
 	_t_blueprints()
 	_t_nov12_evening()
 	await _t_rooms()
+	await _t_omens()
 	await _t_hands()
+
+
+## Nächtliche Vorkommnisse (13.11.): alle Arten einmal auslösen, ein paar Ergebnisse prüfen.
+func _t_omens() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_rot := p.rotation
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var cfg := ThreatDirector.config
+	p.global_position = Vector3(-2.5, Cabin.FLOOR_Y, 2.5)   # Wohnzimmer
+	var all: Array = NightOmens.HOUSE_KINDS + NightOmens.FOREST_KINDS
+	for k: String in all:
+		NightOmens.fire(k, _scene(), p, cfg, rng)
+	await get_tree().process_frame
+	_ok("Vorkommnisse: alle %d Arten laufen ohne Absturz" % all.size(), true)
+	var tap := get_tree().get_first_node_in_group("tap_ghost")
+	_ok("Wasserhahn läuft von selbst und lässt sich zudrehen", tap != null)
+	if tap:
+		tap.interact(p)
+	await get_tree().process_frame
+	_ok("Wasserhahn zu", get_tree().get_first_node_in_group("tap_ghost") == null)
+	var ic := get_tree().get_first_node_in_group("inside_changes") as InsideChanges
+	_ok("Dinge im Haus: Teddy, Buch, Becher vorhanden", ic != null and ic._props.size() == 3)
+	if ic:
+		ic.morning(2)
+		_ok("Dinge im Haus: morgens stehen 2 anders", ic.changed_count() >= 2)
+		for id: String in ic.state.keys():
+			ic.put_back(id)
+		_ok("Dinge im Haus: zurückgestellt", ic.changed_count() == 0)
+		_ok("Neue Kinderzeichnung liegt auf dem Tisch", ic.drawing_shown and ic.find_child("KidsDrawing2", true, false) != null)
+	# Hand durch Spalte: ansehen → zieht sich zurück
+	for h in _scene().get_children():
+		if h is NightOmens.GapHand:
+			h.queue_free()
+	await get_tree().process_frame
+	var hand := NightOmens.GapHand.new()
+	hand.inward = Vector3.UP
+	_scene().add_child(hand)
+	hand.global_position = Vector3(-2.0, 0.44, 0.5)
+	p.global_position = Vector3(-2.0, Cabin.FLOOR_Y, 4.0)
+	p.look_at(Vector3(-2.0, Cabin.FLOOR_Y + 1.0, 0.5), Vector3.UP)
+	p.rotation.x = 0.0
+	p.head.rotation.x = -0.35
+	await get_tree().create_timer(3.5).timeout
+	_ok("Hand zieht sich zurück, wenn man hinsieht", not is_instance_valid(hand) or hand._leaving)
+	# Sichtung verschwindet von selbst
+	var g := NightOmens.Glimpse.new()
+	g.what = "mauler"
+	_scene().add_child(g)
+	g.global_position = Vector3(-30, Terrain.height_at(-30, 30), 30)
+	_ok("Zerfleischer-Sichtung: nur Aussehen, kein Verhalten", get_tree().get_nodes_in_group("mauler").is_empty())
+	var hp := p.health
+	await get_tree().create_timer(10.5).timeout
+	_ok("Sichtung ist nach ein paar Sekunden weg", not is_instance_valid(g))
+	_ok("Sichtung verletzt niemanden", p.health >= hp - 0.1)
+	p.global_position = keep
+	p.rotation = keep_rot
+	p.head.rotation.x = 0.0
 
 
 ## Anbauten (13.11.): Büro, Kinderzimmer, Dachboden mit Zugleiter, Keller unter dem Teppich.

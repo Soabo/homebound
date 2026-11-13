@@ -1892,6 +1892,10 @@
     "dachboden_liste": {
       "name": "Zettel am Karton",
       "text": "In Stefanies Schrift, mit Klebeband an den Karton geklebt: »Kinderzimmer: Grün für Lena (sie will »Waldgrün«), Sterne an die Decke für Ben. Christians Unterlagen NICHT hier oben lassen – zu feucht.«"
+    },
+    "kinder_bild2": {
+      "name": "Neue Zeichnung",
+      "text": "Auf dem Esstisch liegt eine Zeichnung, die gestern noch nicht da war. Wachsmalkreide, dieselbe Kinderhand: das Haus zwischen den Bäumen, vier Strichmännchen davor. Und hinter dem Haus, größer als die Bäume, eine fünfte Gestalt – dünn, mit vielen kleinen Punkten, wo die Augen sein müssten."
     }
   },
   "lab": {

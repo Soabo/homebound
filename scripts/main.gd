@@ -23,6 +23,7 @@ func _ready() -> void:
 	add_child(Terraformer.new())
 	add_child(CarWreck.new())
 	add_child(NightChanges.new())
+	add_child(InsideChanges.new())
 	add_child(Wildlife.new())
 	add_child(ScrapField.new())
 	add_child(SupplyProps.new())

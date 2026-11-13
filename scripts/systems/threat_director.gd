@@ -110,6 +110,9 @@ func _on_phase_changed(is_night: bool) -> void:
 		Tasks.flag("unrest_night")
 		if _kinds_tonight.has("creature") and night_kind in ["visit", "hunt"] and not far_from_home():
 			Tasks.flag("creature_visited")
+	# Dinge im Haus stehen anders
+	if scene and _activity_tonight and not far_from_home() and _rng.randf() < config.inside_change_chance:
+		get_tree().call_group("inside_changes", "morning", _rng.randi_range(config.inside_change_count.x, config.inside_change_count.y))
 	if scene and _activity_tonight and _rng.randf() < config.night_change_chance:
 		get_tree().call_group("night_changes", "morning", _rng.randi_range(config.night_change_count.x, config.night_change_count.y), config.night_change_days)
 		_kinds_tonight.append("change")
@@ -151,6 +154,12 @@ func plan_night(night_day: int) -> void:
 	var pool := _event_pool(night_intensity)
 	for i in n:
 		_add(start + _rng.randf_range(0.6, night_len - 1.0), pool[_rng.randi() % pool.size()])
+	# Nächtliche Vorkommnisse (NightOmens): Hände, wandernde Dinge, Lichter und Sichtungen im Wald …
+	var oc := config.omen_count_quiet if night_kind == "quiet" else config.omen_count_busy
+	for i in _rng.randi_range(oc.x, oc.y):
+		var kind := _pick_omen(night_day)
+		if kind != "":
+			_add(start + _rng.randf_range(0.3, night_len - 0.8), "omen:" + kind)
 	match night_kind:
 		"sighting":
 			_add(start + _rng.randf_range(1.0, night_len - 2.0), "sighting")
@@ -216,6 +225,38 @@ func _event_pool(intensity: int) -> Array[String]:
 	if intensity >= 2:
 		pool.append_array(["knock_door", "rattle", "music_box", "handprint", "photo", "scratch", "roof"])
 	return pool
+
+
+## Welches Vorkommnis heute Nacht möglich ist (mit Tagesgrenzen), Draußen-Dinge etwas häufiger.
+func _pick_omen(night_day: int) -> String:
+	var opts: Array[String] = []
+	var weights: Array[float] = []
+	for k: String in NightOmens.HOUSE_KINDS + NightOmens.FOREST_KINDS:
+		match k:
+			"gap_hand":
+				if night_day < config.omen_hand_from_night: continue
+			"seeker_glimpse":
+				if night_day < config.omen_seeker_from_night: continue
+			"mauler_glimpse":
+				if night_day < config.omen_mauler_from_night: continue
+			"drawing":
+				var ic := get_tree().get_first_node_in_group("inside_changes")
+				if night_day < config.omen_drawing_from_night or _drawing_planned or (ic and ic.drawing_shown): continue
+		opts.append(k)
+		weights.append(config.omen_forest_weight if k in NightOmens.FOREST_KINDS else 1.0)
+	if opts.is_empty():
+		return ""
+	var total := 0.0
+	for w in weights:
+		total += w
+	var r := _rng.randf() * total
+	for i in opts.size():
+		r -= weights[i]
+		if r <= 0.0:
+			if opts[i] == "drawing":
+				_drawing_planned = true
+			return opts[i]
+	return opts[0]
 
 
 ## Ereignis von außen einplanen (z. B. eine ausgebrochene Probe ruft die Drohne).
@@ -310,6 +351,7 @@ func _check_evening() -> void:
 ## Zerfleischer (ab Story-Phase 2): nachts im Zeitfenster eines „mauler“-Ereignisses, sobald du draußen bist
 ## (am Haus, im Wald, beim Zelt – dort schleicht er nur herum); selten auch tagsüber weit weg im dichten Wald.
 var mauler_until: float = -1.0
+var _drawing_planned := false
 var _mauler_check: float = 0.0
 var _mauler_last_hour: float = -1.0
 
@@ -370,7 +412,8 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic"] and e["at"] > from_total and e["at"] < to_total:
+		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic",
+				"omen:gap_hand", "omen:knock_walk", "omen:music_box", "omen:tap_run"] and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -380,6 +423,15 @@ func _fire(type: String) -> void:
 	if scene == null:
 		return
 	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if type.begins_with("omen:"):
+		var kind := type.substr(5)
+		# Dinge am Haus nur, wenn man zuhause ist; Wald-Dinge überall um einen herum
+		if kind in NightOmens.HOUSE_KINDS and far_from_home():
+			return
+		if kind in ["gap_hand", "knock_walk", "music_box", "tap_run"]:
+			_activity_tonight = true
+		NightOmens.fire(kind, scene, player as Player, config, _rng)
+		return
 	# Weit weg von der Hütte (Ausflug, Zelt): Ereignisse am Haus werden zu Ereignissen im Wald um dich herum
 	if far_from_home():
 		type = _far_variant(type)

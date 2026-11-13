@@ -629,8 +629,7 @@ func _build_living_room() -> void:
 	BuildKit.box_mm(self, Vector3(-4.2, y + 0.38, 1.3), Vector3(-3.5, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
 	for p: Vector2 in [Vector2(-4.12, 1.38), Vector2(-3.58, 1.38), Vector2(-4.12, 2.12), Vector2(-3.58, 2.12)]:
 		BuildKit.box_mm(self, Vector3(p.x - 0.03, y, p.y - 0.03), Vector3(p.x + 0.03, y + 0.38, p.y + 0.03), m_wood_dark, false)
-	BuildKit.cylinder(self, 0.04, 0.1, Vector3(-3.8, y + 0.49, 1.55), BuildKit.color_mat(Color(0.75, 0.73, 0.68), 0.6), false, Vector3.ZERO, -1.0, 8)
-	BuildKit.box(self, Vector3(0.22, 0.04, 0.16), Vector3(-4.02, y + 0.46, 2.03), BuildKit.color_mat(Color(0.35, 0.18, 0.12)), false, Vector3(0, 20, 0))
+	# (Becher und Buch gehören zu InsideChanges – sie wandern nachts)
 	# Bücherregal
 	_shelf(Vector3(-5.7, y, -0.92), Vector3(-4.4, y + 1.9, -0.55), 4, true)
 	# Esstisch – kleiner Tisch für zwei, gegenüber gedeckt (GDD 3.1). Steht vom Fenster weg, damit man hinaussehen kann.

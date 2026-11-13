@@ -95,6 +95,8 @@ const SHOTS := [
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
 	{"name": "86_keller", "hour": 14.0, "pos": Vector3(0.2, -2.1, -2.6), "look": Vector3(1.6, -1.3, -3.6), "lights": true, "cellar_open": true},
 	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},
+	{"name": "88_nacht_waldrand", "hour": 23.5, "pos": Vector3(-7.4, 0.45, -2.0), "look": Vector3(-25.0, 1.5, -2.5), "omens": ["seeker_at", "wisps_at"]},
+	{"name": "89_hand_spalte", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 3.4), "look": Vector3(-2.0, 0.6, 2.0), "lights": true, "omens": ["hand_at"]},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
 
@@ -164,6 +166,33 @@ func _run() -> void:
 			PowerManager.start_generator()   # Generator läuft seit 11/2026 beim Start nicht mehr
 		for sw in get_tree().get_nodes_in_group("light_switch"):
 			sw.switch_to(shot.get("lights", false))
+		if shot.has("omens"):
+			var pl := get_tree().get_first_node_in_group("player") as Player
+			var orng := RandomNumberGenerator.new()
+			orng.seed = 3
+			for k: String in shot["omens"]:
+				match k:
+					"seeker_at":
+						var g := NightOmens.Glimpse.new()
+						g.what = "seeker"
+						get_tree().current_scene.add_child(g)
+						g.global_position = Vector3(-24.0, Terrain.height_at(-24.0, -6.0), -6.0)
+						g.look_at(Vector3(-7.0, g.global_position.y, -2.0), Vector3.UP)
+						g._life = 999.0
+					"wisps_at":
+						for i in 4:
+							var w := NightOmens.Wisp.new()
+							w.life = 999.0
+							get_tree().current_scene.add_child(w)
+							w.global_position = Vector3(-28.0 + i * 1.7, Terrain.height_at(-28.0, 3.0) + 1.5 + i * 0.4, 3.0 - i * 2.0)
+					"hand_at":
+						var h := NightOmens.GapHand.new()
+						h.inward = Vector3.UP
+						get_tree().current_scene.add_child(h)
+						h.global_position = Vector3(-2.0, 0.44, 2.0)
+						h._out = 1.0
+						h.set_process(false)
+						h._arm.position = Vector3(0, -0.1, 0)
 		if shot.get("attic_down", false):
 			var ah := get_tree().get_first_node_in_group("attic_hatch") as AtticHatch
 			if ah:

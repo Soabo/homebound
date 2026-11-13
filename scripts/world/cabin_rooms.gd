@@ -266,13 +266,7 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 		# Kopfteil (Lena: Norden, Ben: Süden)
 		var hz := bz if b[2] == "Lena" else bz + 1.71
 		BuildKit.box_mm(c, Vector3(ix0, y, hz), Vector3(ix0 + 0.85, y + 0.75, hz + 0.04), frame, false)
-	# Kuscheltier auf Bens Bett
-	var fur := BuildKit.tex_mat("fabric", 0.4, Color(1.1, 0.8, 0.55))
-	var bear := Vector3(ix0 + 0.5, y + 0.55, iz1 - 0.6)
-	BuildKit.sphere(c, 0.1, bear, fur, Vector3(1.0, 1.1, 0.9), 8)
-	BuildKit.sphere(c, 0.075, bear + Vector3(0, 0.15, 0), fur, Vector3.ONE, 8)
-	for s: float in [-1.0, 1.0]:
-		BuildKit.sphere(c, 0.03, bear + Vector3(s * 0.06, 0.22, 0), fur, Vector3.ONE, 6)
+	# (Bens Teddy gehört zu InsideChanges – er wandert nachts)
 	# Halb gestrichene Wand: grüner Streifen an der Nordwand, Farbeimer, Rolle
 	var green := BuildKit.color_mat(Color(0.45, 0.65, 0.45), 0.9)
 	BuildKit.box_mm(c, Vector3(ix0 + 0.95, y + 0.1, iz0 - 0.03), Vector3(-7.95, y + 2.0, iz0 - 0.02), green, false)

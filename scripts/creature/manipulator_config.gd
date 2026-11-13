@@ -24,6 +24,9 @@ static func get_default() -> ManipulatorConfig:
 ## Sichtbar aus der Nähe bzw. im Lichtkegel der Uhr bis zu dieser Entfernung.
 @export var visible_distance: float = 16.0
 @export var flashlight_distance: float = 30.0
+## Schwaches Eigenleuchten: bis zu dieser Entfernung sieht man ihn vage in der Dunkelheit (Christian 13.11.)
+@export var glow_distance: float = 55.0
+@export var glow_energy: float = 0.35
 
 @export_group("Ortswechsel")
 ## Wechselt ungesehen die Stelle, alle … Sekunden.

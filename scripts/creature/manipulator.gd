@@ -14,6 +14,7 @@ var cfg: ManipulatorConfig = ManipulatorConfig.get_default()
 var _t: float = 0.0
 var _lure_timer: float = 4.0
 var _model: Node3D
+var _seen: bool = false
 var _eye: StandardMaterial3D
 var _player: Player
 var _gone: bool = false
@@ -62,6 +63,10 @@ func _build_model() -> void:
 	dark.rim_enabled = true
 	dark.rim = 0.4
 	dark.rim_tint = 0.2
+	# leuchtet ganz schwach von sich aus – ein blasser Umriss in der Dunkelheit
+	dark.emission_enabled = true
+	dark.emission = Color(0.42, 0.5, 0.46)
+	dark.emission_energy_multiplier = cfg.glow_energy
 	# sehr lange Beine, schmaler Rumpf leicht gebeugt, Arme bis unter die Knie
 	for s: float in [-1.0, 1.0]:
 		BuildKit.cylinder(_model, 0.05, 1.6, Vector3(s * 0.1, 0.8, 0), dark, false, Vector3.ZERO, 0.035, 6)
@@ -86,7 +91,7 @@ func _process(delta: float) -> void:
 		return
 	_update_visibility()
 	_move_timer -= delta
-	if _move_timer <= 0.0 and not _model.visible:
+	if _move_timer <= 0.0 and not _seen:
 		_move_timer = _rng.randf_range(cfg.relocate_interval.x, cfg.relocate_interval.y)
 		_relocate()
 	_lure_timer -= delta
@@ -112,8 +117,10 @@ func _update_visibility() -> void:
 	var to := (global_position + Vector3(0, 2.0, 0)) - cam.origin
 	var d := to.length()
 	var lit := _player.light_shining() and d < cfg.flashlight_distance and (-cam.basis.z).dot(to.normalized()) > 0.93
-	_model.visible = lit or d < cfg.visible_distance
-	_eye.emission_energy_multiplier = 2.5 if lit else 0.6
+	# "gesehen" (für den Ortswechsel): angeleuchtet, nah oder man schaut gerade in seine Richtung
+	_seen = lit or d < cfg.visible_distance or (d < cfg.glow_distance and (-cam.basis.z).dot(to.normalized()) > 0.75)
+	_model.visible = lit or d < cfg.glow_distance
+	_eye.emission_energy_multiplier = 2.5 if lit else 1.0
 
 
 func _lure() -> void:

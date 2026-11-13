@@ -43,6 +43,24 @@ extends Resource
 @export var traces_after_hints: float = 0.5
 @export var traces_after_visit: float = 0.85
 
+@export_group("Nächtliche Vorkommnisse (NightOmens)")
+## Wie viele pro Nacht: ruhige Nacht / alle anderen
+@export var omen_count_quiet: Vector2i = Vector2i(1, 2)
+@export var omen_count_busy: Vector2i = Vector2i(2, 4)
+## Draußen-Dinge (Lichter, fliehende Tiere, Sichtungen) kommen so viel öfter als Dinge im Haus
+@export var omen_forest_weight: float = 1.6
+## Hände durch Spalten ab Nacht …, Schaden aus der Nähe
+@export var omen_hand_from_night: int = 3
+@export var omen_hand_damage: float = 12.0
+## Kurze Sichtungen am Waldrand: Sucher ab Nacht …, Zerfleischer ab Nacht …
+@export var omen_seeker_from_night: int = 2
+@export var omen_mauler_from_night: int = 5
+## Neue Kinderzeichnung (einmalig) ab Nacht …
+@export var omen_drawing_from_night: int = 5
+## Morgens nach unruhigen Nächten stehen Dinge im Haus anders (Chance, Anzahl)
+@export var inside_change_chance: float = 0.6
+@export var inside_change_count: Vector2i = Vector2i(1, 2)
+
 @export_group("Dachboden")
 ## In Nächten mit Besuch/Jagd: Chance, dass etwas über das Dach in den Dachboden kommt (Schritte, Kratzen an der Luke).
 @export var attic_chance: float = 0.45

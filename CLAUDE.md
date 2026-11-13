@@ -345,6 +345,19 @@
 - Notizen: buero_kalender, kinder_bild, dachboden_liste, keller_hinweis, keller_mauer. Tour-Bilder 80–87. Prüfung `RegressTest._t_rooms`,
   Lauftest „Vorratsraum -> Büro“, „Wohnzimmer -> Kinderzimmer“.
 
+## Nächtliche Vorkommnisse (Christian, 13.11.2026)
+- `NightOmens` (scripts/creature/night_omens.gd): ThreatDirector plant pro Nacht `omen_count_quiet/busy` Ereignisse „omen:<art>“
+  (`_pick_omen`, Tagesgrenzen + Gewicht in ThreatConfig `omen_*`). Haus-Arten nur zuhause (`HOUSE_KINDS`), Wald-Arten überall.
+- Christians Wünsche: **Hände durch Spalten** (`GapHand`, Orte `GAPS`; ansehen → zieht sich zurück, zu nah → `omen_hand_damage`),
+  **Dinge im Haus wandern** (`InsideChanges`: Bens Teddy, Buch, Becher; morgens nach unruhigen Nächten `inside_change_*`, nachts
+  „deco_move“ nur ungesehen; E = zurückstellen), **Wald**: Lichter (`Wisp`), fliehende Rehe, kurze Sichtungen von Sucher/Zerfleischer
+  (`Glimpse`: nur Aussehen, schwaches Gegenlicht, weg nach Sekunden oder nach längerem Hinsehen); **Manipulator leuchtet schwach**
+  (`ManipulatorConfig.glow_distance/glow_energy`, Ortswechsel nur ungesehen).
+- Zehn weitere: Lampe pendelt, Klopfen wandert durch die Wände, Spieluhr im Kinderzimmer, Atem + Fingerstriche auf einer Scheibe
+  (`FogPatch`), Schatten huscht am Fenster vorbei, Küchenhahn läuft (`TapGhost`, E zudrehen), Augen unter Bens Bett
+  (`UnderBedEyes`), Vogel prallt ans Fenster, Kleiderschranktür geht auf, neue Kinderzeichnung mit fünfter Gestalt (einmalig,
+  Notiz kinder_bild2). Wecken: gap_hand, knock_walk, music_box, tap_run. Prüfung `RegressTest._t_omens`, Tour-Bilder 88/89.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
