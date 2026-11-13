@@ -57,3 +57,7 @@ static func get_default() -> DroneConfig:
 ## Grelles Licht (Stroboskop, Bewegungsmelder) in dieser Entfernung bringt sie ins Taumeln.
 @export var light_range: float = 9.0
 @export var stagger_time: float = 2.5
+
+@export_group("Tarnung im Gebüsch")
+## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
+@export var cover_sniff_range: float = 0.0

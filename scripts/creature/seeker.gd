@@ -282,6 +282,9 @@ func _sense() -> void:
 	if sig >= cfg.signature_min and d < cfg.w17_range * clampf(sig / 0.5, 0.0, 2.0):
 		_investigate(pp)
 		return
+	# getarnt im Gebüsch: nur ganz nah gewittert
+	if not _player.detectable_from(global_position, cfg.cover_sniff_range):
+		return
 	if lit and d < cfg.light_range and (camp != null or _sees(pp)):
 		_investigate(pp)
 		return

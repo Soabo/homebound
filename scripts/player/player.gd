@@ -47,6 +47,9 @@ var _ray: RayCast3D
 var _shape: CollisionShape3D
 var _capsule: CapsuleShape3D
 var _height: float = STAND_HEIGHT
+var _concealed: bool = false
+var _cover_note_msec: int = -100000
+var _rustle_msec: int = 0
 var _bob_time: float = 0.0
 var _last_prompt: String = ""
 var _gravity: float = 9.8
@@ -140,6 +143,43 @@ func is_hidden() -> bool:
 	return hidden_in != null and is_instance_valid(hidden_in) and hidden_in.call("hides_player")
 
 
+## Getarnt im dichten Gebüsch (Christian): geduckt (oder Gebüsch höher als cover_stand_height), Licht aus, fast still.
+## Gegner wittern einen dann erst aus ihrer cover_sniff_range. Wird jedes Physik-Bild neu bestimmt.
+func is_concealed() -> bool:
+	return _concealed
+
+
+## Darf ein Gegner an dieser Stelle den Spieler wahrnehmen? (versteckt = nie, getarnt = nur ganz nah)
+func detectable_from(from: Vector3, sniff_range: float) -> bool:
+	if is_hidden():
+		return false
+	if _concealed:
+		return from.distance_to(global_position) <= sniff_range
+	return true
+
+
+func _update_concealment() -> void:
+	var was := _concealed
+	_concealed = false
+	if GameState.dead or light_shining() or in_tent != null or Cabin.is_inside(global_position):
+		pass
+	else:
+		var h := Cover.at(global_position)
+		if h > 0.0:
+			var wc := TreeKit.cfg()
+			var still := Vector2(velocity.x, velocity.z).length() <= wc.cover_max_speed
+			_concealed = still and (_height < STAND_HEIGHT - 0.3 or h >= wc.cover_stand_height)
+	var now := Time.get_ticks_msec()
+	if _concealed and not was and now - _cover_note_msec > 25000:
+		_cover_note_msec = now
+		EventBus.notify("Im dichten Gebüsch – getarnt, solange du still bleibst und kein Licht machst.", 2.5)
+	# Wer schnell durchs Gebüsch läuft, raschelt (Gegner hören das)
+	if not _concealed and now - _rustle_msec > 900 and Vector2(velocity.x, velocity.z).length() > 2.6 and Cover.at(global_position) > 0.0:
+		_rustle_msec = now
+		SoundBank.play_at(get_parent(), "twig", global_position, -8.0, randf_range(0.8, 1.1))
+		EventBus.noise_made.emit(global_position, 9.0)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if look_only and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
 		var ms := mouse_sensitivity * Settings.mouse
@@ -215,6 +255,7 @@ func _update_light_hold(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_light_hold(delta)
+	_update_concealment()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 

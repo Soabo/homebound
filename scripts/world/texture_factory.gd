@@ -18,6 +18,8 @@ static func get_texture(kind: String) -> Texture2D:
 		"floor": img = _planks(true, Color(0.42, 0.28, 0.17), 11)
 		"logs": img = _logs()
 		"bark": img = _bark()
+		"birch_bark": img = _birch_bark()
+		"smooth_bark": img = _smooth_bark()
 		"stone": img = _stone(Color(0.46, 0.44, 0.41), 14)
 		"stone_dark": img = _stone(Color(0.3, 0.27, 0.25), 18)
 		"concrete": img = _stone(Color(0.55, 0.54, 0.51), 40)
@@ -143,6 +145,48 @@ static func _bark() -> Image:
 			var c := base * cols[x] * crack * (1.0 + (r.randf() - 0.5) * 0.15)
 			c.a = 1.0
 			img.set_pixel(x, y, c)
+	return img
+
+
+## Birkenrinde: fast weiß, waagrechte schwarze Striche und dunkle Flecken.
+static func _birch_bark() -> Image:
+	var img := _img()
+	var r := _rng(17)
+	for y in SIZE:
+		for x in SIZE:
+			var v := 0.82 + r.randf() * 0.1
+			img.set_pixel(x, y, Color(v, v * 0.96, v * 0.88, 1.0))
+	for i in 60:
+		var cx := r.randi_range(0, SIZE - 1)
+		var cy := r.randi_range(0, SIZE - 1)
+		var w := r.randi_range(2, 9)
+		var dark := r.randf_range(0.08, 0.3)
+		for dx in w:
+			img.set_pixel(posmod(cx + dx, SIZE), cy, Color(dark, dark, dark * 0.9, 1.0))
+			if r.randf() < 0.4:
+				img.set_pixel(posmod(cx + dx, SIZE), posmod(cy + 1, SIZE), Color(dark, dark, dark, 1.0))
+	for i in 6:
+		var cx := r.randi_range(0, SIZE - 1)
+		var cy := r.randi_range(0, SIZE - 1)
+		for dy in range(-2, 3):
+			for dx in range(-3, 4):
+				if dx * dx + dy * dy * 2 < 9:
+					img.set_pixel(posmod(cx + dx, SIZE), posmod(cy + dy, SIZE), Color(0.14, 0.13, 0.12, 1.0))
+	return img
+
+
+## Buchenrinde: glatt, hellgrau, leicht fleckig.
+static func _smooth_bark() -> Image:
+	var img := _img()
+	var r := _rng(23)
+	var blot: Array[float] = []
+	for i in 64:
+		blot.append(r.randf())
+	for y in SIZE:
+		for x in SIZE:
+			var b := blot[(y / 8) % 8 * 8 + (x / 8) % 8]
+			var v := 0.5 + b * 0.12 + r.randf() * 0.05
+			img.set_pixel(x, y, Color(v * 1.02, v, v * 0.9, 1.0))
 	return img
 
 

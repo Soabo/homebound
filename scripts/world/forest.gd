@@ -15,6 +15,7 @@ static var trees: Array[Vector4] = []
 
 func _ready() -> void:
 	name = "Forest"
+	Cover.clear()
 	_rng.seed = SEED
 	_build_trees()
 	_build_rocks()
@@ -45,92 +46,57 @@ func _build_trees() -> void:
 	trunk_mesh.rings = 1
 	var cone_mesh := _fir_layer_mesh(11)
 	var crown_mesh := _leaf_cluster_mesh()
-
-	var trunks: Array[Transform3D] = []
-	var trunk_cols: Array[Color] = []
-	var cones: Array[Transform3D] = []
-	var cone_cols: Array[Color] = []
-	var crowns: Array[Transform3D] = []
-	var crown_cols: Array[Color] = []
+	var cfg := TreeKit.cfg()
+	var p := TreeKit.Parts.new()
 	var colliders := StaticBody3D.new()
 	colliders.name = "TreeColliders"
 	add_child(colliders)
 
 	trees.clear()
+	# Arten und Jungwuchs mit eigenem Zufall – die Plätze der Bäume kommen weiter aus dem Raster
+	var kind_rng := RandomNumberGenerator.new()
+	kind_rng.seed = SEED + 77
 	var steps := int(LIMIT * 2.0 / SPACING)
 	for gz in steps + 1:
 		for gx in steps + 1:
 			var x := -LIMIT + gx * SPACING + _rng.randf_range(-1.6, 1.6)
 			var z := -LIMIT + gz * SPACING + _rng.randf_range(-1.6, 1.6)
-			if not _tree_allowed(x, z) or _rng.randf() > 0.82:
+			var allowed := _tree_allowed(x, z)
+			var roll := _rng.randf()
+			var kind_roll := kind_rng.randf()
+			var size := kind_rng.randf()
+			var yaw := kind_rng.randf() * TAU
+			var seed_value := kind_rng.randi()
+			if not allowed:
 				continue
-			# Auf Wegen keine Bäume – der Zufall läuft trotzdem gleich weiter (übriger Wald bleibt, wie er war)
-			var trail_blocked := on_trail(x, z, 1.4)
-			var n_before := [trunks.size(), cones.size(), crowns.size(), trees.size()]
 			var g := Terrain.height_at(x, z)
-			var conifer := _rng.randf() > 0.16
-			var h := _rng.randf_range(10.0, 19.0) if conifer else _rng.randf_range(8.0, 12.0)
-			var r := _rng.randf_range(0.2, 0.38)
-			var yaw := _rng.randf() * TAU
-			var bark := Color(0.9, 0.85, 0.8).lerp(Color(1.15, 1.05, 0.95), _rng.randf())
-			var trunk_h := h * (0.85 if conifer else 0.62)
-			var lean := Vector3(_rng.randf_range(-0.04, 0.04), 0, _rng.randf_range(-0.04, 0.04))
-			trunks.append(Transform3D(Basis.from_euler(Vector3(lean.x, yaw, lean.z)).scaled(Vector3(r, trunk_h, r)),
-					Vector3(x, g + trunk_h * 0.5 - 0.3, z)))
-			trunk_cols.append(bark)
-			trees.append(Vector4(x, g, z, r))
-
-			if conifer:
-				var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), _rng.randf())
-				# Viele überlappende, schlanke Kegel ergeben die typische Tannenform.
-				var layers := 9
-				var crown_r := h * _rng.randf_range(0.15, 0.19)
-				var bottom := h * _rng.randf_range(0.12, 0.22)
-				for i in layers:
-					var f := float(i) / float(layers - 1)
-					var lr := crown_r * lerpf(1.0, 0.18, f) * _rng.randf_range(0.9, 1.1)
-					var lh := h * lerpf(0.3, 0.2, f)
-					var cy := g + lerpf(bottom, h * 0.92, f) + lh * 0.5
-					var col := green * lerpf(0.8, 1.2, f)
-					col.a = 1.0
-					var tilt := Vector3(_rng.randf_range(-0.06, 0.06), yaw + i * 0.7, _rng.randf_range(-0.06, 0.06))
-					cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy - lh * 0.5, z)))
-					cone_cols.append(col)
-			else:
-				var leaf := Color(0.14, 0.2, 0.08).lerp(Color(0.24, 0.26, 0.1), _rng.randf())
-				for i in 9:
-					var off := Vector3(_rng.randf_range(-1.8, 1.8), _rng.randf_range(-1.2, 1.6), _rng.randf_range(-1.8, 1.8))
-					var s := _rng.randf_range(2.2, 3.4)
-					var rot := Basis.from_euler(Vector3(_rng.randf_range(-0.4, 0.4), _rng.randf() * TAU, _rng.randf_range(-0.4, 0.4)))
-					crowns.append(Transform3D(rot.scaled(Vector3(s, s, s)), Vector3(x, g + trunk_h - 0.4, z) + off))
-					var lc := Color(0.75, 0.85, 0.6) * _rng.randf_range(0.75, 1.15)
-					lc.a = 1.0
-					crown_cols.append(lc)
-
-			if trail_blocked:
-				trunks.resize(n_before[0])
-				trunk_cols.resize(n_before[0])
-				cones.resize(n_before[1])
-				cone_cols.resize(n_before[1])
-				crowns.resize(n_before[2])
-				crown_cols.resize(n_before[2])
-				trees.resize(n_before[3])
+			var t: Dictionary
+			if roll > 0.82:
+				# Lücke: Jungwuchs (nicht auf Wegen, nicht direkt am Garten)
+				if kind_rng.randf() > cfg.forest_young_chance or on_trail(x, z, 1.0) or Terrain.yard_distance(x, z) < 3.0:
+					continue
+				t = TreeKit.make(x, z, g, "young_spruce" if kind_rng.randf() < 0.6 else "young_leaf", size, yaw, seed_value)
+				TreeKit.build(t, 2, p, null)
 				continue
-			var cs := CollisionShape3D.new()
-			var shape := CylinderShape3D.new()
-			shape.radius = r * 1.05
-			shape.height = 4.0
-			cs.shape = shape
-			cs.position = Vector3(x, g + 1.8, z)
-			colliders.add_child(cs)
+			if on_trail(x, z, 1.4):
+				continue
+			var wet := 1.0 - smoothstep(3.0, 14.0, Terrain.stream_distance(x, z))
+			var edge := 1.0 - smoothstep(4.0, 14.0, Terrain.yard_distance(x, z))
+			t = TreeKit.make(x, z, g, TreeKit.pick_kind(kind_roll, g, wet, edge), size, yaw, seed_value)
+			TreeKit.build(t, 2, p, colliders)
+			trees.append(Vector4(x, g, z, float(t["r"])))
 
 	var bark_mat := _textured("bark", 1.5)
+	var birch_mat := _textured("birch_bark", 1.2)
+	var smooth_mat := _textured("smooth_bark", 1.6)
 	var needle_mat := _textured("needles", 0.9)
 	needle_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var leaf_mat := BuildKit.cutout_mat("leaves")
-	_add_multimesh("Trunks", trunk_mesh, trunks, trunk_cols, bark_mat, true)
-	_add_multimesh("Needles", cone_mesh, cones, cone_cols, needle_mat, true)
-	_add_multimesh("Crowns", crown_mesh, crowns, crown_cols, leaf_mat, true)
+	_add_multimesh("Trunks", trunk_mesh, p.trunks, p.trunk_cols, bark_mat, true)
+	_add_multimesh("BirchTrunks", trunk_mesh, p.birch, p.birch_cols, birch_mat, true)
+	_add_multimesh("BeechTrunks", trunk_mesh, p.smooth, p.smooth_cols, smooth_mat, true)
+	_add_multimesh("Needles", cone_mesh, p.cones, p.cone_cols, needle_mat, true)
+	_add_multimesh("Crowns", crown_mesh, p.crowns, p.crown_cols, leaf_mat, true)
 
 
 func _build_rocks() -> void:
@@ -209,32 +175,55 @@ func _build_ground_plants() -> void:
 		var gc := Color(0.75, 0.9, 0.6).lerp(Color(1.1, 1.05, 0.7), _rng.randf())
 		grass_cols.append(gc)
 
-	# Farn im Wald und am Bach
+	var cfg := TreeKit.cfg()
+	# Farn im Wald und am Bach, in Gruppen (wie echte Farnteppiche)
 	tries = 0
-	while ferns.size() < 4800 and tries < 60000:
+	while ferns.size() < cfg.valley_ferns and tries < cfg.valley_ferns * 8:
 		tries += 1
-		var by_stream := _rng.randf() < 0.3
+		var by_stream := _rng.randf() < 0.25
 		var z := _rng.randf_range(-LIMIT, LIMIT)
-		var x := Terrain.stream_x_at(z) + _rng.randf_range(-6.0, 6.0) if by_stream else _rng.randf_range(-LIMIT, LIMIT)
-		if Terrain.yard_distance(x, z) < 0.5 or _blocked_for_plants(x, z) or Terrain.stream_distance(x, z) < 1.4:
+		var x := Terrain.stream_x_at(z) + _rng.randf_range(-7.0, 7.0) if by_stream else _rng.randf_range(-LIMIT, LIMIT)
+		if Terrain.yard_distance(x, z) < 1.5 or _blocked_for_plants(x, z) or Terrain.stream_distance(x, z) < 1.4:
 			continue
-		var g := Terrain.height_at(x, z)
-		var s := _rng.randf_range(0.6, 1.2)
-		ferns.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
-		fern_cols.append(Color(0.8, 0.95, 0.7) * _rng.randf_range(0.75, 1.1))
+		for k in _rng.randi_range(cfg.fern_clump.x, cfg.fern_clump.y):
+			var fx := x + _rng.randf_range(-0.9, 0.9)
+			var fz := z + _rng.randf_range(-0.9, 0.9)
+			if k > 0 and _blocked_for_plants(fx, fz):
+				continue
+			var g := Terrain.height_at(fx, fz)
+			var s := _rng.randf_range(0.6, 1.35)
+			ferns.append(Transform3D(Basis.from_euler(Vector3(_rng.randf_range(-0.15, 0.15), _rng.randf() * TAU, 0)).scaled(Vector3(s, s, s)), Vector3(fx, g - 0.03, fz)))
+			fern_cols.append(Color(0.8, 0.95, 0.7).lerp(Color(1.0, 1.0, 0.65), _rng.randf() * 0.4) * _rng.randf_range(0.7, 1.1))
 
-	# Büsche
+	# Büsche, dazu dichte Gebüsche (zum Verstecken) und flache Brombeerhecken
+	Cover.remove_owner("valley")
+	var total := cfg.valley_bushes + cfg.valley_thickets + cfg.valley_brambles
 	tries = 0
-	while bushes.size() < 440 and tries < 8000:
+	while bushes.size() < total and tries < total * 12:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT, LIMIT)
 		var z := _rng.randf_range(-LIMIT, LIMIT)
-		if Terrain.yard_distance(x, z) < 0.8 or _blocked_for_plants(x, z) or Terrain.stream_distance(x, z) < 2.0:
+		if Terrain.yard_distance(x, z) < 1.2 or _blocked_for_plants(x, z) or Terrain.stream_distance(x, z) < 2.0:
+			continue
+		var n := bushes.size()
+		var kind := 0 if n < cfg.valley_bushes else (1 if n < cfg.valley_bushes + cfg.valley_thickets else 2)
+		var s := _rng.randf_range(0.5, 1.2) if kind == 0 else (_rng.randf_range(1.35, 2.0) if kind == 1 else _rng.randf_range(0.9, 1.4))
+		if kind == 1 and (on_trail(x, z, s * 1.4) or Terrain.yard_distance(x, z) < 4.0):
 			continue
 		var g := Terrain.height_at(x, z)
-		var s := _rng.randf_range(0.5, 1.2)
-		bushes.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
-		bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), _rng.randf()))
+		var sc := Vector3(s * 1.25, s * 0.9, s * 1.2) if kind < 2 else Vector3(s * 2.0, s * 0.45, s * 1.7)
+		bushes.append(Transform3D(Basis.from_euler(Vector3(0, _rng.randf() * TAU, 0)).scaled(sc), Vector3(x, g - 0.05, z)))
+		var col := Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), _rng.randf())
+		if kind == 1:
+			col = Color(0.38, 0.52, 0.32).lerp(Color(0.55, 0.7, 0.4), _rng.randf())
+		elif kind == 2:
+			col = Color(0.32, 0.4, 0.26).lerp(Color(0.45, 0.5, 0.3), _rng.randf())
+		bush_cols.append(col)
+		# Busch-Kern: Radius ≈ 0,72 × Breite, Höhe ≈ 1,15 × Höhe des Modells
+		var radius := 0.72 * minf(sc.x, sc.z)
+		var height := 1.15 * sc.y
+		if radius >= cfg.cover_min_radius and height >= 0.95:
+			Cover.add("valley", x, z, radius, height)
 
 	# Kleine weiße und gelbe Blüten am Waldrand und am Bach
 	tries = 0
@@ -291,7 +280,8 @@ func _build_forest_details() -> void:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
 		var z := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
-		if not _tree_allowed(x, z) or Terrain.yard_distance(x, z) < 4.0 or on_trail(x, z, 1.2):
+		# nicht auf Wegen und nicht am Bach (liegende Stämme reichen bis 3,5 m weit)
+		if not _tree_allowed(x, z) or Terrain.yard_distance(x, z) < 4.0 or on_trail(x, z, 1.2) or Terrain.stream_distance(x, z) < 6.0:
 			continue
 		spots.append(Vector3(x, Terrain.height_at(x, z), z))
 

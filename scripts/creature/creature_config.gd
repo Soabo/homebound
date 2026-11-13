@@ -89,3 +89,7 @@ static func get_default() -> CreatureConfig:
 ## Chance, dass die Lampe danach ganz ausgeht, und wie lange.
 @export var blackout_chance: float = 0.5
 @export var blackout_time: Vector2 = Vector2(1.0, 3.5)
+
+@export_group("Tarnung im Gebüsch")
+## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
+@export var cover_sniff_range: float = 2.5

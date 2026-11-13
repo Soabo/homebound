@@ -106,6 +106,8 @@ const SHOTS := [
 	{"name": "97_spur_tablet", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 0.4), "look": Vector3(-5.0, 0.8, 1.75), "story_demo": true, "tablet_tab": "tasks"},
 	{"name": "98_meldekasten", "hour": 14.0, "wendt": 3},
 	{"name": "99_kabeltrasse", "hour": 14.0, "pos": Vector3(-9.0, 0.0, -30.0), "look": Vector3(-3.0, 0.5, -41.0)},
+	{"name": "A0_wald_tal", "hour": 11.0, "pos": Vector3(-70.0, 0.0, -66.0), "look": Vector3(-92.0, 2.0, -84.0)},
+	{"name": "A1_wald_weit", "hour": 11.0, "pos": Vector3(-168.0, 0.0, 125.0), "look": Vector3(-200.0, 3.0, 146.0)},
 	{"name": "89_hand_spalte", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 3.4), "look": Vector3(-2.0, 0.6, 2.0), "lights": true, "omens": ["hand_at"]},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]

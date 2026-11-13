@@ -355,6 +355,51 @@ func _t_more() -> void:
 	await _t_hands()
 	_t_trails()
 	_t_story()
+	await _t_cover()
+
+
+## Lebendiger Wald + Tarnung im Gebüsch (13.11.): Baumarten, Jungwuchs, dichte Gebüsche, geduckt + ohne Licht = getarnt.
+func _t_cover() -> void:
+	var forest := _scene().find_child("Forest", true, false)
+	var kinds := 0
+	for n: String in ["Trunks", "BirchTrunks", "BeechTrunks", "Needles", "Crowns"]:
+		var mmi := forest.find_child(n, false, false) as MultiMeshInstance3D if forest else null
+		if mmi and mmi.multimesh.instance_count > 0:
+			kinds += 1
+	_ok("Wald: Fichten, Birken, Buchen, Laubbäume im Tal", kinds == 5)
+	_ok("Wald: viele dichte Gebüsche zum Verstecken", Cover.count() >= 200, "%d" % Cover.count())
+	var n0 := Cover.count()
+	Cover.add("test", 2000.0, 2000.0, 1.0, 1.2)
+	Cover.add(Vector2i(99, 99), 2001.0, 2001.0, 1.0, 1.2)
+	Cover.remove_owner(Vector2i(99, 99))
+	Cover.remove_owner("test")
+	_ok("Gebüsch: Stücke tragen sich sauber aus (gemischte Besitzer)", Cover.count() == n0)
+	var p := _player()
+	var keep := p.global_position
+	var b := Cover.nearest(Vector3(-40, 0, 40))
+	_ok("Wald: ein Gebüsch gefunden", b != Vector4.ZERO)
+	if b == Vector4.ZERO:
+		return
+	var at := Vector3(b.x, Terrain.height_at(b.x, b.y) + 0.1, b.y)
+	p.global_position = at
+	p.velocity = Vector3.ZERO
+	p.flashlight.visible = false
+	Input.action_press("crouch")
+	for i in 40:
+		await get_tree().physics_frame
+	_ok("Gebüsch: geduckt und ohne Licht getarnt", p.is_concealed())
+	_ok("Gebüsch: Zerfleischer wittert dich erst ganz nah", not p.detectable_from(at + Vector3(10, 0, 0), 3.0) and p.detectable_from(at + Vector3(2, 0, 0), 3.0))
+	p.flashlight.visible = true
+	for i in 3:
+		await get_tree().physics_frame
+	var lit := p.light_shining()
+	_ok("Gebüsch: mit Licht nicht getarnt", (not p.is_concealed()) if lit else true)
+	p.flashlight.visible = false
+	Input.action_release("crouch")
+	for i in 40:
+		await get_tree().physics_frame
+	_ok("Gebüsch: aufrecht im normalen Gebüsch nicht getarnt", not p.is_concealed() or b.w >= TreeKit.cfg().cover_stand_height)
+	p.global_position = keep
 
 
 ## Roter Faden der Story (13.11.): Spuren werden aktiv/erledigt, Phasen folgen, Karte, Truhe, Hinweise, Spielstand, Fäden in der Welt.

@@ -54,3 +54,7 @@ static func get_default() -> SeekerConfig:
 ## Zelt aufreißen: Chance, wenn er am Zelt ist und kein Licht/W-17 ihn lockt
 @export var tear_chance_dark: float = 0.25
 @export var tear_from_day: int = 6
+
+@export_group("Tarnung im Gebüsch")
+## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
+@export var cover_sniff_range: float = 2.2

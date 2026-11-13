@@ -44,10 +44,10 @@ func _ready() -> void:
 	rock.rings = 4
 	_meshes = {"trunk": trunk, "trunk_lod": trunk_lod, "cone": Forest._fir_layer_mesh(11), "cone_lod": Forest._fir_layer_mesh(5),
 		"crown": Forest._leaf_cluster_mesh(), "cross": Forest._cross_quad_mesh(), "rock": rock,
-		"bush0": Forest.bush_mesh(300), "bush1": Forest.bush_mesh(307)}
+		"bush0": Forest.bush_mesh(300), "bush1": Forest.bush_mesh(307), "bush2": Forest.bush_mesh(314)}
 	var needles := _textured("needles", 0.9)
 	needles.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_mats = {"bark": _textured("bark", 1.5), "needles": needles, "leaves": BuildKit.cutout_mat("leaves"),
+	_mats = {"bark": _textured("bark", 1.5), "birch": _textured("birch_bark", 1.2), "smooth": _textured("smooth_bark", 1.6), "needles": needles, "leaves": BuildKit.cutout_mat("leaves"),
 		"grass": BuildKit.cutout_mat("grass_blades"), "fern": BuildKit.cutout_mat("fern"), "stone": _textured("stone", 1.2),
 		"log": BuildKit.tex_mat("bark", 1.0), "moss": BuildKit.tex_mat("moss", 0.6)}
 
@@ -84,9 +84,11 @@ func update_around(focus: Vector3, budget_ms: float) -> void:
 			(c["node"] as Node3D).queue_free()
 			_chunks.erase(key)
 			_tree_cache.erase(key)
+			Cover.remove_owner(key)
 		elif int(c["lod"]) == 2 and d > NEAR_RADIUS + 30.0:
 			(c["node"] as Node3D).queue_free()
 			_chunks.erase(key)
+			Cover.remove_owner(key)
 	for key: Vector2i in _tree_cache.keys():
 		if _center(key).distance_to(f) > DROP_RADIUS + 64.0:
 			_tree_cache.erase(key)
@@ -150,7 +152,7 @@ class NearJob:
 	var index: int = 0
 	var root: Node3D
 	var body: StaticBody3D
-	var parts: TreeParts
+	var parts: TreeKit.Parts
 	var ground: GroundParts
 
 	func _init(k: Vector2i) -> void:
@@ -158,16 +160,6 @@ class NearJob:
 
 
 ## Bäume eines Stücks als Listen für die Sammel-Netze.
-class TreeParts:
-	extends RefCounted
-	var trunks: Array[Transform3D] = []
-	var trunk_cols: Array[Color] = []
-	var cones: Array[Transform3D] = []
-	var cone_cols: Array[Color] = []
-	var crowns: Array[Transform3D] = []
-	var crown_cols: Array[Color] = []
-
-
 ## Bodenpflanzen und Felsen eines Stücks.
 class GroundParts:
 	extends RefCounted
@@ -182,6 +174,7 @@ class GroundParts:
 	var bush_cols: Array[Color] = []
 	var rocks: Array[Transform3D] = []
 	var rock_cols: Array[Color] = []
+	var cover: Array[Vector4] = []   ## dichte Büsche zum Verstecken (x, z, Radius, Höhe)
 
 
 func _drop_job() -> void:
@@ -211,13 +204,13 @@ func _work_job(limit: int) -> bool:
 			j.body = StaticBody3D.new()
 			j.body.name = "Colliders"
 			j.root.add_child(j.body)
-			j.parts = TreeParts.new()
+			j.parts = TreeKit.Parts.new()
 			j.stage = 1
 			return cached
 		1:
 			var trees := _trees(j.key)
 			while j.index < trees.size():
-				_tree_parts(trees[j.index], 2, j.parts, j.body)
+				TreeKit.build(trees[j.index], 2, j.parts, j.body)
 				j.index += 1
 				if j.index % 6 == 0 and Time.get_ticks_usec() > limit:
 					return false
@@ -229,6 +222,8 @@ func _work_job(limit: int) -> bool:
 			var p := j.parts
 			if j.stage == 2:
 				_mm(j.root, "Trunks", _meshes["trunk"], p.trunks, p.trunk_cols, _mats["bark"], true)
+				_mm(j.root, "BirchTrunks", _meshes["trunk"], p.birch, p.birch_cols, _mats["birch"], true)
+				_mm(j.root, "BeechTrunks", _meshes["trunk"], p.smooth, p.smooth_cols, _mats["smooth"], true)
 			elif j.stage == 3:
 				_mm(j.root, "Needles", _meshes["cone"], p.cones, p.cone_cols, _mats["needles"], true)
 			else:
@@ -282,10 +277,12 @@ static func _chunk_rng(key: Vector2i, salt: int) -> RandomNumberGenerator:
 
 
 ## Bäume eines Stücks (Position, Höhe, Art) – einmal gewürfelt, solange in der Nähe gemerkt.
+## In Lücken wächst Jungwuchs (junge Fichten und Laubbäume).
 func _trees(key: Vector2i) -> Array:
 	if _tree_cache.has(key):
 		return _tree_cache[key]
 	var rng := _chunk_rng(key, 1)
+	var cfg := TreeKit.cfg()
 	var out: Array = []
 	var n := int(CHUNK / SPACING)
 	for gz in n:
@@ -293,26 +290,27 @@ func _trees(key: Vector2i) -> Array:
 			var x := key.x * CHUNK + gx * SPACING + SPACING * 0.5 + rng.randf_range(-1.6, 1.6)
 			var z := key.y * CHUNK + gz * SPACING + SPACING * 0.5 + rng.randf_range(-1.6, 1.6)
 			var roll := rng.randf()
-			var conifer_roll := rng.randf()
+			var kind_roll := rng.randf()
 			var size_roll := rng.randf()
+			var young_roll := rng.randf()
+			var yaw := rng.randf() * TAU
+			var seed_value := rng.randi()
 			if maxf(absf(x), absf(z)) <= INNER:
-				continue
-			if roll > 0.82:
 				continue
 			if Terrain.stream_distance(x, z) < 3.2 or (z > 14.0 and Terrain.road_distance(x, z) < 3.6):
 				continue
 			var g := Terrain.height_at(x, z)
-			var dens := WorldMap.tree_density(x, z, g)
-			if roll > 0.82 * dens:
-				continue
 			if Terrain.water_level_at(x, z) > g - 0.2:
 				continue
-			# höher oben fast nur Nadelbäume
-			var conifer := conifer_roll > lerpf(0.2, 0.0, smoothstep(40.0, 90.0, g))
-			var h := lerpf(10.0, 19.0, size_roll) if conifer else lerpf(8.0, 12.0, size_roll)
-			h *= lerpf(1.0, 0.6, smoothstep(100.0, 150.0, g))
-			out.append({"x": x, "z": z, "g": g, "c": conifer, "h": h, "r": lerpf(0.2, 0.38, size_roll), "yaw": rng.randf() * TAU,
-				"seed": rng.randi()})
+			var dens := WorldMap.tree_density(x, z, g)
+			if roll > 0.82 * dens:
+				# Lücke: Jungwuchs, wo noch Wald ist (nicht auf Lichtungen, Wegen, Orten)
+				if dens > 0.35 and young_roll < cfg.forest_young_chance * dens and WorldMap.trail_info(x, z).x > 1.0:
+					out.append(TreeKit.make(x, z, g, "young_spruce" if kind_roll < 0.6 or g > 90.0 else "young_leaf", size_roll, yaw, seed_value))
+				continue
+			var wet := 1.0 - smoothstep(4.0, 16.0, Terrain.stream_distance(x, z))
+			var edge := 1.0 - smoothstep(0.3, 0.8, dens)
+			out.append(TreeKit.make(x, z, g, TreeKit.pick_kind(kind_roll, g, wet, edge), size_roll, yaw, seed_value))
 	_tree_cache[key] = out
 	return out
 
@@ -327,11 +325,15 @@ func _build_chunk(key: Vector2i, lod: int) -> void:
 		body = StaticBody3D.new()
 		body.name = "Colliders"
 		root.add_child(body)
-	var p := TreeParts.new()
+	var p := TreeKit.Parts.new()
 	for t: Dictionary in trees:
-		_tree_parts(t, lod, p, body)
+		if lod == 1 and TreeKit.is_young(t):
+			continue   # Jungwuchs nur im Nahbereich
+		TreeKit.build(t, lod, p, body)
 	var shadows := lod == 2
 	_mm(root, "Trunks", _meshes["trunk" if lod == 2 else "trunk_lod"], p.trunks, p.trunk_cols, _mats["bark"], shadows)
+	_mm(root, "BirchTrunks", _meshes["trunk" if lod == 2 else "trunk_lod"], p.birch, p.birch_cols, _mats["birch"], shadows)
+	_mm(root, "BeechTrunks", _meshes["trunk" if lod == 2 else "trunk_lod"], p.smooth, p.smooth_cols, _mats["smooth"], shadows)
 	_mm(root, "Needles", _meshes["cone" if lod == 2 else "cone_lod"], p.cones, p.cone_cols, _mats["needles"], shadows)
 	_mm(root, "Crowns", _meshes["crown"], p.crowns, p.crown_cols, _mats["leaves"], shadows)
 	add_child(root)
@@ -340,57 +342,6 @@ func _build_chunk(key: Vector2i, lod: int) -> void:
 		var gp := _ground_start(key)
 		_ground_scatter(key, gp, -1)
 		_ground_finish(key, root, gp)
-
-
-## Ein Baum: Stamm, Krone (Nadel-Etagen oder Laubbüschel) und – im nahen Stück – die Kollision.
-func _tree_parts(t: Dictionary, lod: int, p: TreeParts, body: StaticBody3D) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = int(t["seed"])
-	var x: float = t["x"]
-	var z: float = t["z"]
-	var g: float = t["g"]
-	var h: float = t["h"]
-	var r: float = t["r"]
-	var yaw: float = t["yaw"]
-	var conifer: bool = t["c"]
-	var trunk_h := h * (0.85 if conifer else 0.62)
-	var bark := Color(0.9, 0.85, 0.8).lerp(Color(1.15, 1.05, 0.95), rng.randf())
-	p.trunks.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.04, 0.04), yaw, rng.randf_range(-0.04, 0.04))).scaled(Vector3(r, trunk_h, r)),
-			Vector3(x, g + trunk_h * 0.5 - 0.3, z)))
-	p.trunk_cols.append(bark)
-	if conifer:
-		var green := Color(0.06, 0.13, 0.07).lerp(Color(0.11, 0.18, 0.09), rng.randf())
-		var crown_r := h * rng.randf_range(0.15, 0.19)
-		var bottom := h * rng.randf_range(0.12, 0.22)
-		var layers := 9 if lod == 2 else 3
-		for i in layers:
-			var fr := float(i) / float(layers - 1)
-			var lr := crown_r * lerpf(1.0, 0.18, fr) * rng.randf_range(0.9, 1.1)
-			var lh := h * (lerpf(0.3, 0.2, fr) if lod == 2 else lerpf(0.45, 0.35, fr))
-			var cy := g + lerpf(bottom, h * 0.92, fr) + lh * 0.5
-			var col := green * lerpf(0.8, 1.2, fr)
-			col.a = 1.0
-			var tilt := Vector3(rng.randf_range(-0.06, 0.06), yaw + i * 0.7, rng.randf_range(-0.06, 0.06))
-			p.cones.append(Transform3D(Basis.from_euler(tilt).scaled(Vector3(lr, lh, lr)), Vector3(x, cy - lh * 0.5, z)))
-			p.cone_cols.append(col)
-	else:
-		var count := 9 if lod == 2 else 3
-		for i in count:
-			var off := Vector3(rng.randf_range(-1.8, 1.8), rng.randf_range(-1.2, 1.6), rng.randf_range(-1.8, 1.8))
-			var s := rng.randf_range(2.2, 3.4) * (1.0 if lod == 2 else 1.4)
-			var rot := Basis.from_euler(Vector3(rng.randf_range(-0.4, 0.4), rng.randf() * TAU, rng.randf_range(-0.4, 0.4)))
-			p.crowns.append(Transform3D(rot.scaled(Vector3(s, s, s)), Vector3(x, g + trunk_h - 0.4, z) + off * (1.0 if lod == 2 else 0.6)))
-			var lc := Color(0.75, 0.85, 0.6) * rng.randf_range(0.75, 1.15)
-			lc.a = 1.0
-			p.crown_cols.append(lc)
-	if body:
-		var cs := CollisionShape3D.new()
-		var shape := CylinderShape3D.new()
-		shape.radius = r * 1.05
-		shape.height = 4.0
-		cs.shape = shape
-		cs.position = Vector3(x, g + 1.8, z)
-		body.add_child(cs)
 
 
 ## Nahbereich: Felsen, Gras (auf Lichtungen dicht), Farn, Büsche, liegende Stämme.
@@ -408,7 +359,8 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 	var rng := gp.rng
 	var x0 := key.x * CHUNK
 	var z0 := key.y * CHUNK
-	while gp.tries < 900:
+	var cfg := TreeKit.cfg()
+	while gp.tries < cfg.wild_ground_tries:
 		if limit >= 0 and gp.tries % 12 == 0 and Time.get_ticks_usec() > limit:
 			return false
 		gp.tries += 1
@@ -433,25 +385,45 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			if bi.y > 0.5 and rng.randf() < 0.85:
 				continue
 			in_place = true
-		if in_place and roll >= 0.55 + meadow * 0.35:
+		var grass_share := 0.32 + meadow * 0.55
+		if in_place and roll >= grass_share:
 			continue
 		var high := smoothstep(150.0, 200.0, g)
-		if roll < 0.55 + meadow * 0.35:
+		if roll < grass_share:
 			# Gras: auf Lichtungen und am Wegrand dicht, im Wald dünn
 			if rng.randf() > 0.25 + meadow * 0.75 or high > 0.8:
 				continue
 			gp.grass.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 0.6, s * 0.65, s * 0.6)), Vector3(x, g - 0.02, z)))
 			gp.grass_cols.append(Color(0.75, 0.9, 0.6).lerp(Color(1.1, 1.05, 0.7), rng.randf()))
-		elif roll < 0.85:
+		elif roll < 0.8:
 			if meadow > 0.6 or high > 0.5:
 				continue
-			gp.ferns.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
-			gp.fern_cols.append(Color(0.8, 0.95, 0.7) * rng.randf_range(0.75, 1.1))
+			# Farn in Gruppen
+			for k in rng.randi_range(cfg.fern_clump.x, cfg.fern_clump.y):
+				var fx := x + (rng.randf_range(-0.9, 0.9) if k > 0 else 0.0)
+				var fz := z + (rng.randf_range(-0.9, 0.9) if k > 0 else 0.0)
+				var fs := s * rng.randf_range(0.8, 1.2)
+				gp.ferns.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.15, 0.15), rng.randf() * TAU, 0)).scaled(Vector3(fs, fs, fs)),
+						Vector3(fx, Terrain.height_at(fx, fz) - 0.03, fz)))
+				gp.fern_cols.append(Color(0.8, 0.95, 0.7).lerp(Color(1.0, 1.0, 0.65), rng.randf() * 0.4) * rng.randf_range(0.7, 1.1))
 		elif roll < 0.95:
-			if high > 0.6 or ti.x < s * 1.4 or WorldMap.cable_distance(x, z) < s * 1.4:   # Büsche nicht in den Weg / die Kabeltrasse
+			var thicket := rng.randf() < cfg.wild_thicket_share
+			var bramble := not thicket and rng.randf() < 0.2
+			var bs := rng.randf_range(1.35, 2.0) if thicket else s
+			if high > 0.6 or ti.x < bs * 1.4 or WorldMap.cable_distance(x, z) < bs * 1.4:   # Büsche nicht in den Weg / die Kabeltrasse
 				continue
-			gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
-			gp.bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))
+			var sc := Vector3(bs * 2.0, bs * 0.45, bs * 1.7) if bramble else Vector3(bs * 1.25, bs * 0.9, bs * 1.2)
+			gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(sc), Vector3(x, g - 0.05, z)))
+			var col := Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf())
+			if thicket:
+				col = Color(0.38, 0.52, 0.32).lerp(Color(0.55, 0.7, 0.4), rng.randf())
+			elif bramble:
+				col = Color(0.32, 0.4, 0.26).lerp(Color(0.45, 0.5, 0.3), rng.randf())
+			gp.bush_cols.append(col)
+			var radius := 0.72 * minf(sc.x, sc.z)
+			var height := 1.15 * sc.y
+			if radius >= cfg.cover_min_radius and height >= 0.95:
+				gp.cover.append(Vector4(x, z, radius, height))
 		else:
 			if rng.randf() < 0.5 and high < 0.5:
 				continue
@@ -498,19 +470,17 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 		gp.body.add_child(cs)
 	_mm(root, "Grass", _meshes["cross"], gp.grass, gp.grass_cols, _mats["grass"], false)
 	_mm(root, "Ferns", _meshes["cross"], gp.ferns, gp.fern_cols, _mats["fern"], false)
-	var b0: Array[Transform3D] = []
-	var c0: Array[Color] = []
-	var b1: Array[Transform3D] = []
-	var c1: Array[Color] = []
-	for i in gp.bushes.size():
-		if i % 2 == 0:
-			b0.append(gp.bushes[i])
-			c0.append(gp.bush_cols[i])
-		else:
-			b1.append(gp.bushes[i])
-			c1.append(gp.bush_cols[i])
-	_mm(root, "Bushes0", _meshes["bush0"], b0, c0, null, true)
-	_mm(root, "Bushes1", _meshes["bush1"], b1, c1, null, true)
+	# Drei Buschformen im Wechsel
+	for v in 3:
+		var bv: Array[Transform3D] = []
+		var cv: Array[Color] = []
+		for i in range(v, gp.bushes.size(), 3):
+			bv.append(gp.bushes[i])
+			cv.append(gp.bush_cols[i])
+		_mm(root, "Bushes%d" % v, _meshes["bush%d" % v], bv, cv, null, true)
+	Cover.remove_owner(key)
+	for c: Vector4 in gp.cover:
+		Cover.add(key, c.x, c.y, c.z, c.w)
 	_mm(root, "Rocks", _meshes["rock"], gp.rocks, gp.rock_cols, _mats["stone"], true)
 	root.add_child(gp.body)
 

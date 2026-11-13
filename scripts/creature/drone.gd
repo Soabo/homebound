@@ -260,8 +260,8 @@ func _leave() -> void:
 
 ## Im Lichtkegel und im Freien? Dann Alarm.
 func _scan() -> void:
-	if _alarm_done or _player == null or GameState.dead:
-		return
+	if _alarm_done or _player == null or GameState.dead or _player.is_concealed():
+		return   # im Gebüsch sieht der Lichtkegel von oben nichts
 	var p := _player.global_position
 	var aim := _aim_point()
 	if _aim != null:

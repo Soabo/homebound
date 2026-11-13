@@ -24,3 +24,4 @@ strike_damage = 24.0
 min_health = 15.0
 tear_chance_dark = 0.25
 tear_from_day = 6
+cover_sniff_range = 2.2

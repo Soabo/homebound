@@ -43,3 +43,4 @@ blackout_chance = 0.5
 blackout_time = Vector2(1, 3.5)
 hunt_hours = Vector2(1, 3)
 whole_night_chance = 0.2
+cover_sniff_range = 2.5

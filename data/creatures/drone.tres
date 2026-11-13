@@ -29,3 +29,4 @@ hear_hold = Vector2(4, 7)
 jammer_range = 26.0
 light_range = 9.0
 stagger_time = 2.5
+cover_sniff_range = 0.0

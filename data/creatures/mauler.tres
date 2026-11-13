@@ -26,3 +26,4 @@ return_chance = 0.45
 bright_radius = 9.0
 tooth_chance = 0.5
 cue_interval = Vector2(3, 7)
+cover_sniff_range = 3.0

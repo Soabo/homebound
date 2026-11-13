@@ -66,3 +66,7 @@ static func get_default() -> MaulerConfig:
 @export_group("Geräusche")
 ## Abstand der Warnzeichen beim Heranschleichen (Äste, Hecheln) in Sekunden
 @export var cue_interval: Vector2 = Vector2(3.0, 7.0)
+
+@export_group("Tarnung im Gebüsch")
+## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
+@export var cover_sniff_range: float = 3.0

@@ -413,8 +413,8 @@ func _player_outside() -> bool:
 
 ## Sicht: Reichweite hängt davon ab, ob der Spieler Licht macht.
 func _can_see_player() -> bool:
-	if _player.is_hidden():
-		return false
+	if not _player.detectable_from(global_position, cfg.cover_sniff_range):
+		return false   # versteckt oder getarnt im Gebüsch
 	var d := _dist()
 	var lit := _player.light_shining() or _player_near_light()
 	var range_m := 34.0 if lit else 13.0

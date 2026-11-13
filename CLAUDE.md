@@ -407,6 +407,18 @@
 - Offen: Abstieg in den Brunnen (`flag:well_descended`) und die Enden – DataTest führt das als bekannt offen.
   Prüfung `RegressTest._t_story`, Tour-Bilder 96–99.
 
+## Lebendiger Wald + Tarnung im Gebüsch (Christian, 13.11.2026)
+- `TreeKit` (scripts/world/tree_kit.gd) baut für Tal (`Forest`) und großen Wald (`WildForest`) dieselben Arten: Fichte, Kiefer
+  (Schirmkrone, rötlicher Stamm), Buche (glatte graue Rinde, breite Krone), Birke (weiße Rinde, schmale helle Krone), alter Laubbaum,
+  Dürrständer (kahle Äste) und Jungwuchs (junge Fichte/junger Laubbaum in Lücken, ohne Kollision, nur nah). Texturen birch_bark,
+  smooth_bark. Anteile, Jungwuchs, Farn-/Buschzahlen: WorldConfig `forest_*`, `valley_*`, `wild_*`, `fern_clump` (world_state.tres).
+- Farne wachsen in Gruppen, dazu dichte Gebüsche (Thickets) und flache Brombeerhecken. Talbäume behalten ihre Plätze (Arten aus eigenem Zufall).
+- Tarnung: `Cover` (scripts/world/cover.gd) – große Büsche tragen sich ein (Tal „valley“, Waldstücke mit ihrem Schlüssel, beim Entladen raus).
+  `Player.is_concealed()`: im Kern eines dichten Gebüschs, geduckt (oder Gebüsch ≥ `cover_stand_height`), Licht aus, langsamer als
+  `cover_max_speed`. `Player.detectable_from(pos, sniff)`: Kreatur/Zerfleischer/Sucher (Config `cover_sniff_range` 2,5/3,0/2,2 m) nehmen
+  einen dann nur ganz nah wahr, die Drohne gar nicht. Wer rennt, raschelt (Geräusch 9 m). W-17/Signatur lockt den Sucher trotzdem.
+- Prüfung `RegressTest._t_cover`, Tour-Bilder A0/A1.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

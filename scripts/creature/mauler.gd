@@ -402,8 +402,8 @@ func _bright_at(p: Vector3) -> Vector3:
 
 
 func _player_reachable() -> bool:
-	if GameState.dead or _player.is_hidden():
-		return false
+	if GameState.dead or not _player.detectable_from(global_position, cfg.cover_sniff_range):
+		return false   # versteckt oder getarnt im Gebüsch – er schleicht nur herum
 	var pp := _player.global_position
 	if Cabin.is_inside(pp) or Shed.is_inside(pp):
 		return false

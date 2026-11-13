@@ -36,3 +36,32 @@ extends Resource
 ## Mindestabstand zwischen zwei Wucherungen, Wirkbereich der Myzel-Sperre.
 @export var patch_spacing: float = 3.0
 @export var barrier_range: float = 15.0
+
+@export_group("Wald (Baumarten, Dichte)")
+## Anteile der Baumarten im Tiefland (oben am Berg mehr Fichte und Kiefer, am Wasser und Waldrand mehr Birke).
+@export var forest_spruce: float = 0.46
+@export var forest_pine: float = 0.12
+@export var forest_beech: float = 0.15
+@export var forest_birch: float = 0.12
+@export var forest_leaf: float = 0.07
+@export var forest_dead: float = 0.035
+## Chance auf Jungwuchs (junge Fichte / junger Laubbaum) in einer Lücke zwischen den Bäumen.
+@export var forest_young_chance: float = 0.45
+## Tal: wie viele Farne, Büsche, dichte Gebüsche, Brombeerhecken.
+@export var valley_ferns: int = 13000
+@export var valley_bushes: int = 1100
+@export var valley_thickets: int = 260
+@export var valley_brambles: int = 220
+## Großer Wald: Versuche pro 64-m-Stück (mehr = dichter), Farne wachsen in Gruppen von so vielen.
+@export var wild_ground_tries: int = 1500
+@export var fern_clump: Vector2i = Vector2i(2, 5)
+## Anteil dichter Gebüsche unter den Büschen im großen Wald.
+@export var wild_thicket_share: float = 0.3
+
+@export_group("Tarnung im Gebüsch")
+## Ab dieser Größe gilt ein Busch als dicht genug zum Verstecken (Radius in m).
+@export var cover_min_radius: float = 0.75
+## Man muss geduckt sein, außer das Gebüsch ist mindestens so hoch (m).
+@export var cover_stand_height: float = 1.9
+## Wer sich schneller bewegt, raschelt und ist nicht getarnt (m/s).
+@export var cover_max_speed: float = 1.3
