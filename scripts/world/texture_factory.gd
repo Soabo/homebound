@@ -30,6 +30,7 @@ static func get_texture(kind: String) -> Texture2D:
 		"rug": img = _rug()
 		"metal": img = _metal()
 		"grass_ground": img = _ground()
+		"path_ground": img = _path_ground()
 		"fern": img = _fern()
 		"grass_blades": img = _grass_blades()
 		"water": img = _water()
@@ -310,6 +311,51 @@ static func _ground() -> Image:
 			if r.randf() < 0.05:
 				v = 1.3
 			img.set_pixel(x, y, Color(v, v, v * 0.95, 1.0))
+	return img
+
+
+## Waldweg: festgetretene Erde mit Kieseln (Graustufen, die Farbe kommt vom Gelände).
+## Im Alpha-Kanal liegt weiches, kachelbares Rauschen – damit franst der Wegrand im Boden-Shader aus.
+static func _path_ground() -> Image:
+	var img := _img()
+	var r := _rng(53)
+	for y in SIZE:
+		for x in SIZE:
+			var v := 0.82 + r.randf() * 0.22
+			img.set_pixel(x, y, Color(v, v * 0.98, v * 0.95, 1.0))
+	# Kiesel: helle Kerne mit dunklem Schatten unten rechts
+	for i in 70:
+		var cx := r.randi_range(0, SIZE - 1)
+		var cy := r.randi_range(0, SIZE - 1)
+		var rad := r.randf_range(0.8, 2.2)
+		var lv := r.randf_range(1.05, 1.35)
+		for dy in range(-3, 4):
+			for dx in range(-3, 4):
+				var d := Vector2(dx, dy).length()
+				var px := posmod(cx + dx, SIZE)
+				var py := posmod(cy + dy, SIZE)
+				var c := img.get_pixel(px, py)
+				if d <= rad:
+					img.set_pixel(px, py, Color(lv, lv * 0.98, lv * 0.94, 1.0))
+				elif d <= rad + 1.0 and dx + dy > 0:
+					img.set_pixel(px, py, Color(c.r * 0.6, c.g * 0.6, c.b * 0.6, 1.0))
+	# weiches Rauschen (8x8-Gitter, kachelbar) in den Alpha-Kanal
+	var grid: Array[float] = []
+	for i in 64:
+		grid.append(r.randf())
+	for y in SIZE:
+		for x in SIZE:
+			var gx := x / 8.0
+			var gy := y / 8.0
+			var ix := int(gx)
+			var iy := int(gy)
+			var fx := smoothstep(0.0, 1.0, gx - ix)
+			var fy := smoothstep(0.0, 1.0, gy - iy)
+			var a := lerpf(grid[iy % 8 * 8 + ix % 8], grid[iy % 8 * 8 + (ix + 1) % 8], fx)
+			var b := lerpf(grid[(iy + 1) % 8 * 8 + ix % 8], grid[(iy + 1) % 8 * 8 + (ix + 1) % 8], fx)
+			var c := img.get_pixel(x, y)
+			c.a = lerpf(a, b, fy)
+			img.set_pixel(x, y, c)
 	return img
 
 

@@ -448,7 +448,7 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			gp.ferns.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
 			gp.fern_cols.append(Color(0.8, 0.95, 0.7) * rng.randf_range(0.75, 1.1))
 		elif roll < 0.95:
-			if high > 0.6:
+			if high > 0.6 or ti.x < s * 1.4:   # Büsche nicht in den Weg
 				continue
 			gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
 			gp.bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))
@@ -456,6 +456,8 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			if rng.randf() < 0.5 and high < 0.5:
 				continue
 			var rs := s * (1.0 + high * 0.8)
+			if ti.x < rs * 1.7 + 0.3:   # Felsen nicht auf oder direkt am Weg
+				continue
 			var sc := Vector3(rs * rng.randf_range(1.0, 1.7), rs * rng.randf_range(0.5, 0.85), rs * rng.randf_range(1.0, 1.5))
 			gp.rocks.append(Transform3D(Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4)).scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
 			gp.rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))

@@ -104,6 +104,9 @@ static func stream_distance(x: float, z: float) -> float:
 const BED_STEP := 1.0
 ## Wasserspiegel über dem Bachbett, halbe Wasserbreite, Uferhöhe über dem Bett
 const WATER_LEVEL := 0.22
+## Wege liegen etwas tiefer als der Waldboden (Meter)
+const TRAIL_DIP_PATH := 0.16
+const TRAIL_DIP_TRACK := 0.22
 const WATER_HALF_WIDTH := 1.35
 const BANK_HEIGHT := 0.7
 const BED_START := STREAM_START
@@ -212,11 +215,23 @@ static func _local_height(x: float, z: float) -> float:
 	if z > 16.0:
 		var road := 1.0 - smoothstep(2.2, 6.0, road_distance(x, z))
 		h = lerpf(h, h * 0.2, road)
-	# Waldwege: kleine Unebenheiten glätten
+	# Waldwege: kleine Unebenheiten glätten und den Weg leicht in den Boden treten
 	var ti := WorldMap.trail_info(x, z)
 	if ti.x < 3.0:
 		h -= _detail.get_noise_2d(x, z) * 0.35 * (1.0 - smoothstep(0.0, 3.0, ti.x))
+		h -= trail_dip(x, z, ti, d)
 	return h
+
+
+## Wie tief der Weg hier im Boden liegt (Fahrweg tiefer als Pfad, nicht im Garten, an Bach und Zufahrt flach).
+static func trail_dip(x: float, z: float, ti: Vector2, yard_d: float) -> float:
+	if ti.y < 0.0 or ti.y > 1.5 or ti.x > 1.0:
+		return 0.0
+	var dip := (TRAIL_DIP_TRACK if ti.y > 0.5 else TRAIL_DIP_PATH) * (1.0 - smoothstep(-0.6, 1.0, ti.x))
+	dip *= smoothstep(1.0, 4.0, yard_d) * smoothstep(7.0, 11.0, stream_distance(x, z))
+	if z > 14.0:
+		dip *= smoothstep(3.0, 6.0, road_distance(x, z))
+	return dip
 
 
 ## Wasserspiegel an dieser Stelle (Bach, See, Tümpel) oder -INF.
@@ -243,12 +258,19 @@ static func ground_color(x: float, z: float, h: float, ny: float, with_density: 
 	var road := 1.0 - smoothstep(1.6, 3.2, road_distance(x, z))
 	if z > 6.5:
 		col = col.lerp(Color(0.3, 0.24, 0.16), road)
+	# Waldwege (Erde), Schotterwege (Kies), Autobahn – überall, auch im Tal (nicht im Garten); Farbe kommt nach dem Bachufer
+	var path_amount := 0.0
+	var path_col := Color()
+	var ti := WorldMap.trail_info(x, z)
+	if ti.x < 1.4 and d > 0.5:
+		var kind := clampi(int(ti.y), 0, 2)
+		path_col = [Color(0.25, 0.19, 0.12), Color(0.34, 0.31, 0.25), Color(0.2, 0.2, 0.21)][kind] as Color
+		path_col = path_col.lerp(path_col * 0.8, n)
+		path_amount = (1.0 - smoothstep(-0.5, 1.4, ti.x)) * smoothstep(0.5, 2.5, d)
+		if kind < 2:
+			# Wegrand: etwas Moos und Laub, die Mitte ist festgetreten
+			col = col.lerp(Color(0.13, 0.15, 0.07), (1.0 - smoothstep(0.4, 1.4, absf(ti.x))) * 0.35)
 	if far:
-		# Waldwege, Schotterwege, Autobahn
-		var ti := WorldMap.trail_info(x, z)
-		if ti.x < 1.2:
-			var path_col := [Color(0.27, 0.21, 0.14), Color(0.36, 0.33, 0.27), Color(0.2, 0.2, 0.21)][clampi(int(ti.y), 0, 2)] as Color
-			col = col.lerp(path_col, 1.0 - smoothstep(-0.4, 1.2, ti.x))
 		# Bergwiese oberhalb des Waldes, Fels nur an steilen Stellen und ganz oben
 		col = col.lerp(Color(0.2, 0.22, 0.09).lerp(Color(0.26, 0.25, 0.12), n), smoothstep(115.0, 160.0, h) * 0.8)
 		var rock := maxf(1.0 - smoothstep(0.55, 0.72, ny), smoothstep(190.0, 240.0, h) * 0.85)
@@ -266,6 +288,10 @@ static func ground_color(x: float, z: float, h: float, ny: float, with_density: 
 	if sd < 6.0:
 		col = col.lerp(Color(0.14, 0.2, 0.08), 1.0 - smoothstep(2.5, 5.0, sd))
 		col = col.lerp(Color(0.22, 0.2, 0.16), 1.0 - smoothstep(1.0, 2.0, sd))
+	if path_amount > 0.0:
+		# im Bachbett selbst kein Weg (dort liegt der Steg)
+		path_amount *= smoothstep(1.2, 2.2, sd)
+		col = col.lerp(path_col, path_amount)
 	# Seeufer und Seegrund: Schlamm
 	var wl := WorldMap.water_level(x, z) if far else -INF
 	if wl > -INF and h < wl + 0.4:
@@ -274,7 +300,7 @@ static func ground_color(x: float, z: float, h: float, ny: float, with_density: 
 	var cd := Vector2(x - CrashSite.SITE.x, z - CrashSite.SITE.z).length()
 	if cd < 10.0:
 		col = col.lerp(Color(0.03, 0.028, 0.025), 1.0 - smoothstep(4.0, 10.0, cd))
-	col.a = (WorldMap.tree_density(x, z, h) if far else smoothstep(4.0, 12.0, d)) if with_density else 1.0
+	col.a = (WorldMap.tree_density(x, z, h) if far else smoothstep(4.0, 12.0, d)) if with_density else 1.0 - path_amount
 	return col
 
 
@@ -282,7 +308,7 @@ static func ground_color(x: float, z: float, h: float, ny: float, with_density: 
 
 var _chunks: Dictionary = {}          ## Vector2i -> Node3D
 var _job: Dictionary = {}             ## laufendes Nachladen
-var _ground_mat: StandardMaterial3D
+var _ground_mat: ShaderMaterial
 var _far_mat: ShaderMaterial
 var _water_mat: StandardMaterial3D
 var _flow: float = 0.0
@@ -295,11 +321,11 @@ func _ready() -> void:
 	_born = Time.get_ticks_msec()
 	WorldMap.ensure()
 	_ensure_noise()
-	_ground_mat = StandardMaterial3D.new()
-	_ground_mat.vertex_color_use_as_albedo = true
-	_ground_mat.roughness = 1.0
-	_ground_mat.albedo_texture = TextureFactory.get_texture("grass_ground")
-	_ground_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	# Boden-Shader: Waldboden und auf Wegen Erde/Kies (Anteil im Alpha der Eckpunktfarbe)
+	_ground_mat = ShaderMaterial.new()
+	_ground_mat.shader = load("res://shaders/ground.gdshader")
+	_ground_mat.set_shader_parameter("grass_tex", TextureFactory.get_texture("grass_ground"))
+	_ground_mat.set_shader_parameter("path_tex", TextureFactory.get_texture("path_ground"))
 	_build_water_material()
 	# Das Tal sofort (Spieler, Garten und Hütte stehen darauf)
 	for cz in range(-CORE_CHUNKS, CORE_CHUNKS):

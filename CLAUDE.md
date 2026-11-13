@@ -377,6 +377,20 @@
   und zweiter Monitor `OfficeMonitorStation` (MonitorStation hat jetzt `screen_rot_y`, `chair_feet`, `face_dir`).
 - Prüfung `RegressTest._t_siege` (inkl. Echtzeit-Lauf mit schnellen Werten).
 
+## Waldwege (Christian, 13.11.2026)
+- Wege sind jetzt überall sichtbar, auch im Tal: Boden-Shader `shaders/ground.gdshader` mischt Waldboden und Wegtextur
+  (`TextureFactory` "path_ground"), Anteil im Alpha der Eckpunktfarbe (`Terrain.ground_color`). Wege liegen etwas tiefer
+  (`Terrain.trail_dip`, `TRAIL_DIP_PATH/TRACK`), nicht im Garten, an Bach und Zufahrt flach. Talbäume/Felsen/Pflanzen meiden Wege
+  (`Forest.on_trail`; der Zufall der übrigen Bäume bleibt gleich).
+- Neue Wege in map.json: Bachpfad (`hoehle` + `bachpfad`, Hochsitz → Steg → Höhle → Ostufer → Ostweg), Kleiner Rundweg (`rundweg`,
+  Lagerweg → an der Absturzstelle vorbei → Kapellenweg), Waldpfad (Imkerei ↔ Kapelle), Hangpfad (Friedhof ↔ Windwurf).
+  Lagerweg beginnt jetzt an der Zufahrt. Wege haben optional `name`, `mark` (Farbe der Markierung), `board` (Zeile der Wandertafel).
+- `WorldTrails`: Stege reichen von Ufer zu Ufer (`_bank_reach`, geneigt, Pfähle ins Bachbett), Markierungspfosten (MultiMesh je 128 m),
+  Wanderbänke mit `Seat`, Holzpolter an Fahrwegen, Rundholzstufen an steilen Pfaden, offene Schranken, wo Fahrwege von der Zufahrt
+  abgehen, Wandertafel `TrailBoard` an der Zufahrt. Abstände in map.json `trail_kit`. Listen `benches/markers/bridges`.
+- Draufsicht zum Planen (Sekunden): `godot --headless --path . res://scenes/dev/map_dump.tscn -- --out=/tmp/map.png --cx=0 --cz=0 --size=300 --px=600`.
+  Prüfung `RegressTest._t_trails`, Tour-Bilder 90–95.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

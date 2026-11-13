@@ -353,6 +353,39 @@ func _t_more() -> void:
 	await _t_omens()
 	await _t_siege()
 	await _t_hands()
+	_t_trails()
+
+
+## Waldwege (13.11.): sichtbar und vertieft auch im Tal, keine Bäume darauf, Stege von Ufer zu Ufer, Ausstattung.
+func _t_trails() -> void:
+	var on_path := Vector2(5.0, -40.0)   # Nordweg kurz hinter dem Gartentor
+	var dip := Terrain.trail_dip(on_path.x, on_path.y, WorldMap.trail_info(on_path.x, on_path.y), 20.0)
+	_ok("Weg im Tal liegt tiefer als der Waldboden", dip > 0.1, "%.2f m" % dip)
+	var col := Terrain.ground_color(on_path.x, on_path.y, 1.0, 1.0)
+	_ok("Weg im Tal ist als Weg eingefärbt (Alpha = Wegboden)", col.a < 0.3, "a=%.2f" % col.a)
+	var on_trees := 0
+	for t: Vector4 in Forest.trees:
+		if WorldMap.trail_info(t.x, t.z).x < 0.8:
+			on_trees += 1
+	_ok("Keine Talbäume auf Wegen", on_trees == 0, "%d Bäume" % on_trees)
+	_ok("Stege vorhanden (Nordweg, Ostweg, Höhle)", WorldTrails.bridges.size() >= 3)
+	var bad := []
+	for b: Dictionary in WorldTrails.bridges:
+		for k: String in ["a", "b"]:
+			var e: Vector3 = b[k]
+			if absf(e.y - Terrain.height_at(e.x, e.z)) > 0.25:
+				bad.append("%s %s" % [k, e])
+		if (b["a"] as Vector3).y < (b["pos"] as Vector3).y + 0.25:
+			bad.append("zu tief %s" % b["pos"])
+	_ok("Stege liegen auf beiden Ufern auf (nicht unten im Bach)", bad.is_empty(), str(bad))
+	_ok("Wanderbänke und Markierungspfosten stehen", WorldTrails.benches.size() >= 15 and WorldTrails.markers.size() >= 100,
+		"%d Bänke, %d Pfosten" % [WorldTrails.benches.size(), WorldTrails.markers.size()])
+	_ok("Wandertafel an der Zufahrt", _scene().find_child("TrailBoard", true, false) != null)
+	var benches_blocked := 0
+	for b: Vector3 in WorldTrails.benches:
+		if WorldMap.trail_info(b.x, b.z).x < 0.6:
+			benches_blocked += 1
+	_ok("Bänke stehen neben dem Weg, nicht darauf", benches_blocked == 0)
 
 
 ## Belagerungsnacht (13.11.): Aufgaben, Gegenmittel, Fehlschläge, Verstecken, Ende.

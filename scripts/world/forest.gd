@@ -64,6 +64,9 @@ func _build_trees() -> void:
 			var z := -LIMIT + gz * SPACING + _rng.randf_range(-1.6, 1.6)
 			if not _tree_allowed(x, z) or _rng.randf() > 0.82:
 				continue
+			# Auf Wegen keine Bäume – der Zufall läuft trotzdem gleich weiter (übriger Wald bleibt, wie er war)
+			var trail_blocked := on_trail(x, z, 1.4)
+			var n_before := [trunks.size(), cones.size(), crowns.size(), trees.size()]
 			var g := Terrain.height_at(x, z)
 			var conifer := _rng.randf() > 0.16
 			var h := _rng.randf_range(10.0, 19.0) if conifer else _rng.randf_range(8.0, 12.0)
@@ -104,6 +107,15 @@ func _build_trees() -> void:
 					lc.a = 1.0
 					crown_cols.append(lc)
 
+			if trail_blocked:
+				trunks.resize(n_before[0])
+				trunk_cols.resize(n_before[0])
+				cones.resize(n_before[1])
+				cone_cols.resize(n_before[1])
+				crowns.resize(n_before[2])
+				crown_cols.resize(n_before[2])
+				trees.resize(n_before[3])
+				continue
 			var cs := CollisionShape3D.new()
 			var shape := CylinderShape3D.new()
 			shape.radius = r * 1.05
@@ -147,6 +159,11 @@ func _build_rocks() -> void:
 		rocks.append(Transform3D(Basis.from_euler(Vector3(_rng.randf() * 0.4, _rng.randf() * TAU, _rng.randf() * 0.4)).scaled(scale),
 				Vector3(x, g + scale.y * 0.25, z)))
 		var mossy := _rng.randf() < 0.6
+		if on_trail(x, z, s * 1.6):
+			rocks.pop_back()
+			_rng.randf()
+			placed += 1   # zählt mit, damit der Zufall danach gleich bleibt
+			continue
 		cols.append(Color(0.75, 0.75, 0.72) * _rng.randf_range(0.8, 1.1) if not mossy else Color(0.45, 0.6, 0.32) * _rng.randf_range(0.8, 1.1))
 		if s > 0.7 and not near_stream and Terrain.stream_distance(x, z) > 4.5:
 			var cs := CollisionShape3D.new()
@@ -274,7 +291,7 @@ func _build_forest_details() -> void:
 		tries += 1
 		var x := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
 		var z := _rng.randf_range(-LIMIT + 4, LIMIT - 4)
-		if not _tree_allowed(x, z) or Terrain.yard_distance(x, z) < 4.0:
+		if not _tree_allowed(x, z) or Terrain.yard_distance(x, z) < 4.0 or on_trail(x, z, 1.2):
 			continue
 		spots.append(Vector3(x, Terrain.height_at(x, z), z))
 
@@ -557,7 +574,14 @@ static func bush_mesh(seed_value: int) -> ArrayMesh:
 
 
 ## Keine Pflanzen auf Wegen, im Haus, im Schuppen oder im Wasser.
+## Liegt der Punkt auf einem Waldweg (oder näher als margin am Wegrand)?
+static func on_trail(x: float, z: float, margin: float = 0.0) -> bool:
+	return WorldMap.trail_info(x, z).x < margin
+
+
 static func _blocked_for_plants(x: float, z: float) -> bool:
+	if on_trail(x, z, 0.2):
+		return true
 	if absf(x) < 7.2 and z > -5.2 and z < 7.8:
 		return true
 	if absf(x - Shed.ORIGIN.x) < 2.6 and absf(z - Shed.ORIGIN.z) < 2.3:

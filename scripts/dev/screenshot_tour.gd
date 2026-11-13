@@ -96,6 +96,12 @@ const SHOTS := [
 	{"name": "86_keller", "hour": 14.0, "pos": Vector3(0.2, -2.1, -2.6), "look": Vector3(1.6, -1.3, -3.6), "lights": true, "cellar_open": true},
 	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},
 	{"name": "88_nacht_waldrand", "hour": 23.5, "pos": Vector3(-7.4, 0.45, -2.0), "look": Vector3(-25.0, 1.5, -2.5), "omens": ["seeker_at", "wisps_at"]},
+	{"name": "90_weg_nordtor", "hour": 15.0, "pos": Vector3(4.6, 0.0, -14.0), "look": Vector3(5.5, 1.0, -40.0)},
+	{"name": "91_wandertafel", "hour": 15.0, "pos": Vector3(-3.5, 0.0, 26.5), "look": Vector3(-9.0, 1.3, 22.5)},
+	{"name": "92_steg_ostweg", "hour": 15.0, "pos": Vector3(16.0, 0.0, 66.0), "look": Vector3(32.0, 3.5, 73.5)},
+	{"name": "93_steg_nordweg", "hour": 15.0, "pos": Vector3(25.0, 0.0, -118.0), "look": Vector3(36.0, 3.0, -129.0)},
+	{"name": "94_wanderbank", "hour": 15.0, "bench": true},
+	{"name": "95_rundweg", "hour": 15.0, "pos": Vector3(-63.4, 0.0, 32.0), "look": Vector3(-63.5, 1.0, 5.0)},
 	{"name": "89_hand_spalte", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 3.4), "look": Vector3(-2.0, 0.6, 2.0), "lights": true, "omens": ["hand_at"]},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
@@ -136,6 +142,16 @@ func _run() -> void:
 			var fh := StreamCave.floor_height()
 			pos.y = fh + 0.05
 			look.y += fh
+		elif shot.get("bench", false):
+			# nächste Wanderbank zur Hütte, von vorn schräg angeschaut
+			var best: Node3D = null
+			for n: Node in get_tree().root.find_children("TrailBench_*", "", true, false):
+				if best == null or (n as Node3D).global_position.length() < best.global_position.length():
+					best = n as Node3D
+			if best:
+				pos = best.global_transform * Vector3(1.6, 0, 3.4)
+				pos.y = Terrain.height_at(pos.x, pos.z)
+				look = best.global_position + Vector3(0, 0.5, 0)
 		elif shot.has("place"):
 			var base := WorldMap.place_point(shot["place"])
 			pos = base + shot.get("off", Vector3.ZERO)
