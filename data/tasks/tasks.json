@@ -1,17 +1,6 @@
 {
-  "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG day_start_hour: ab dieser Uhrzeit zählt für Aufgaben der neue Tag (neue Ziele/Routinen erst dann).",
+  "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG, note:NOTIZ (gelesen), step:SPUR (Story erledigt), phase>=N. Die Story-Orte stehen als Spuren in data/story/story.json, nicht hier. day_start_hour: ab dieser Uhrzeit zählt für Aufgaben der neue Tag (neue Ziele/Routinen erst dann).",
   "goals": [
-    {
-      "id": "moving_box",
-      "title": "Der Umzugskarton",
-      "text": "Unter dem Funktisch in der Werkstatt steht noch mein Karton mit Sachen aus der alten Arbeit. Ich habe ihn nie ausgepackt.",
-      "unlock": [
-        "got:metal_fragment"
-      ],
-      "done": [
-        "got:w17"
-      ]
-    },
     {
       "id": "power",
       "title": "Strom sichern",
@@ -148,17 +137,6 @@
       ]
     },
     {
-      "id": "crash",
-      "title": "Den Lichtern nachgehen",
-      "text": "Im Waldkurier stand etwas von Lichtern über dem Tal. Im Nordwesten des Waldes scheint etwas heruntergekommen zu sein.",
-      "unlock": [
-        "day>=2"
-      ],
-      "done": [
-        "flag:visit_crash"
-      ]
-    },
-    {
       "id": "analyzer",
       "title": "Ein Analysegerät bauen",
       "text": "Die Funde sind seltsam. Mit dem alten Funkgerät in der Werkstatt ließe sich ein Messgerät basteln (Werkbank) – aber dafür bräuchte ich ein Teil, das fremde Signale versteht. In meinem alten Umzugskarton unter dem Funktisch liegt noch Kram aus der Firma.",
@@ -178,17 +156,6 @@
       ],
       "done": [
         "analyses>=3"
-      ]
-    },
-    {
-      "id": "tower",
-      "title": "Den Hochsitz finden",
-      "text": "Der Förster hatte einen Hochsitz im Norden des Waldes. Vielleicht hat er etwas gesehen.",
-      "unlock": [
-        "day>=3"
-      ],
-      "done": [
-        "flag:visit_tower"
       ]
     },
     {
@@ -214,28 +181,6 @@
       ]
     },
     {
-      "id": "cave",
-      "title": "Die Höhle am Bach",
-      "text": "Bachaufwärts im Nordosten soll eine Höhle sein.",
-      "unlock": [
-        "day>=5"
-      ],
-      "done": [
-        "flag:visit_cave"
-      ]
-    },
-    {
-      "id": "structure",
-      "title": "Das Summen im Westen",
-      "text": "Im Westen summt etwas, das nicht dorthin gehört.",
-      "unlock": [
-        "day>=6"
-      ],
-      "done": [
-        "flag:visit_structure"
-      ]
-    },
-    {
       "id": "filter",
       "title": "Wasser filtern",
       "text": "Das Wasser hat sich verfärbt. Ohne Wasserfilter (Werkbank) wird einem davon schlecht.",
@@ -247,28 +192,6 @@
       ]
     },
     {
-      "id": "explore_signs",
-      "title": "Den Wegweisern folgen",
-      "text": "Hinter dem Grundstück beginnen Waldwege. An den Kreuzungen stehen Wegweiser – die Kapelle und der Friedhof der Hochsitze sind nicht weit.",
-      "unlock": [
-        "day>=2"
-      ],
-      "done": [
-        "flag:visit_kapelle"
-      ]
-    },
-    {
-      "id": "explore_bees",
-      "title": "Die Imkerei Brandl",
-      "text": "Westlich der Hütte gab es eine Imkerei. Vielleicht ist dort noch Honig – und der alte Brandl wusste etwas.",
-      "unlock": [
-        "day>=3"
-      ],
-      "done": [
-        "flag:visit_imkerei"
-      ]
-    },
-    {
       "id": "binoculars",
       "title": "Ein Fernglas",
       "text": "Mit einem Fernglas (Taste Q halten) sieht man weit über das Tal. Jäger lassen so etwas an ihren Hochsitzen liegen.",
@@ -277,28 +200,6 @@
       ],
       "done": [
         "got:binoculars"
-      ]
-    },
-    {
-      "id": "messstelle",
-      "title": "Messstelle 4-Nord",
-      "text": "Der Weg nach Norden führt an einem eingezäunten Container vorbei. ReZort Industries – meine alte Firma. Was machen die hier im Wald?",
-      "unlock": [
-        "flag:visit_hochsitz"
-      ],
-      "done": [
-        "flag:visit_messstelle"
-      ]
-    },
-    {
-      "id": "funkmast",
-      "title": "Den Funkmast reparieren",
-      "text": "Auf dem Kahlen Kopf steht ein Funkmast. Wenn er wieder sendet, erreiche ich vielleicht jemanden. Ich brauche Funkteile und eine Batterie.",
-      "unlock": [
-        "flag:visit_messstelle"
-      ],
-      "done": [
-        "flag:mast_repaired"
       ]
     },
     {
@@ -335,29 +236,6 @@
       ]
     },
     {
-      "id": "aussenstelle",
-      "title": "Außenstelle Messpunkt 4",
-      "text": "Die Schlüsselkarte aus der Messstelle gehört zu einer Außenstelle weit im Norden, oben am Nordkamm.",
-      "unlock": [
-        "got:keycard_m4",
-        "got:tent"
-      ],
-      "done": [
-        "flag:shaft_b_open"
-      ]
-    },
-    {
-      "id": "tunnel",
-      "title": "Tunnel Ost",
-      "text": "In den Akten steht: Teil 2 der Abschaltfolge liegt bei Tunnel Ost. Die Baustelle liegt im Osten unter der Ostwand.",
-      "unlock": [
-        "flag:shaft_b_open"
-      ],
-      "done": [
-        "flag:visit_tunnel"
-      ]
-    },
-    {
       "id": "sleeping_bag",
       "title": "Ein Schlafsack",
       "text": "Aus Schafwolle und einem Schaffell lässt sich an der Werkbank ein Schlafsack nähen. Ohne friert man draußen in der Nacht.",
@@ -388,17 +266,6 @@
       ],
       "done": [
         "flag:tent_repaired"
-      ]
-    },
-    {
-      "id": "w17_locator",
-      "title": "W-17 als Suchgerät",
-      "text": "W-17 lässt sich aus dem Analysegerät ausbauen. Unterwegs summt es in der Nähe ihrer Orte – je schneller, desto näher. Aber: Etwas da draußen spürt es auch.",
-      "unlock": [
-        "link:link_w17"
-      ],
-      "done": [
-        "flag:w17_carried"
       ]
     },
     {

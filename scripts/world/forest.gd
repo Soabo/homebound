@@ -574,13 +574,13 @@ static func bush_mesh(seed_value: int) -> ArrayMesh:
 
 
 ## Keine Pflanzen auf Wegen, im Haus, im Schuppen oder im Wasser.
-## Liegt der Punkt auf einem Waldweg (oder näher als margin am Wegrand)?
+## Liegt der Punkt auf einem Waldweg (oder näher als margin am Wegrand)? Die Kabeltrasse zählt als schmaler Weg.
 static func on_trail(x: float, z: float, margin: float = 0.0) -> bool:
-	return WorldMap.trail_info(x, z).x < margin
+	return WorldMap.trail_info(x, z).x < margin or WorldMap.cable_distance(x, z) < margin + 0.3
 
 
 static func _blocked_for_plants(x: float, z: float) -> bool:
-	if on_trail(x, z, 0.2):
+	if on_trail(x, z, 0.2) or WorldMap.cable_distance(x, z) < 1.2:
 		return true
 	if absf(x) < 7.2 and z > -5.2 and z < 7.8:
 		return true

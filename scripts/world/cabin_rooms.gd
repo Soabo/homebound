@@ -341,6 +341,11 @@ func _attic() -> void:
 	var card := BuildKit.tex_mat("fabric", 0.3, Color(1.3, 1.1, 0.8))
 	BuildKit.box_mm(c, Vector3(-5.5, y, 0.75), Vector3(-4.7, y + 0.55, 1.6), BuildKit.tex_mat("planks_h", 0.5, Color(0.6, 0.4, 0.28)), true, "AtticTrunk")
 	BuildKit.box_mm(c, Vector3(-5.52, y + 0.5, 0.73), Vector3(-4.68, y + 0.58, 1.62), c.m_iron, false)
+	# Die Truhe ist Stefanies „Kiste mit den Weihnachtssachen“ (Story Phase 4: Mappe im doppelten Boden)
+	var trunk := XmasTrunk.new()
+	trunk.name = "XmasTrunk"
+	trunk.position = Vector3(-5.1, y, 1.175)
+	c.add_child(trunk)
 	for b: Array in [[Vector3(-3.6, y, 0.9), 0.0], [Vector3(-3.1, y, 1.0), 14.0], [Vector3(-3.4, y + 0.4, 0.95), -6.0], [Vector3(1.2, y, -1.0), 5.0], [Vector3(1.8, y, -1.05), -9.0]]:
 		BuildKit.box(c, Vector3(0.5, 0.4, 0.45), (b[0] as Vector3) + Vector3(0, 0.2, 0), card, (b[0] as Vector3).y < y + 0.1, Vector3(0, b[1], 0))
 	c._chair(Vector3(-1.5, y, -0.9), 30.0)

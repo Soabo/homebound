@@ -59,6 +59,11 @@ static func _messstelle(root: Node3D) -> void:
 	BuildKit.cylinder(root, 0.6, 0.1, m + Vector3(0, 0.05, 0), PlaceKit.mat("steel_dark"), true, Vector3.ZERO, -1.0, 14)
 	for k in 3:
 		BuildKit.cylinder(root, 0.05, 4.2, m + Vector3(1.9, 0.07, -1.6 + k * 0.12), PlaceKit.mat("dark"), false, Vector3(0, 40, 88), -1.0, 6)
+	# Stefanies Spur: Haarspange im Zaun (Ostseite)
+	var clip := PlaceKit.on_ground(root, 8.15, 1.5, 1.05)
+	BuildKit.box(root, Vector3(0.012, 0.018, 0.07), clip, BuildKit.color_mat(Color(0.15, 0.3, 0.75), 0.4), false, Vector3(0, 0, 15))
+	BuildKit.box(root, Vector3(0.014, 0.014, 0.014), clip + Vector3(0.0, 0.01, 0.0), BuildKit.color_mat(Color(0.85, 0.85, 0.9), 0.3, 0.6), false)
+	PlaceKit.note(root, "stef_spange", clip - Vector3(0, 0.9, 0), true)
 	PlaceKit.inspect(root, "Shaft", "[E] Schachtdeckel ansehen", "Verschweißt. Die Kabel verschwinden durch eine Dichtung in die Tiefe. Wenn man das Ohr an den Deckel legt: ein tiefes, gleichmäßiges Brummen.", m, Vector3(1.3, 0.3, 1.3))
 
 

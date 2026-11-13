@@ -1,7 +1,7 @@
 class_name MovingBox
 extends Interactable
 ## Christians Umzugskarton aus der alten Arbeit, nie ausgepackt (unten im Funktisch).
-## Darin: Helm, Firmenausweis, Einsatzmappe – und das Bauteil W-17 (Story-Bibel).
+## Darin: Helm, Firmenausweis, Einsatzmappe, die alte Einsatzkarte (Karte, Taste M) – und das Bauteil W-17 (Story-Bibel).
 ## E = auspacken (Notizen lesen, W-17 nehmen). Persistent.
 
 var opened: bool = false
@@ -70,7 +70,8 @@ func interact(_p: Node) -> void:
 		SoundBank.play_at(self, "backpack", global_position + Vector3(0, 0.2, 0), -4.0, 0.8)
 		Research.read_note("karton_ausweis")
 		Research.read_note("karton_mappe")
-		EventBus.notify("Mein alter Firmenausweis, der Helm, die Einsatzmappe … (Notizen auf dem Tablet)", 4.0)
+		Inventory.add("work_map", 1)
+		EventBus.notify("Mein alter Firmenausweis, der Helm, die Einsatzmappe … und meine alte Einsatzkarte [M]. (Notizen auf dem Tablet)", 4.5)
 		return
 	if not w17_taken:
 		if Inventory.add("w17", 1) <= 0:
@@ -81,6 +82,9 @@ func interact(_p: Node) -> void:
 		Research.read_note("w17_info")
 		SoundBank.play_at(self, "signal", global_position + Vector3(0, 0.2, 0), -12.0, 0.5)
 		EventBus.notify("W-17. Es ist kalt – und das Funkgerät knackt, als ich es in die Hand nehme.", 4.0)
+		return
+	if Inventory.count("work_map") <= 0 and Inventory.add("work_map", 1) > 0:
+		EventBus.notify("Die alte Einsatzkarte nehme ich mit. [M]", 2.5)
 		return
 	EventBus.notify("Nur noch alte Sachen. Ich mag sie nicht ansehen.", 2.5)
 

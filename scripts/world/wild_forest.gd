@@ -448,7 +448,7 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			gp.ferns.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s, s, s)), Vector3(x, g - 0.03, z)))
 			gp.fern_cols.append(Color(0.8, 0.95, 0.7) * rng.randf_range(0.75, 1.1))
 		elif roll < 0.95:
-			if high > 0.6 or ti.x < s * 1.4:   # Büsche nicht in den Weg
+			if high > 0.6 or ti.x < s * 1.4 or WorldMap.cable_distance(x, z) < s * 1.4:   # Büsche nicht in den Weg / die Kabeltrasse
 				continue
 			gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 1.25, s * 0.9, s * 1.2)), Vector3(x, g - 0.05, z)))
 			gp.bush_cols.append(Color(0.48, 0.62, 0.4).lerp(Color(0.72, 0.82, 0.52), rng.randf()))

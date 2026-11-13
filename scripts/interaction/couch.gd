@@ -65,6 +65,9 @@ func available() -> Array:
 	for i in out.size():
 		idx[out[i]["id"]] = i
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		# alte Mails (vor dem Spiel) immer unten
+		if bool(a.get("old", false)) != bool(b.get("old", false)):
+			return not bool(a.get("old", false))
 		var da := int(a.get("day", 1))
 		var db := int(b.get("day", 1))
 		return da > db if da != db else int(idx[a["id"]]) < int(idx[b["id"]]))
@@ -74,9 +77,16 @@ func available() -> Array:
 func unread_count() -> int:
 	var n := 0
 	for m: Dictionary in available():
-		if not read_ids.has(m["id"]):
+		if is_unread(m):
 			n += 1
 	return n
+
+
+## Ungelesen? Alte Mails von vor dem Spiel gelten als gelesen – außer der letzten von Stefanie (unread = true).
+func is_unread(m: Dictionary) -> bool:
+	if read_ids.has(m["id"]):
+		return false
+	return not bool(m.get("old", false)) or bool(m.get("unread", false))
 
 
 func mark_read(id: String) -> void:

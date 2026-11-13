@@ -134,6 +134,14 @@ func check(c: String) -> bool:
 		return false
 	if c.begins_with("link:"):
 		return Research.links_done.has(c.substr(5))
+	if c.begins_with("note:"):
+		return Research.notes.has(c.substr(5))
+	if c.begins_with("step:"):
+		return Story.steps_done.has(c.substr(5))
+	if c == "ws:structure_off":
+		return WorldState.structure_off
+	if c == "ws:source_dead":
+		return not WorldState.source_alive
 	if c.begins_with("item:"):
 		return _compare(c.substr(5), func(id: String) -> float: return Inventory.count(id))
 	if c == "beds_planted":
@@ -184,6 +192,7 @@ func _value(name: String) -> float:
 		"stage": return WorldState.stage()
 		"fuel": return PowerManager.fuel
 		"gencond": return Supplies.generator_condition
+		"phase": return Story.phase
 	return 0.0
 
 

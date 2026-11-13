@@ -28,6 +28,7 @@ func _ready() -> void:
 	add_child(ScrapField.new())
 	add_child(SupplyProps.new())
 	add_child(Places.new())
+	add_child(StoryProps.new())
 	_build_world_limits()
 	_build_cameras()
 	Builder.spawn_all(self)

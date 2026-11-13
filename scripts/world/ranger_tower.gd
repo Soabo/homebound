@@ -98,6 +98,15 @@ func _ready() -> void:
 	map.anchor = Vector3(0, DECK + 1.1, -1.3)
 	map.hide_paper = true
 	add_child(map)
+	# Wendts Kontrollrunde: Blatt unter der Karte (führt zu den Meldekästen, Story-Spur)
+	BuildKit.box(self, Vector3(0.21, 0.28, 0.008), Vector3(0.55, DECK + 1.15, -1.425), BuildKit.color_mat(Color(0.88, 0.86, 0.8), 0.9), false)
+	BuildKit.box(self, Vector3(0.03, 0.03, 0.006), Vector3(0.55, DECK + 1.27, -1.42), BuildKit.color_mat(Color(0.75, 0.1, 0.08)), false)
+	var round_note := ResearchNote.new()
+	round_note.name = "TowerRound"
+	round_note.note_id = "wendt_runde"
+	round_note.anchor = Vector3(0.55, DECK + 1.0, -1.3)
+	round_note.hide_paper = true
+	add_child(round_note)
 
 
 ## Mittelpunkt des Pfostens (sx, sz) auf Höhe y – die Pfosten stehen leicht schräg.

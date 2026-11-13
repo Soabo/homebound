@@ -951,5 +951,11 @@
     "stack": 1,
     "category": "Werkzeug",
     "signature": 0.05
+  },
+  "work_map": {
+    "name": "Alte Einsatzkarte (Taste M)",
+    "weight": 0.1,
+    "stack": 1,
+    "category": "Werkzeug"
   }
 }

@@ -247,8 +247,7 @@
   Blitzlicht, Lichtköder, Außenlampen) im `bright_radius`.
 - Wann: ThreatConfig `mauler_*` (Ereignis „mauler“ öffnet ein Zeitfenster, `ThreatDirector._check_mauler` lässt ihn erscheinen,
   sobald man draußen ist; tagsüber selten weit weg im dichten Wald). Beim Zelt nur herumschleichen.
-- Story-Gerüst `Story` (Autoload, `phase`, im Spielstand), Phasen + VORLÄUFIGE Auslöser in `data/story/story.json`
-  (Phase 2: link_core_map | w17_carried | shaft_b_open | ab Tag 10) – beim Story-Bau mit Christian festlegen.
+- Story-Gerüst `Story` (Autoload, `phase`, im Spielstand). Auslöser der Phasen hängen seit 13.11. an der Spur (siehe „Roter Faden“).
 - Test: `--night-test=mauler`. Tour-Bilder 73/74. Schnelle Figuren-Vorschau (Sekunden statt Minuten):
   `xvfb-run -a godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=BILD.png --pose=warn|charge|stalk --angle=90`.
 
@@ -390,6 +389,23 @@
   abgehen, Wandertafel `TrailBoard` an der Zufahrt. Abstände in map.json `trail_kit`. Listen `benches/markers/bridges`.
 - Draufsicht zum Planen (Sekunden): `godot --headless --path . res://scenes/dev/map_dump.tscn -- --out=/tmp/map.png --cx=0 --cz=0 --size=300 --px=600`.
   Prüfung `RegressTest._t_trails`, Tour-Bilder 90–95.
+
+## Roter Faden der Story (Christian, 13.11.2026)
+- Christians Entscheidungen: Spur mit Eintrag auf der Karte, alle drei Fäden (Kabeltrasse, Wendts Zeichen, Stefanies Spuren),
+  die meisten Orte in der Geschichte. Kette + Fäden auch in der Story-Bibel (Abschnitt „Der rote Faden (Spur)“).
+- Daten: `data/story/story.json` `steps` (start/done bzw. done_count, main, target/targets, title/text, thought/finish,
+  hint_days/hint), Phasen über `begins_all`/`begins_any`. Bedingungen = Tasks.check + neu `note:`, `step:`, `phase>=N`,
+  `ws:structure_off`, `ws:source_dead`. Story-Orte stehen nicht mehr als Ziele in tasks.json.
+- `Story`: `steps_active` (id → Starttag), `steps_done`, `hinted`, `update(announce)`, `active_steps`, `map_targets`, `step_progress`;
+  Gedanken über `EventBus.notify`; zweiter Hinweis nach `hint_days` (von „Ilse über Funk“, sobald `mast_repaired`).
+- Tablet „Aufgaben“ beginnt mit „SPUR“ (Hauptspuren, Nebenspuren, Hinweis, bisheriger Weg). Karte: `work_map` (Alte Einsatzkarte,
+  aus dem Umzugskarton) zeigt nur bekannte/eingekreiste Orte, `hiking_map` alle; rote Kreise `MapScreen.Ring`.
+- Welt: `StoryProps` (Kabeltrassen map.json `cables`, Meldekästen `wendt_boxes`), Stefanies Spuren als Notizen `stef_*` in den Orten,
+  Weihnachtstruhe `XmasTrunk` auf dem Dachboden (Mappe erst ab Phase 4), Wendts Funkgerät in der Höhle (`hoehle_funkgeraet`),
+  Kontrollrunde am Hochsitz (`wendt_runde`), Sattelzug an der Raststätte (`lkw_raststation`). Stefanies alte Mails im Posteingang
+  (`old`, gelten als gelesen, nur „Kommst du nach?“ ungelesen, `Couch.is_unread`).
+- Offen: Abstieg in den Brunnen (`flag:well_descended`) und die Enden – DataTest führt das als bekannt offen.
+  Prüfung `RegressTest._t_story`, Tour-Bilder 96–99.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

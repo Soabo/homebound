@@ -95,3 +95,14 @@ func _ready() -> void:
 	note.note_id = "ranger_note3"
 	note.anchor = Vector3(cx - 1.4, 0.0, 1.7)
 	add_child(note)
+	# Wendts Funkgerät der Firma (Kanal 4) – führt zur Messstelle Nord
+	var radio_mat := BuildKit.color_mat(Color(0.12, 0.12, 0.13), 0.6)
+	BuildKit.box(self, Vector3(0.07, 0.2, 0.04), Vector3(cx - 2.25, 0.1, 2.45), radio_mat, false, Vector3(0, 30, 70))
+	BuildKit.box(self, Vector3(0.012, 0.012, 0.12), Vector3(cx - 2.3, 0.1, 2.55), radio_mat, false, Vector3(0, 30, 0))
+	BuildKit.box(self, Vector3(0.04, 0.02, 0.005), Vector3(cx - 2.25, 0.14, 2.47), BuildKit.color_mat(Color(0.9, 0.5, 0.1)), false, Vector3(0, 30, 70))
+	var radio := ResearchNote.new()
+	radio.name = "RangerRadio"
+	radio.note_id = "hoehle_funkgeraet"
+	radio.anchor = Vector3(cx - 2.25, 0.0, 2.45)
+	radio.hide_paper = true
+	add_child(radio)

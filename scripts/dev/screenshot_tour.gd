@@ -102,6 +102,10 @@ const SHOTS := [
 	{"name": "93_steg_nordweg", "hour": 15.0, "pos": Vector3(25.0, 0.0, -118.0), "look": Vector3(36.0, 3.0, -129.0)},
 	{"name": "94_wanderbank", "hour": 15.0, "bench": true},
 	{"name": "95_rundweg", "hour": 15.0, "pos": Vector3(-63.4, 0.0, 32.0), "look": Vector3(-63.5, 1.0, 5.0)},
+	{"name": "96_spur_karte", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "story_demo": true, "map": true},
+	{"name": "97_spur_tablet", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 0.4), "look": Vector3(-5.0, 0.8, 1.75), "story_demo": true, "tablet_tab": "tasks"},
+	{"name": "98_meldekasten", "hour": 14.0, "wendt": 3},
+	{"name": "99_kabeltrasse", "hour": 14.0, "pos": Vector3(-9.0, 0.0, -30.0), "look": Vector3(-3.0, 0.5, -41.0)},
 	{"name": "89_hand_spalte", "hour": 14.0, "pos": Vector3(-2.0, 0.45, 3.4), "look": Vector3(-2.0, 0.6, 2.0), "lights": true, "omens": ["hand_at"]},
 	{"name": "11_werkstatt_taschenlampe", "hour": 23.5, "pos": Vector3(2.6, 0.45, 3.4), "look": Vector3(5.5, 1.2, 0.8), "flashlight": true},
 ]
@@ -152,6 +156,12 @@ func _run() -> void:
 				pos = best.global_transform * Vector3(1.6, 0, 3.4)
 				pos.y = Terrain.height_at(pos.x, pos.z)
 				look = best.global_position + Vector3(0, 0.5, 0)
+		elif shot.has("wendt"):
+			var wb := get_tree().current_scene.find_child("WendtBox_%d" % int(shot["wendt"]), true, false) as Node3D
+			if wb:
+				pos = wb.global_transform * Vector3(0.9, 0, 2.6)
+				pos.y = Terrain.height_at(pos.x, pos.z)
+				look = wb.global_position + Vector3(0, 1.2, 0)
 		elif shot.has("place"):
 			var base := WorldMap.place_point(shot["place"])
 			pos = base + shot.get("off", Vector3.ZERO)
@@ -306,6 +316,17 @@ func _run() -> void:
 			for id: String in ["wood", "scrap", "nails", "planks", "battery", "electronics"]:
 				Inventory.add(id, 4)
 			get_tree().call_group("game_menus", "open_crafting")
+		if shot.get("story_demo", false):
+			# Beispiel-Fortschritt: Phase 2, Kontrollrunde begonnen
+			Tasks.flag("visit_crash")
+			Tasks.got["w17"] = true
+			for n: String in ["ranger_map", "wendt_runde", "wendt_kp1", "stef_spange"]:
+				Research.read_note(n)
+			Inventory.add("work_map", 1)
+			for k in 3:
+				Story.update(false)
+		if shot.get("map", false):
+			get_tree().call_group("map_screen", "open")
 		if shot.has("tablet_tab"):
 			# Beispiel-Forschungsstand: drei Analysen fertig und gesendet, zwei Funde offen
 			for an: String in ["an_tissue", "an_crystal", "an_fungus"]:
@@ -369,4 +390,8 @@ func _run() -> void:
 				b.queue_free()
 		if shot.has("menu"):
 			get_tree().call_group("game_menus", "close")
+		if shot.get("map", false):
+			get_tree().call_group("map_screen", "close")
+		if shot.has("tablet_tab"):
+			get_tree().call_group("tablet_menu", "close")
 	get_tree().quit()

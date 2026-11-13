@@ -71,6 +71,8 @@ static func _kapelle(root: Node3D) -> void:
 	PlaceKit.loot(h, "Candles", "candles", 4, Vector3(0.45, 1.0, -2.8), "candles")
 	PlaceKit.loot(h, "Matches", "matches", 1, Vector3(-0.5, 1.0, -2.75), "box")
 	PlaceKit.note(h, "kapelle_buch", Vector3(0.0, 0.97, -2.75))
+	# Stefanies Spur: Gebetszettel unter der hintersten Bank
+	PlaceKit.note(h, "stef_kapelle", Vector3(-1.15, 0.0, 1.75))
 	# Steine auf den Bänken (wächst mit den Tagen)
 	var stones := Node3D.new()
 	stones.name = "Stones"

@@ -22,6 +22,7 @@ static var _clearings: Array = []        ## {pos, r}
 static var _cuts: Array = []             ## Einschnitte für Tunnel: {pos, half: Vector2, yaw, place}
 static var _segments: Array = []         ## [a: Vector2, b: Vector2, half_w, kind]
 static var _buckets: Dictionary = {}     ## Vector2i -> PackedInt32Array
+static var _cable_segs: Array = []       ## Kabeltrassen (Story): [a: Vector2, b: Vector2, lo: Vector2, hi: Vector2]
 static var _noise: FastNoiseLite
 static var _ready_flag: bool = false
 ## Raster für Landschaftsformen: Vector2i -> {"places": [...], "lakes": [...], ...}
@@ -79,6 +80,14 @@ static func ensure() -> void:
 		_insert("basins", b, b["pos"], float(b["r"]) * 1.25)
 	for m: Dictionary in _mountains:
 		_insert("mountains", m, m["pos"], float(m["r"]))
+	# Kabeltrassen von ReZort (Story-Faden): eine schmale Schneise im Wald
+	_cable_segs.clear()
+	for c: Dictionary in _data.get("cables", []):
+		var cp: Array = c["pts"]
+		for i in cp.size() - 1:
+			var a := _v2(cp[i])
+			var b := _v2(cp[i + 1])
+			_cable_segs.append([a, b, Vector2(minf(a.x, b.x), minf(a.y, b.y)) - Vector2.ONE * 4.0, Vector2(maxf(a.x, b.x), maxf(a.y, b.y)) + Vector2.ONE * 4.0])
 	# Wege in ein Raster einsortieren
 	for t: Dictionary in _data.get("trails", []):
 		var pts: Array = t["pts"]
@@ -381,6 +390,20 @@ static func _seg_dist(p: Vector2, a: Vector2, b: Vector2) -> float:
 	return p.distance_to(a + ab * t)
 
 
+## Abstand zur nächsten Kabeltrasse (INF, wenn weiter als ~4 m weg).
+static func cable_distance(x: float, z: float) -> float:
+	ensure()
+	var q := Vector2(x, z)
+	var best := INF
+	for s: Array in _cable_segs:
+		var lo: Vector2 = s[2]
+		var hi: Vector2 = s[3]
+		if q.x < lo.x or q.y < lo.y or q.x > hi.x or q.y > hi.y:
+			continue
+		best = minf(best, _seg_dist(q, s[0], s[1]))
+	return best
+
+
 # --- Bäume -----------------------------------------------------------------
 
 ## 0..1: Wie dicht hier Wald wächst (0 = Lichtung, Weg, See, Ort).
@@ -392,6 +415,11 @@ static func tree_density(x: float, z: float, h: float) -> float:
 	if ti.x < 1.6:
 		return 0.0
 	dens *= smoothstep(1.6, 4.0, ti.x)
+	# Kabeltrasse: schmale Schneise
+	var cd := cable_distance(x, z)
+	if cd < 1.3:
+		return 0.0
+	dens *= smoothstep(1.3, 3.0, cd)
 	var cell := _cell(x, z)
 	for p: Dictionary in cell["places"]:
 		var cr: float = p["clear"]

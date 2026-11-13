@@ -1,5 +1,5 @@
 {
-  "_info": "Story-Gerüst (Story-Bibel: 5 Phasen). Eine Phase beginnt, sobald EINE ihrer Bedingungen erfüllt ist (begins_any). Bedingungen wie in tasks.json: flag:X, link:X, day>=N. VORLÄUFIG: Die genauen Auslöser legt Christian beim Story-Bau fest. beats = einmalige Story-Hinweise: when = Bedingung (wie oben), hour = frühestens ab dieser Uhrzeit, flag = Tasks-Merker, der danach gesetzt ist, note = Notiz (research.json) fürs Tablet, text = Meldung.",
+  "_info": "Story (Story-Bibel: 5 Phasen) und der rote Faden („Spur“). Eine Phase beginnt, sobald EINE Bedingung aus begins_any oder ALLE aus begins_all erfüllt sind. Bedingungen wie in tasks.json (flag:X, got:X, link:X, day>=N …) plus note:X (Notiz gelesen), step:X (Spur erledigt), phase>=N, ws:structure_off, ws:source_dead. beats = einmalige Hinweise (when, hour, flag, note, text). steps = Spuren: start (alle Bedingungen, ab dann aktiv), done (alle Bedingungen) oder done_count {of: [...], need: N}, main = Hauptspur (sonst Nebenspur), target = Orts-ID aus map.json oder \"hut\" (Kreis auf der Karte), targets = mehrere Orte [{place, done}], title/text = Tablet, thought = Gedanke beim Start, finish = Gedanke beim Erledigen, hint_days + hint = zweiter, deutlicherer Hinweis, wenn man so viele Tage nicht weiterkommt.",
   "phases": [
     {
       "id": 1,
@@ -8,25 +8,38 @@
     {
       "id": 2,
       "name": "Das Gebiet unter dem Wald",
-      "begins_any": [
-        "link:link_core_map",
-        "flag:w17_carried",
-        "flag:shaft_b_open",
-        "day>=10"
+      "text": "Es ist nicht nur etwas im Wald. Es ist etwas unter dem Wald.",
+      "begins_all": [
+        "step:p1_hochsitz"
       ],
-      "text": "Es ist nicht nur etwas im Wald. Es ist etwas unter dem Wald. Und seit gestern Nacht jagt dort draußen etwas Neues."
+      "begins_any": [
+        "day>=12"
+      ]
     },
     {
       "id": 3,
-      "name": "Menschliche Beteiligung"
+      "name": "Menschliche Beteiligung",
+      "begins_all": [
+        "step:p2_messstelle",
+        "step:p2_wendt"
+      ],
+      "text": "Meine Firma hat hier etwas gebaut. Und ich war dabei."
     },
     {
       "id": 4,
-      "name": "Die Wahrheit über die Familie"
+      "name": "Die Wahrheit über die Familie",
+      "begins_all": [
+        "note:ast_risiken"
+      ],
+      "text": "»Kopien der Ehefrau nicht aufgefunden.« Stefanie hat etwas versteckt."
     },
     {
       "id": 5,
-      "name": "Die Saat"
+      "name": "Die Saat",
+      "begins_all": [
+        "note:tunnel_massnahme11"
+      ],
+      "text": "Es war kein Unfall. Und das Ding unter dem Wald ist bald fertig."
     }
   ],
   "beats": [
@@ -37,6 +50,569 @@
       "flag": "cellar_hint",
       "note": "keller_hinweis",
       "text": "In Stefanies Büro klingt der Boden unter dem Teppich hohl …"
+    }
+  ],
+  "steps": [
+    {
+      "id": "p1_absturz",
+      "phase": 1,
+      "main": true,
+      "title": "Was heute Nacht herunterkam",
+      "text": "Lichter über dem Wald, dann ein Einschlag – nordwestlich der Hütte, nicht weit. Der Kleine Rundweg führt in der Nähe vorbei.",
+      "start": [],
+      "done": [
+        "flag:visit_crash"
+      ],
+      "target": "absturz",
+      "thought": "Heute Nacht ist etwas über dem Wald heruntergekommen. Nordwestlich vom Haus hat es gebrannt.",
+      "finish": "Das ist kein Flugzeug. Nichts hier ist von uns.",
+      "hint_days": 2,
+      "hint": "Die Absturzstelle liegt nordwestlich, keine hundert Meter. Den Lagerweg ein Stück, dann den Kleinen Rundweg nach Norden."
+    },
+    {
+      "id": "p1_karton",
+      "phase": 1,
+      "main": true,
+      "title": "Der Umzugskarton",
+      "text": "Nichts im Haus kann so etwas messen. Aber in der Werkstatt, unten im Funktisch, steht noch der Karton aus der alten Arbeit bei ReZort.",
+      "start": [
+        "step:p1_absturz"
+      ],
+      "done": [
+        "got:w17"
+      ],
+      "target": "hut",
+      "thought": "Nichts von dem, was ich habe, kann so etwas messen. Außer … im Umzugskarton in der Werkstatt liegt noch mein altes Prüfzeug.",
+      "finish": "W-17, das Ausschussteil. Stefanie hat damals gefragt, warum ich so etwas mit nach Hause bringe. Meine alte Einsatzkarte ist auch dabei. [M]",
+      "hint_days": 2,
+      "hint": "Der Umzugskarton steht in der Werkstatt, unten im Funktisch."
+    },
+    {
+      "id": "p1_hochsitz",
+      "phase": 1,
+      "main": true,
+      "title": "Der Hochsitz des Försters",
+      "text": "Auf meiner alten Einsatzkarte hat jemand mit Bleistift ein Kreuz gemacht: »Ansitz W.« – nördlich der Hütte am Nordweg. Georg Wendt, der Förster. Wenn einer weiß, was hier vorgeht, dann er.",
+      "start": [
+        "step:p1_karton"
+      ],
+      "done": [
+        "note:ranger_map"
+      ],
+      "target": "hochsitz",
+      "thought": "»Ansitz W.« auf meiner Einsatzkarte. Wendt. Der Förster müsste wissen, was hier los ist.",
+      "finish": "Ein Dreieck aus Bleistift: Krater, Säulen, Höhle. Und in der Mitte, unterstrichen, meine Hütte.",
+      "hint_days": 3,
+      "hint": "Der Hochsitz steht am Nordweg, gleich hinter dem Gartentor nach Norden. Die Karte hängt oben an der Rückwand."
+    },
+    {
+      "id": "p2_saeulen",
+      "phase": 2,
+      "main": true,
+      "title": "Wendts Dreieck: die Säulen",
+      "text": "Auf Wendts Revierkarte: »die Säulen« westlich der Hütte. Von dort kommt das Summen.",
+      "start": [
+        "phase>=2"
+      ],
+      "done": [
+        "flag:visit_structure"
+      ],
+      "target": "struktur",
+      "thought": "Die Säulen auf Wendts Karte. Westlich, dort, wo nachts das Summen herkommt.",
+      "finish": "Das ist keine Ruine. Das atmet.",
+      "hint_days": 3,
+      "hint": "Die Säulen stehen westlich der Hütte, nahe am Lagerweg, wo er nach Südwesten abbiegt."
+    },
+    {
+      "id": "p2_hoehle",
+      "phase": 2,
+      "main": true,
+      "title": "Wendts Dreieck: die alte Höhle",
+      "text": "»Die alte Höhle« am Bach, nordöstlich. Der Bachpfad führt vom Hochsitz über einen Steg hin.",
+      "start": [
+        "phase>=2"
+      ],
+      "done": [
+        "note:hoehle_funkgeraet"
+      ],
+      "target": "hoehle",
+      "thought": "Die Höhle am Bach. Wendts letzter Punkt auf der Karte.",
+      "finish": "Wendts Rucksack. Und ein Funkgerät, das nicht der Forstverwaltung gehört. Kanal 4. »Beobachter 4 an Nord.«",
+      "hint_days": 3,
+      "hint": "Vom Hochsitz geht der Bachpfad nach Osten über den Steg direkt zur Höhle. Der Rucksack liegt hinten in der Kammer."
+    },
+    {
+      "id": "p2_messstelle",
+      "phase": 2,
+      "main": true,
+      "title": "Messstelle 4-Nord",
+      "text": "»Beobachter 4 an Nord.« Nord – die Messstelle 4-Nord. Ich habe dort gearbeitet. Vom alten Brunnen laufen Kabel dorthin: orange Schutzrohre im Wald, nummerierte Pfosten.",
+      "start": [
+        "step:p2_hoehle"
+      ],
+      "done": [
+        "note:messstelle_log"
+      ],
+      "target": "messstelle",
+      "thought": "Nord. Die Messstelle. Vom alten Brunnen laufen die Kabel genau dorthin – ich muss ihnen nur folgen.",
+      "finish": "Meine Personalnummer. Und W-17 war ein Ersatzteil für genau diese Anlage.",
+      "hint_days": 3,
+      "hint": "Die Kabeltrasse beginnt hinter dem Gartenzaun am alten Brunnen und läuft neben dem Nordweg nach Norden. Etwa ein halber Kilometer."
+    },
+    {
+      "id": "p2_suchgeraet",
+      "phase": 2,
+      "main": true,
+      "title": "W-17 versteht diese Anlagen",
+      "text": "Wenn W-17 zu dieser Anlage gehört, gehört es vielleicht auch zu den anderen. Das Analysegerät könnte die Verbindung zeigen – dann lässt es sich ausbauen und mitnehmen.",
+      "start": [
+        "step:p2_messstelle"
+      ],
+      "done": [
+        "flag:w17_carried"
+      ],
+      "thought": "W-17 gehört zu dieser Anlage. Vielleicht findet es die anderen.",
+      "finish": "Es piept. Je näher ich an etwas Fremdes komme, desto schneller.",
+      "hint_days": 4,
+      "hint": "Forschung: die Verknüpfung „Dieselbe Handschrift“. Danach W-17 an der Fassung am Funkgerät herausnehmen."
+    },
+    {
+      "id": "p2_wendt",
+      "phase": 2,
+      "main": true,
+      "title": "Wendts Kontrollrunde",
+      "text": "Wendt hatte sechs Meldekästen im Revier, rot markiert. Was hat er dort gemeldet – und wem? (Mindestens vier Kästen finden.)",
+      "start": [
+        "note:wendt_runde"
+      ],
+      "done": [],
+      "thought": "Sechs Meldekästen, rot markiert. Wendt hat jemandem Bericht erstattet.",
+      "finish": "In jedem Kasten steht es. »H. allein.« »H. fragt nichts.« H. – das bin ich. Georg hat mich beobachtet.",
+      "hint_days": 5,
+      "hint": "Die Meldekästen hängen an Pfosten mit rotem Kreuz, direkt an den Wegen bei den Orten. Rote Kreuze an den Pfosten davor zeigen, dass man richtig ist.",
+      "done_count": {
+        "of": [
+          "note:wendt_kp1",
+          "note:wendt_kp2",
+          "note:wendt_kp3",
+          "note:wendt_kp4",
+          "note:wendt_kp5",
+          "note:wendt_kp6"
+        ],
+        "need": 4
+      },
+      "targets": [
+        {
+          "place": "kapelle",
+          "done": "note:wendt_kp1"
+        },
+        {
+          "place": "friedhof",
+          "done": "note:wendt_kp2"
+        },
+        {
+          "place": "imkerei",
+          "done": "note:wendt_kp3"
+        },
+        {
+          "place": "windwurf",
+          "done": "note:wendt_kp4"
+        },
+        {
+          "place": "spiegel",
+          "done": "note:wendt_kp5"
+        },
+        {
+          "place": "see",
+          "done": "note:wendt_kp6"
+        }
+      ]
+    },
+    {
+      "id": "n2_stefanie",
+      "phase": 2,
+      "main": false,
+      "title": "Stefanies Spuren",
+      "text": "Ich finde Dinge von ihr an Orten, an denen sie nie gewesen sein dürfte. Sie war hier. Vor mir. (Drei Spuren finden.)",
+      "start": [
+        "note:stef_spange"
+      ],
+      "done": [],
+      "thought": "Stefanies Haarspange. Hier, an diesem Zaun.",
+      "finish": "Sie war an all diesen Orten. Allein. Sie hat gesucht, was ich gebaut habe.",
+      "done_count": {
+        "of": [
+          "note:stef_spange",
+          "note:stef_kapelle",
+          "note:stef_polaroid",
+          "note:stef_gipfelbuch",
+          "note:stef_dorf",
+          "note:stef_tunnel"
+        ],
+        "need": 3
+      }
+    },
+    {
+      "id": "n2_brandl",
+      "phase": 2,
+      "main": false,
+      "title": "Die Imkerei Brandl",
+      "text": "Brandl hat Proben zum Amt gebracht – und ist nie zurückgekommen. In seinen Kästen wächst etwas.",
+      "start": [
+        "note:wendt_kp3"
+      ],
+      "done": [
+        "got:alien_comb"
+      ],
+      "target": "imkerei",
+      "finish": "Fremde Waben. Das Analysegerät wird sich dafür interessieren."
+    },
+    {
+      "id": "p3_funkmast",
+      "phase": 3,
+      "main": true,
+      "title": "Kanal 7",
+      "text": "An Wendts Funkgerät klebt ein Streifen Klebeband: »Kanal 7 – I. – Mast Kahler Kopf«. Jemand da oben hat Funk. Aber der Mast hat keinen Strom. Funkteile und eine Batterie mitnehmen.",
+      "start": [
+        "phase>=3"
+      ],
+      "done": [
+        "flag:mast_repaired"
+      ],
+      "target": "funkmast",
+      "thought": "»Kanal 7 – I.« Da oben ist noch jemand. Wenn der Mast am Kahlen Kopf wieder sendet …",
+      "finish": "Ilse. Sie lebt oben in den Bergen. Zur Außenstelle, sagt sie, sind es zwei Tage. Ohne Zelt nicht.",
+      "hint_days": 4,
+      "hint": "Der Funkmast steht auf dem Kahlen Kopf im Westen, am Ende des Kapellenwegs. Funkteile gibt es in der Messstelle und im Technikhäuschen am Mast."
+    },
+    {
+      "id": "p3_zelt",
+      "phase": 3,
+      "main": true,
+      "title": "Ausrüstung für zwei Tage",
+      "text": "Ilse: »Im Ferienlager Waldfuchs liegt noch ein Zelt. Nimm Essen und Wasser für zwei Tage mit. Und wenn du frierst: am Schäferkarren gibt es Wolle und Felle.«",
+      "start": [
+        "step:p3_funkmast"
+      ],
+      "done": [
+        "got:tent"
+      ],
+      "target": "ferienlager",
+      "thought": "Ein Zelt. Ilse sagt, im Ferienlager liegt noch eins.",
+      "hint_days": 4,
+      "hint": "Das Ferienlager liegt im Südwesten am Ende des Lagerwegs. Das Zelt liegt in der Kantine."
+    },
+    {
+      "id": "p3_aussenstelle",
+      "phase": 3,
+      "main": true,
+      "title": "Außenstelle Messpunkt 4",
+      "text": "Von der Messstelle laufen die Kabel weiter nach Nordwesten, zur Außenstelle. Zwei Tagesmärsche. Ilse: »Bleib nachts nicht ohne Feuer. Und mach kein Licht nach oben.«",
+      "start": [
+        "step:p3_zelt"
+      ],
+      "done": [
+        "note:ast_einsatzplan"
+      ],
+      "target": "aussenstelle",
+      "thought": "Die Kabel laufen von der Messstelle weiter. Zur Außenstelle. Zwei Tage hin.",
+      "finish": "Mein Name. »Schacht B, nachts, ohne Begleitung.« Ich habe daran mitgebaut.",
+      "hint_days": 5,
+      "hint": "Der Nordweg führt an der Messstelle vorbei bis zur Außenstelle. Die Kabelpfosten zählen mit."
+    },
+    {
+      "id": "p3_schacht",
+      "phase": 3,
+      "main": true,
+      "title": "Schacht B",
+      "text": "Die Tür zu Schacht B hat einen Kartenleser. Die Schlüsselkarte aus der Messstelle müsste passen.",
+      "start": [
+        "step:p3_aussenstelle"
+      ],
+      "done": [
+        "flag:shaft_b_open"
+      ],
+      "target": "aussenstelle",
+      "finish": "Eine Seilwinde. Und die erste Hälfte einer Notabschaltung.",
+      "hint_days": 3,
+      "hint": "Die Schlüsselkarte liegt in der Messstelle 4-Nord auf dem Tisch im Container."
+    },
+    {
+      "id": "p3_risiken",
+      "phase": 3,
+      "main": true,
+      "title": "Was sie wussten",
+      "text": "Irgendwo in den Büros der Außenstelle muss stehen, was WURZELWERK über uns wusste.",
+      "start": [
+        "step:p3_aussenstelle"
+      ],
+      "done": [
+        "note:ast_risiken"
+      ],
+      "target": "aussenstelle",
+      "finish": "»Familie C.: Maßnahme abgeschlossen. Kopien der Ehefrau nicht aufgefunden.« Kopien. Stefanie hat Kopien gemacht. Wovon?",
+      "hint_days": 3,
+      "hint": "Im Bürotrakt der Außenstelle, Westseite, liegt ein Blatt am Boden: »Offene Risiken«."
+    },
+    {
+      "id": "n3_kessler",
+      "phase": 3,
+      "main": false,
+      "title": "Markus Kessler",
+      "text": "Auf dem Einsatzplan: M. Kessler, Projektleitung. Ilse: »Am Schwarzen See steht seit Wochen ein Auto im Wasser.«",
+      "start": [
+        "note:ast_einsatzplan"
+      ],
+      "done": [
+        "note:see_ausweis"
+      ],
+      "target": "see",
+      "finish": "Kessler wollte aufhören. Er ist nicht weit gekommen."
+    },
+    {
+      "id": "n3_steinbruch",
+      "phase": 3,
+      "main": false,
+      "title": "Sprengstoff",
+      "text": "In den Akten: Sprengungen im Steinbruch für ReZort, »Erweiterung Stollen Ost«. Wenn ich je in einen Schacht muss, brauche ich so etwas.",
+      "start": [
+        "note:ast_wurzelwerk"
+      ],
+      "done": [
+        "flag:quarry_bunker"
+      ],
+      "target": "steinbruch",
+      "finish": "Zwei Ladungen. Ich hoffe, ich brauche sie nie."
+    },
+    {
+      "id": "n3_kontrollpunkt",
+      "phase": 3,
+      "main": false,
+      "title": "Der Kontrollpunkt",
+      "text": "Ilse: »Im Süden hatte die Bundeswehr einen Kontrollpunkt. Die sind weg. Ihre Vorräte vielleicht nicht.«",
+      "start": [
+        "step:p3_funkmast"
+      ],
+      "done": [
+        "flag:visit_kontrollpunkt"
+      ],
+      "target": "kontrollpunkt"
+    },
+    {
+      "id": "n3_schaefer",
+      "phase": 3,
+      "main": false,
+      "title": "Wolle und Felle",
+      "text": "Für die Nächte draußen: Am Schäferkarren gibt es Wolle und ein Schaffell – genug für einen Schlafsack.",
+      "start": [
+        "step:p3_zelt"
+      ],
+      "done": [
+        "got:sheepskin"
+      ],
+      "target": "schaefer"
+    },
+    {
+      "id": "p4_truhe",
+      "phase": 4,
+      "main": true,
+      "title": "Stefanies Kopien",
+      "text": "Sie hat sie dort versteckt, wo nur ich suchen würde. Ihre alte Mail: »Ich hab dir was in die Kiste mit den Weihnachtssachen gelegt. Die alte Truhe, oben unterm Dach.«",
+      "start": [
+        "phase>=4"
+      ],
+      "done": [
+        "note:stef_mappe"
+      ],
+      "target": "hut",
+      "thought": "Wo nur ich suchen würde … Die Weihnachtskiste. Die alte Truhe auf dem Dachboden.",
+      "finish": "A. Senn. Tunnel Ost. Sie hat es gewusst – drei Wochen vor der Regennacht.",
+      "hint_days": 2,
+      "hint": "Die alte Truhe steht auf dem Dachboden (Luke in der Werkstattdecke). Unter der Krippe."
+    },
+    {
+      "id": "p4_tunnel",
+      "phase": 4,
+      "main": true,
+      "title": "Tunnel Ost",
+      "text": "In Stefanies Mappe: »Die Akten liegen im Tunnel Ost, bei Senn.« Die Kabel von der Messstelle laufen nach Osten, zum Tunnelportal.",
+      "start": [
+        "step:p4_truhe"
+      ],
+      "done": [
+        "note:tunnel_massnahme11"
+      ],
+      "target": "tunnel",
+      "thought": "Tunnel Ost. Dorthin laufen auch die Kabel von der Messstelle.",
+      "finish": "»Maßnahme 11. Durchführung bestätigt.« Die Regennacht. Ehefrau und Kinder C. Es war kein Unfall.",
+      "hint_days": 5,
+      "hint": "Das Tunnelportal liegt weit im Osten: hinter der Windwurf-Schneise den Fahrweg nach Osten. Die Akten liegen im Baucontainer vor dem Portal."
+    },
+    {
+      "id": "n4_lkw",
+      "phase": 4,
+      "main": false,
+      "title": "DEG-RZ 117",
+      "text": "Das Kennzeichen aus der Akte. Ilse: »An der Raststätte im Süden stehen noch Lastwagen. Seit Wochen bewegt sich da nichts.«",
+      "start": [
+        "note:tunnel_massnahme11"
+      ],
+      "done": [
+        "note:lkw_raststation"
+      ],
+      "target": "raststation",
+      "finish": "Ich habe lange vor diesem Lastwagen gestanden."
+    },
+    {
+      "id": "n4_dorf",
+      "phase": 4,
+      "main": false,
+      "title": "Altenreuth 1962",
+      "text": "In Stefanies Mappe ein Zettel: »Altenreuth – Stausee – 1962?«. Das alte Dorf im Süden liegt wieder frei, seit der See abgelassen ist.",
+      "start": [
+        "note:stef_mappe"
+      ],
+      "done": [
+        "note:dorf_chronik"
+      ],
+      "target": "dorf",
+      "finish": "Es leuchtete schon vor sechzig Jahren. Das Ding ist älter als die Firma."
+    },
+    {
+      "id": "n4_wetter",
+      "phase": 4,
+      "main": false,
+      "title": "Das Tal von oben",
+      "text": "Auf einem Foto in Stefanies Mappe: das Tal vom Grat aus, mit Bleistiftkreisen. Von der Wetterstation sieht man alles.",
+      "start": [
+        "note:stef_mappe"
+      ],
+      "done": [
+        "flag:telescope"
+      ],
+      "target": "wetterstation",
+      "finish": "Von hier oben sieht man, wie weit es schon ist."
+    },
+    {
+      "id": "p5_abschaltung",
+      "phase": 5,
+      "main": true,
+      "title": "Die Notabschaltung",
+      "text": "Zwei Teile: einer aus Schacht B in der Außenstelle, einer tief im Tunnel Ost. Erst zusammen ergeben sie die Abschaltfolge.",
+      "start": [
+        "phase>=5"
+      ],
+      "done": [
+        "note:ast_abschaltfolge1",
+        "note:tunnel_abschaltfolge2"
+      ],
+      "thought": "Wenn man es abschalten kann, dann nur mit beiden Teilen der Notabschaltung.",
+      "finish": "Säulen abschalten. Die Leitung in der Höhle trennen. Dann W-17 in die Fassung.",
+      "hint_days": 5,
+      "hint": "Teil 1 liegt in Schacht B (Außenstelle), Teil 2 hinten im Tunnel Ost auf einer Kiste."
+    },
+    {
+      "id": "p5_saeulen",
+      "phase": 5,
+      "main": true,
+      "title": "Die Säulen abschalten",
+      "text": "Schritt 1 der Notabschaltung: die Säulen der Struktur in der richtigen Reihenfolge abschalten.",
+      "start": [
+        "step:p5_abschaltung"
+      ],
+      "done": [
+        "ws:structure_off"
+      ],
+      "target": "struktur",
+      "finish": "Das Summen ist weg. Zum ersten Mal seit Wochen ist es still im Westen."
+    },
+    {
+      "id": "p5_hoehle",
+      "phase": 5,
+      "main": true,
+      "title": "Die Leitung trennen",
+      "text": "Schritt 2: der Knoten in der Höhle ist die lebende Leitung zur Anlage. Er muss weg.",
+      "start": [
+        "step:p5_abschaltung"
+      ],
+      "done": [
+        "ws:source_dead"
+      ],
+      "target": "hoehle",
+      "finish": "Es zuckt noch eine Weile. Dann nicht mehr."
+    },
+    {
+      "id": "n5_ilse",
+      "phase": 5,
+      "main": false,
+      "title": "Ilses Berghütte",
+      "text": "Wenn jemand die Wahrheit weitergeben kann, dann Ilse. Ihre Berghütte liegt hoch im Nordwesten, hinter der Außenstelle.",
+      "start": [
+        "phase>=5"
+      ],
+      "done": [
+        "flag:ilse_knocked"
+      ],
+      "target": "ilse"
+    },
+    {
+      "id": "n5_saat",
+      "phase": 5,
+      "main": false,
+      "title": "Die Saat",
+      "text": "Auf den Akten: ein Agrarversuch von ReZort mit Proben aus Messpunkt 4. Die Gewächshäuser liegen weit im Südwesten.",
+      "start": [
+        "phase>=5"
+      ],
+      "done": [
+        "note:gw_bericht"
+      ],
+      "target": "gewaechshaus",
+      "finish": "Sie haben es selbst ausgesät."
+    },
+    {
+      "id": "n5_wal",
+      "phase": 5,
+      "main": false,
+      "title": "Was im Hang schläft",
+      "text": "Ilse: »Im Südosten liegt etwas im Hang. Größer als ein Haus. Es atmet.« Vielleicht gibt es dort Energie, die ich brauchen kann.",
+      "start": [
+        "phase>=5"
+      ],
+      "done": [
+        "got:energy_cell"
+      ],
+      "target": "wal"
+    },
+    {
+      "id": "n5_moor",
+      "phase": 5,
+      "main": false,
+      "title": "Die Toten im Moor",
+      "text": "Am Hochmoor hat jemand ins Schild geritzt: »Die Toten hier sind nicht alt.«",
+      "start": [
+        "phase>=5"
+      ],
+      "done": [
+        "got:alien_implant"
+      ],
+      "target": "moor"
+    },
+    {
+      "id": "p5_brunnen",
+      "phase": 5,
+      "main": true,
+      "title": "Der alte Brunnen",
+      "text": "»MP4 – B«, in den Brunnenrand geritzt. Mit der Seilwinde aus Schacht B komme ich hinunter. Wenn ich das tue, gibt es kein Zurück mehr.",
+      "start": [
+        "step:p5_saeulen",
+        "step:p5_hoehle"
+      ],
+      "done": [
+        "flag:well_descended"
+      ],
+      "target": "brunnen",
+      "thought": "Der alte Brunnen. Darunter liegt es. Ich wohne seit einem Jahr auf dem Ding."
     }
   ]
 }

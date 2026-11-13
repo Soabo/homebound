@@ -1,5 +1,5 @@
 {
-  "_info": "Nachrichten auf dem Tablet (Couch). type = mail | news. day = ab diesem Tag lesbar (hour optional: ab dieser Uhrzeit). Texte sind Platzhalter – Namen und Story kann Christian anpassen.",
+  "_info": "Nachrichten auf dem Tablet (Couch). type = mail | news. day = ab diesem Tag lesbar (hour optional: ab dieser Uhrzeit). Texte sind Platzhalter – Namen und Story kann Christian anpassen. old = alte Mail aus der Zeit vor dem Spiel (Stefanie), steht unten in der Liste und gilt als gelesen (außer unread = true).",
   "messages": [
     {
       "id": "mail_sister_1",
@@ -24,6 +24,61 @@
       "from": "Waldkurier – Regionales",
       "subject": "Rätselhafte Lichter über dem Tal",
       "body": "Mehrere Anwohner haben in der vergangenen Nacht helle, lautlose Lichter über den Wäldern nördlich der Kreisstraße beobachtet. Ein Jäger berichtet von einem „tiefen Brummen, das man mehr im Bauch als in den Ohren gespürt hat“.\n\nDie Polizei vermutet einen Meteoriten und bittet, mögliche Fundstücke nicht zu berühren, sondern zu melden. Im Laufe der Nacht fiel in zwei Ortschaften kurzzeitig der Strom aus. Der Versorger prüft einen Zusammenhang, hält ihn aber für unwahrscheinlich.\n\nAuffällig: In mehreren Höfen schlugen kurz vor den Sichtungen die Hunde an – und verstummten dann alle gleichzeitig."
+    },
+    {
+      "id": "mail_stef_huette",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Schau mal – die Hütte!",
+      "old": true,
+      "body": "Gesendet: vor zwei Jahren, im Mai\n\nSchatz,\n\nschau dir die Fotos an! Mitten im Wald, ein Bach direkt nebenan, eine Werkstatt für dich und ein Zimmer, das die Kinder sich teilen können. Ist das nicht perfekt für uns? Für die Wochenenden, die Ferien, irgendwann vielleicht für immer?\n\nDer Makler sagt, der alte Brunnen beim Haus ist schon lange trocken. Macht nichts, dann pflanzen wir eben Blumen hinein.\n\nSag ja. Bitte sag ja.\n\nS."
+    },
+    {
+      "id": "mail_stef_liste",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Wo warst du letzte Woche?",
+      "old": true,
+      "body": "Gesendet: vor achtzehn Monaten\n\nHey,\n\nkurze Frage, nicht böse gemeint: Wo genau warst du letzte Woche Donnerstag und Freitag? Auf deiner Einsatzliste steht „Werk Süd“, aber Markus' Frau sagt, ihr wart gar nicht im Werk.\n\nIch frag nur, weil du so müde zurückgekommen bist. Und weil deine Stiefel nach Wald gerochen haben, nicht nach Halle.\n\nKuss, S."
+    },
+    {
+      "id": "mail_stef_ruhe",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Samstag",
+      "old": true,
+      "body": "Gesendet: vor sechzehn Monaten\n\nIch fahr am Samstag allein raus zur Hütte. Brauch mal Ruhe. Die Kinder freuen sich auf einen Papa-Tag mit dir – Ben will unbedingt in den Zoo, Lena will Pizza backen. Beides schaffst du.\n\nIch bin am Sonntagabend zurück. Mach dir keine Sorgen, wenn ich mich nicht melde, da draußen ist ja kaum Netz.\n\nS."
+    },
+    {
+      "id": "mail_stef_senn",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Kurze Frage",
+      "old": true,
+      "body": "Gesendet: vor vierzehn Monaten\n\nKennst du jemanden namens Senn? A. Senn? Arbeitet bei euch oder für euch?\n\nIst nicht wichtig. Erzähl ich dir am Wochenende.\n\nS."
+    },
+    {
+      "id": "mail_stef_kiste",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Nicht vor Weihnachten!",
+      "old": true,
+      "body": "Gesendet: vor dreizehn Monaten\n\nIch hab dir was in die Kiste mit den Weihnachtssachen gelegt. Die alte Truhe, oben unterm Dach.\n\nNICHT vor Weihnachten aufmachen! Ich weiß, wie du bist.\n\nIch liebe dich. Auch wenn ich in letzter Zeit komisch bin. Ich erklär dir alles, versprochen.\n\nS."
+    },
+    {
+      "id": "mail_stef_letzte",
+      "type": "mail",
+      "day": 1,
+      "from": "Stefanie",
+      "subject": "Kommst du nach?",
+      "old": true,
+      "body": "Gesendet: vor einem Jahr, 18:42 Uhr\n\nWir sind los, es schüttet wie verrückt. Die Kinder fragen nach dir. Ben hat sein Geschenk für dich auf dem Schoß und lässt es keinen Moment los.\n\nKommst du nach, wenn du fertig bist? Mama hat für alle gekocht.\n\nFahr vorsichtig.\n\nS.",
+      "unread": true
     }
   ]
 }

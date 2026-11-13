@@ -1,5 +1,5 @@
 {
-  "_info": "Die große Welt (ca. 2,2 x 2,2 km, Hütte in der Mitte). Koordinaten in Metern [x, z]; Norden = -z, Süden = +z. mountains: Berg (Mitte, Radius, Höhe). lakes: See (Mitte, Radius, Tiefe; stream_z = See liegt am Bach bei dieser z-Position). basins: Mulden (Steinbruch, Stausee). bogs: Moor (flach, nass). clearings: Lichtungen ohne Bäume. places: Orte (ring: near | day | multi; clear = baumfreier Radius, flat = eingeebneter Radius). trails: Wege (kind: path | track | asphalt; w = Breite). signs: Wegweiser (to = Orts-IDs). Wege optional: name, mark (Farbe der Markierung an Pfosten), board (Zeile auf der Wandertafel an der Hütte). trail_kit: Abstände der Wegausstattung in Metern (Pfosten, Bänke, Holzpolter), Steigung für Stufen, Sichtweite, Ort der Wandertafel.",
+  "_info": "Die große Welt (ca. 2,2 x 2,2 km, Hütte in der Mitte). Koordinaten in Metern [x, z]; Norden = -z, Süden = +z. mountains: Berg (Mitte, Radius, Höhe). lakes: See (Mitte, Radius, Tiefe; stream_z = See liegt am Bach bei dieser z-Position). basins: Mulden (Steinbruch, Stausee). bogs: Moor (flach, nass). clearings: Lichtungen ohne Bäume. places: Orte (ring: near | day | multi; clear = baumfreier Radius, flat = eingeebneter Radius). trails: Wege (kind: path | track | asphalt; w = Breite). signs: Wegweiser (to = Orts-IDs). Wege optional: name, mark (Farbe der Markierung an Pfosten), board (Zeile auf der Wandertafel an der Hütte). cables: Kabeltrassen von ReZort (orange Schutzrohre, nummerierte Pfosten, Story-Faden). wendt_boxes: Meldekästen des Försters (Notiz, Ort, Nummer; stehen am Weg beim Ort, rot markiert). trail_kit: Abstände der Wegausstattung in Metern (Pfosten, Bänke, Holzpolter), Steigung für Stufen, Sichtweite, Ort der Wandertafel.",
   "half_size": 1150,
   "limit": 1100,
   "mountains": [
@@ -95,6 +95,20 @@
     {"id": "waldpfad", "kind": "path", "w": 1.4, "name": "Waldpfad", "mark": "#3a9a4a", "pts": [[-245, 172], [-252, 100], [-236, 20], [-214, -70], [-186, -140], [-160, -200]]},
     {"id": "hangpfad", "kind": "path", "w": 1.4, "name": "Hangpfad", "mark": "#c43a2c", "pts": [[210, 130], [226, 40], [240, -60], [251, -170], [262, -282]]},
     {"id": "autobahn", "kind": "asphalt", "w": 11.0, "pts": [[-1150, 1088], [-400, 1086], [0, 1086], [400, 1088], [1150, 1086]]}
+  ],
+  "cables": [
+    {"id": "K4-Nord", "from": "brunnen", "to": "messstelle", "pts": [[13.5, -18], [-4, -32], [-2, -60], [-1, -95], [9, -128], [26, -212], [38, -330], [47, -452]]},
+    {"id": "K4-West", "from": "messstelle", "to": "aussenstelle", "pts": [[50, -482], [8, -566], [-50, -686], [-120, -806], [-174, -912]]},
+    {"id": "K2-Ost", "from": "messstelle", "to": "tunnel", "pts": [[72, -470], [180, -455], [300, -425], [400, -395], [560, -345], [700, -305], [826, -292]]},
+    {"id": "K2-Sued", "from": "tunnel", "to": "steinbruch", "pts": [[836, -272], [790, -150], [700, 30], [610, 180], [578, 228]]}
+  ],
+  "wendt_boxes": [
+    {"note": "wendt_kp1", "place": "kapelle", "nr": 1},
+    {"note": "wendt_kp2", "place": "friedhof", "nr": 2},
+    {"note": "wendt_kp3", "place": "imkerei", "nr": 3},
+    {"note": "wendt_kp4", "place": "windwurf", "nr": 4},
+    {"note": "wendt_kp5", "place": "spiegel", "nr": 5},
+    {"note": "wendt_kp6", "place": "see", "nr": 6}
   ],
   "trail_kit": {"marker_every_path": 55, "marker_every_track": 85, "bench_every": 270, "polter_every": 210, "step_slope": 0.2, "view_range": 170, "board_pos": [-8.5, 22]},
   "signs": [

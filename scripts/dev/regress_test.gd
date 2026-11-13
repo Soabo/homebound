@@ -354,6 +354,106 @@ func _t_more() -> void:
 	await _t_siege()
 	await _t_hands()
 	_t_trails()
+	_t_story()
+
+
+## Roter Faden der Story (13.11.): Spuren werden aktiv/erledigt, Phasen folgen, Karte, Truhe, Hinweise, Spielstand, Fäden in der Welt.
+func _t_story() -> void:
+	var keep_story := Story.get_state()
+	var keep_flags := Tasks.flags.duplicate()
+	var keep_got := Tasks.got.duplicate()
+	var keep_notes := Research.notes.duplicate()
+	var keep_w17 := Inventory.count("w17")
+	if keep_w17 > 0:
+		Inventory.remove("w17", keep_w17)
+	Tasks.flags = {}
+	Tasks.got = {}
+	Research.notes = []
+	Story.set_state({"phase": 1, "active": {}, "done": [], "hinted": []})
+	Story.update(false)
+	_ok("Spur: Am Anfang führt die Spur zur Absturzstelle", Story.steps_active.has("p1_absturz") and Story.active_steps().size() == 1)
+	Tasks.flag("visit_crash")
+	Story.update(false)
+	_ok("Spur: Nach der Absturzstelle zum Umzugskarton", Story.steps_done.has("p1_absturz") and Story.steps_active.has("p1_karton"))
+	Tasks.got["w17"] = true
+	Story.update(false)
+	var circled := false
+	for t: Dictionary in Story.map_targets():
+		circled = circled or (t["pos"] as Vector2).distance_to(WorldMap.place_pos("hochsitz")) < 1.0
+	_ok("Spur: Dann zum Hochsitz, auf der Karte eingekreist", Story.steps_active.has("p1_hochsitz") and circled)
+	Research.notes.append("ranger_map")
+	Story.update(false)
+	Story.update(false)
+	_ok("Spur: Wendts Karte öffnet Phase 2 (Säulen + Höhle)", Story.phase == 2 and Story.steps_active.has("p2_saeulen") and Story.steps_active.has("p2_hoehle"),
+		"Phase %d" % Story.phase)
+	Research.notes.append("wendt_runde")
+	Story.update(false)
+	_ok("Spur: Kontrollrunde kreist sechs Meldekästen ein", Story.steps_active.has("p2_wendt") and Story.map_targets().size() >= 6 + 2)
+	for k in 4:
+		Research.notes.append("wendt_kp%d" % (k + 1))
+	Story.update(false)
+	_ok("Spur: Vier Meldekästen reichen", Story.steps_done.has("p2_wendt"))
+	Research.notes.append("hoehle_funkgeraet")
+	Story.update(false)
+	Research.notes.append("messstelle_log")
+	Story.update(false)
+	Story.update(false)
+	_ok("Spur: Höhle → Messstelle → Phase 3 (Funkmast)", Story.phase == 3 and Story.steps_active.has("p3_funkmast"), "Phase %d" % Story.phase)
+	var trunk := _scene().find_child("XmasTrunk", true, false) as XmasTrunk
+	_ok("Weihnachtstruhe auf dem Dachboden", trunk != null)
+	if trunk:
+		trunk.interact(_player())
+		_ok("Truhe: vor Phase 4 nur Weihnachtssachen", not Research.notes.has("stef_mappe"))
+		Research.notes.append("ast_risiken")
+		Story.update(false)
+		trunk.interact(_player())
+		Story.update(false)
+		_ok("Truhe: in Phase 4 Stefanies Mappe, dann zum Tunnel", Story.phase == 4 and Research.notes.has("stef_mappe") and Story.steps_active.has("p4_tunnel"),
+			"Phase %d" % Story.phase)
+	# Feststecken: zweiter Hinweis
+	Story.steps_active["p4_tunnel"] = Tasks.task_day() - 20
+	var night := TimeManager.is_night()
+	if not night:
+		Story.update(true)
+		_ok("Spur: Wer feststeckt, bekommt einen zweiten Hinweis", Story.hint_shown("p4_tunnel"))
+	var st := Story.get_state()
+	Story.set_state({"phase": 1, "active": {}, "done": [], "hinted": []})
+	Story.set_state(st)
+	_ok("Spur: übersteht Speichern und Laden", Story.phase == 4 and Story.steps_done.size() == (st["done"] as Array).size()
+		and Story.steps_active.has("p4_tunnel"))
+	# Fäden in der Welt
+	var boxes_ok := StoryProps.wendt_boxes.size() == 6
+	for nr: int in StoryProps.wendt_boxes:
+		var b: Vector3 = StoryProps.wendt_boxes[nr]
+		if WorldMap.trail_info(b.x, b.z).x < 0.3 or Terrain.water_level_at(b.x, b.z) > b.y - 0.1:
+			boxes_ok = false
+	_ok("Wendts sechs Meldekästen stehen neben dem Weg im Trockenen", boxes_ok)
+	var near_hut := false
+	for c: Vector3 in StoryProps.cable_posts:
+		near_hut = near_hut or Vector2(c.x, c.z).length() < 70.0
+	_ok("Kabeltrasse: Pfosten von der Hütte bis zu den Anlagen", StoryProps.cable_posts.size() >= 30 and near_hut, "%d Pfosten" % StoryProps.cable_posts.size())
+	_ok("Stefanies letzte Mail ist ungelesen, die alten nicht", _old_mails_ok())
+	# zurück
+	Story.set_state(keep_story)
+	Tasks.flags = keep_flags
+	Tasks.got = keep_got
+	Research.notes = keep_notes
+	if keep_w17 > 0:
+		Inventory.add("w17", keep_w17)
+
+
+func _old_mails_ok() -> bool:
+	var couch := _scene().find_child("Couch", true, false)
+	if couch == null:
+		return false
+	var last := false
+	var first := true
+	for m: Dictionary in couch.call("available"):
+		if m["id"] == "mail_stef_letzte":
+			last = couch.call("is_unread", m)
+		if m["id"] == "mail_stef_kiste":
+			first = not couch.call("is_unread", m)
+	return last and first
 
 
 ## Waldwege (13.11.): sichtbar und vertieft auch im Tal, keine Bäume darauf, Stege von Ufer zu Ufer, Ausstattung.

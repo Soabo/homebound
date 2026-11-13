@@ -1,7 +1,8 @@
 class_name MapScreen
 extends CanvasLayer
-## Wanderkarte (Taste M, nur mit der Karte aus der Wetterstation – Gegenstand „hiking_map“).
-## Zeigt Gelände, Seen, Bach, Wege, alle Orte (besuchte hell, unbesuchte grau) und den eigenen Standort.
+## Karte (Taste M). Christians alte Einsatzkarte („work_map“, aus dem Umzugskarton) zeigt Gelände, Wege und die Orte,
+## die man kennt (besucht oder von einer Spur eingekreist). Die Wanderkarte aus der Wetterstation („hiking_map“) zeigt alle Orte.
+## Spuren der Story (Story.map_targets) sind mit roten Bleistiftkreisen markiert (Hauptspur kräftig, Nebenspur blasser).
 
 const RES := 220
 
@@ -37,7 +38,7 @@ func _ready() -> void:
 	_marks.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(_marks)
 	var title := Label.new()
-	title.text = "Wanderkarte – Revier 4 und Umgebung        [M] schließen"
+	title.text = "Karte – Revier 4 und Umgebung        [M] schließen"
 	title.add_theme_font_size_override("font_size", 20)
 	title.position = Vector2(24, 8)
 	_root.add_child(title)
@@ -50,7 +51,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			close()
 		elif not _player_free():
 			pass  # anderes Menü offen, Schlaf, Sitzen, Pause: Karte bleibt zu
-		elif Inventory.count("hiking_map") > 0:
+		elif Inventory.count("hiking_map") > 0 or Inventory.count("work_map") > 0:
 			open()
 		else:
 			EventBus.notify("Ich habe keine Karte. Zum Glück stehen an den Wegen Schilder.", 2.5)
@@ -131,10 +132,23 @@ func _place_marks() -> void:
 	for c in _marks.get_children():
 		c.queue_free()
 	var all := WorldMap.places()
+	var full := Inventory.count("hiking_map") > 0
+	var targets := Story.map_targets()
+	for t: Dictionary in targets:
+		var ring := Ring.new()
+		ring.main = bool(t["main"])
+		ring.position = _to_screen(t["pos"]) - Vector2(22, 22)
+		_marks.add_child(ring)
 	for id: String in all:
 		var p: Dictionary = all[id]
 		var alias: String = {"absturz": "visit_crash", "struktur": "visit_structure", "hoehle": "visit_cave", "hochsitz": "visit_tower"}.get(id, "-")
 		var seen := Tasks.flags.has("visit_" + id) or Tasks.flags.has(alias)
+		var circled := false
+		for t: Dictionary in targets:
+			if (t["pos"] as Vector2).distance_to(p["pos"]) < 1.0:
+				circled = true
+		if not full and not seen and not circled:
+			continue   # alte Einsatzkarte: unbekannte Orte fehlen
 		var l := Label.new()
 		l.text = "● " + String(p["name"])
 		l.add_theme_font_size_override("font_size", 14)
@@ -160,3 +174,17 @@ func _place_marks() -> void:
 		me.add_theme_constant_override("outline_size", 5)
 		me.position = _to_screen(Vector2(_player.global_position.x, _player.global_position.z)) - Vector2(6, 12)
 		_marks.add_child(me)
+
+
+## Bleistiftkreis um ein Spur-Ziel (zweimal leicht versetzt gezogen, wie von Hand).
+class Ring extends Control:
+	var main := true
+
+	func _init() -> void:
+		size = Vector2(44, 44)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var c := Color(0.95, 0.2, 0.15, 0.95) if main else Color(0.9, 0.55, 0.45, 0.6)
+		draw_arc(Vector2(22, 22), 17.0, 0.2, TAU + 0.5, 40, c, 2.5 if main else 1.6)
+		draw_arc(Vector2(23, 21), 19.0, 1.4, TAU + 0.9, 40, c, 1.4 if main else 1.0)

@@ -38,6 +38,10 @@ static func _aussenstelle(root: Node3D) -> void:
 	BuildKit.box(root, Vector3(7.0, 0.12, 0.12), gate + Vector3(0, 1.0, 0.4), PlaceKit.mat("white"), false, Vector3(0, 0, 70))
 	var guard := PlaceKit.hut(root, "Guard", PlaceKit.on_ground(root, -4.5, 22.0), Vector2(2.6, 2.4), 2.4, 0.0, "concrete", "flat", "concrete", 0.9, true)
 	PlaceKit.loot(guard, "Medkit", "medkit", 2, Vector3(-0.7, 0.06, -0.7), "medkit")
+	# Stefanies Spur: Polaroid hinter der Scheibe des Wachhäuschens
+	BuildKit.box(guard, Vector3(0.09, 0.1, 0.004), Vector3(0.5, 1.35, -1.13), BuildKit.color_mat(Color(0.92, 0.92, 0.88)), false)
+	BuildKit.box(guard, Vector3(0.075, 0.07, 0.003), Vector3(0.5, 1.36, -1.127), BuildKit.color_mat(Color(0.25, 0.3, 0.22)), false)
+	PlaceKit.note(guard, "stef_polaroid", Vector3(0.5, 1.15, -1.0), true)
 	# Hauptgebäude
 	var main := PlaceKit.hut(root, "Main", PlaceKit.on_ground(root, -8.0, -6.0), Vector2(22.0, 10.0), 3.0, 0.0, "concrete", "flat", "concrete", 1.4, true)
 	_inner_wall_z(main, -3.5, -5.0, 5.0, 3.0, 3.6)
@@ -195,6 +199,7 @@ static func _tunnel(root: Node3D) -> void:
 	BuildKit.box(office, Vector3(1.6, 0.05, 0.8), Vector3(-1.5, 0.76, -0.7), PlaceKit.mat("wood"), true)
 	PlaceKit.note(office, "tunnel_massnahme11", Vector3(-1.8, 0.79, -0.7))
 	PlaceKit.blueprint(office, "bp_overload", "Überlastungsmodul", Vector3(-1.0, 0.79, -0.7))
+	PlaceKit.note(office, "stef_tunnel", Vector3(-0.35, 0.79, -0.75))   # Stefanies Spur: alter Parkschein
 	PlaceKit.loot(office, "Electronics", "electronics", 3, Vector3(2.0, 0.06, -0.7), "case")
 	var store := PlaceKit.hut(root, "Store", PlaceKit.on_ground(root, 2.0, 12.0), Vector2(6.0, 2.6), 2.5, 180.0, "tin", "flat", "tin", 0.9, false)
 	PlaceKit.loot(store, "Scrap", "scrap", 8, Vector3(-1.4, 0.06, 0.0), "parts", 2)
@@ -256,6 +261,7 @@ static func _dorf(root: Node3D) -> void:
 	t.tween_property(bell, "rotation_degrees:z", 9.0, 2.6).set_trans(Tween.TRANS_SINE)
 	t.tween_property(bell, "rotation_degrees:z", -9.0, 2.6).set_trans(Tween.TRANS_SINE)
 	PlaceKit.note(ch, "dorf_chronik", Vector3(0.0, 0.06, -4.5))
+	PlaceKit.note(ch, "stef_dorf", Vector3(1.3, 0.06, -4.4))   # Stefanies Spur: Zeitungsausschnitt
 	for k in 4:
 		BuildKit.box(ch, Vector3(2.4, 0.06, 0.4), Vector3(-1.6 + (k % 2) * 3.2, 0.45, -1.0 + (k / 2) * 2.0), PlaceKit.mat("wood_old"), false, Vector3(0, 0, rng.randf_range(-12, 12)))
 	# Gestrandete Boote
@@ -277,6 +283,7 @@ static func _wetterstation(root: Node3D) -> void:
 	BuildKit.box(h, Vector3(1.8, 0.05, 0.8), Vector3(0, 0.78, -1.4), PlaceKit.mat("wood"), true)
 	PlaceKit.loot(h, "Map", "hiking_map", 1, Vector3(-0.4, 0.8, -1.4), "paper")
 	PlaceKit.note(h, "wetter_log", Vector3(0.5, 0.8, -1.4))
+	PlaceKit.note(h, "stef_gipfelbuch", Vector3(1.2, 0.8, -1.45))   # Stefanies Spur: Gipfelbuch
 	PlaceKit.loot(h, "Food", "food", 2, Vector3(1.8, 0.06, 1.4), "cans")
 	# Kuppel
 	var dp := PlaceKit.on_ground(root, 6.0, -3.0)
@@ -487,3 +494,7 @@ static func _raststation(root: Node3D) -> void:
 	BuildKit.box(truck, Vector3(13.0, 3.4, 2.5), Vector3(0, 2.2, 0), PlaceKit.mat("white"), true)
 	BuildKit.box(truck, Vector3(3.0, 3.0, 2.5), Vector3(8.2, 2.0, 0), PlaceKit.mat("red"), true)
 	_label(truck, "DEG-RZ 117", Vector3(9.72, 0.9, 0), 40, Color(0.1, 0.1, 0.1), 90.0)
+	# Eingedrückte Stoßstange mit blauem Lacksplitter (Story: Maßnahme 11)
+	BuildKit.box(truck, Vector3(0.25, 0.3, 2.4), Vector3(9.8, 0.55, 0.0), PlaceKit.mat("steel_dark"), false, Vector3(0, 8, 0))
+	BuildKit.box(truck, Vector3(0.03, 0.12, 0.2), Vector3(9.95, 0.62, 0.7), BuildKit.color_mat(Color(0.15, 0.3, 0.75), 0.4), false)
+	PlaceKit.note(truck, "lkw_raststation", Vector3(10.3, 0.0, 0.4), true)

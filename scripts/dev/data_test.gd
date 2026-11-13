@@ -6,7 +6,9 @@ extends RefCounted
 
 ## Bekannte offene Punkte (angelegt, aber noch nicht fertig gebaut) – werden gemeldet, zählen nicht als Fehler.
 ## alien_seeds: „seed: alien“ ist vorbereitet, aber es gibt noch keine Pflanze „alien“ fürs Hochbeet.
-const KNOWN_OPEN := ["Gegenstand alien_seeds: Pflanze „alien“ gibt es nicht (supplies.tres crops)"]
+const KNOWN_OPEN := ["Gegenstand alien_seeds: Pflanze „alien“ gibt es nicht (supplies.tres crops)",
+	# Abstieg in den Brunnen kommt mit dem Story-Bau Phase 5 (Enden)
+	"Spur p5_brunnen: Ereignis „well_descended“ meldet nie ein System"]
 
 const NEED_KINDS := ["", "power", "light", "alien", "heat", "night", "day", "water"]
 const EFFECTS := ["", "drain", "noise", "signal", "hurt", "escape"]
@@ -14,7 +16,7 @@ const ESCAPES := ["crawl", "spread", "call", "bloom"]
 const DROP_AFTER := ["any", "creature", "drone", "manipulator", "seeker", "mauler", "change"]
 const DROP_WHERE := ["yard", "window", "porch", "garden", "forest", "stream", "patch", "player"]
 const HAND_KINDS := ["axe", "tin_snips", "food", "water", "watering_can", "dictaphone"]
-const TASK_VALUES := ["day", "cameras", "tier", "analyses", "stage", "fuel", "gencond"]
+const TASK_VALUES := ["day", "cameras", "tier", "analyses", "stage", "fuel", "gencond", "phase"]
 const TASK_WORDS := ["beds_planted", "beds_watered", "firewood", "radio_heard", "water_bad"]
 ## Flags, die mit einem Vorsatz + Kennung gemeldet werden (Tasks.flag("vorsatz" + id))
 const FLAG_PREFIXES := ["visit_", "done_", "lab_", "cooked_", "link_", "bp_", "ate_"]
@@ -212,6 +214,9 @@ static func run(tree: SceneTree) -> int:
 	var beat_notes := []
 	for b: Dictionary in DataDB.load_json("res://data/story/story.json").get("beats", []):
 		beat_notes.append(String(b.get("note", "")))
+	# Wendts Meldekästen (map.json "wendt_boxes") legen ihre Notizen selbst ab
+	for b: Dictionary in WorldMap.data().get("wendt_boxes", []):
+		beat_notes.append(String(b.get("note", "")))
 	for n: String in notes:
 		if not code.contains("\"%s\"" % n) and not beat_notes.has(n):
 			errs.append("Notiz %s: wird nirgends in der Welt abgelegt" % n)
@@ -231,6 +236,37 @@ static func run(tree: SceneTree) -> int:
 				var e := _check_condition(c, items, builds, links, analyses, code)
 				if e != "":
 					errs.append("Aufgabe %s: %s" % [gid, e])
+
+	# --- Story: Phasen und Spuren
+	var story: Dictionary = DataDB.load_json("res://data/story/story.json")
+	var step_ids := {}
+	for st: Dictionary in story.get("steps", []):
+		step_ids[String(st.get("id", ""))] = true
+	for ph: Dictionary in story.get("phases", []):
+		for c: String in (ph.get("begins_any", []) as Array) + (ph.get("begins_all", []) as Array):
+			var e := _story_condition(c, items, builds, links, analyses, code, notes, step_ids)
+			if e != "":
+				errs.append("Phase %d: %s" % [int(ph.get("id", 0)), e])
+	for st: Dictionary in story.get("steps", []):
+		var sid := String(st.get("id", ""))
+		if String(st.get("title", "")) == "" or String(st.get("text", "")) == "":
+			errs.append("Spur %s: Titel oder Text fehlt" % sid)
+		var conds: Array = (st.get("start", []) as Array) + (st.get("done", []) as Array)
+		if st.has("done_count"):
+			conds += (st["done_count"] as Dictionary).get("of", [])
+		elif (st.get("done", []) as Array).is_empty():
+			errs.append("Spur %s: keine Bedingung zum Erledigen" % sid)
+		for t: Dictionary in st.get("targets", []):
+			conds.append(String(t.get("done", "")))
+			if not WorldMap.places().has(String(t.get("place", ""))):
+				errs.append("Spur %s: Ort %s gibt es nicht" % [sid, t.get("place", "")])
+		for c: String in conds:
+			var e := _story_condition(c, items, builds, links, analyses, code, notes, step_ids)
+			if e != "":
+				errs.append("Spur %s: %s" % [sid, e])
+		var tg := String(st.get("target", ""))
+		if tg != "" and tg != "hut" and not WorldMap.places().has(tg):
+			errs.append("Spur %s: Ort %s gibt es nicht" % [sid, tg])
 
 	# --- Karte
 	var map: Dictionary = WorldMap.data()
@@ -373,6 +409,18 @@ static func _check_condition(c: String, items: Dictionary, builds: Dictionary, l
 	if m and TASK_VALUES.has(m.get_string(1)):
 		return ""
 	return "unbekannte Bedingung „%s“" % c
+
+
+## Story-Bedingungen: wie Aufgaben, dazu note:, step:, ws:
+static func _story_condition(c: String, items: Dictionary, builds: Dictionary, links: Dictionary, analyses: Dictionary, code: String,
+		notes: Dictionary, step_ids: Dictionary) -> String:
+	if c.begins_with("note:"):
+		return "" if notes.has(c.substr(5)) else "Notiz %s gibt es nicht" % c.substr(5)
+	if c.begins_with("step:"):
+		return "" if step_ids.has(c.substr(5)) else "Spur %s gibt es nicht" % c.substr(5)
+	if c in ["ws:structure_off", "ws:source_dead"]:
+		return ""
+	return _check_condition(c, items, builds, links, analyses, code)
 
 
 ## Der gesamte Spielcode als ein Text (ohne die Entwickler-Tests).

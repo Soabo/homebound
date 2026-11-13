@@ -1743,11 +1743,11 @@
   "notes": {
     "ranger_note": {
       "name": "Zerknitterte Notiz",
-      "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – R. W., Forstdienst"
+      "text": "»Tag 9. Die Lichter kommen jetzt jede Nacht. Sie landen nicht, sie VERMESSEN. Immer dieselben drei Punkte. Ich habe das Ding im Krater gefunden, es reagiert auf die Platte. Wenn jemand das liest: Bleib nachts im Haus. Und lass das Licht an.« – G. W., Forstdienst"
     },
     "ranger_note2": {
       "name": "Tagebuch vom Hochsitz",
-      "text": "»Tag 5. Keine Vögel mehr. Die Rehe sind über den Bach nach Osten gezogen und nicht zurückgekommen. Nachts fliegt etwas Leises über den Wald, mit einem Lichtkegel. Es sucht. Ich bleibe tagsüber hier oben, nachts unten im Unterstand.« – R. W."
+      "text": "»Tag 5. Keine Vögel mehr. Die Rehe sind über den Bach nach Osten gezogen und nicht zurückgekommen. Nachts fliegt etwas Leises über den Wald, mit einem Lichtkegel. Es sucht. Ich bleibe tagsüber hier oben, nachts unten im Unterstand.« – G. W."
     },
     "ranger_map": {
       "name": "Karte des Försters",
@@ -1896,6 +1896,70 @@
     "kinder_bild2": {
       "name": "Neue Zeichnung",
       "text": "Auf dem Esstisch liegt eine Zeichnung, die gestern noch nicht da war. Wachsmalkreide, dieselbe Kinderhand: das Haus zwischen den Bäumen, vier Strichmännchen davor. Und hinter dem Haus, größer als die Bäume, eine fünfte Gestalt – dünn, mit vielen kleinen Punkten, wo die Augen sein müssten."
+    },
+    "wendt_runde": {
+      "name": "Wendts Kontrollrunde",
+      "text": "Ein Blatt, mit Reißzwecken unter die Revierkarte geheftet: »Kontrollrunde Revier 4, wöchentlich. Meldekästen, rot markiert: 1 Waldkapelle · 2 Hochstand-Lichtung · 3 Imkerei Brandl · 4 Windwurf · 5 Spiegel-Lichtung · 6 Schwarzer See. Meldung jeweils in den Kasten, Abholung durch N.« Am Rand, später, mit zittrigem Stift: »Seit drei Wochen holt niemand mehr ab.«"
+    },
+    "wendt_kp1": {
+      "name": "Meldung KP 1 – Waldkapelle",
+      "text": "»Woche 41. H. heute an der Kapelle vorbei, ohne anzuhalten. Trägt kein Gerät. Allein. Keine Besucher an der Hütte. – G. W.«"
+    },
+    "wendt_kp2": {
+      "name": "Meldung KP 2 – Hochstand-Lichtung",
+      "text": "»H. trinkt weniger. Hackt jeden Morgen Holz, genau vierzig Minuten. Fährt nicht in die Stadt. Fragt nichts. Nachtrag: Heute Nacht hat jemand alle Hochsitze umgedreht. Nicht H. – G. W.«"
+    },
+    "wendt_kp3": {
+      "name": "Meldung KP 3 – Imkerei",
+      "text": "»Brandl hat Proben zum Amt gebracht. Das Amt hat sie an N. weitergegeben. Brandl seitdem nicht mehr gesehen. H. unauffällig. – G. W.«"
+    },
+    "wendt_kp4": {
+      "name": "Meldung KP 4 – Windwurf",
+      "text": "»Die Bäume liegen seit heute Nacht. Alle von einem Punkt weg. Das Messgerät am Krater zeigt dasselbe wie die Messstelle Nord. H. hat nichts gehört, sein Licht blieb aus. – G. W.«"
+    },
+    "wendt_kp5": {
+      "name": "Meldung KP 5 – Spiegel-Lichtung",
+      "text": "»Jemand hängt Spiegel in die Bäume. Nicht H. – H. war die ganze Nacht im Haus, ich habe aufgepasst. Ich weiß nicht mehr, für wen ich aufpasse. – G. W.«"
+    },
+    "wendt_kp6": {
+      "name": "Meldung KP 6 – Schwarzer See",
+      "text": "»Kesslers Wagen liegt im See. Ich habe N. angefunkt, Kanal 4. Antwort: Kein Handlungsbedarf. Beobachtung H. fortsetzen. – Ich höre auf. Ich gehe zur Höhle und sehe selbst nach. G. W.«"
+    },
+    "hoehle_funkgeraet": {
+      "name": "Wendts Funkgerät",
+      "text": "Im Rucksack: ein Handfunkgerät mit ReZort-Aufkleber, eingestellt auf Kanal 4. Im Speicher der letzte Spruch: »Beobachter 4 an Nord. H. weiterhin allein. Die Wucherung wächst zur Hütte. Erbitte Abholung.« Eine Antwort ist nicht gespeichert. Nord – die Messstelle 4-Nord."
+    },
+    "stef_spange": {
+      "name": "Eine Haarspange",
+      "text": "Am Zaun der Messstelle, im Maschendraht verhakt: eine Haarspange. Blau, mit einem kleinen Silberstern, verrostet. Stefanie hatte genau so eine – ich habe sie ihr auf dem Weihnachtsmarkt gekauft. Wann war sie hier? Und warum?"
+    },
+    "stef_kapelle": {
+      "name": "Zettel unter der Bank",
+      "text": "Unter der hintersten Bank der Kapelle, zusammengefaltet und feucht: ein Gebetszettel in einer Schrift, die ich überall erkennen würde. »Für L. und B. – damit der Wald gut auf sie aufpasst. Und für C., damit er nicht merkt, warum ich so oft herkomme. S.«"
+    },
+    "stef_polaroid": {
+      "name": "Ein Polaroid",
+      "text": "Im Wachhäuschen, hinter die Scheibe geklemmt: ein Polaroid der Außenstelle bei Tag, aus dem Gebüsch fotografiert. Hinten in Stefanies Schrift: »MP4 gibt es wirklich. 14.06.« Zwei Tagesmärsche. Sie ist das allein gegangen."
+    },
+    "stef_gipfelbuch": {
+      "name": "Eintrag im Gipfelbuch",
+      "text": "Im Gipfelbuch der Wetterwarte, vor zwei Sommern: »Von hier oben sieht man, wie gerade manche Schneisen im Tal laufen. Das sind keine Forstwege. Das sind Kabeltrassen. – S.« Daneben eine kleine Skizze des Tals. Ein Kreuz darauf: unsere Hütte."
+    },
+    "stef_dorf": {
+      "name": "Zeitungsausschnitt",
+      "text": "In der Kirche, zwischen den verquollenen Gesangbüchern, steckt eine Klarsichthülle: »Das Leuchten von Altenreuth – 1962«. Am Rand Stefanies Bleistift: »Gleicher Ort wie MP4? Seit sechzig Jahren?«"
+    },
+    "stef_tunnel": {
+      "name": "Ein alter Parkschein",
+      "text": "Im Baucontainer, unter die Schreibunterlage gerutscht: ein Parkschein aus der Kreisstadt, zwei Jahre alt. Auf der Rückseite, Stefanies Schrift: »Senn – Büro im Tunnel? Herausfinden, wer A. ist.«"
+    },
+    "stef_mappe": {
+      "name": "Stefanies Mappe",
+      "text": "Unter der Krippe, in einem doppelten Boden: Stefanies Mappe. Ein Kartenausschnitt mit »Messpunkt 4« – genau dort, wo unsere Hütte steht. Kopien meiner Einsatzpläne, die ich nie mit nach Hause genommen habe. Ihre Notizen, »A. Senn« dreimal eingekreist. Und ein unfertiger Brief an eine Journalistin: »… Ich habe Angst, dass sie merken, dass ich frage. Wenn mir etwas passiert: Die Akten liegen im Tunnel Ost, bei Senn …« Das Datum: drei Wochen vor der Regennacht."
+    },
+    "lkw_raststation": {
+      "name": "Der Sattelzug",
+      "text": "Am Rand des Parkplatzes steht ein Sattelzug, die Plane zerrissen, die Reifen platt. Kennzeichen DEG-RZ 117. Die Stoßstange ist rechts eingedrückt. Im Kühlergrill steckt ein Splitter blauer Lack. Unser Auto war blau."
     }
   },
   "lab": {

@@ -234,7 +234,7 @@ func _refresh() -> void:
 		c.queue_free()
 	for m: Dictionary in _couch.available():
 		var b := Button.new()
-		var unread := not _couch.read_ids.has(m["id"])
+		var unread := _couch.is_unread(m)
 		var kind := "✉ " if m.get("type", "mail") == "mail" else "▤ "
 		b.text = ("● " if unread else "   ") + kind + String(m.get("from", "")) + "\n      " + String(m.get("subject", ""))
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -249,8 +249,9 @@ func _refresh() -> void:
 		_list.add_child(_label("Keine Nachrichten.", 16, Color(0.6, 0.6, 0.65)))
 
 
-## Reiter „Aufgaben“: Tagesroutine, offene Ziele, erledigte Ziele.
+## Reiter „Aufgaben“: Spur (roter Faden der Story), Tagesroutine, offene Ziele, erledigte Ziele.
 func _fill_tasks(box: VBoxContainer) -> void:
+	_fill_story(box)
 	box.add_child(_label("HEUTE  (Tag %d)" % TimeManager.day, 17, Color(1.0, 0.82, 0.45)))
 	var routine := Tasks.daily()
 	if routine.is_empty():
@@ -280,6 +281,42 @@ func _fill_tasks(box: VBoxContainer) -> void:
 		box.add_child(_label("ERLEDIGT", 17, Color(0.6, 0.66, 0.75)))
 		for g: Dictionary in done_g:
 			box.add_child(_label("   ✓  " + String(g.get("title", "")), 17, Color(0.5, 0.68, 0.5)))
+
+
+## Oben im Reiter „Aufgaben“: Hauptspur(en), Nebenspuren, zuletzt erledigte Spuren.
+func _fill_story(box: VBoxContainer) -> void:
+	var active := Story.active_steps()
+	box.add_child(_label("SPUR  –  %s" % String(Story.phase_def(Story.phase).get("name", "")), 17, Color(1.0, 0.55, 0.4)))
+	if active.is_empty():
+		box.add_child(_label("   Im Moment keine offene Spur.", 17, Color(0.6, 0.6, 0.65)))
+	var side_header := false
+	for s: Dictionary in active:
+		var main := bool(s.get("main", false))
+		if not main and not side_header:
+			side_header = true
+			box.add_child(_label("   Nebenspuren", 16, Color(0.7, 0.72, 0.8)))
+		var prog := Story.step_progress(s)
+		var title := ("   ◉  " if main else "   ○  ") + String(s.get("title", "")) + ("   (%s)" % prog if prog != "" else "")
+		box.add_child(_label(title, 21 if main else 18, Color(1.0, 0.86, 0.7) if main else Color(0.85, 0.87, 0.92)))
+		var t := _label("        " + String(s.get("text", "")), 16 if main else 15, Color(0.75, 0.76, 0.82) if main else Color(0.62, 0.65, 0.72))
+		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(t)
+		if Story.hint_shown(String(s.get("id", ""))) and String(s.get("hint", "")) != "":
+			var h := _label("        Hinweis: " + String(s["hint"]), 15, Color(0.95, 0.75, 0.45))
+			h.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(h)
+	if Inventory.count("work_map") + Inventory.count("hiking_map") > 0 and not Story.map_targets().is_empty():
+		box.add_child(_label("        Die Orte sind auf der Karte eingekreist [M].", 15, Color(0.6, 0.66, 0.75)))
+	var done := Story.done_step_defs()
+	if not done.is_empty():
+		box.add_child(_label("   Bisheriger Weg:", 15, Color(0.6, 0.66, 0.75)))
+		var names: Array = []
+		for s: Dictionary in done:
+			names.append(String(s.get("title", "")))
+		var l := _label("        " + "  ›  ".join(names), 15, Color(0.5, 0.62, 0.5))
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(l)
+	box.add_child(_spacer())
 
 
 func _spacer() -> Control:
