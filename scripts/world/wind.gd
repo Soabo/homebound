@@ -193,7 +193,7 @@ func _update_rustle(delta: float) -> void:
 	if not ev["wind"] and _looking_at(p):
 		_rustle_amp = 0.0
 		_rustle_snd.stop()
-		get_tree().call_group("nature_ambience", "silence_for", _cfg.rustle_silence_seconds)
+		get_tree().call_group("nature_ambience", "silence_for", _cfg.rustle_silence_seconds, false)
 		if _rng.randf() < _cfg.rustle_twig_chance:
 			var behind := _player.global_position - (-_player.camera.global_transform.basis.z) * _rng.randf_range(7.0, 12.0)
 			get_tree().create_timer(_rng.randf_range(3.0, 7.0)).timeout.connect(func() -> void:

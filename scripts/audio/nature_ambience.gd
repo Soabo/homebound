@@ -16,6 +16,8 @@ var _rng := RandomNumberGenerator.new()
 var _brook: AudioStreamPlayer3D
 var _frogs: AudioStreamPlayer3D
 var _dread: AudioStreamPlayer
+var _dread_until := -1.0
+var _dread_level := 0.0
 
 
 func _ready() -> void:
@@ -61,8 +63,12 @@ func _on_phase_changed(is_night: bool) -> void:
 
 
 ## Für Ereignisse: Die Tiere verstummen für einige Sekunden.
-func silence_for(seconds: float) -> void:
-	_forced_silence_until = _t + seconds
+## dread = mit dem tiefen Brummton („etwas ist da“). Rascheln im Gebüsch lässt nur die Vögel verstummen,
+## damit offen bleibt, ob es der Wind war.
+func silence_for(seconds: float, dread: bool = true) -> void:
+	_forced_silence_until = maxf(_forced_silence_until, _t + seconds)
+	if dread:
+		_dread_until = maxf(_dread_until, _t + seconds)
 
 
 func _process(delta: float) -> void:
@@ -103,8 +109,16 @@ func _process(delta: float) -> void:
 			var frog_vol := (1.0 if night else 0.0) * (1.0 - _silence)
 			_frogs.volume_db = linear_to_db(maxf(frog_vol, 0.0001)) - 10.0 + indoor_db + fauna_db
 	if _dread:
-		var dread := maxf(_silence, 0.0 if st == 0 else 0.15 + 0.1 * st)
-		_dread.volume_db = linear_to_db(maxf(dread, 0.0001)) - 10.0
+		# Brummton nur, wenn wirklich etwas da ist (Kreatur in der Nähe oder ein Ereignis mit Brummen);
+		# die Talverwandlung legt ihn nur nachts leise darunter, tagsüber nie
+		var target_dread := 0.0
+		if target_silence > 0.5 and (_t < _dread_until or is_instance_valid(creature) and player \
+				and creature.global_position.distance_to(player.global_position) < CREATURE_SILENCE_RADIUS):
+			target_dread = 1.0
+		if night and st > 0:
+			target_dread = maxf(target_dread, 0.08 + 0.06 * st)
+		_dread_level = move_toward(_dread_level, target_dread, delta * (0.5 if target_dread > _dread_level else 0.12))
+		_dread.volume_db = linear_to_db(maxf(_dread_level, 0.0001)) - 10.0
 
 	if night and _silence < 0.3:
 		_owl_timer -= delta

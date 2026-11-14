@@ -110,7 +110,7 @@ func _office() -> void:
 					gable_mat if (d < 0.0) == (x == x0) else c.m_wall)
 	_lean_to_z(x0 - 0.45, x1 + 0.45, z0 - 0.55, z1, roof_at)
 	# Licht + Schalter (innen neben der Tür)
-	var lamp := c._lamp(Vector3(0.0, roof_at.call(-6.3) - 0.12, -6.3), 0.9, 5.0, true)
+	var lamp := c._lamp(Vector3(0.0, roof_at.call(-6.3) - 0.12, -6.3), 0.9, 5.0, true, "flush")
 	c._switch("office", "Licht Büro", Vector3(1.15, y + 1.25, z1 - 0.17), 180.0, [lamp])
 	_office_furniture(x0, x1, z0, z1)
 	# Kellerluke unter dem Teppich
@@ -258,7 +258,7 @@ func _kids_room() -> void:
 			_panel([Vector3(x0, west_top, zz), Vector3(x1, west_top, zz), Vector3(x1, roof_at.call(x1) + 0.05, zz), Vector3(x0, roof_at.call(x0) + 0.05, zz)],
 					gable_mat if (d < 0.0) == (z == z0) else c.m_wall)
 	_lean_to_x(x0 - 0.55, x1, z0 - 0.45, z1 + 0.4, roof_at)
-	var lamp := c._lamp(Vector3(-7.5, roof_at.call(-7.5) - 0.12, -2.0), 0.9, 5.0, true)
+	var lamp := c._lamp(Vector3(-7.5, roof_at.call(-7.5) - 0.12, -2.0), 0.9, 5.0, true, "flush")
 	c._switch("kids", "Licht Kinderzimmer", Vector3(x1 - 0.17, y + 1.25, -0.75), -90.0, [lamp])
 	_kids_furniture(x0, x1, z0, z1)
 
@@ -332,8 +332,8 @@ func _attic() -> void:
 	BuildKit.box_mm(c, Vector3(-5.6, y, -0.9), Vector3(3.6, y + 0.02, 0.9), boards, false)
 	BuildKit.box_mm(c, Vector3(4.7, y, -0.9), Vector3(5.6, y + 0.02, 0.9), boards, false)
 	# Glühbirne am First + Schalter an einem Pfosten neben der Luke
-	var bulb := c._lamp(Vector3(0.0, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.7, 6.5, true)
-	var bulb2 := c._lamp(Vector3(4.6, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.5, 4.5, false)
+	var bulb := c._lamp(Vector3(0.0, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.7, 6.5, true, "flush")
+	var bulb2 := c._lamp(Vector3(4.6, Cabin.WALL_TOP + Cabin.ROOF_RISE - 0.15, 0.0), 0.5, 4.5, false, "flush")
 	BuildKit.box(c, Vector3(0.1, Cabin.ROOF_RISE, 0.1), Vector3(3.0, y + Cabin.ROOF_RISE * 0.5 - 0.05, 0.7), c.m_beam, true)
 	Babyfon.sender(c, Vector3(3.3, y, 0.75), 90.0)
 	c._switch("attic", "Licht Dachboden", Vector3(3.06, y + 1.2, 0.7), 90.0, [bulb, bulb2])
@@ -393,7 +393,7 @@ func _cellar() -> void:
 	for bz: float in [-6.2, -4.6, -3.0]:
 		BuildKit.box(c, Vector3(x1 - x0, 0.16, 0.14), Vector3((x0 + x1) * 0.5, -0.14, bz), c.m_beam, false)
 	# Licht (nackte Birne) mit Schalter an der Leiter
-	var bulb := c._lamp(Vector3(0.1, -0.02, -3.6), 0.6, 5.0, true)
+	var bulb := c._lamp(Vector3(0.1, -0.06, -3.6), 0.6, 5.0, true, "flush")
 	c._switch("cellar", "Licht Keller", Vector3(x0 + 0.12, fy + 1.35, -4.6), 90.0, [bulb])
 	# Vorratsregal an der Westwand: Weckgläser (zum Mitnehmen), Säcke aus der Speis
 	var shelf_x := x0 + 0.1
@@ -415,8 +415,8 @@ func _cellar() -> void:
 	for i in 3:
 		var j := Node3D.new()
 		jars.add_child(j)
-		BuildKit.cylinder(j, 0.06, 0.16, Vector3(shelf_x + 0.2, fy + 0.57, -6.1 + i * 0.25), glass, false, Vector3.ZERO, -1.0, 10)
-		BuildKit.cylinder(j, 0.062, 0.02, Vector3(shelf_x + 0.2, fy + 0.66, -6.1 + i * 0.25), c.m_iron, false, Vector3.ZERO, -1.0, 10)
+		BuildKit.cylinder(j, 0.06, 0.16, Vector3(shelf_x + 0.2, fy + 0.5425, -6.1 + i * 0.25), glass, false, Vector3.ZERO, -1.0, 10)
+		BuildKit.cylinder(j, 0.062, 0.02, Vector3(shelf_x + 0.2, fy + 0.6325, -6.1 + i * 0.25), c.m_iron, false, Vector3.ZERO, -1.0, 10)
 		jars.visuals.append(j)
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(c, 0.28, Vector3(0.0, fy + 0.22, -3.0), sack, Vector3(1.0, 0.8, 0.8), 10)

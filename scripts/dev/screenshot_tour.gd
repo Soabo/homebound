@@ -94,6 +94,8 @@ const SHOTS := [
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
 	{"name": "86_keller", "hour": 14.0, "pos": Vector3(0.2, -2.1, -2.6), "look": Vector3(1.6, -1.3, -3.6), "lights": true, "cellar_open": true},
+	{"name": "8A_kellerleiter", "hour": 14.0, "pos": Vector3(0.9, -2.1, -3.1), "look": Vector3(0.9, -0.6, -5.8), "lights": true, "cellar_open": true},
+	{"name": "8B_regal_speis", "hour": 14.0, "pos": Vector3(0.9, 0.45, -2.9), "look": Vector3(-0.8, 1.1, -2.9), "lights": true},
 	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},
 	{"name": "88_nacht_waldrand", "hour": 23.5, "pos": Vector3(-7.4, 0.45, -2.0), "look": Vector3(-25.0, 1.5, -2.5), "omens": ["seeker_at", "wisps_at"]},
 	{"name": "90_weg_nordtor", "hour": 15.0, "pos": Vector3(4.6, 0.0, -14.0), "look": Vector3(5.5, 1.0, -40.0)},

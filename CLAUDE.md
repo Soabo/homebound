@@ -438,6 +438,17 @@
 - Hütte: Vorhänge wehen (`CurtainDraft`, stark bei zerbrochenem Fenster), Laufwege/Flecken/Ruß als Decals (`Cabin._build_wear`).
 - Kamera: Fernglas mit Tiefenunschärfe, leichtes Schwanken beim Gehen. Tour-Bilder B0–B4 (Mond, Wolken, Morgennebel, Regen, Abendsonne).
 - Prüfung `RegressTest._t_atmosphere`.
+- Brummton „etwas ist da“ (Aufnahme silence, `NatureAmbience._dread_level`): nur bei echter Präsenz (Kreatur nah,
+  `silence_for(s, true)`); Rascheln im Gebüsch ruft `silence_for(s, false)` = nur Vögel still. Talverwandlung legt ihn nur nachts leise darunter.
+
+## Korrekturen 13.11. abends (Christian)
+- Regale an Ost-/Westwänden: `Cabin._shelf` richtet Seitenbretter nach der langen Seite aus. Speis-Vorräte stehen auf den Brettern,
+  ohne Kisten/Seitenwand zu berühren (`Cabin._overlaps`). Wandertafel linksbündig ab der Farbmarke, Kabelschacht-Schrift zweizeilig.
+  Steg-Geländer fest (`RailCollision_L/R`).
+- Lampen in Büro, Kinderzimmer, Dachboden, Keller: Stil `flush` (direkt an der Decke); nur Hängelampen pendeln (Vorkommnis).
+- Leitern: Dachbodenleiter hängt an der Nordkante (`AtticHatch.LADDER_TOP_Z/LADDER_FOOT_Z`), Deckel klappt nach oben (`LID_OPEN`);
+  Kellerleiter an der Nordkante (`CellarHatch.LADDER_RUN`). Kletterwege `climb_points()` – Kopf oberhalb der Decke immer in der Öffnung.
+- Wasserhahn-Spuk: E am Küchenhahn dreht zu (`WaterSource.running_ghost`). Prüfung `RegressTest._t_fixes_1311`, Tour-Bilder 8A/8B.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

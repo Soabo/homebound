@@ -10,6 +10,11 @@ const HOLE := Rect2(Vector2(3.75, -0.45), Vector2(0.8, 1.1))
 ## Fuß der Leiter im Raum (Weltkoordinaten) – dort landet auch, was von oben herunterkommt
 const FOOT := Vector3(4.15, Cabin.FLOOR_Y, 1.55)
 const TOP_STAND := Vector3(3.3, Cabin.WALL_TOP + 0.11, 0.1)
+## Leiter hängt an der Nordkante der Öffnung und steht weiter südlich auf dem Boden:
+## so klettert man durch die Öffnung (vorher hing sie an der Südkante, der Kopf ging durch die Decke).
+const LADDER_TOP_Z := -0.45 + 0.08
+const LADDER_FOOT_Z := 0.75
+const LID_OPEN := 100.0
 
 ## Ist die Leiter gerade unten? (für Bett und ThreatDirector)
 static var down_now: bool = false
@@ -47,12 +52,12 @@ func _ready() -> void:
 	_lid.add_child(_cord)
 	BuildKit.cylinder(_cord, 0.006, 0.45, Vector3(0, -0.22, -HOLE.size.y + 0.12), BuildKit.color_mat(Color(0.75, 0.7, 0.6)), false, Vector3.ZERO, -1.0, 4)
 	BuildKit.sphere(_cord, 0.025, Vector3(0, -0.46, -HOLE.size.y + 0.12), wood, Vector3.ONE, 6)
-	# Leiter: schräg von der Südkante zum Boden
+	# Leiter: schräg von der Nordkante der Öffnung nach Süden zum Boden
 	_ladder = Node3D.new()
-	_ladder.position = Vector3(0, -0.02, hd - 0.08)
+	_ladder.position = Vector3(0, -0.02, LADDER_TOP_Z - c.y)
 	add_child(_ladder)
 	var drop := Cabin.WALL_TOP - Cabin.FLOOR_Y
-	var run := FOOT.z - (c.y + hd - 0.08)
+	var run := LADDER_FOOT_Z - LADDER_TOP_Z
 	var length := sqrt(drop * drop + run * run)
 	_ladder.rotation.x = -atan2(run, drop)
 	for s: float in [-1.0, 1.0]:
@@ -84,7 +89,8 @@ func _apply(animate: bool) -> void:
 	_rail_cs.disabled = not down
 	_ladder_cs.disabled = not down
 	_cord.visible = not down
-	var lid_rot := -100.0 if down else 0.0
+	# Deckel klappt nach oben in den Dachboden (hing er nach unten, ging der Kopf beim Klettern hindurch)
+	var lid_rot := LID_OPEN if down else 0.0
 	if animate:
 		var tw := create_tween().set_trans(Tween.TRANS_SINE)
 		tw.tween_property(_lid, "rotation_degrees:x", lid_rot, 0.5)
@@ -103,6 +109,21 @@ func _apply(animate: bool) -> void:
 		_ladder.scale = Vector3.ONE
 
 
+## Wo die Leiter auf Höhe y steht (z in Weltkoordinaten)
+static func ladder_z(y: float) -> float:
+	var t := clampf((y - Cabin.FLOOR_Y) / (Cabin.WALL_TOP - Cabin.FLOOR_Y), 0.0, 1.0)
+	return lerpf(LADDER_FOOT_Z, LADDER_TOP_Z, t)
+
+
+## Kletterweg (Füße) – auch für die Prüfung im RegressTest
+func climb_points() -> Array:
+	var stand := Vector3(FOOT.x, Cabin.FLOOR_Y, LADDER_FOOT_Z + 0.5)
+	var low := Vector3(FOOT.x, Cabin.FLOOR_Y + 0.25, ladder_z(Cabin.FLOOR_Y + 0.25) + 0.2)
+	var high := Vector3(FOOT.x, Cabin.FLOOR_Y + 1.45, ladder_z(Cabin.FLOOR_Y + 1.45) + 0.2)
+	var hole := Vector3(FOOT.x, Cabin.WALL_TOP + 0.11, HOLE.get_center().y)
+	return [stand, low, high, hole, TOP_STAND]
+
+
 func _up_there(p: Node3D) -> bool:
 	return p.global_position.y > Cabin.WALL_TOP - 0.2
 
@@ -114,8 +135,8 @@ func _siege_attic() -> bool:
 
 func bump() -> void:
 	var tw := create_tween()
-	tw.tween_property(_lid, "rotation_degrees:x", -6.0, 0.08)
-	tw.tween_property(_lid, "rotation_degrees:x", -100.0 if down else 0.0, 0.2)
+	tw.tween_property(_lid, "rotation_degrees:x", (LID_OPEN - 6.0) if down else 6.0, 0.08)
+	tw.tween_property(_lid, "rotation_degrees:x", LID_OPEN if down else 0.0, 0.2)
 	SoundBank.play_at(get_parent(), "thud", global_position, -2.0, 0.7)
 	Fx.burst(get_parent(), global_position + Vector3(0, -0.05, 0), "dust", Vector3.DOWN, 0.5)
 
@@ -164,14 +185,14 @@ func interact(player: Node) -> void:
 			return
 		set_down(true)
 		return
-	var hole := Vector3(global_position.x, Cabin.WALL_TOP + 0.11, global_position.z + 0.1)
-	var high := Vector3(FOOT.x, Cabin.FLOOR_Y + 1.75, FOOT.z - 0.7)
-	var low := Vector3(FOOT.x, Cabin.FLOOR_Y + 0.15, FOOT.z - 0.05)
-	var stand := Vector3(FOOT.x, Cabin.FLOOR_Y, FOOT.z + 0.4)
+	var pts := climb_points()
 	if _up_there(p):
-		LadderClimb.climb(self, p, [TOP_STAND + Vector3(0.1, 0, 0), hole, high, low, stand], Vector3(FOOT.x, 0, -2.0), -0.35)
+		var down_pts := pts.duplicate()
+		down_pts.reverse()
+		down_pts[0] = TOP_STAND + Vector3(0.1, 0, 0)
+		LadderClimb.climb(self, p, down_pts, Vector3(FOOT.x, 0, -2.0), -0.35)
 	else:
-		LadderClimb.climb(self, p, [stand, low, high, hole, TOP_STAND], Vector3(FOOT.x, 0, -2.0), 0.2)
+		LadderClimb.climb(self, p, pts, Vector3(FOOT.x, 0, -2.0), 0.2)
 		Tasks.flag("attic_visited")
 
 

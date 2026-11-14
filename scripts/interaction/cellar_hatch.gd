@@ -7,6 +7,7 @@ extends Interactable
 ## Öffnung im Büroboden (Draufsicht x/z): x 0.5..1.3, z -6.1..-5.3
 const HOLE := Rect2(Vector2(0.5, -6.1), Vector2(0.8, 0.8))
 const HINT_FLAG := "cellar_hint"
+const LADDER_RUN := 0.45   # so weit steht der Leiterfuß südlich der Oberkante
 
 var rug_moved: bool = false
 var open: bool = false
@@ -36,13 +37,14 @@ func _ready() -> void:
 	add_child(_lid)
 	BuildKit.box(_lid, Vector3(HOLE.size.x - 0.02, 0.04, HOLE.size.y - 0.02), Vector3(0, -0.02, hw), wood, false)
 	BuildKit.cylinder(_lid, 0.05, 0.012, Vector3(0, 0.002, hw * 1.6), iron, false, Vector3.ZERO, -1.0, 10)
-	# Leiter in den Keller (leicht schräg)
+	# Leiter in den Keller (leicht schräg): hängt an der Nordkante unter dem Scharnier, Fuß nach Süden –
+	# so klettert man durch die Öffnung statt neben ihr durch den Boden
 	var lad := Node3D.new()
-	lad.position = Vector3(0, -0.08, hw - 0.05)
+	lad.position = Vector3(0, -0.08, -hw + 0.05)
 	add_child(lad)
 	var drop := Cabin.FLOOR_Y - Cabin.CELLAR_FLOOR
-	var length := sqrt(drop * drop + 0.45 * 0.45)
-	lad.rotation.x = -atan2(0.45, drop)   # Fuß nach Süden
+	var length := sqrt(drop * drop + LADDER_RUN * LADDER_RUN)
+	lad.rotation.x = -atan2(LADDER_RUN, drop)
 	for s: float in [-1.0, 1.0]:
 		BuildKit.box(lad, Vector3(0.05, length, 0.08), Vector3(s * 0.22, -length * 0.5, 0), dark, false)
 	var k := 0.2
@@ -106,16 +108,35 @@ func get_secondary_prompt(player: Node) -> String:
 	return ""
 
 
+## Wo die Leiter auf Höhe y steht (z in Weltkoordinaten)
+func ladder_z(y: float) -> float:
+	var top_z := global_position.z - HOLE.size.y * 0.5 + 0.05
+	var t := clampf((y - Cabin.CELLAR_FLOOR) / (Cabin.FLOOR_Y - Cabin.CELLAR_FLOOR), 0.0, 1.0)
+	return lerpf(top_z + LADDER_RUN, top_z, t)
+
+
+## Kletterweg von unten nach oben (Füße) – Kopf ist oberhalb der Kellerdecke immer in der Öffnung
+func climb_points() -> Array:
+	var c := global_position
+	var bottom := Vector3(c.x, Cabin.CELLAR_FLOOR, ladder_z(Cabin.CELLAR_FLOOR) + 0.6)
+	var low := Vector3(c.x, Cabin.CELLAR_FLOOR + 0.25, ladder_z(Cabin.CELLAR_FLOOR + 0.25) + 0.2)
+	var mid := Vector3(c.x, Cabin.CELLAR_FLOOR + 1.1, ladder_z(Cabin.CELLAR_FLOOR + 1.1) + 0.2)
+	var hole := Vector3(c.x, Cabin.FLOOR_Y + 0.02, c.z)
+	var top_stand := Vector3(c.x + 0.75, Cabin.FLOOR_Y, c.z)
+	return [bottom, low, mid, hole, top_stand]
+
+
 func interact(player: Node) -> void:
 	var p := player as Player
 	if p == null:
 		return
 	var c := global_position
-	var top_stand := Vector3(c.x + 0.75, Cabin.FLOOR_Y, c.z)
-	var hole := Vector3(c.x, Cabin.FLOOR_Y + 0.02, c.z)
-	var mid := Vector3(c.x, Cabin.FLOOR_Y - 1.4, c.z + 0.75)
-	var low := Vector3(c.x, Cabin.CELLAR_FLOOR + 0.1, c.z + 1.05)
-	var bottom := Vector3(c.x, Cabin.CELLAR_FLOOR, c.z + 1.45)
+	var pts := climb_points()
+	var bottom: Vector3 = pts[0]
+	var low: Vector3 = pts[1]
+	var mid: Vector3 = pts[2]
+	var hole: Vector3 = pts[3]
+	var top_stand: Vector3 = pts[4]
 	if _below(p):
 		LadderClimb.climb(self, p, [bottom, low, mid, hole, top_stand], Vector3(c.x, 0, c.z - 3.0), 0.25)
 		return

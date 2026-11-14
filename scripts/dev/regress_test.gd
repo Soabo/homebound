@@ -357,6 +357,121 @@ func _t_more() -> void:
 	_t_story()
 	await _t_cover()
 	await _t_atmosphere()
+	await _t_fixes_1311()
+
+
+## Fehler vom 13.11. abends: Regal-Clipping, Lampen zu tief, Leitern, Wasserhahn-Spuk, Brummton am Tag.
+func _t_fixes_1311() -> void:
+	var cabin := _scene().find_child("Cabin", true, false) as Cabin
+	# 1) Speis-Regal: nichts ragt ins Brett, in die Seitenwand, in die Kisten oder ineinander
+	var sx := -1.0 + Cabin.INT_T * 0.5 + 0.02
+	var y := Cabin.FLOOR_Y
+	var boards: Array[float] = []
+	for lvl in 5:
+		boards.append(y + 0.05 + lvl * (2.05 / 5.0))
+	var items: Array[AABB] = []
+	for c in cabin.get_children():
+		var mi := c as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var bb := mi.transform * mi.get_aabb()
+		var mid := bb.get_center()
+		if mid.x < sx or mid.x > sx + 0.45 or mid.z < -4.3 or mid.z > -1.55 or mid.y < y or mid.y > y + 2.1:
+			continue
+		if bb.size.z > 1.0 or bb.size.y > 1.0 or bb.size.y < 0.05:
+			continue   # Bretter und Seitenwände
+		items.append(bb)
+	var bad := 0
+	for bb in items:
+		var on_board := false
+		for b in boards:
+			if absf(bb.position.y - b) < 0.012:
+				on_board = true
+		if not on_board or bb.position.z < -4.26 or bb.end.z > -1.585:
+			bad += 1
+		var lvl_y := bb.position.y
+		if absf(lvl_y - boards[2]) < 0.02 and (Cabin._overlaps(bb.position.z, bb.end.z, -3.83, -3.37) or Cabin._overlaps(bb.position.z, bb.end.z, -2.84, -2.46)):
+			bad += 1
+	for i in items.size():
+		for j in range(i + 1, items.size()):
+			if items[i].grow(-0.005).intersects(items[j].grow(-0.005)):
+				bad += 1
+	_ok("Speis-Regal: Vorräte stehen auf den Brettern, ohne sich zu überschneiden", items.size() > 20 and bad == 0, "%d Teile, %d Fehler" % [items.size(), bad])
+	# 2) Lampen in Büro, Kinderzimmer, Dachboden, Keller sitzen an der Decke
+	var flush := 0
+	var hanging_new := 0
+	for l in get_tree().get_nodes_in_group("lamp"):
+		var lamp := l as Lamp
+		if lamp == null:
+			continue
+		var gp := lamp.global_position
+		var new_room := Cabin.OFFICE.has_point(Vector2(gp.x, gp.z)) or Cabin.KIDS.has_point(Vector2(gp.x, gp.z)) \
+				or gp.y > Cabin.WALL_TOP + 0.3 or gp.y < Cabin.FLOOR_Y - 0.2
+		if new_room:
+			if lamp.style == "flush":
+				flush += 1
+			else:
+				hanging_new += 1
+	_ok("Neue Räume: Lampen direkt an der Decke", flush >= 5 and hanging_new == 0, "%d an der Decke, %d hängend" % [flush, hanging_new])
+	# 3) Leitern: oberhalb der Decke ist der Kopf immer in der Öffnung
+	var ah := _scene().find_child("AtticHatch", true, false) as AtticHatch
+	var ah_ok := ah != null and _climb_head_ok(ah.climb_points(), Cabin.WALL_TOP - 0.05, AtticHatch.HOLE)
+	_ok("Dachbodenleiter: Kopf geht durch die Öffnung, nicht durch die Decke", ah_ok)
+	var ch := _scene().find_child("CellarHatch", true, false) as CellarHatch
+	var hole := Rect2(Vector2(ch.global_position.x, ch.global_position.z) - CellarHatch.HOLE.size * 0.5, CellarHatch.HOLE.size) if ch else Rect2()
+	var ch_ok := ch != null and _climb_head_ok(ch.climb_points(), -0.06, hole)
+	_ok("Kellerleiter: Kopf geht durch die Öffnung, nicht durch den Boden", ch_ok)
+	# 4) Wasserhahn-Spuk: am Küchenhahn mit E zudrehen
+	NightOmens._tap_run(_scene())
+	await get_tree().process_frame
+	var tap := _scene().find_child("KitchenTap", true, false) as WaterSource
+	var ghost := get_tree().get_first_node_in_group("tap_ghost")
+	var had_ghost := ghost != null
+	var prompt := tap.get_prompt(_player()) if tap else ""
+	if tap:
+		tap.interact(_player())
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_ok("Wasserhahn läuft von selbst: am Hahn [E] zudrehen", had_ghost and prompt.contains("zudrehen") \
+			and get_tree().get_nodes_in_group("tap_ghost").is_empty(), prompt)
+	# 5) Brummton: Rascheln im Gebüsch am Tag ohne Brummen, echte Präsenz mit
+	var amb := get_tree().get_first_node_in_group("nature_ambience") as NatureAmbience
+	if amb == null:
+		for n in get_tree().get_nodes_in_group("nature_ambience"):
+			if n is NatureAmbience:
+				amb = n
+	if amb:
+		var keep_h := TimeManager.hour
+		TimeManager.hour = 13.0
+		amb._dread_level = 0.0
+		amb._dread_until = -1.0
+		amb.silence_for(3.0, false)
+		await get_tree().create_timer(1.0).timeout
+		var rustle_level := amb._dread_level
+		amb.silence_for(3.0, true)
+		await get_tree().create_timer(1.5).timeout
+		var real_level := amb._dread_level
+		amb._forced_silence_until = -1.0
+		amb._dread_until = -1.0
+		TimeManager.hour = keep_h
+		_ok("Brummton: kein Brummen tagsüber beim Rascheln, aber bei echter Präsenz", rustle_level < 0.01 and real_level > 0.3,
+				"%.2f / %.2f" % [rustle_level, real_level])
+	else:
+		_ok("Brummton: Naturklang gefunden", false)
+
+
+func _climb_head_ok(pts: Array, ceiling_y: float, hole: Rect2) -> bool:
+	for i in range(pts.size() - 1):
+		var a: Vector3 = pts[i]
+		var b: Vector3 = pts[i + 1]
+		for k in 21:
+			var f := a.lerp(b, k / 20.0)
+			var head := f + Vector3(0, Player.STAND_HEIGHT, 0)
+			# Kopf zwischen Unterseite der Decke und Fußhöhe darüber = steckt in der Decke
+			if head.y > ceiling_y and f.y < ceiling_y + 0.1:
+				if not hole.grow(-0.05).has_point(Vector2(head.x, head.z)):
+					return false
+	return true
 
 
 ## Stimmung (13.11.): Wind, Rascheln, Wetter, Himmel mit Mond, Vorhänge im Luftzug, Abnutzung.

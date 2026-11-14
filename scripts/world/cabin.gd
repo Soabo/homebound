@@ -648,8 +648,9 @@ func _build_lights() -> void:
 	_switch("workshop", "Licht Werkstatt", Vector3(2.0 + INT_T * 0.5 + 0.012, FLOOR_Y + 1.25, 2.35), 90.0, [workshop])
 
 
-func _lamp(pos: Vector3, energy: float, light_range: float, shadow: bool) -> Lamp:
+func _lamp(pos: Vector3, energy: float, light_range: float, shadow: bool, lamp_style: String = "ceiling") -> Lamp:
 	var lamp := Lamp.new()
+	lamp.style = lamp_style
 	lamp.position = pos
 	lamp.energy = energy
 	lamp.light_range = light_range
@@ -926,20 +927,29 @@ func _build_storage() -> void:
 	var colors := [Color(0.6, 0.5, 0.3), Color(0.4, 0.45, 0.3), Color(0.7, 0.3, 0.2), Color(0.5, 0.5, 0.55), Color(0.75, 0.7, 0.55)]
 	for level in 5:
 		var sy := y + 0.05 + level * (2.05 / 5.0)
-		var z := -4.2
-		while z < -1.7:
-			# Platz für die beschrifteten Kisten (Konserven, Wasser) auf der mittleren Ebene
-			if level == 2 and ((z > -3.9 and z < -3.3) or (z > -2.9 and z < -2.4)):
-				z += 0.05
-				continue
+		var z := -4.25 + 0.02
+		var z_end := -1.55 - 0.06   # Seitenbrett nicht berühren
+		while z < z_end:
 			var c: Color = colors[_rng.randi() % colors.size()]
-			if _rng.randf() < 0.5:
-				BuildKit.cylinder(self, 0.05, 0.13, Vector3(scx, sy + 0.065, z), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
-				z += 0.13
+			var round := _rng.randf() < 0.5
+			var w := 0.1 if round else _rng.randf_range(0.15, 0.3)
+			var h := 0.13 if round else _rng.randf_range(0.12, 0.3)
+			# Platz für die beschrifteten Kisten (Konserven, Wasser) auf der mittleren Ebene freihalten
+			if level == 2 and _overlaps(z, z + w, -3.86, -3.34) :
+				z = -3.34 + 0.03
+				continue
+			if level == 2 and _overlaps(z, z + w, -2.86, -2.44):
+				z = -2.44 + 0.03
+				continue
+			if z + w > z_end:
+				break
+			# Höhe nicht über das nächste Brett hinaus (Abstand 0,41 m)
+			h = minf(h, 0.33)
+			if round:
+				BuildKit.cylinder(self, 0.05, h, Vector3(scx, sy + h * 0.5, z + 0.05), BuildKit.color_mat(c, 0.5, 0.3), false, Vector3.ZERO, -1.0, 8)
 			else:
-				var w := _rng.randf_range(0.15, 0.3)
-				BuildKit.box(self, Vector3(0.3, _rng.randf_range(0.12, 0.3), w), Vector3(scx, sy + 0.1, z + w * 0.5), BuildKit.color_mat(c), false)
-				z += w + 0.05
+				BuildKit.box(self, Vector3(0.3, h, w), Vector3(scx, sy + h * 0.5, z + w * 0.5), BuildKit.color_mat(c), false)
+			z += w + 0.04
 	# Vorräte zum Mitnehmen: Konserven, Wasserflaschen, leere Dosen
 	# Konserven in einer Kiste mit "FOOD"-Etikett, Wasserflaschen in einer Kiste mit Tropfen-Symbol
 	var food := _crate_pickup("FoodShelf", "food", 6, 1, Vector3(scx, y + 0.9, -3.6), Vector3(0.27, 0.08, 0.44), "food", Vector3(1, 0, 0))
@@ -1408,6 +1418,10 @@ func _chair(pos: Vector3, rot_y: float) -> void:
 		BuildKit.box_mm(chair, Vector3(-0.18, yy - 0.04, -0.205), Vector3(0.18, yy + 0.04, -0.18), m_wood, false)
 	for p: Vector2 in [Vector2(-0.18, -0.18), Vector2(0.18, -0.18), Vector2(-0.18, 0.18), Vector2(0.18, 0.18)]:
 		BuildKit.box_mm(chair, Vector3(p.x - 0.022, 0, p.y - 0.022), Vector3(p.x + 0.022, 0.42, p.y + 0.022), m_wood_dark, false)
+
+
+static func _overlaps(a0: float, a1: float, b0: float, b1: float) -> bool:
+	return a0 < b1 and b0 < a1
 
 
 func _shelf(from: Vector3, to: Vector3, levels: int, books: bool) -> void:

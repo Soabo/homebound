@@ -179,6 +179,9 @@ static func _lamp_swing(scene: Node, player: Player, rng: RandomNumberGenerator)
 	var best_d := 9.0
 	for l in scene.get_tree().get_nodes_in_group("lamp"):
 		var n := l as Node3D
+		# nur Hängelampen pendeln (Deckenleuchten sitzen fest)
+		if n is Lamp and (n as Lamp).style != "ceiling":
+			continue
 		if n and Cabin.is_inside(n.global_position):
 			var d := n.global_position.distance_to(player.global_position)
 			if d < best_d:

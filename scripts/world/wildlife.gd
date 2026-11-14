@@ -31,7 +31,7 @@ func _ready() -> void:
 
 
 ## Etwas Fremdes ist in der Nähe: Tiere fliehen, eine Weile kommt keins.
-func silence_for(seconds: float) -> void:
+func silence_for(seconds: float, _dread: bool = true) -> void:
 	_silent_until = maxf(_silent_until, _t + seconds)
 	for a in get_children():
 		var an := a as Animal

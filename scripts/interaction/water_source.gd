@@ -34,7 +34,20 @@ func _dirty() -> bool:
 	return contaminable and WorldState.water_contaminated()
 
 
+## Läuft hier gerade das Wasser von selbst (nächtliches Vorkommnis)? Dann dreht E es zu.
+func running_ghost() -> Node3D:
+	if not is_inside_tree():
+		return null
+	for g in get_tree().get_nodes_in_group("tap_ghost"):
+		var n := g as Node3D
+		if n and not n.is_queued_for_deletion() and n.global_position.distance_to(to_global(anchor)) < 1.5:
+			return n
+	return null
+
+
 func get_prompt(_player: Node) -> String:
+	if running_ghost():
+		return "Das Wasser läuft  [E] zudrehen"
 	if _dirty():
 		var how := "mit Filter" if Inventory.count("water_filter") > 0 else "VERFÄRBT – ohne Filter gefährlich"
 		return "[E] %s – trinken (%s)  (Durst %d%%)" % [label, how, int(Survival.thirst)]
@@ -86,6 +99,10 @@ func secondary_interact(_player: Node) -> void:
 
 
 func interact(player: Node) -> void:
+	var ghost := running_ghost()
+	if ghost:
+		ghost.call("interact", player)
+		return
 	if _dirty() and Inventory.count("water_filter") <= 0 and Inventory.count("comb_filter") <= 0:
 		# verunreinigt: löscht nur halb den Durst und schadet
 		Survival.apply({"thirst": thirst_gain * 0.5})

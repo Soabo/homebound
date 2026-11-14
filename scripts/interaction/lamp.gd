@@ -43,6 +43,12 @@ func _ready() -> void:
 		BuildKit.sphere(self, 0.07, Vector3(0, 0.02, 0.13), _bulb_mat)
 		BuildKit.cylinder(self, 0.11, 0.12, Vector3(0, 0.1, 0.13), metal, false, Vector3.ZERO, 0.05)
 		light_pos = Vector3(0, -0.05, 0.25)
+	elif style == "flush":
+		# Deckenleuchte direkt an der Decke: Rosette, flacher Schirm, Glühbirne darunter
+		BuildKit.cylinder(self, 0.07, 0.03, Vector3(0, -0.015, 0), metal, false, Vector3.ZERO, -1.0, 10)
+		BuildKit.cylinder(self, 0.06, 0.1, Vector3(0, -0.08, 0), metal, false, Vector3.ZERO, 0.2, 12)
+		BuildKit.sphere(self, 0.055, Vector3(0, -0.14, 0), _bulb_mat)
+		light_pos = Vector3(0, -0.22, 0)
 	else:
 		BuildKit.box(self, Vector3(0.01, 0.5, 0.01), Vector3(0, -0.25, 0), metal, false)
 		BuildKit.cylinder(self, 0.22, 0.16, Vector3(0, -0.56, 0), metal, false, Vector3.ZERO, 0.06)
