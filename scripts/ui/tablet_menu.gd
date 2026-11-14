@@ -253,6 +253,24 @@ func _refresh() -> void:
 		_list.add_child(_label("Keine Nachrichten.", 16, Color(0.6, 0.6, 0.65)))
 
 
+## Packliste, solange ein Mehrtagesmarsch ansteht (Story.multi_trip_target)
+func _fill_packing(box: VBoxContainer) -> void:
+	var target := Story.multi_trip_target()
+	if target == "":
+		return
+	var name := String(WorldMap.places()[target]["name"])
+	box.add_child(_label("PACKLISTE  –  Mehrtagesmarsch: %s" % name, 17, Color(0.6, 0.9, 1.0)))
+	for it: Dictionary in Story.packing_status():
+		var mark := "   ✓  " if it["ok"] else ("   ·  " if it["optional"] else "   ○  ")
+		var count := "" if int(it["need"]) <= 1 else "  (%d/%d)" % [mini(int(it["have"]), int(it["need"])), int(it["need"])]
+		var col := Color(0.55, 0.8, 0.55) if it["ok"] else (Color(0.65, 0.68, 0.75) if it["optional"] else Color(1.0, 0.75, 0.6))
+		box.add_child(_label(mark + String(it["label"]) + count + ("  – empfohlen" if it["optional"] and not it["ok"] else ""), 18, col))
+	var hint := _label("      Früh aufbrechen. Unterwegs gibt es Rastplätze mit Feuerstelle (△ auf der Wanderkarte).", 15, Color(0.65, 0.7, 0.78))
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(hint)
+	box.add_child(_spacer())
+
+
 ## Reiter „Tagebuch“: Einträge nach Tagen (Journal)
 func _fill_journal(box: VBoxContainer) -> void:
 	var days := Journal.by_day()
@@ -304,6 +322,7 @@ func _fill_tasks(box: VBoxContainer) -> void:
 ## Oben im Reiter „Aufgaben“: Hauptspur(en), Nebenspuren, zuletzt erledigte Spuren.
 func _fill_story(box: VBoxContainer) -> void:
 	var active := Story.active_steps()
+	_fill_packing(box)
 	box.add_child(_label("SPUR  –  %s" % String(Story.phase_def(Story.phase).get("name", "")), 17, Color(1.0, 0.55, 0.4)))
 	if active.is_empty():
 		box.add_child(_label("   Im Moment keine offene Spur.", 17, Color(0.6, 0.6, 0.65)))

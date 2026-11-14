@@ -50,6 +50,7 @@ func _process(delta: float) -> void:
 		return   # Hauptmenü
 	update(true)
 	_check_deadline()
+	_check_packing()
 
 
 ## Alles einmal prüfen: Hinweise, Phasen, Spuren. announce = Gedanken/Meldungen zeigen.
@@ -224,6 +225,89 @@ func set_phase(n: int) -> void:
 	Tasks.flag("story_phase_%d" % n)
 	phase_changed.emit(n)
 	print("[Story] Phase ", n, ": ", phase_def(n).get("name", ""))
+
+
+# --- Mehrtagesmarsch: Packliste und Warnung beim Losgehen --------------------------
+
+var _packing_warned_day: int = -1
+
+
+func packing_def() -> Dictionary:
+	return data().get("packing", {})
+
+
+## Aktive Spur mit einem Ziel, das man nur mit Übernachtung erreicht (map.json ring multi)? Rückgabe: Ziel-ID oder "".
+func multi_trip_target() -> String:
+	for s: Dictionary in active_steps():
+		var ids: Array = []
+		if s.has("target"):
+			ids.append(s["target"])
+		ids.append_array(s.get("targets", []))
+		for id: Variant in ids:
+			var pl: Dictionary = WorldMap.places().get(String(id), {})
+			if pl.get("ring", "") == "multi" and not Tasks.flags.has("visit_" + String(id)):
+				return String(id)
+	return ""
+
+
+## Packliste mit Stand: [{label, have, need, ok, optional}]
+func packing_status() -> Array:
+	var out: Array = []
+	for it: Dictionary in packing_def().get("items", []):
+		var have := 0
+		var need := 1
+		if it.has("need"):
+			var ok_all := true
+			for id: String in it["need"]:
+				need = int(it["need"][id])
+				have = Inventory.count(id)
+				if have < need:
+					ok_all = false
+			out.append({"label": it["label"], "have": have, "need": need, "ok": ok_all, "optional": bool(it.get("optional", false))})
+			continue
+		if it.has("any"):
+			for id: String in it["any"]:
+				have = maxi(have, Inventory.count(id))
+		elif it.has("food"):
+			need = int(it["food"])
+			have = Inventory.count_food()
+		elif it.has("water"):
+			need = int(it["water"])
+			have = Inventory.count_water()
+		elif it.has("fuel"):
+			need = int(it["fuel"])
+			have = Inventory.count_fuel()
+		out.append({"label": it["label"], "have": have, "need": need, "ok": have >= need, "optional": bool(it.get("optional", false))})
+	return out
+
+
+func _check_packing() -> void:
+	var target := multi_trip_target()
+	if target == "":
+		return
+	var pk := packing_def()
+	# Erstes Mal: klare Ansage, dass es ein Mehrtagesmarsch wird
+	if not Tasks.flags.has("packing_intro"):
+		Tasks.flag("packing_intro")
+		EventBus.notify(String(pk.get("intro", "")), 10.0)
+		return
+	# Beim Losgehen: einmal am Tag warnen, wenn etwas fehlt oder es schon spät ist
+	var p := get_tree().get_first_node_in_group("player") as Node3D
+	if p == null or _packing_warned_day == TimeManager.day:
+		return
+	var d := Vector2(p.global_position.x, p.global_position.z).length()
+	if d < float(pk.get("leave_distance", 70.0)) or d > float(pk.get("leave_distance", 70.0)) + 60.0:
+		return
+	var missing: PackedStringArray = []
+	for it: Dictionary in packing_status():
+		if not it["ok"] and not it["optional"]:
+			missing.append(String(it["label"]))
+	if not missing.is_empty():
+		_packing_warned_day = TimeManager.day
+		EventBus.notify(String(pk.get("missing_text", "%s")) % ", ".join(missing), 8.0)
+	elif TimeManager.hour >= float(pk.get("late_hour", 12.0)) and not TimeManager.is_night():
+		_packing_warned_day = TimeManager.day
+		EventBus.notify(String(pk.get("late_text", "")), 7.0)
 
 
 # --- Endspurt und Enden ---------------------------------------------------------

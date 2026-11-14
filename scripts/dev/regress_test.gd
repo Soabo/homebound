@@ -364,6 +364,49 @@ func _t_more() -> void:
 	await _t_fixes_1311()
 	await _t_endings()
 	await _t_camp_events()
+	await _t_packing()
+
+
+## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
+func _t_packing() -> void:
+	var p := _player()
+	var keep_pos := p.global_position
+	var keep_active := Story.steps_active.duplicate()
+	var keep_visit := Tasks.flags.has("visit_aussenstelle")
+	Tasks.flags.erase("visit_aussenstelle")
+	Tasks.flags.erase("packing_intro")
+	Story.steps_active["p3_aussenstelle"] = Tasks.task_day()
+	_ok("Mehrtagesmarsch: Außenstelle wird als Übernachtungsziel erkannt", Story.multi_trip_target() == "aussenstelle", Story.multi_trip_target())
+	Story._check_packing()
+	_ok("Mehrtagesmarsch: klare Ansage beim ersten Mal", Tasks.flags.has("packing_intro"))
+	for id: String in ["tent", "sleeping_bag"]:
+		while Inventory.count(id) > 0:
+			Inventory.remove(id, 1)
+	var missing := 0
+	for it: Dictionary in Story.packing_status():
+		if not it["ok"] and not it["optional"]:
+			missing += 1
+	_ok("Packliste: ohne Zelt und Schlafsack fehlt etwas", missing >= 2)
+	Story._packing_warned_day = -1
+	p.global_position = Vector3(80.0, Terrain.height_at(80.0, 0.0) + 0.2, 0.0)
+	Story._check_packing()
+	_ok("Beim Losgehen: Warnung, was fehlt", Story._packing_warned_day == TimeManager.day)
+	Inventory.add("tent", 1)
+	Inventory.add("sleeping_bag", 1)
+	Inventory.add("food", 4)
+	Inventory.add("water", 4)
+	Inventory.add("wood", 4)
+	missing = 0
+	for it: Dictionary in Story.packing_status():
+		if not it["ok"] and not it["optional"]:
+			missing += 1
+	_ok("Packliste: alles gepackt", missing == 0 and MapScreen.supply_text().contains("alles gepackt"))
+	Inventory.remove("tent", 1)
+	Inventory.remove("sleeping_bag", 1)
+	Story.steps_active = keep_active
+	if keep_visit:
+		Tasks.flags["visit_aussenstelle"] = 1
+	p.global_position = keep_pos
 
 
 ## Zeltnacht 2.0 (14.11.): viele Vorfälle, Tiere, Dinge zum Handeln – verletzt, tötet aber nicht.

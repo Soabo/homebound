@@ -52,6 +52,23 @@
       "text": "In Stefanies Büro klingt der Boden unter dem Teppich hohl …"
     }
   ],
+  "packing": {
+    "_info": "Mehrtagesmarsch (Christian 14.11.: der Spieler soll sich vorbereiten können). Gilt, sobald eine aktive Spur ein Ziel mit ring multi hat (map.json). intro = Gedanke beim ersten Mal (Flag packing_intro), items = Packliste im Tablet (Aufgaben) und auf der Karte: need = Gegenstände, food/water/fuel = Mindestanzahl (Essen, Wasser, Holz/Torf), optional = nur empfohlen. Beim Losgehen (weiter als leave_distance von der Hütte) einmal am Tag eine Warnung, wenn etwas fehlt oder es schon nach late_hour ist.",
+    "intro": "Das ist kein Ausflug mehr, das sind zwei Tage da draußen, mit einer Nacht im Wald. Ich brauche ein Zelt, einen Schlafsack, Essen und Wasser für zwei Tage und Holz für zwei Feuer. (Packliste: Tablet, Aufgaben)",
+    "leave_distance": 70.0,
+    "late_hour": 12.0,
+    "late_text": "Es ist schon nach Mittag. Bis zur Nacht komme ich nicht weit – entweder heute nah am Weg ein Lager, oder morgen früh los.",
+    "missing_text": "Bevor ich weitergehe: Mir fehlt noch %s. Zwei Tage da draußen ohne das …",
+    "items": [
+      {"label": "Zelt", "need": {"tent": 1}},
+      {"label": "Schlafsack", "need": {"sleeping_bag": 1}},
+      {"label": "Essen für 2 Tage", "food": 4},
+      {"label": "Wasser für 2 Tage", "water": 4},
+      {"label": "Holz oder Torf für 2 Feuer", "fuel": 4},
+      {"label": "Verbandskasten", "need": {"medkit": 1}, "optional": true},
+      {"label": "Wanderkarte oder alte Einsatzkarte", "any": ["hiking_map", "work_map"], "optional": true}
+    ]
+  },
   "steps": [
     {
       "id": "p1_absturz",
@@ -290,7 +307,7 @@
       "phase": 3,
       "main": true,
       "title": "Ausrüstung für zwei Tage",
-      "text": "Ilse: »Im Ferienlager Waldfuchs liegt noch ein Zelt. Nimm Essen und Wasser für zwei Tage mit. Und wenn du frierst: am Schäferkarren gibt es Wolle und Felle.«",
+      "text": "Ilse: »Bis zur Außenstelle sind es zwei Tage, mit einer Nacht im Wald. Im Ferienlager Waldfuchs liegt noch ein Zelt. Nimm Essen und Wasser für zwei Tage mit und Holz fürs Feuer. Und näh dir einen Schlafsack – am Schäferkarren gibt es Wolle und Felle.«",
       "start": [
         "step:p3_funkmast"
       ],

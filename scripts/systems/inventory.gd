@@ -151,6 +151,21 @@ func remove_all(needs: Dictionary) -> bool:
 
 
 ## Benutzt Essen/Trinken. Gibt true zurück, wenn etwas passiert ist.
+## Essbares im Rucksack (Kategorie Nahrung mit Sättigung, ohne Getränke und Verbandskasten)
+func count_food() -> int:
+	var n := 0
+	for id: String in items:
+		var d := DataDB.item(id)
+		if d.get("category", "") == "Nahrung" and float(d.get("use", {}).get("hunger", 0.0)) > 0.0 and not id.begins_with("water"):
+			n += int(items[id])
+	return n
+
+
+## Trinkwasser (sauber oder roh – roh muss man abkochen oder filtern)
+func count_water() -> int:
+	return count("water") + count("water_raw")
+
+
 ## Brennstoff für Kamin und Ofen: Holz, sonst Torf.
 func count_fuel() -> int:
 	return count("wood") + count("peat")

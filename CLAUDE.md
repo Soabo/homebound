@@ -493,6 +493,14 @@
 - Regel bleibt: verletzt, tötet nicht. Nach dem Aufreißen `TentCamp.spared_until` → Zerfleischer greift dort bis zum Morgen nicht an.
 - Prüfung `RegressTest._t_camp_events` (Planung, echtes Zelt, alle Handlungen richtig/falsch, alle Vorfälle einmal).
 
+## Vorbereitung Mehrtagesmarsch (Christian 14.11.2026)
+- story.json `packing` (intro, items mit need/food/water/fuel/any/optional, leave_distance, late_hour, Texte). Gilt, sobald eine aktive
+  Spur ein Ziel mit map.json ring „multi“ hat, das noch nicht besucht ist (`Story.multi_trip_target`). Erstes Mal: Gedanke (Flag
+  `packing_intro`); Tablet „Aufgaben“ zeigt oben die PACKLISTE (`Story.packing_status`); Karte zeigt „es fehlt: …“; beim Losgehen
+  (70–130 m von der Hütte) einmal am Tag Warnung, wenn etwas fehlt oder es nach 12 Uhr ist (`Story._check_packing`).
+  `Inventory.count_food/count_water`. Ilses Text zur Zeltspur nennt jetzt Zelt, Essen/Wasser für 2 Tage, Holz, Schlafsack.
+- Prüfung `RegressTest._t_packing`.
+
 ## Fehler im 15-Tage-Durchlauf (14.11.2026, behoben)
 - „Nach Tag 11 kommt Tag 13“ war echt: zweites Einschlafen (E im Zelt während der Abblende) sprang zum übernächsten Morgen.
   Jetzt `EventBus.request_sleep()` + `EventBus.sleeping` (Bett und Zelt), zurückgesetzt in `GameState._apply`.

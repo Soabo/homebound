@@ -170,7 +170,7 @@ func _place_marks() -> void:
 	plan.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
 	plan.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	plan.add_theme_constant_override("outline_size", 4)
-	plan.position = Vector2(24, get_viewport().get_visible_rect().size.y - 34)
+	plan.position = Vector2(24, get_viewport().get_visible_rect().size.y - (56 if plan.text.contains("\n") else 34))
 	_marks.add_child(plan)
 	for id: String in all:
 		var p: Dictionary = all[id]
@@ -221,15 +221,21 @@ static func supply_text() -> String:
 	var h := TimeManager.hour
 	var night := TimeManager.config.night_start_hour
 	var light := "Es ist Nacht." if TimeManager.is_night() else "Hell noch ca. %d Std." % int(maxf(night - h, 0.0))
-	var food := 0
-	for id: String in ["food", "ration", "radish", "carrot", "potato", "meat_cooked", "baked_potato", "veg_soup", "stew", "honey", "alien_fruit"]:
-		food += Inventory.count(id)
-	var water := Inventory.count("water") + Inventory.count("water_raw")
+	var food := Inventory.count_food()
+	var water := Inventory.count_water()
 	var parts := ["%s" % light, "Essen %d" % food, "Wasser %d" % water,
 		"Zelt " + ("ja" if Inventory.count("tent") > 0 else "nein"),
 		"Schlafsack " + ("ja" if Inventory.count("sleeping_bag") > 0 else "nein"),
 		"Brennstoff %d" % Inventory.count_fuel()]
-	return "Marsch:  " + "   ·   ".join(parts) + ("     △ = Rastplatz (Feuerstelle, ruhigere Zeltnacht)" if Inventory.count("hiking_map") > 0 else "")
+	var trip := Story.multi_trip_target()
+	var head := "Marsch:  "
+	if trip != "":
+		var missing: PackedStringArray = []
+		for it: Dictionary in Story.packing_status():
+			if not it["ok"] and not it["optional"]:
+				missing.append(String(it["label"]))
+		head = "Mehrtagesmarsch (%s) – %s\n" % [WorldMap.places()[trip]["name"], "alles gepackt" if missing.is_empty() else "es fehlt: " + ", ".join(missing)]
+	return head + "   ·   ".join(parts) + ("     △ = Rastplatz (Feuerstelle, ruhigere Zeltnacht)" if Inventory.count("hiking_map") > 0 else "")
 
 
 ## Bleistiftkreis um ein Spur-Ziel (zweimal leicht versetzt gezogen, wie von Hand).
