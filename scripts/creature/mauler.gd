@@ -416,6 +416,10 @@ func _player_reachable() -> bool:
 	for t in get_tree().get_nodes_in_group("tent_camp"):
 		if t.has_method("occupied") and t.call("occupied"):
 			return false
+		# aufgerissenes Zelt: in dieser Nacht lässt er einen dort liegen (Zeltnacht tötet nicht)
+		var tc := t as TentCamp
+		if tc and tc.spared_until > TimeManager.get_total_hours() and tc.global_position.distance_to(pp) < 15.0:
+			return false
 	return _bright_at(pp) == Vector3.INF
 
 

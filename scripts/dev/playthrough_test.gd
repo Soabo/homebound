@@ -48,7 +48,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if _fast_clock and TimeManager.running and not get_tree().paused:
-		var hours := delta * FAST_HOURS_PER_SECOND
+		# pro Bild höchstens 0,1 Spielstunden: ein Ruckler des langsamen Rechners darf die Uhr nicht über das
+		# Ziel (z. B. 21:30) hinwegspringen lassen – sonst wartete der Bot bis zum nächsten Abend („Tag 2 → 4“)
+		var hours := minf(delta * FAST_HOURS_PER_SECOND, 0.1)
 		TimeManager.advance_hours(hours)
 		# Hunger, Durst, Wärme und Tank laufen im Spiel nach echter Zeit – hier im Zeitraffer mitziehen
 		var as_seconds := hours / maxf(TimeManager.get_hours_per_second(), 0.0001)

@@ -173,7 +173,17 @@ extends Resource
 ## Ab dieser Signatur bleibt auch eine „ruhige“ Nacht nicht ganz ruhig: Drohne und Sucher dürfen kommen.
 @export var signature_wakes_quiet: float = 0.8
 ## Zeltnacht: so viele Ereignisse pro Nacht im Zelt (frühestens so viele Stunden nach dem Hinlegen)
-@export var camp_events: Vector2i = Vector2i(1, 3)
+@export var camp_events: Vector2i = Vector2i(4, 7)
+## So viele Vorfälle einer Zeltnacht wecken höchstens auf (die übrigen erlebt man nur wach im Zelt)
+@export var camp_wake_max: int = 3
+## Reißverschluss/Zelt schütteln: so schnell steigt der Druck (pro Sekunde), so schnell sinkt er beim Halten von E
+@export var camp_hold_rise: float = 0.16
+@export var camp_hold_fall: float = 0.3
+@export var camp_hold_seconds: float = 9.0
+## Schaden, wenn die Hand durch den Reißverschluss greift / wenn man sich beim Atem bewegt (nie unter camp_min_health)
+@export var camp_hand_damage: float = 14.0
+@export var camp_still_damage: float = 8.0
+@export var camp_min_health: float = 15.0
 @export var camp_first_after: float = 0.4
 
 @export_group("Schlaf")

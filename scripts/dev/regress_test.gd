@@ -363,6 +363,148 @@ func _t_more() -> void:
 	await _t_atmosphere()
 	await _t_fixes_1311()
 	await _t_endings()
+	await _t_camp_events()
+
+
+## Zeltnacht 2.0 (14.11.): viele Vorfälle, Tiere, Dinge zum Handeln – verletzt, tötet aber nicht.
+func _t_camp_events() -> void:
+	var p := _player()
+	var keep_pos := p.global_position
+	var keep_hp := p.health
+	var cfgt := ThreatDirector.config
+	# Planung: viele Vorfälle, höchstens camp_wake_max wecken
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var all_ok := true
+	for k in 20:
+		var kinds := CampEvents.plan(cfgt.camp_events.y, 6, cfgt.camp_wake_max, rng)
+		var w := 0
+		for kd: String in kinds:
+			if CampEvents.wakes(kd):
+				w += 1
+		if w > cfgt.camp_wake_max or kinds.size() < cfgt.camp_events.y - 1:
+			all_ok = false
+	_ok("Zeltnacht: 4–7 Vorfälle, höchstens %d wecken" % cfgt.camp_wake_max, all_ok and cfgt.camp_events.x >= 4)
+	_ok("Zeltnacht: über 20 verschiedene Vorfälle", CampEvents.data().size() >= 20)
+	# Zelt aufbauen und hineinkriechen
+	var base := Vector3(-60.0, 0.0, 30.0)
+	base.y = Terrain.height_at(base.x, base.z)
+	p.global_position = base + Vector3(0, 0.3, 3.0)
+	await get_tree().physics_frame
+	var tent := Builder.place("tent", base, 0.0)
+	await get_tree().process_frame
+	var camp: TentCamp = tent.camp if tent else null
+	if camp == null:
+		_ok("Zeltnacht: Zelt steht", false)
+		return
+	camp.interact(p)
+	await get_tree().create_timer(1.3).timeout
+	_ok("Zeltnacht: im Zelt", camp.occupied())
+	# Reißverschluss: nicht festhalten → Hand greift herein, verletzt, aber nie unter camp_min_health
+	p.health = 20.0
+	camp.events.run("zipper")
+	var w0 := 0.0
+	while camp.events.busy() and w0 < 12.0:
+		await get_tree().create_timer(0.2).timeout
+		w0 += 0.2
+	await get_tree().create_timer(0.6).timeout
+	_ok("Reißverschluss nicht gehalten: Hand greift herein, aber man stirbt nicht", p.health < 20.0 and p.health >= cfgt.camp_min_health, "%.0f" % p.health)
+	# Reißverschluss festhalten → nichts passiert
+	p.health = 100.0
+	camp.events.run("zipper")
+	Input.action_press("interact")
+	w0 = 0.0
+	while camp.events.busy() and w0 < 14.0:
+		await get_tree().create_timer(0.2).timeout
+		w0 += 0.2
+	Input.action_release("interact")
+	_ok("Reißverschluss festgehalten: es lässt los", p.health == 100.0 and camp.occupied() and not camp.torn)
+	# Marder: Licht an verscheucht ihn, ohne Licht klaut er Essen
+	Inventory.add("food", 2)
+	var food0 := Inventory.count("food")
+	p.set_flashlight(true)
+	camp.events.run("sniffer")
+	await get_tree().create_timer(1.0).timeout
+	p.set_flashlight(false)
+	await get_tree().create_timer(0.3).timeout
+	var kept := Inventory.count("food") == food0
+	camp.events.run("sniffer")
+	w0 = 0.0
+	while camp.events.busy() and w0 < 10.0:
+		await get_tree().create_timer(0.25).timeout
+		w0 += 0.25
+	_ok("Marder: Licht verscheucht ihn, ohne Licht ist Essen weg", kept and Inventory.count("food") < food0)
+	# Atem: stillhalten = nichts passiert
+	p.health = 100.0
+	camp.events.run("breath_still")
+	w0 = 0.0
+	while camp.events.busy() and w0 < 11.0:
+		await get_tree().create_timer(0.25).timeout
+		w0 += 0.25
+	_ok("Atem am Kopf: wer stillhält, bleibt heil", p.health == 100.0)
+	# Wecken: leise Vorfälle wecken nicht, laute schon
+	var now := TimeManager.get_total_hours()
+	var keep_ev := ThreatDirector.events.duplicate(true)
+	ThreatDirector.events = [{"at": now + 0.5, "type": "camp:owl_silence", "done": false}, {"at": now + 1.0, "type": "camp:zipper", "done": false}]
+	var first := ThreatDirector.first_disturbance(now, now + 5.0)
+	ThreatDirector.events = keep_ev
+	_ok("Zeltnacht: Eule weckt nicht, Reißverschluss schon", is_equal_approx(first, now + 1.0))
+	# Zelt schütteln nicht gehalten → bricht zusammen; der Zerfleischer lässt einen danach in Ruhe
+	camp.events.run("shake")
+	w0 = 0.0
+	while camp.events.busy() and w0 < 12.0:
+		await get_tree().create_timer(0.2).timeout
+		w0 += 0.2
+	await get_tree().process_frame
+	_ok("Zelt geschüttelt, nicht gehalten: es bricht zusammen", camp.torn and not camp.occupied())
+	_ok("Aufgerissenes Zelt: Zerfleischer lässt einen in dieser Nacht liegen", camp.spared_until > TimeManager.get_total_hours())
+	# Stimme lockt: wer weggeht, verliert das Zelt (Zelt erst flicken)
+	Inventory.add("planks", 1)
+	Inventory.add("nails", 3)
+	camp.interact(p)
+	camp.interact(p)
+	await get_tree().create_timer(1.3).timeout
+	camp.events.run("lure")
+	await get_tree().create_timer(0.6).timeout
+	camp.leave()
+	await get_tree().create_timer(1.2).timeout
+	p.global_position = base + Vector3(14.0, 0.5, 0.0)
+	w0 = 0.0
+	while camp.events.busy() and w0 < 6.0:
+		await get_tree().create_timer(0.25).timeout
+		w0 += 0.25
+	await get_tree().create_timer(1.2).timeout
+	_ok("Kinderstimme gefolgt: das Zelt reißt hinter einem", camp.torn)
+	# Alle übrigen Vorfälle einmal abspielen (keine Skriptfehler, kein Hängenbleiben)
+	Inventory.add("planks", 1)
+	Inventory.add("nails", 3)
+	camp.interact(p)
+	p.global_position = base + Vector3(0, 0.3, 3.0)
+	await get_tree().physics_frame
+	camp.interact(p)
+	await get_tree().create_timer(1.3).timeout
+	var stuck := ""
+	Inventory.add("dictaphone", 1)
+	for kd: String in ["owl_silence", "twigs", "deer", "wisps", "glimpse", "fox_scream", "pebbles", "radio_voice", "gear_moved",
+			"face_door", "drone_scan", "mauler_prowl", "steps", "shadow", "press", "voice", "light"]:
+		camp._busy = false
+		camp.camp_event(kd)
+		var wt := 0.0
+		while (camp.events.busy() or camp._busy) and wt < 25.0:
+			await get_tree().create_timer(0.25).timeout
+			wt += 0.25
+		if wt >= 25.0:
+			stuck += kd + " "
+	camp.events.morning(_scene())
+	_ok("Zeltnacht: alle Vorfälle laufen durch", stuck == "", stuck)
+	Inventory.remove("dictaphone", 1)
+	# aufräumen
+	if is_instance_valid(tent):
+		Builder.remove(tent.uid)
+	p.input_locked = false
+	p.health = keep_hp
+	p.global_position = keep_pos
+	EventBus.interaction_prompt_changed.emit("")
 
 
 ## Endspurt und Enden (14.11.): Brunnen öffnen, Kammer, Fassung, Frist, Pickup, Abschluss-Bildschirm.

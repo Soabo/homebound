@@ -3,8 +3,8 @@ extends Node3D
 ## Das Zelt als Unterschlupf für die Nacht draußen (Mutprobe).
 ##  E (außen) = hineinkriechen · drinnen: E schlafen, R hinauskriechen, F Uhrlicht
 ##  Im Zelt sieht man nach draußen nur durch den Eingang. Licht drinnen macht das Zelt zur Laterne.
-##  Zeltnacht-Ereignisse (vom ThreatDirector geplant): Schritte ums Zelt, Schatten auf der Plane,
-##  etwas drückt die Plane ein, eine Stimme, Licht von oben, das Feuer geht aus, der Sucher.
+##  Zeltnacht-Ereignisse (vom ThreatDirector geplant, data/threat/camp_events.json): hier Schritte ums Zelt, Schatten
+##  auf der Plane, Plane eingedrückt, Stimme, Licht von oben, Feuer aus, Sucher; alle neueren in CampEvents.
 ##  Zerrissen (Sucher/Kreatur) = man ist verletzt, kann nicht mehr darin schlafen, E flickt es (1 Brett, 3 Nägel).
 
 const REPAIR := {"planks": 1, "nails": 3}
@@ -17,6 +17,10 @@ var _busy: bool = false
 var _shadow: Node3D
 var _bulge: MeshInstance3D
 var _night_events: int = 0
+var events: CampEvents
+## Bis zu dieser Spielstunde lässt der Zerfleischer den Spieler am Zelt in Ruhe (nach dem Aufreißen:
+## man liegt draußen, aber die Zeltnacht tötet nicht – Christians Regel)
+var spared_until: float = -1.0
 
 
 func _ready() -> void:
@@ -25,6 +29,10 @@ func _ready() -> void:
 	torn = bool(_rec().get("torn", false))
 	_apply_torn()
 	TimeManager.day_changed.connect(_on_day)
+	events = CampEvents.new()
+	events.name = "CampEvents"
+	events.camp = self
+	add_child(events)
 
 
 func _rec() -> Dictionary:
@@ -94,6 +102,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("interact") and not event.is_echo():
 		get_viewport().set_input_as_handled()
+		# Während einer Handlung (Reißverschluss halten …) heißt E festhalten, nicht schlafen
+		if events and events.busy():
+			return
 		_try_sleep()
 	elif event.is_action_pressed("interact_secondary") and not event.is_echo():
 		get_viewport().set_input_as_handled()
@@ -124,16 +135,18 @@ func glowing() -> bool:
 
 ## Vom ThreatDirector: ein Ereignis der Zeltnacht. kind = "" → zufällig.
 func camp_event(kind: String = "") -> void:
-	if _busy:
+	if _busy or (events and events.busy()):
 		return
 	_night_events += 1
 	_rec()["visited"] = true
 	if kind == "":
-		var pool := ["steps", "steps", "shadow", "press", "voice", "light", "fire_out"]
-		if ThreatDirector.current_night() >= ThreatDirector.config.seeker_from_day:
-			pool.append_array(["seeker", "seeker"])
-		kind = pool[_rng.randi() % pool.size()]
+		kind = String(CampEvents.plan(1, ThreatDirector.current_night(), 1, _rng)[0])
 	print("[TentCamp] Ereignis: ", kind)
+	if kind == "fire_out" and not events._fire_burning():
+		kind = "steps"
+	if not (kind in CampEvents.OWN):
+		events.run(kind)
+		return
 	match kind:
 		"steps": _steps_around()
 		"shadow": _shadow_pass()
@@ -273,13 +286,16 @@ func tear(damage: float) -> void:
 	SoundBank.play_at(get_parent(), "wood_crack", global_position + Vector3(0, 0.7, 0), 0.0, 0.7)
 	CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.4, 1.5), -2.0)
 	EventBus.screen_shake.emit(0.8)
+	# Für den Rest der Nacht lässt der Zerfleischer einen hier liegen (keine Tötung in der Zeltnacht)
+	spared_until = float(ThreatDirector.current_night()) * 24.0 + TimeManager.config.day_start_hour
 	if _player:
 		var p := _player
-		var h := p.health
-		p.health = maxf(h - damage, minf(h, 15.0))
-		EventBus.player_hurt.emit(damage)
+		if damage > 0.0:
+			var h := p.health
+			p.health = maxf(h - damage, minf(h, 15.0))
+			EventBus.player_hurt.emit(damage)
 		leave()
-		EventBus.notify("Die Plane reißt auf! Etwas hat mich durch den Stoff erwischt.", 4.0)
+		EventBus.notify("Die Plane reißt auf! Etwas hat mich durch den Stoff erwischt." if damage > 0.0 else "Die Plane reißt. Ich liege im Freien.", 4.0)
 	Tasks.flag("tent_torn")
 
 
@@ -307,3 +323,5 @@ func _on_day(_d: int) -> void:
 		Traces.footprints(scene, p0, p1)
 	var door := global_position + global_transform.basis * Vector3(0, 0, size_z() * 0.5 + 0.5)
 	Traces.footprints(scene, door + Vector3(0, 0, 2.5), door)
+	if events:
+		events.morning(scene)

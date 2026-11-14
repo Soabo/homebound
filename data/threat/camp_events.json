@@ -1,0 +1,29 @@
+{
+  "_info": "Vorfälle der Zeltnacht (Christian 14.11.: umfangreicher und bedrohlicher, Geräusche, Bewegungen, Tiere, Dinge zum Handeln). weight = wie oft, from_night = frühestens ab Nacht N, wakes = weckt den Schlafenden (sonst nur erlebbar, wenn man wach im Zelt sitzt), needs = Bedingung (fire = ein Feuer brennt in der Nähe, phase2 = Story-Phase 2, dictaphone = Diktiergerät dabei), act = was der Spieler tun kann (nur Beschreibung). Wie viele pro Nacht und wie viele wecken: ThreatConfig camp_events, camp_wake_max.",
+  "events": [
+    {"id": "steps",        "weight": 3, "wakes": true,  "act": "–"},
+    {"id": "shadow",       "weight": 2, "wakes": true,  "act": "–"},
+    {"id": "press",        "weight": 2, "wakes": true,  "act": "–"},
+    {"id": "voice",        "weight": 1, "wakes": true,  "act": "–"},
+    {"id": "light",        "weight": 1, "wakes": true,  "act": "–"},
+    {"id": "fire_out",     "weight": 1, "wakes": true,  "needs": "fire", "act": "Feuer neu anzünden"},
+    {"id": "seeker",       "weight": 2, "wakes": true,  "from_night": 5, "act": "Licht aus, W-17 weglegen, still bleiben"},
+    {"id": "owl_silence",  "weight": 2, "wakes": false, "act": "–"},
+    {"id": "twigs",        "weight": 2, "wakes": false, "act": "–"},
+    {"id": "deer",         "weight": 2, "wakes": false, "act": "–"},
+    {"id": "wisps",        "weight": 1, "wakes": false, "act": "–"},
+    {"id": "glimpse",      "weight": 1, "wakes": false, "from_night": 3, "act": "–"},
+    {"id": "fox_scream",   "weight": 1, "wakes": true,  "act": "–"},
+    {"id": "pebbles",      "weight": 2, "wakes": true,  "act": "–"},
+    {"id": "radio_voice",  "weight": 1, "wakes": true,  "needs": "dictaphone", "act": "–"},
+    {"id": "gear_moved",   "weight": 1, "wakes": false, "act": "morgens nachsehen"},
+    {"id": "face_door",    "weight": 1, "wakes": true,  "from_night": 4, "act": "nicht hinsehen"},
+    {"id": "sniffer",      "weight": 2, "wakes": true,  "act": "[F] Licht an verscheucht es, sonst klaut es Essen"},
+    {"id": "zipper",       "weight": 2, "wakes": true,  "from_night": 2, "act": "[E] halten, sonst greift eine Hand herein"},
+    {"id": "shake",        "weight": 1, "wakes": true,  "from_night": 3, "act": "[E] halten, sonst bricht das Zelt zusammen"},
+    {"id": "breath_still", "weight": 2, "wakes": true,  "act": "stillhalten: nicht umsehen, kein Licht, nicht hinaus"},
+    {"id": "drone_scan",   "weight": 1, "wakes": true,  "from_night": 3, "act": "Licht aus, sonst kommt später der Sucher"},
+    {"id": "mauler_prowl", "weight": 1, "wakes": true,  "needs": "phase2", "act": "mit der Uhr-LED zum Eingang hinausleuchten"},
+    {"id": "lure",         "weight": 1, "wakes": true,  "act": "drinnen bleiben – wer der Stimme folgt, verliert das Zelt"}
+  ]
+}

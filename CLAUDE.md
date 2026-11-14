@@ -209,6 +209,7 @@
   `TentCamp` (Kind des Zelts): E hineinkriechen, drinnen E schlafen / R hinaus / F Licht (leuchtet nach außen).
   `ThreatDirector.plan_camp_night` plant `camp_events` Ereignisse („camp“): Schritte ums Zelt, Schatten auf der Plane,
   Plane eingedrückt, Stimme, Licht von oben, Feuer geht aus, Sucher. Morgens Spuren ums Zelt. Werte: ThreatConfig `camp_*`.
+  Seit 14.11. viel mehr Vorfälle (siehe „Zeltnacht 2.0“).
 - Kälte (Christian: ja): `Survival.warmth` (HUD „Wärme“), Werte `data/survival/survival.tres` (`SurvivalConfig`).
   Draußen nachts schnell kalt (Höhe, nass nach Waten schneller), Hütte mit Kamin/Ofen wärmt, Zelt halbiert den Verlust,
   Schlafsack (`sleeping_bag`: 3 Wolle + 1 Schaffell) noch mehr; Lagerfeuer (`campfire`-Bündel, 3 Holz, `Campfire`) wärmt,
@@ -478,11 +479,26 @@
   Sitzstämme, Holz, Schild) aus WorldTrails; Zelt in `camp_rest_radius` → weniger Zeltnacht-Ereignisse (`camp_rest_factor`).
   Karte: △ Rastplätze (Wanderkarte), Entfernung + Gehzeit an Spur-Zielen (`MapScreen.march_text`), Proviantzeile (`supply_text`).
 
+## Zeltnacht 2.0 (Christian 14.11.2026: „umfangreicher und bedrohlicher, Geräusche, Bewegungen, Tiere, Dinge zum Handeln“)
+- Inhalte `data/threat/camp_events.json` (24 Vorfälle: id, weight, wakes, from_night, needs fire|phase2|dictaphone, act).
+  Menge/Werte ThreatConfig: `camp_events` (4,7), `camp_wake_max` 3, `camp_hold_rise/fall/seconds`, `camp_hand_damage`,
+  `camp_still_damage`, `camp_min_health`. ThreatDirector plant Ereignisse „camp:<id>“ (`CampEvents.plan`); nur `wakes` weckt
+  (`first_disturbance`), verschlafene leise Vorfälle entfallen.
+- `CampEvents` (scripts/building/camp_events.gd, Kind von TentCamp): Stimmung (owl_silence, twigs, deer/wisps/glimpse über
+  NightOmens, fox_scream, pebbles, radio_voice, gear_moved → Steinkreis am Morgen, face_door nur beim Hinsehen) und Handeln:
+  sniffer ([F] Licht, sonst Essen weg), zipper/shake ([E] halten, Druckbalken in der Hinweiszeile; sonst Hand greift herein bzw.
+  Zelt bricht = `tear(0)`), breath_still (stillhalten), drone_scan (Licht aus, sonst Signatur + Sucher), mauler_prowl (LED zum
+  Eingang hinaus, Feuer hält ihn fern, sonst Krallenrisse), lure (Kinderstimme; wer >10 m weggeht, dem reißt das Zelt; morgens
+  Kinderfußspuren). Ältere Vorfälle (steps, shadow, press, voice, light, fire_out, seeker) bleiben in TentCamp.
+- Regel bleibt: verletzt, tötet nicht. Nach dem Aufreißen `TentCamp.spared_until` → Zerfleischer greift dort bis zum Morgen nicht an.
+- Prüfung `RegressTest._t_camp_events` (Planung, echtes Zelt, alle Handlungen richtig/falsch, alle Vorfälle einmal).
+
 ## Fehler im 15-Tage-Durchlauf (14.11.2026, behoben)
 - „Nach Tag 11 kommt Tag 13“ war echt: zweites Einschlafen (E im Zelt während der Abblende) sprang zum übernächsten Morgen.
   Jetzt `EventBus.request_sleep()` + `EventBus.sleeping` (Bett und Zelt), zurückgesetzt in `GameState._apply`.
 - Durchgefroren aufwachen tötete Sekunden später (Wärme 0): jetzt Gnadenfrist `SurvivalConfig.wake_grace`.
 - Hunger/Durst-Abnahme steht jetzt in `data/survival/survival.tres` (`hunger_per_hour`, `thirst_per_hour`) statt im Code.
+- Testprogramm: Zeitraffer des Bots pro Bild auf 0,1 Std. begrenzt (Ruckler ließen die Uhr über 21:30 springen → „Tag 2 → 4“).
 - 15-Tage-Durchlauf: 0 Tode, 0 Fehler. Beobachtung: Der Bot tankt erst spät nach (Tank tagelang 0) – im Spiel hilft der Holzvergaser.
 
 ## Technik

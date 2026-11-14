@@ -362,7 +362,11 @@ func _process(delta: float) -> void:
 	for e in events:
 		if not e["done"] and now >= e["at"]:
 			e["done"] = true
-			_fire(e["type"])
+			# Leise Zeltnacht-Vorfälle, die man verschlafen hat, finden nicht nachträglich statt
+			var t := String(e["type"])
+			if t.begins_with("camp:") and not CampEvents.wakes(t.substr(5)) and now - float(e["at"]) > 0.25:
+				continue
+			_fire(t)
 
 
 ## Gegen 17 Uhr: „Der Abend beginnt“ (Zeit-Werte in TimeConfig evening_warning_*).
@@ -448,8 +452,10 @@ func first_disturbance(from_total: float, to_total: float) -> float:
 	for e in events:
 		if e["done"]:
 			continue
-		if e["type"] in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic",
-				"omen:gap_hand", "omen:knock_walk", "omen:music_box", "omen:tap_run", "siege"] and e["at"] > from_total and e["at"] < to_total:
+		var t := String(e["type"])
+		var wakes := t in ["creature", "sighting", "outage", "drone", "manipulator", "seeker", "mauler", "camp", "steps", "breath_wall", "knock_door", "rattle", "scratch", "roof", "radio", "photo", "attic",
+				"omen:gap_hand", "omen:knock_walk", "omen:music_box", "omen:tap_run", "siege"] or (t.begins_with("camp:") and CampEvents.wakes(t.substr(5)))
+		if wakes and e["at"] > from_total and e["at"] < to_total:
 			return e["at"]
 	return -1.0
 
@@ -576,6 +582,12 @@ func _fire(type: String) -> void:
 			var camps := get_tree().get_nodes_in_group("tent_camp").filter(func(c: Node) -> bool: return c.call("occupied"))
 			if not camps.is_empty():
 				camps[0].call("camp_event", "")
+			elif far_from_home():
+				_play_phantom_steps(scene)
+		_ when type.begins_with("camp:"):
+			var camps2 := get_tree().get_nodes_in_group("tent_camp").filter(func(c: Node) -> bool: return c.call("occupied"))
+			if not camps2.is_empty():
+				camps2[0].call("camp_event", type.substr(5))
 			elif far_from_home():
 				_play_phantom_steps(scene)
 		"drone":
@@ -706,9 +718,16 @@ func plan_camp_night(camp: Node) -> void:
 	# Zelt an einem Rastplatz: ruhigere Nacht
 	if camp is Node3D and RestSpot.near((camp as Node3D).global_position, config.camp_rest_radius, get_tree()):
 		n = maxi(1, int(round(float(n) * config.camp_rest_factor)))
-	for i in n:
-		_add(_rng.randf_range(now + config.camp_first_after, night_end - 0.8), "camp")
+	# Vorfälle aus data/threat/camp_events.json; höchstens camp_wake_max wecken den Schlafenden
+	var kinds := CampEvents.plan(n, night, config.camp_wake_max, _rng)
+	var times: Array[float] = []
+	for i in kinds.size():
+		times.append(_rng.randf_range(now + config.camp_first_after, night_end - 0.8))
+	times.sort()
+	for i in kinds.size():
+		_add(times[i], "camp:" + String(kinds[i]))
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
+	n = kinds.size()
 	print("[ThreatDirector] Zeltnacht: %d Ereignisse" % n)
 
 
