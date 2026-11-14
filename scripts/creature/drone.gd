@@ -161,7 +161,8 @@ func _physics_process(delta: float) -> void:
 	_t += delta
 	_ring.rotation.y += delta * 3.0
 	_blink.emission_energy_multiplier = 4.0 if fmod(_t, 1.0) < 0.12 else 0.2
-	if _t > cfg.patrol_time:
+	# Morgengrauen: Die Drohne zieht ab, bei Tag späht sie niemanden aus (Christian 14.11.)
+	if _t > cfg.patrol_time or not TimeManager.is_night():
 		_leave()
 	# Taumeln nach grellem Licht
 	if _stagger > 0.0:
@@ -242,6 +243,11 @@ func _on_noise(pos: Vector3, radius: float) -> void:
 	_hold.insert(0, _rng.randf_range(cfg.hear_hold.x, cfg.hear_hold.y))
 	_aims.insert(0, null)
 	_hold_left = 0.0
+
+
+## Von außen (ThreatDirector im Morgengrauen).
+func leave() -> void:
+	_leave()
 
 
 func _leave() -> void:

@@ -206,6 +206,13 @@ static func _tunnel(root: Node3D) -> void:
 	PlaceKit.loot(store, "Fuel", "fuel_can", 2, Vector3(1.6, 0.06, 0.4), "canister")
 
 
+## Eigener Zufall je Haus (die Ruinen behalten ihren Platz, auch wenn sich ihr Aufbau ändert).
+static func _sub_rng(seed_value: int) -> RandomNumberGenerator:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_value
+	return r
+
+
 ## Versunkenes Dorf: Grund des abgelassenen Stausees. Hausruinen, Kirche mit Glocke, gebrochener Damm.
 static func _dorf(root: Node3D) -> void:
 	var rng := RandomNumberGenerator.new()
@@ -222,18 +229,7 @@ static func _dorf(root: Node3D) -> void:
 		root.add_child(ruin)
 		var w := rng.randf_range(6.0, 9.0)
 		var d := rng.randf_range(5.0, 7.0)
-		for k in 4:
-			var hh := rng.randf_range(1.2, 3.5)
-			var along := k % 2 == 0
-			var len := w if along else d
-			var off := Vector3(0, hh * 0.5, (d * 0.5 if k == 0 else -d * 0.5)) if along else Vector3((w * 0.5 if k == 1 else -w * 0.5), hh * 0.5, 0)
-			var gap := 1.2 if k == 0 else 0.0
-			if gap > 0.0:
-				BuildKit.box(ruin, Vector3((len - gap) * 0.5, hh, 0.5), off + Vector3(-(len + gap) * 0.25, 0, 0), stone, true)
-				BuildKit.box(ruin, Vector3((len - gap) * 0.5, hh, 0.5), off + Vector3((len + gap) * 0.25, 0, 0), stone, true)
-			else:
-				BuildKit.box(ruin, Vector3(len if along else 0.5, hh, 0.5 if along else len), off, stone, true)
-		BuildKit.box(ruin, Vector3(w - 0.6, 0.05, d - 0.6), Vector3(0, 0.03, 0), PlaceKit.mat("mud"), false)
+		DrownedVillage.house(ruin, w, d, _sub_rng(1962 + i * 31))
 		if i == 1:
 			PlaceKit.loot(ruin, "Scrap", "scrap", 8, Vector3(1.0, 0.06, 0.5), "parts", 2)
 		elif i == 2:
@@ -241,29 +237,14 @@ static func _dorf(root: Node3D) -> void:
 			PlaceKit.loot(ruin, "Planks", "planks", 6, Vector3(1.2, 0.06, -1.0), "logs", 2)
 		elif i == 4:
 			PlaceKit.loot(ruin, "Food", "food", 2, Vector3(0.0, 0.06, 0.8), "cans")
-	# Kirche mit Turm
-	var ch := PlaceKit.hut(root, "Church", PlaceKit.on_ground(root, 0, -6.0), Vector2(7.0, 12.0), 5.0, 0.0, "stone", "gable", "shingles", 1.6, true, true)
-	var tower := Node3D.new()
-	tower.position = Vector3(0, 0, 7.5)
-	ch.add_child(tower)
-	BuildKit.box(tower, Vector3(3.2, 15.0, 3.2), Vector3(0, 7.5, 0), stone, true)
-	BuildKit.cylinder(tower, 2.4, 5.0, Vector3(0, 17.5, 0), PlaceKit.mat("shingles"), false, Vector3.ZERO, 0.0, 4)
-	for sx: float in [-1.0, 1.0]:
-		BuildKit.box(tower, Vector3(0.1, 1.4, 0.8), Vector3(sx * 1.62, 13.0, 0), PlaceKit.mat("dark"), false)
-	var bell := Node3D.new()
-	bell.name = "Bell"
-	bell.position = Vector3(0, 14.0, 0)
-	tower.add_child(bell)
-	var bm := BuildKit.lathe(bell, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.55, 0.0), Vector2(0.5, 0.15), Vector2(0.35, 0.6), Vector2(0.3, 0.9), Vector2(0.0, 0.95)]),
-			Vector3(0, -0.95, 0), BuildKit.color_mat(Color(0.45, 0.35, 0.2), 0.4, 0.8), 14)
-	bm.position = Vector3(0, -0.95, 0)
-	var t := bell.create_tween().set_loops()
-	t.tween_property(bell, "rotation_degrees:z", 9.0, 2.6).set_trans(Tween.TRANS_SINE)
-	t.tween_property(bell, "rotation_degrees:z", -9.0, 2.6).set_trans(Tween.TRANS_SINE)
-	PlaceKit.note(ch, "dorf_chronik", Vector3(0.0, 0.06, -4.5))
-	PlaceKit.note(ch, "stef_dorf", Vector3(1.3, 0.06, -4.4))   # Stefanies Spur: Zeitungsausschnitt
-	for k in 4:
-		BuildKit.box(ch, Vector3(2.4, 0.06, 0.4), Vector3(-1.6 + (k % 2) * 3.2, 0.45, -1.0 + (k / 2) * 2.0), PlaceKit.mat("wood_old"), false, Vector3(0, 0, rng.randf_range(-12, 12)))
+	# Kirche mit begehbarem Turm (Christian 14.11.: schöner, und man muss hineinkommen)
+	var ch := Node3D.new()
+	ch.name = "Church"
+	ch.position = PlaceKit.on_ground(root, 0, -6.0)
+	root.add_child(ch)
+	DrownedVillage.church(ch, _sub_rng(77))
+	PlaceKit.note(ch, "dorf_chronik", Vector3(-0.5, 1.29, -5.9))   # auf dem Altar
+	PlaceKit.note(ch, "stef_dorf", Vector3(0.5, 1.29, -5.9))   # Stefanies Spur: Zeitungsausschnitt
 	# Gestrandete Boote
 	for k in 3:
 		var bp := PlaceKit.on_ground(root, rng.randf_range(-40, 40), rng.randf_range(20, 50), 0.1)

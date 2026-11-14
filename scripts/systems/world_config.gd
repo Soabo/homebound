@@ -76,6 +76,8 @@ extends Resource
 @export var fog_morning_factor: float = 3.0
 ## Wie lange ein Wetter anhält (Spielstunden)
 @export var weather_hours: Vector2 = Vector2(3.0, 9.0)
+## Nach Regen/Gewitter: so viel seltener gleich wieder Regen
+@export var rain_repeat_factor: float = 0.3
 ## Windstärke je Wetter (0..1), dazu Böen
 @export var wind_clear: float = 0.22
 @export var wind_cloudy: float = 0.38

@@ -221,7 +221,7 @@ static func _rustle() -> PackedFloat32Array:
 
 ## Regen: dichtes Rauschen mit vielen kleinen Tropfen (auf dem Dach dumpfer und mit Prasseln). Schleife, 4 s.
 static func _rain(roof: bool) -> PackedFloat32Array:
-	var b := _buf(4.0)
+	var b := _buf(8.6)
 	var r := RandomNumberGenerator.new()
 	r.seed = 909 if roof else 808
 	var lp := 0.0
@@ -235,11 +235,18 @@ static func _rain(roof: bool) -> PackedFloat32Array:
 			for j in 180:
 				if i + j < b.size():
 					b[i + j] += sin(TAU * f * float(j) / RATE) * 0.25 * exp(-j * 0.04)
-	for j in 800:
-		var f2 := float(j) / 800.0
-		b[j] *= f2
-		b[b.size() - 1 - j] *= f2
-	return b
+	# nahtlos: das Ende wird in den Anfang überblendet (vorher: Ausblenden an beiden Enden = hörbare Lücke)
+	return _seamless(b, int(0.6 * RATE))
+
+
+## Schleife ohne Lücke: die letzten n Werte werden über den Anfang geblendet und abgeschnitten.
+static func _seamless(b: PackedFloat32Array, n: int) -> PackedFloat32Array:
+	var size := b.size() - n
+	var out := b.slice(0, size)
+	for j in n:
+		var f := float(j) / float(n)
+		out[j] = b[j] * sqrt(f) + b[size + j] * sqrt(1.0 - f)
+	return out
 
 
 ## Donner: tiefes, rollendes Grollen mit einem Krachen am Anfang (6 s).

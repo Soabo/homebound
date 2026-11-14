@@ -98,6 +98,8 @@ const SHOTS := [
 	{"name": "C1_fassung", "hour": 14.0, "pos": Vector3(13.5 - 4.0, -35.95, -13.0 - 0.6), "abs_y": true, "look": Vector3(13.5 - 2.3, -35.0, -13.0), "shaft_open": true},
 	{"name": "C2_brunnen_offen", "day": 6, "hour": 18.2, "pos": Vector3(10.8, 0.0, -10.6), "look": Vector3(13.5, 0.6, -13.0), "shaft_open": true, "saat_days": 3},
 	{"name": "C3_pickup", "hour": 11.0, "pos": Vector3(2.4, 0.0, 9.6), "look": Vector3(6.5, 0.9, 13.6)},
+	{"name": "D0_dorf_kirche", "hour": 15.0, "place": "dorf", "off": Vector3(9.0, 0.0, 19.0), "look_off": Vector3(0.0, 3.0, -6.0)},
+	{"name": "D1_dorf_innen", "hour": 15.0, "place": "dorf", "off": Vector3(0.6, 0.0, -2.0), "look_off": Vector3(0.0, 0.0, -12.5)},
 	{"name": "8A_kellerleiter", "hour": 14.0, "pos": Vector3(0.9, -2.1, -3.1), "look": Vector3(0.9, -0.6, -5.8), "lights": true, "cellar_open": true},
 	{"name": "8B_regal_speis", "hour": 14.0, "pos": Vector3(0.9, 0.45, -2.9), "look": Vector3(-0.8, 1.1, -2.9), "lights": true},
 	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},

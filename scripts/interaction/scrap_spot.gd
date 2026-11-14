@@ -49,6 +49,18 @@ func _ready() -> void:
 	cs.position = Vector3(0, size.y * 0.5, 0)
 	area.add_child(cs)
 	add_child(area)
+	# Bei jeder zweiten Fundstelle liegen alte Blechdosen im Laub (Christian 14.11.)
+	if spot_id % 2 == 0:
+		var cans := ItemPickup.new()
+		cans.name = "Cans"
+		cans.item_id = "cans"
+		cans.amount = 2
+		cans.per_take = 2
+		var at := Vector3(size.x * 0.5 + 0.35, 0.0, 0.25)
+		cans.collider_size = Vector3(0.3, 0.14, 0.25)
+		cans.collider_offset = at + Vector3(0, 0.07, 0)
+		add_child(cans)
+		SupplyProps.empty_cans(cans, at, 2, spot_id)
 
 
 func _title() -> String:

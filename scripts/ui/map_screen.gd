@@ -5,8 +5,14 @@ extends CanvasLayer
 ## Spuren der Story (Story.map_targets) sind mit roten Bleistiftkreisen markiert (Hauptspur kräftig, Nebenspur blasser).
 
 const RES := 220
+## Zoomstufen (Mausrad), gezeigt wird ein Ausschnitt um _center
+const ZOOMS := [1.0, 2.0, 4.0, 8.0]
 
 static var _image: ImageTexture
+var _zoom_i := 0
+var _center := Vector2.ZERO
+var _drag := false
+var _dragged := 0.0
 
 var _root: Control
 var _map: TextureRect
@@ -38,7 +44,7 @@ func _ready() -> void:
 	_marks.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.add_child(_marks)
 	var title := Label.new()
-	title.text = "Karte – Revier 4 und Umgebung        [M] schließen"
+	title.text = "Karte – Revier 4 und Umgebung        Mausrad: zoomen · ziehen: verschieben        [M] schließen"
 	title.add_theme_font_size_override("font_size", 20)
 	title.position = Vector2(24, 8)
 	_root.add_child(title)
@@ -60,6 +66,51 @@ func _unhandled_input(event: InputEvent) -> void:
 		close()
 
 
+## Mausrad zoomt dorthin, wo die Maus steht; mit gedrückter Maustaste verschieben.
+func _input(event: InputEvent) -> void:
+	if not _root.visible:
+		return
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			var at := _to_world(mb.position)
+			var old := _half()
+			_zoom_i = clampi(_zoom_i + (1 if mb.button_index == MOUSE_BUTTON_WHEEL_UP else -1), 0, ZOOMS.size() - 1)
+			_center = at - (at - _center) * (_half() / old)
+			_clamp_center()
+			_refresh_view()
+			get_viewport().set_input_as_handled()
+		elif mb.button_index == MOUSE_BUTTON_LEFT:
+			_drag = mb.pressed
+			if not mb.pressed and _dragged > 0.0:
+				_dragged = 0.0
+				_refresh_view()
+	elif event is InputEventMouseMotion and _drag and _zoom_i > 0:
+		var r := _map_rect()
+		_center -= (event as InputEventMouseMotion).relative / r.size.x * _half() * 2.0
+		_clamp_center()
+		_dragged += (event as InputEventMouseMotion).relative.length()
+		_place_marks()
+
+
+func _half() -> float:
+	return WorldMap.limit() / float(ZOOMS[_zoom_i])
+
+
+func _clamp_center() -> void:
+	var m := WorldMap.limit() - _half()
+	_center = Vector2(clampf(_center.x, -m, m), clampf(_center.y, -m, m))
+
+
+func _refresh_view() -> void:
+	if _zoom_i == 0:
+		_center = Vector2.ZERO
+		_map.texture = _image
+	else:
+		_map.texture = ImageTexture.create_from_image(_render(_center, _half()))
+	_place_marks()
+
+
 func is_open() -> bool:
 	return _root.visible
 
@@ -76,6 +127,8 @@ func open() -> void:
 	if _image == null:
 		_image = ImageTexture.create_from_image(_render())
 	_map.texture = _image
+	_zoom_i = 0
+	_center = Vector2.ZERO
 	_root.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if _player:
@@ -91,19 +144,20 @@ func close() -> void:
 
 
 ## Gelände als Bild: Höhenstufen mit Schattierung, Wasser, Wege.
-func _render() -> Image:
-	var half := WorldMap.limit()
+func _render(center: Vector2 = Vector2.ZERO, half: float = -1.0) -> Image:
+	if half <= 0.0:
+		half = WorldMap.limit()
 	var img := Image.create(RES, RES, false, Image.FORMAT_RGB8)
 	var step := half * 2.0 / RES
 	var hs := PackedFloat32Array()
 	hs.resize(RES * RES)
 	for y in RES:
 		for x in RES:
-			hs[y * RES + x] = Terrain.height_at(-half + (x + 0.5) * step, -half + (y + 0.5) * step)
+			hs[y * RES + x] = Terrain.height_at(center.x - half + (x + 0.5) * step, center.y - half + (y + 0.5) * step)
 	for y in RES:
 		for x in RES:
-			var wx := -half + (x + 0.5) * step
-			var wz := -half + (y + 0.5) * step
+			var wx := center.x - half + (x + 0.5) * step
+			var wz := center.y - half + (y + 0.5) * step
 			var h := hs[y * RES + x]
 			var hl := hs[y * RES + maxi(x - 1, 0)]
 			var hu := hs[maxi(y - 1, 0) * RES + x]
@@ -120,12 +174,23 @@ func _render() -> Image:
 	return img
 
 
-func _to_screen(p: Vector2) -> Vector2:
-	var half := WorldMap.limit()
+## Bildfläche der Karte (quadratisch, mittig).
+func _map_rect() -> Rect2:
 	var r := _map.get_rect()
 	var side := minf(r.size.x, r.size.y)
-	var origin := r.position + (r.size - Vector2(side, side)) * 0.5
-	return origin + (p + Vector2(half, half)) / (half * 2.0) * side
+	return Rect2(r.position + (r.size - Vector2(side, side)) * 0.5, Vector2(side, side))
+
+
+func _to_screen(p: Vector2) -> Vector2:
+	var half := _half()
+	var r := _map_rect()
+	return r.position + (p - _center + Vector2(half, half)) / (half * 2.0) * r.size.x
+
+
+func _to_world(s: Vector2) -> Vector2:
+	var half := _half()
+	var r := _map_rect()
+	return _center - Vector2(half, half) + (s - r.position) / r.size.x * half * 2.0
 
 
 func _place_marks() -> void:
@@ -171,6 +236,7 @@ func _place_marks() -> void:
 	plan.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	plan.add_theme_constant_override("outline_size", 4)
 	plan.position = Vector2(24, get_viewport().get_visible_rect().size.y - (56 if plan.text.contains("\n") else 34))
+	plan.set_meta("fixed", true)
 	_marks.add_child(plan)
 	for id: String in all:
 		var p: Dictionary = all[id]
@@ -207,6 +273,12 @@ func _place_marks() -> void:
 		me.add_theme_constant_override("outline_size", 5)
 		me.position = _to_screen(Vector2(_player.global_position.x, _player.global_position.z)) - Vector2(6, 12)
 		_marks.add_child(me)
+	# beim Zoomen: was außerhalb des Ausschnitts liegt, ausblenden
+	var area := _map_rect().grow(4.0)
+	for c in _marks.get_children():
+		if c is Control and not c.is_queued_for_deletion() and not c.has_meta("fixed"):
+			var ctl := c as Control
+			ctl.visible = area.has_point(ctl.position + Vector2(10, 10))
 
 
 ## Entfernung + ungefähre Gehzeit in Spielstunden (Wege sind länger als die Luftlinie: ×1,3)

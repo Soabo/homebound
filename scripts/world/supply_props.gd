@@ -23,8 +23,26 @@ func _ready() -> void:
 	_potato_sack("SeedPotatoes", so + Vector3(1.0, 0.03, 1.15))
 	_oil_can("MotorOil", so + Vector3(1.62, 0.43, 0.35))
 	_spark_plug("SparePlug", so + Vector3(1.62, 0.43, -0.35))
-	_watering_can("WateringCan", Vector3(-12.25, 0.0, 7.75))
+	_watering_can("WateringCan", Vector3(-8.95, 0.0, 9.3))   # am Rand des östlichen Hochbeets, von der Hütte aus gleich zu sehen
 	_cooler_box("CoolerCans", COOLER_XZ)
+	# Vier ausgespülte leere Dosen neben der Spüle (Christian 14.11.)
+	var cz := -1.0 + Cabin.INT_T * 0.5
+	var kc := _pickup("KitchenCans", "cans", 4, 2, Vector3(0.36, 0.14, 0.2), Vector3(-0.62, Cabin.FLOOR_Y + 0.92, cz + 0.32))
+	empty_cans(kc, Vector3(-0.62, Cabin.FLOOR_Y + 0.92, cz + 0.32), 4)
+
+
+## Leere Blechdosen als sichtbare Teile eines Fundstücks (eine Dose je Stück, teils umgekippt).
+static func empty_cans(p: ItemPickup, at: Vector3, n: int, seed_value: int = 7) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for i in n:
+		var off := Vector3(-0.12 + (i % 2) * 0.1 + rng.randf_range(-0.02, 0.02), 0, -0.05 + (i / 2) * 0.09 + rng.randf_range(-0.02, 0.02))
+		var c := HandItems.can_body(p, at + off)
+		c.rotation.y = rng.randf() * TAU
+		if rng.randf() < 0.3:
+			c.rotation.x = PI * 0.5
+			c.position.y += 0.0375
+		p.visuals.append(c)
 
 
 func _pickup(n: String, item: String, amount: int, per_take: int, collider: Vector3, at: Vector3) -> ItemPickup:

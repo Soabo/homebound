@@ -214,6 +214,11 @@ static func _knock_walk(scene: Node, player: Player, rng: RandomNumberGenerator)
 
 
 static func _music_box(scene: Node) -> void:
+	# Bens Spieluhr selbst spielt (dann hält E sie an, statt eine zweite Melodie zu starten)
+	var box := scene.get_tree().get_first_node_in_group("music_box")
+	if box and box.has_method("play_ghost"):
+		box.call("play_ghost")
+		return
 	var p := Vector3(-6.75, 1.1, -2.75)   # Kisten im Kinderzimmer
 	SoundBank.play_at(scene, "music_box", p, -6.0, 0.94)
 

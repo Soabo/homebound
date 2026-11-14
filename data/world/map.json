@@ -42,7 +42,7 @@
     {"id": "absturz", "name": "Absturzstelle", "pos": [-42, -30], "ring": "near", "clear": 0, "flat": 0},
     {"id": "struktur", "name": "Fremde Struktur", "pos": [-78, 40], "ring": "near", "clear": 0, "flat": 0},
     {"id": "hoehle", "name": "Höhle am Bach", "pos": [49, -72], "ring": "near", "clear": 0, "flat": 0},
-    {"id": "hochsitz", "name": "Förster-Hochsitz", "pos": [12, -80], "ring": "near", "clear": 0, "flat": 0},
+    {"id": "hochsitz", "name": "Förster-Hochsitz", "pos": [7.2, -81.2], "ring": "near", "clear": 0, "flat": 0},
     {"id": "kapelle", "name": "Waldkapelle", "pos": [-160, -200], "ring": "near", "clear": 16, "flat": 9},
     {"id": "friedhof", "name": "Hochstand-Friedhof", "pos": [210, 130], "ring": "near", "clear": 22, "flat": 0},
     {"id": "imkerei", "name": "Imkerei Brandl", "pos": [-240, 170], "ring": "near", "clear": 34, "flat": 14},

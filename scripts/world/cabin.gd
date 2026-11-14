@@ -92,6 +92,13 @@ static func in_footprint(x: float, z: float, margin: float = 0.0) -> bool:
 	return false
 
 
+## Steht ein Punkt am Boden (egal welche Höhe) in Hütte, Anbauten oder Schuppen? Für Gegner-Wege draußen –
+## is_inside prüft die Höhe ab dem Hüttenboden, ein Punkt auf dem Gelände (y ≈ 0) fiel da durch (Fehler 14.11.:
+## Sucher stand im Kinderzimmer).
+static func blocks_ground(p: Vector3, margin: float = 0.4) -> bool:
+	return in_footprint(p.x, p.z, margin) or (absf(p.x - Shed.ORIGIN.x) < Shed.HALF.x + margin and absf(p.z - Shed.ORIGIN.z) < Shed.HALF.y + margin)
+
+
 ## Gelände unter dem Keller tief absenken (sonst stünde der Boden mitten im Kellerraum).
 ## Nur Gitterpunkte, die ganz unter Büro/Speis liegen – von außen sieht man davon nichts.
 static func cellar_dip(x: float, z: float, h: float) -> float:
@@ -626,7 +633,7 @@ func _build_fireplace() -> void:
 		BuildKit.cylinder(self, 0.008, 0.6, Vector3(-4.75 + (i - 1) * 0.04, y + 0.35, 2.9), m_iron, false, Vector3((i - 1) * 6.0, 0, (i - 1) * 6.0), -1.0, 4)
 	var basket := WoodBasket.new()
 	basket.name = "WoodBasket"
-	basket.position = Vector3(-4.75, y, 0.55)
+	basket.position = Vector3(-5.35, y, 0.5)   # dicht an der Wand neben dem Kamin – der Weg zum Couchtisch bleibt frei
 	add_child(basket)
 	# Auf dem Sims: Familienfoto (GDD 3.1), Krug, Kerzen
 	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12).add_to_group("family_photo")
@@ -709,8 +716,9 @@ func _build_living_room() -> void:
 	add_child(couch)
 	_rocking_chair(Vector3(-4.3, y, 3.45), 140.0)
 	# Couchtisch mit Becher und Buch
-	BuildKit.box_mm(self, Vector3(-4.2, y + 0.38, 1.3), Vector3(-3.5, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
-	for p: Vector2 in [Vector2(-4.12, 1.38), Vector2(-3.58, 1.38), Vector2(-4.12, 2.12), Vector2(-3.58, 2.12)]:
+	# schmal genug, dass man zwischen Tisch und Couch und zwischen Tisch und Kamin/Holzkorb durchgehen kann
+	BuildKit.box_mm(self, Vector3(-4.15, y + 0.38, 1.3), Vector3(-3.75, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
+	for p: Vector2 in [Vector2(-4.09, 1.36), Vector2(-3.81, 1.36), Vector2(-4.09, 2.14), Vector2(-3.81, 2.14)]:
 		BuildKit.box_mm(self, Vector3(p.x - 0.03, y, p.y - 0.03), Vector3(p.x + 0.03, y + 0.38, p.y + 0.03), m_wood_dark, false)
 	# (Becher und Buch gehören zu InsideChanges – sie wandern nachts)
 	# Bücherregal

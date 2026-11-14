@@ -114,7 +114,7 @@ func _process(delta: float) -> void:
 	# Klang: draußen Rauschen, drinnen dumpfes Prasseln aufs Dach, im Zelt laut auf der Plane
 	var loud := linear_to_db(maxf(_rain_amount, 0.0001))
 	_set_vol(_rain_snd, loud - (4.0 if not indoor else 30.0) + (4.0 if tent else 0.0), delta)
-	_set_vol(_roof_snd, loud - (2.0 if indoor else 40.0), delta)
+	_set_vol(_roof_snd, loud - (9.0 if indoor else 40.0), delta)   # drinnen gedämpft, nicht aufdringlich
 	# nass werden
 	if cfg.rain_wets and _rain_amount > 0.3 and not indoor and not tent:
 		_wet_t -= delta

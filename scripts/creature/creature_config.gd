@@ -51,6 +51,8 @@ static func get_default() -> CreatureConfig:
 @export_group("Wie lange sie bleibt")
 ## Auf der Jagd bleibt sie so viele Spielstunden (zufällig dazwischen) – nur manchmal die ganze Nacht.
 @export var hunt_hours: Vector2 = Vector2(1.0, 3.0)
+## Sekunden nach dem Abzug (Morgengrauen): ist sie dann noch da, verschwindet sie im Blitz.
+@export var leave_timeout: float = 45.0
 @export var whole_night_chance: float = 0.2
 
 @export_group("Klang")

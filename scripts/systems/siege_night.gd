@@ -42,6 +42,7 @@ var _finished := false
 var _breath_heard := 0.0           # im Versteck: Sekunden hörbarer Atem, während es davorsteht
 var _noise_note_t := 0.0
 var _breath_warned := false
+var _calm_until := 0.0
 var fake: Changeling = null        # das falsche Ding im Haus
 var _fake_wait := 20.0
 var _fake_start_d := 8.0
@@ -102,6 +103,9 @@ func _process(delta: float) -> void:
 	if _intrusion >= 0.0:
 		_update_intrusion(delta)
 		return
+	# Nach einem überstandenen Eindringen: kurze Atempause, bevor die Aufgaben wieder drängen
+	if _t < _calm_until:
+		return
 	if active("music"):
 		_update_music(delta)
 	if active("attic"):
@@ -156,6 +160,11 @@ func wind_music_box() -> void:
 
 ## Der Manipulator hat gewonnen: man geht wie ferngesteuert zur Haustür und öffnet sie.
 func _lure_to_door() -> void:
+	# Wer versteckt ist (Schrank, Keller, Dachboden), wird nicht herausgezogen – es zählt nur als Fehlschlag
+	if is_safe(_player) or _player.is_hidden():
+		wind = 0.6
+		_strike("door", _player.global_position + Vector3(0, 1.2, 0))
+		return
 	var door: Door = null
 	for d in get_tree().get_nodes_in_group("entry_point"):
 		if d is Door:
@@ -449,6 +458,7 @@ func _update_intrusion(delta: float) -> void:
 			for id: String in tasks:
 				_set_p(id, minf(pressure(id), 0.3))
 			wind = maxf(wind, 0.7)
+			_calm_until = _t + cfg.siege_calm_after
 			EventBus.notify("Es ist weg. Noch nicht vorbei – halte durch.", 3.5)
 		return
 	# nicht versteckt: aus

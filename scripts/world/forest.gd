@@ -686,10 +686,17 @@ func _add_multimesh(node_name: String, mesh: Mesh, transforms: Array[Transform3D
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
 	mm.mesh = mesh
-	mm.instance_count = transforms.size()
+	# Nichts im Grundriss der Anbauten (Kinderzimmer, Büro) – sonst wächst Gras durch den Boden (Christian 14.11.).
+	# Erst hier aussortiert, damit der Zufall (und damit alle Baumplätze) gleich bleibt.
+	var keep: Array[int] = []
 	for i in transforms.size():
-		mm.set_instance_transform(i, transforms[i])
-		mm.set_instance_color(i, colors[i])
+		var o := transforms[i].origin
+		if not Cabin.in_footprint(o.x, o.z, 0.25):
+			keep.append(i)
+	mm.instance_count = keep.size()
+	for k in keep.size():
+		mm.set_instance_transform(k, transforms[keep[k]])
+		mm.set_instance_color(k, colors[keep[k]])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = node_name
 	mmi.multimesh = mm

@@ -393,8 +393,12 @@ func _process(delta: float) -> void:
 
 ## Flackern nur, wenn wirklich etwas da ist (nachts mit Aktivität oder ein Wesen in der Nähe).
 func flicker(seconds: float = 1.2) -> void:
-	var threat := TimeManager.is_night() and (ThreatDirector._activity_tonight or ThreatDirector.creature != null \
-			or not get_tree().get_nodes_in_group("drone").is_empty() or not get_tree().get_nodes_in_group("mauler").is_empty())
+	# Christian 14.11.: nur, wenn wirklich ein Wesen da ist – nicht schon, weil irgendwann in der Nacht etwas war
+	var threat := TimeManager.is_night() and (is_instance_valid(ThreatDirector.creature) or SiegeNight.current != null)
+	for g: String in ["drone", "mauler", "seeker", "manipulator", "changeling"]:
+		if threat:
+			break
+		threat = TimeManager.is_night() and not get_tree().get_nodes_in_group(g).is_empty()
 	if threat:
 		_flicker = seconds
 

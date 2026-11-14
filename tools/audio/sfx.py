@@ -25,7 +25,7 @@ MAP = [
     ("House dripping faucet *", "drip", "loop", None),
     ("House creaking floorboard *", "floor_creak", "one", None),
     ("House ceiling light *", "light_buzz", "one", None),
-    ("House dull footsteps on the roof *", "roof_steps", "one", None),
+    ("House dull footsteps on the roof *", "roof_steps", "clip", 4.95),   # Christian 14.11.: halb so lang
     ("House radio *", "radio", "loop", None),
     ("House running generator*", "generator", "loop", None),
     ("House sound of music box *", "music_box", "one", None),

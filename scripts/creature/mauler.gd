@@ -69,7 +69,7 @@ func place_near(p: Vector3) -> void:
 		var d := _rng.randf_range(cfg.spawn_distance.x, cfg.spawn_distance.y)
 		var q := _ground(p + Vector3(cos(a), 0, sin(a)) * d)
 		best = q
-		if not Cabin.is_inside(q) and not Shed.is_inside(q) and _bright_at(q) == Vector3.INF and not _player_sees(q):
+		if not Cabin.is_inside(q) and not Shed.is_inside(q) and not Cabin.blocks_ground(q) and _bright_at(q) == Vector3.INF and not _player_sees(q):
 			break
 	global_position = best
 	print("[Mauler] erscheint bei ", global_position)
@@ -504,7 +504,7 @@ func _move_toward(goal: Vector3, speed: float, delta: float) -> void:
 		var q := PhysicsRayQueryParameters3D.create(from, from + d * 1.3)
 		q.exclude = [_player.get_rid()]
 		var next := global_position + d * maxf(speed * delta, 0.05) * 6.0
-		if space.intersect_ray(q).is_empty() and not Cabin.is_inside(next) and not Shed.is_inside(next):
+		if space.intersect_ray(q).is_empty() and not Cabin.is_inside(next) and not Shed.is_inside(next) and not Cabin.blocks_ground(next, 0.2):
 			chosen = d
 			break
 	if chosen == Vector3.ZERO:

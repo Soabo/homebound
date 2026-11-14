@@ -1,5 +1,5 @@
 {
-  "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG, note:NOTIZ (gelesen), step:SPUR (Story erledigt), phase>=N. Die Story-Orte stehen als Spuren in data/story/story.json, nicht hier. day_start_hour: ab dieser Uhrzeit zählt für Aufgaben der neue Tag (neue Ziele/Routinen erst dann).",
+  "_info": "Aufgaben-Manager (Tasks). goals = Ziele, die sich nach und nach freischalten; daily = Tagesroutinen. unlock/done = Liste von Bedingungen (alle müssen gelten). Bedingungen: day>=N, flag:NAME (jemals), today:NAME (heute), got:ITEM (jemals besessen), item:ITEM>=N, built:TYP, cameras>=N, tier>=N, analyses>=N, link:ID, stage>=N, fuel<N, gencond<N, bottles_full>=N (volle Flaschen jeder Art), beds_planted, beds_watered, firewood, radio_heard, water_bad, not:BEDINGUNG, note:NOTIZ (gelesen), step:SPUR (Story erledigt), phase>=N. Die Story-Orte stehen als Spuren in data/story/story.json, nicht hier. day_start_hour: ab dieser Uhrzeit zählt für Aufgaben der neue Tag (neue Ziele/Routinen erst dann).",
   "goals": [
     {
       "id": "power",
@@ -172,7 +172,7 @@
     {
       "id": "hide",
       "title": "Ein Versteck kennen",
-      "text": "Im Kleiderschrank und im Spind im Schuppen kann man sich verstecken (R).",
+      "text": "Im Kleiderschrank und im Spind im Schuppen kann man sich verstecken: hineingehen und die Tür von innen schließen (E).",
       "unlock": [
         "day>=5"
       ],
@@ -364,7 +364,7 @@
         "got:bottle_empty"
       ],
       "done": [
-        "item:water>=2"
+        "bottles_full>=2"
       ]
     },
     {

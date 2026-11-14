@@ -138,6 +138,11 @@ func _on_shake(strength: float) -> void:
 
 func _on_sleep_finished() -> void:
 	input_locked = false
+	# Im Schlaf schaltet man die Uhr aus (Christian 14.11.): man wacht immer ohne Licht auf, LED-Modus
+	if flashlight.visible:
+		set_flashlight(false)
+	if hands and hands.screen_mode:
+		hands.screen_mode = false
 
 
 ## Im Versteck: umsehen ja, gehen nein. hidden_in = das Versteck, in dem man steht (oder null).
@@ -188,7 +193,7 @@ func _update_concealment() -> void:
 	# Wer schnell durchs Gebüsch läuft, raschelt (Gegner hören das)
 	if not _concealed and now - _rustle_msec > 900 and Vector2(velocity.x, velocity.z).length() > 2.6 and Cover.at(global_position) > 0.0:
 		_rustle_msec = now
-		SoundBank.play_at(get_parent(), "twig", global_position, -8.0, randf_range(0.8, 1.1))
+		SoundBank.play_at(get_parent(), "twig_snap", global_position, -6.0, randf_range(0.9, 1.1))
 		make_noise(9.0 * (1.0 - Stealth.mask_at(global_position)))
 
 
@@ -429,11 +434,11 @@ func _footstep(speed: float, crouching: bool = false, slow: bool = false) -> voi
 	if Stealth.creaky_board(global_position):
 		var soft := noise_gait in ["sneak", "slow"]
 		if not soft or randf() < sc.creak_soft_chance:
-			SoundBank.play_at(get_parent(), "floor_creak", global_position, -10.0 if soft else -2.0, randf_range(0.85, 1.1))
+			SoundBank.play_at(get_parent(), "board_creak", global_position, -10.0 if soft else -2.0, randf_range(0.9, 1.08))   # kurzes Knarzen
 			r = maxf(r, sc.creak_soft_radius if soft else sc.creak_radius)
 	# Im Wald knackt manchmal ein Ast
 	elif surface == "forest" and noise_gait in ["walk", "run"] and randf() < sc.twig_chance:
-		SoundBank.play_at(get_parent(), "twig", global_position, -6.0, randf_range(0.8, 1.15))
+		SoundBank.play_at(get_parent(), "twig_snap", global_position, -4.0, randf_range(0.9, 1.1))   # knackt sofort
 		r *= sc.twig_factor
 	if r >= 1.0:
 		make_noise(r)

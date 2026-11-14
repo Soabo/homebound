@@ -71,7 +71,7 @@
         },
         {
           "id": "compare",
-          "label": "Symbole vergleichen lassen",
+          "label": "Das fremde Gerät die Symbole vergleichen lassen",
           "needs": "alien",
           "effect": "noise",
           "text": "Das fremde Gerät gibt einen hohen Ton von sich und markiert drei Zeichen. Eines davon gleicht den Handabdrücken an deinen Fenstern."

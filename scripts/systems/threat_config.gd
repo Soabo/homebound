@@ -45,6 +45,8 @@ extends Resource
 
 @export_group("Belagerungsnacht (SiegeNight)")
 ## Ab Nacht … und dann frühestens alle … Nächte
+## So viele Nächte am Anfang ganz ohne Ereignisse (man soll glauben, man kann einfach schlafen)
+@export var calm_first_nights: int = 2
 @export var siege_from_night: int = 5
 @export var siege_every: int = 4
 ## Endspurt (Schacht offen, Story-Bibel Phase 5): Belagerung frühestens alle N Nächte, ruhige Nächte werden zu Besuch (Chance) oder Jagd
@@ -80,6 +82,8 @@ extends Resource
 @export var siege_outside_seconds: float = 8.0
 ## Schleichen: Lautes im Haus (Schritte, knarrende Dielen) hört es auf dem Dach/vor dem Fenster – Druck je 9 m Hörweite
 @export var siege_noise_pressure: float = 0.05
+## Nach überstandenem Eindringen so viele Sekunden Ruhe, bevor die Aufgaben wieder drängen
+@export var siege_calm_after: float = 40.0
 ## Im Versteck, wenn es davorsteht: Atem länger als so viele Sekunden nicht angehalten (Alt) = es findet dich
 @export var siege_breath_grace: float = 2.0
 
@@ -168,6 +172,25 @@ extends Resource
 @export var mauler_day_chance_per_hour: float = 0.05
 ## Ab dieser Baumdichte (WorldMap.tree_density) gilt der Wald als dicht
 @export var mauler_day_density: float = 0.55
+
+@export_group("Nachts durch den Wald (Christian 14.11.: einfach durchlaufen darf sich nicht lohnen)")
+## Ab dieser Entfernung von der Hütte (und abseits vom eigenen Zelt) wird es nachts gefährlich
+@export var roam_min_distance: float = 60.0
+## Alle so viele Sekunden wird gewürfelt
+@export var roam_check_seconds: float = 15.0
+## Grundchance pro Wurf, dazu je 100 m, die man in dieser Nacht draußen gelaufen ist
+@export var roam_base_chance: float = 0.04
+@export var roam_chance_per_100m: float = 0.05
+@export var roam_max_chance: float = 0.45
+## Rennen ist laut: Faktor auf die Chance, solange man sprintet
+@export var roam_run_factor: float = 1.8
+## Erst eine Warnung (Schritte, Ast knackt), beim nächsten Treffer wird es ernst
+@export var roam_warn_first: bool = true
+## Abstand zwischen zwei Begegnungen (Spielstunden) und höchstens so viele pro Nacht
+@export var roam_cooldown_hours: float = 1.0
+@export var roam_max_per_night: int = 3
+## So nah am eigenen Zelt (m) gilt man als „im Lager“
+@export var roam_camp_radius: float = 25.0
 
 @export_group("Signatur (Forschung 2.0)")
 ## Zusatzchance pro Signaturpunkt, dass die Drohne kommt (Fremdes tragen, nachts forschen).

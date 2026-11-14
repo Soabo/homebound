@@ -46,6 +46,7 @@ weather_fog = 0.12
 weather_storm = 0.08
 fog_morning_factor = 3.0
 weather_hours = Vector2(3, 9)
+rain_repeat_factor = 0.3
 wind_clear = 0.22
 wind_cloudy = 0.38
 wind_rain = 0.45

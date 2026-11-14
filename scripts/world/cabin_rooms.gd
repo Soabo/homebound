@@ -128,7 +128,7 @@ func _lean_to_z(xa: float, xb: float, z_out: float, z_house: float, roof_at: Cal
 	var slope := atan2(y_in - y_out, run)
 	var len := run / cos(slope)
 	var mid := Vector3((xa + xb) * 0.5, (y_out + y_in) * 0.5 + 0.1, (z_out + z_house) * 0.5)
-	BuildKit.box(c, Vector3(xb - xa, 0.18, len), mid, shingles, false, Vector3(-rad_to_deg(slope), 0, 0))
+	BuildKit.box(c, Vector3(xb - xa, 0.18, len), mid, shingles, true, Vector3(-rad_to_deg(slope), 0, 0))   # fest
 	# Innen: schräge Bretterdecke
 	var ceil_mat := BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55))
 	BuildKit.box(c, Vector3(xb - xa, 0.04, len), mid + Vector3(0, -0.12, 0), ceil_mat, false, Vector3(-rad_to_deg(slope), 0, 0))
@@ -145,7 +145,8 @@ func _lean_to_x(x_out: float, x_house: float, za: float, zb: float, roof_at: Cal
 	var slope := atan2(y_in - y_out, run)
 	var len := run / cos(slope)
 	var mid := Vector3((x_out + x_house) * 0.5, (y_out + y_in) * 0.5 + 0.1, (za + zb) * 0.5)
-	BuildKit.box(c, Vector3(len, 0.18, zb - za), mid, shingles, false, Vector3(0, 0, rad_to_deg(slope)))
+	# fest: man springt nicht durchs Dach
+	BuildKit.box(c, Vector3(len, 0.18, zb - za), mid, shingles, true, Vector3(0, 0, rad_to_deg(slope)))
 	var ceil_mat := BuildKit.tex_mat("planks_h", 1.2, Color(0.62, 0.58, 0.55))
 	BuildKit.box(c, Vector3(len, 0.04, zb - za), mid + Vector3(0, -0.12, 0), ceil_mat, false, Vector3(0, 0, rad_to_deg(slope)))
 	BuildKit.box(c, Vector3(0.05, 0.2, zb - za + 0.05), Vector3(x_out, y_out + 0.05, mid.z), c.m_wood_dark, false)

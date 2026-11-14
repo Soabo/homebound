@@ -4,7 +4,8 @@ extends Node3D
 ## Vier Pfosten, Plattform in gut 4 m Höhe mit Geländer und Dach, Leiter zum Hochklettern.
 ## Oben: Tagebuch, Revierkarte mit den drei Vermessungspunkten, ein paar Vorräte.
 
-const SITE := Vector3(12.0, 0.0, -80.0)
+## Ein paar Meter neben dem Nordweg (Christian 14.11.: stand vorher mitten auf dem Weg)
+const SITE := Vector3(7.2, 0.0, -81.2)
 const DECK := 4.2
 
 

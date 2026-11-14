@@ -288,7 +288,8 @@
   Fenster verbarrikadieren (`bp_secure`). Erster Besuch der Kreatur am Haus (`creature_visited`) → Spießbarrikade.
   Gefunden: Fallen-Anleitung am Hochsitz (Bärenfalle + Schlinge), Bewegungsmelder-Leuchte in der Imkerei.
   Funkmeldung Tag 7 (`radio_day_7`) oder erstes verseuchtes Wasser → Wasserfilter. Tank < 20 % → Holzvergaser. Zelt liegt im Ferienlager.
-- Leere Blechdosen nicht im Haus: alte Kühlbox im Wald westlich (`SupplyProps.COOLER_XZ`, CoolerCans, 8 Dosen, im Gras eingewachsen).
+- Leere Blechdosen: alte Kühlbox im Wald westlich (`SupplyProps.COOLER_XZ`, CoolerCans, 8 Dosen), seit 14.11. auch 4 neben der Küchenspüle
+  (`KitchenCans`) und 2 an jeder zweiten Schrottstelle (`ScrapSpot` Kind „Cans“, gerade `spot_id`). Sichtbare Dosen: `SupplyProps.empty_cans`.
 
 ## Neue Hände und Hand-Gegenstände (Christian, 12.11.2026)
 - Drei neue Bausteine unter `scripts/player/`: `HandKit` (Formen: `loft` = Schlauch entlang einer Linie für Stiele, Henkel,
@@ -573,6 +574,39 @@
 - Prüfung `RegressTest._t_changeling` (einzeln: `-- --night-test=regress --only=_t_changeling`). Vorschau der Modelle:
   `creature_preview.tscn -- --changeling=masks|true`.
 
+## Christians Testrunde 14.11. abends (bis zur ersten Belagerung)
+- Belagerung: In Belagerungsnächten keine anderen Wesen, Vorkommnisse oder Kleinigkeiten (nur „siege“). Spieluhr-Zwang zieht
+  niemanden aus dem Versteck (`SiegeNight._lure_to_door` zählt dann nur als Fehlschlag). Nach überstandenem Eindringen
+  `siege_calm_after` Sekunden Ruhe. Sucher/Zerfleischer meiden Grundriss von Hütte, Anbauten, Schuppen am Boden
+  (`Cabin.blocks_ground` – `is_inside` prüft die Höhe ab Hüttenboden, Punkte auf dem Gelände fielen durch).
+- Die ersten `calm_first_nights` (2) Nächte ganz ohne Ereignisse (ThreatConfig).
+- Bett: Hinlegen/Aufstehen mit Kamerabewegung (`Bed._lie_down/_on_woke`, aufgeschreckt schneller). Nach jedem Schlaf (Bett,
+  Zelt) ist die Uhr aus und im LED-Modus (`Player._on_sleep_finished`).
+- Klänge: Diele `board_creak` (0,75 s, aus floor_creak geschnitten), Ast beim Gehen `twig_snap` (knackt sofort),
+  Dachschritte halb so lang (sfx.py clip 4.95). Regen aufs Dach drinnen leiser, nach Regen seltener gleich wieder Regen
+  (WorldConfig `rain_repeat_factor`).
+- Gießkanne am Rand des östlichen Hochbeets. Couchtisch schmaler, Holzkorb an die Wand neben den Kamin (Lauftests
+  „Zwischen Couchtisch und …“). Annex-Dächer fest (Kinderzimmer/Büro). Hochsitz neben dem Nordweg.
+- Aufgabe Trinkwasser zählt volle Flaschen jeder Art (`bottles_full`), Aufgabe Versteck nennt (E). Tablet flackert nur, wenn
+  wirklich ein Wesen da ist. Karte (M): Mausrad zoomt (ZOOMS 1/2/4/8 um die Maus), ziehen verschiebt. Experiment-Hinweise
+  erklären die Folgen („laut“ = Wesen hören das).
+- Prüfung `RegressTest._t_fixes_1411`, `_t_window_sides`.
+
+## Christians dritte Liste 14.11. abends
+- Versunkenes Dorf neu: `DrownedVillage` (scripts/world/places/drowned_village.gd) baut Hausruinen (Schlammrand bis `WATERLINE`,
+  Steinmauern mit Öffnungen, eingestürzte Wand, Balken, Schutt) und die Kirche (Schiff mit Rundbogenfenstern, Bänken, Altar, halbem Dach,
+  Turm davor mit Tor + Durchgang ins Schiff, Glocke). Knotennamen Church / Ruin_N bleiben (Funde, Notizen auf dem Altar). Tour-Bilder D0/D1.
+- Nachts im Wald (Christian: „einfach durchlaufen darf nicht belohnt werden“): `ThreatDirector._check_night_roam` / `roam_chance()` –
+  ab `roam_min_distance` von der Hütte, nicht im Zelt-Umkreis, nicht im Gebüsch versteckt: Chance pro Wurf wächst mit der nachts
+  gelaufenen Strecke (`roam_meters`), Rennen × `roam_run_factor`. Erst Warnung (Schritte), dann Zerfleischer (ab Phase 2), Sucher oder
+  Kreatur. Werte ThreatConfig `roam_*`, nicht in ruhigen Nächten / Belagerung.
+- Morgengrauen: alle Kreaturen (`call_group("creature","leave")`) und Drohnen (`AlienDrone.leave`) ziehen ab; Kreatur bei Tag
+  verlässt sofort die Jagd, nach `CreatureConfig.leave_timeout` Teleporterblitz. Drohne späht bei Tag nicht, `spawn_ambush` bei Tag = nichts.
+- Spieluhr: Vorkommnis „music_box“ lässt Bens Spieluhr selbst spielen (`MusicBox.play_ghost`), E hält sie dann an.
+- Regen-Schleife nahtlos (`SoundBank._seamless`), nach Regen seltener gleich wieder Regen. Gras wächst nicht durch Anbau-Böden
+  (`Forest._add_multimesh` filtert `Cabin.in_footprint`). Wege schneiden sich als Hohlweg ins Gelände (`Terrain.TRAIL_CUT_REACH`).
+- Prüfung `RegressTest._t_village`, `_t_batch3_1411`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
@@ -626,4 +660,4 @@ Export-Vorlagen müssen unter `~/.local/share/godot/export_templates/4.7.2.stabl
 - Grundstück/Zaun: x -20..22, z -16..18. Schuppen bei (14, 0, 6.5).
 - Zufahrt läuft vom Tor (x -3, z 18) nach Süden bis zur Autobahn (z ≈ 1086). Spielfeldgrenze ±1100 m (Gelände ±1150).
   Tal-Wald (`Forest`) ±108 m, danach `WildForest`. Alle Orte und ihre Koordinaten: `data/world/map.json`.
-- Orte: Absturzstelle (-42,-30), fremde Struktur (-78, 40), Höhle am Bach (49, -72), Förster-Hochsitz (12, -80).
+- Orte: Absturzstelle (-42,-30), fremde Struktur (-78, 40), Höhle am Bach (49, -72), Förster-Hochsitz (7.2, -81.2) (seit 14.11. neben dem Nordweg).

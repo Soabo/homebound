@@ -277,11 +277,11 @@ func _tags(id: String) -> String:
 
 static func _effect_hint(effect: String) -> String:
 	match effect:
-		"noise": return "  (laut)"
-		"signal": return "  (strahlt kurz grell)"
-		"drain": return "  (zieht viel Strom)"
-		"hurt": return "  (riskant)"
-		"escape": return "  (die Probe wird unruhig)"
+		"noise": return "  (macht einen lauten Ton – Wesen in der Nähe hören das)"
+		"signal": return "  (grelles Signal – draußen zu sehen, lockt an)"
+		"drain": return "  (zieht viel Strom aus dem Tank)"
+		"hurt": return "  (riskant – kann dich verletzen)"
+		"escape": return "  (die Probe wird unruhig – kann ausbrechen)"
 	return ""
 
 

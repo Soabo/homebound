@@ -12,6 +12,8 @@ const CASES := [
 	{"name": "Wohnzimmer -> Werkstatt", "door": "", "from": Vector3(0.8, 0.5, 1.5), "yaw": -90.0, "check": "x", "target": 3.0},
 	{"name": "Werkstatt -> Bad", "door": "", "from": Vector3(4.0, 0.5, 1.0), "yaw": 0.0, "check": "z", "target": -2.5},
 	{"name": "Vorratsraum -> Büro", "door": "", "from": Vector3(0.5, 0.5, -2.0), "yaw": 0.0, "check": "z", "target": -6.5},
+	{"name": "Zwischen Couchtisch und Couch", "door": "", "from": Vector3(-3.35, 0.5, 0.45), "yaw": 180.0, "check": "z", "target": 2.9},
+	{"name": "Zwischen Couchtisch und Kamin", "door": "", "from": Vector3(-4.6, 0.5, 0.2), "yaw": 180.0, "check": "z", "target": 2.9},
 	{"name": "Wohnzimmer -> Kinderzimmer", "door": "", "from": Vector3(-4.6, 0.5, -0.05), "yaw": 90.0, "check": "x", "target": -7.5},
 ]
 

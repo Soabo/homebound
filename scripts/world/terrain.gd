@@ -165,6 +165,14 @@ static func _build_bed_profile() -> void:
 
 static func height_at(x: float, z: float) -> float:
 	var h := _raw_height(x, z)
+	# Wege schneiden sich durch Kuppen (Hohlweg) statt über jeden Buckel zu laufen (Christian 14.11.):
+	# Höhe am Weg = höchstens der Mittelwert der Umgebung (7 m), mit Böschung nach außen.
+	var ti := WorldMap.trail_info(x, z)
+	if ti.x < TRAIL_CUT_REACH and ti.y >= 0.0 and ti.y < 1.5:
+		var w := (1.0 - smoothstep(1.2, TRAIL_CUT_REACH, ti.x)) * smoothstep(1.0, 4.0, yard_distance(x, z))
+		if w > 0.0:
+			var sm := (h + _raw_height(x + 7.0, z) + _raw_height(x - 7.0, z) + _raw_height(x, z + 7.0) + _raw_height(x, z - 7.0)) * 0.2
+			h = lerpf(h, minf(h, sm), w * 0.9)
 	var sd := stream_distance(x, z)
 	if sd < 9.0:
 		var bed := stream_bed_height(z)
@@ -221,6 +229,10 @@ static func _local_height(x: float, z: float) -> float:
 		h -= _detail.get_noise_2d(x, z) * 0.35 * (1.0 - smoothstep(0.0, 3.0, ti.x))
 		h -= trail_dip(x, z, ti, d)
 	return h
+
+
+## Bis zu dieser Entfernung vom Wegrand wird eine Kuppe abgetragen (Hohlweg)
+const TRAIL_CUT_REACH := 4.0
 
 
 ## Wie tief der Weg hier im Boden liegt (Fahrweg tiefer als Pfad, nicht im Garten, an Bach und Zufahrt flach).

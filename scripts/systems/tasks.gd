@@ -10,7 +10,7 @@ const DATA_PATH := "res://data/tasks/tasks.json"
 ## Orte, deren Besuch als Flag zählt (Mittelpunkt, Radius)
 const PLACES := {
 	"visit_crash": [Vector3(-42, 0, -30), 14.0],
-	"visit_tower": [Vector3(12, 0, -80), 10.0],
+	"visit_tower": [Vector3(7.2, 0, -81.2), 10.0],
 	"visit_cave": [Vector3(49, 0, -72), 10.0],
 	"visit_structure": [Vector3(-78, 0, 40), 16.0],
 }
@@ -193,6 +193,8 @@ func _value(name: String) -> float:
 		"fuel": return PowerManager.fuel
 		"gencond": return Supplies.generator_condition
 		"phase": return Story.phase
+		# volle Flaschen, egal ob aus der Speis, vom Hahn, aus Regentonne oder Bach (Rohwasser kocht man ab)
+		"bottles_full": return Inventory.count("water") + Inventory.count("water_raw") + Inventory.count("water_tainted")
 	return 0.0
 
 

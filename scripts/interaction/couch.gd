@@ -8,7 +8,7 @@ const DATA_PATH := "res://data/tablet/tablet.json"
 ## Sitzplatz (Hüttenkoordinaten): Füße am Boden, Blick zum Kamin (-x)
 const SEAT := Vector3(-2.62, Cabin.FLOOR_Y, 1.75)
 const SIT_EYE := 1.02
-const TABLET_SPOT := Vector3(-3.72, Cabin.FLOOR_Y + 0.447, 1.8)
+const TABLET_SPOT := Vector3(-3.95, Cabin.FLOOR_Y + 0.447, 1.8)
 
 var read_ids: Array = []
 var sitting: bool = false

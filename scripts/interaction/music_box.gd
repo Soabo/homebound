@@ -45,10 +45,17 @@ func _ready() -> void:
 func get_prompt(_p: Node) -> String:
 	if _siege:
 		return "Bens Spieluhr (%d %%)  [E] aufziehen" % int(_wind * 100.0)
+	if _player.playing:
+		return "Bens Spieluhr spielt  [E] anhalten"
 	return "Bens Spieluhr  [E] aufziehen"
 
 
 func interact(_p: Node) -> void:
+	# Läuft sie schon (z. B. von allein in der Nacht), hält E sie erst an – sonst spielte sie doppelt
+	if not _siege and _player.playing:
+		_player.stop()
+		SoundBank.play_at(get_parent(), "switch", global_position, -12.0, 1.2)
+		return
 	var tw := create_tween()
 	tw.tween_property(_crank, "rotation:x", _crank.rotation.x + TAU * 2.0, 0.8)
 	SoundBank.play_at(get_parent(), "switch", global_position, -12.0, 1.6)
@@ -57,6 +64,18 @@ func interact(_p: Node) -> void:
 	if not _player.playing:
 		_player.pitch_scale = 1.0
 		_player.play()
+
+
+## Vorkommnis: Die Spieluhr spielt von allein, etwas langsamer.
+func play_ghost() -> void:
+	if _siege or _player.playing:
+		return
+	_player.pitch_scale = 0.94
+	_player.play()
+
+
+func is_playing() -> bool:
+	return _player.playing
 
 
 func start_siege() -> void:

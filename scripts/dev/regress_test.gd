@@ -375,6 +375,9 @@ func _t_more() -> void:
 	await _t_packing()
 	await _t_stealth()
 	await _t_changeling()
+	await _t_fixes_1411()
+	_t_village()
+	await _t_batch3_1411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2090,3 +2093,282 @@ func _look(p: Player, at: Vector3) -> void:
 	var d := at - p.camera.global_position
 	p.rotation.y = atan2(-d.x, -d.z)
 	p.head.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())
+
+
+## Fehler 14.11. (Christian, erste Belagerung): Gestalt stand im Kinderzimmer statt vor dem Fenster.
+## Jedes Fenster: außen liegt draußen, innen liegt drinnen.
+func _t_window_sides() -> void:
+	var bad: Array = []
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow:
+			var o: Vector3 = w.outside_point()
+			var i: Vector3 = w.inside_point()
+			if Cabin.is_inside(o + Vector3(0, 0.3, 0)) or Cabin.in_footprint(o.x, o.z, 0.0) or not Cabin.is_inside(Vector3(i.x, Cabin.FLOOR_Y + 0.5, i.z)):
+				bad.append(String(w.name))
+	_ok("Fenster: außen ist draußen, innen ist drinnen (alle Fenster)", bad.is_empty(), str(bad))
+
+
+## Christians Testrunde 14.11. abends (erste Belagerung + 15 Punkte).
+## Christians dritte Liste 14.11.: Regen nahtlos, Spieluhr, Dosen, Morgengrauen, nachts im Wald.
+func _t_batch3_1411() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_d := TimeManager.day
+	var keep_h := TimeManager.hour
+	# Regen als Schleife ohne Sprung: Ende und Anfang passen zusammen
+	var rain := SoundBank.get_generated("rain")
+	var ok_rain := rain != null and rain.loop_mode == AudioStreamWAV.LOOP_FORWARD
+	if ok_rain:
+		var d := rain.data
+		var a := d.decode_s16(0)
+		var b := d.decode_s16(d.size() - 2)
+		ok_rain = absi(a - b) < 9000
+	_ok("Regen: Schleife ohne Lücke", ok_rain)
+	# Spieluhr: spielt sie von allein, hält E sie an (keine zweite Melodie)
+	var box := _scene().get_tree().get_first_node_in_group("music_box") as MusicBox
+	if box:
+		NightOmens._music_box(_scene())
+		var was: bool = box.is_playing()
+		box.interact(p)
+		_ok("Spieluhr: Vorkommnis spielt die Spieluhr selbst, E hält sie an", was and not box.is_playing())
+	# Leere Dosen: vier in der Küche, an jeder zweiten Schrottstelle zwei
+	var kc := _scene().find_child("KitchenCans", true, false) as ItemPickup
+	_ok("Dosen: vier leere Dosen neben der Spüle", kc != null and kc.item_id == "cans" and kc.amount == 4 and Cabin.is_inside(kc.collider_offset))
+	var sp := ScrapSpot.new()
+	sp.spot_id = 8
+	sp.kind = "barrel"
+	_scene().add_child(sp)
+	_ok("Dosen: an Schrottstellen liegen Dosen", sp.get_node_or_null("Cans") is ItemPickup)
+	sp.queue_free()
+	# Morgengrauen: Kreatur und Drohne ziehen ab, bei Tag kein Hinterhalt
+	TimeManager.set_time(keep_d, 23.0)
+	p.global_position = Vector3(-30, Terrain.height_at(-30, 30) + 0.1, 30)
+	var c := Creature.new()
+	_scene().add_child(c)
+	c.global_position = Creature._ground(Vector3(-10, 0, 30))
+	var dr := AlienDrone.new()
+	_scene().add_child(dr)
+	dr.global_position = Vector3(-20, AlienDrone.HEIGHT, 30)
+	await get_tree().physics_frame
+	TimeManager.set_time(keep_d, 9.0)
+	ThreatDirector._on_phase_changed(false)
+	await get_tree().physics_frame
+	_ok("Morgengrauen: Kreatur zieht ab", c.state == Creature.State.LEAVE)
+	_ok("Morgengrauen: Drohne zieht ab", dr._leaving)
+	c._leave_gone()
+	await get_tree().process_frame
+	_ok("Morgengrauen: wer trödelt, verschwindet", not is_instance_valid(c))
+	dr.queue_free()
+	var before := get_tree().get_nodes_in_group("creature").size()
+	ThreatDirector.spawn_ambush(p.global_position + Vector3(20, 0, 0))
+	_ok("Tag: kein Hinterhalt nach Drohnen-Alarm", get_tree().get_nodes_in_group("creature").size() == before)
+	# Nachts weit draußen wird es gefährlich, an der Hütte nicht
+	TimeManager.set_time(maxi(keep_d, ThreatDirector.config.calm_first_nights + 2), 23.0)
+	var keep_m := ThreatDirector.roam_meters
+	var keep_last := ThreatDirector._roam_last
+	ThreatDirector._roam_last = -99.0
+	ThreatDirector.roam_count = 0
+	p.global_position = Vector3(-130, Terrain.height_at(-130, 40) + 0.2, 40)
+	ThreatDirector.roam_meters = 0.0
+	var c0 := ThreatDirector.roam_chance()
+	ThreatDirector.roam_meters = 400.0
+	var c1 := ThreatDirector.roam_chance()
+	p.global_position = Vector3(0, 0.5, 6.0)
+	var c2 := ThreatDirector.roam_chance()
+	_ok("Nachts im Wald: Gefahr wächst mit der Strecke (%.2f → %.2f), an der Hütte keine (%.2f)" % [c0, c1, c2], c0 > 0.0 and c1 > c0 and c2 == 0.0)
+	ThreatDirector.roam_meters = keep_m
+	ThreatDirector._roam_last = keep_last
+	TimeManager.set_time(keep_d, keep_h)
+	p.global_position = keep
+
+
+## Versunkenes Dorf (14.11.): Kirche durch Turm und Portal bis zum Altar begehbar, Häuser neu gebaut.
+func _t_village() -> void:
+	var ch := _scene().get_node_or_null("Places/dorf/Church") as Node3D
+	_ok("Dorf: Kirche vorhanden", ch != null)
+	if ch == null:
+		return
+	var space := ch.get_world_3d().direct_space_state
+	var sph := SphereShape3D.new()
+	sph.radius = 0.32
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sph
+	var blocked := ""
+	var z := 13.0
+	while z > -3.5:
+		q.transform = Transform3D(Basis(), ch.to_global(Vector3(0, 1.3, z)))
+		for hit in space.intersect_shape(q, 4):
+			var col := hit.collider as Node
+			if col and ch.is_ancestor_of(col):
+				blocked = "%s bei z %.1f" % [col.get_parent().name if col.get_parent() else col.name, z]
+		if blocked != "":
+			break
+		z -= 0.5
+	# Gegenprobe: an der Seitenwand muss die Abfrage etwas treffen
+	q.transform = Transform3D(Basis(), ch.to_global(Vector3(4.0, 1.3, -2.0)))
+	_ok("Dorf: Kirchenwand ist fest", not space.intersect_shape(q, 4).is_empty())
+	_ok("Dorf: vom Turmtor bis zum Altar frei (%s)" % (blocked if blocked != "" else "frei"), blocked == "")
+	var ruins := 0
+	for i in 6:
+		var r := _scene().get_node_or_null("Places/dorf/Ruin_%d" % i) as Node3D
+		if r and r.get_child_count() > 20:
+			ruins += 1
+	_ok("Dorf: sechs ausgebaute Hausruinen (%d)" % ruins, ruins == 6)
+
+
+func _t_fixes_1411() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_d := TimeManager.day
+	var keep_h := TimeManager.hour
+	p.set_physics_process(true)
+	p.input_locked = false
+	p.in_tent = null
+	p.hidden_in = null
+	EventBus.sleeping = false
+	_t_window_sides()
+	# Gießkanne am Beetrand, nicht mitten im Gras
+	var can := _scene().find_child("WateringCan", true, false) as Node3D
+	var bed := _scene().find_child("GardenBed4", true, false) as Node3D
+	var cpos: Vector3 = can.get("collider_offset") if can else Vector3.ZERO
+	_ok("Gießkanne steht am Rand des Hochbeets", can != null and bed != null and Vector2(cpos.x - bed.global_position.x, cpos.z - bed.global_position.z).length() < 2.0,
+		"%s / %s" % [str(cpos), str(bed.global_position) if bed else "-"])
+	# Kurze Klänge
+	var bc := SoundBank.get_sound("board_creak")
+	var ts := SoundBank.get_sound("twig_snap")
+	var rs := SoundBank.get_sound("roof_steps")
+	_ok("Diele knarzt kurz (unter 1 s), Ast knackt sofort, Dachschritte halb so lang",
+		SoundBank.has_recording("board_creak") and bc.get_length() < 1.0 and SoundBank.has_recording("twig_snap") and ts.get_length() < 0.8 \
+		and rs.get_length() < 5.5, "%.2f / %.2f / %.2f s" % [bc.get_length(), ts.get_length(), rs.get_length()])
+	# Die ersten beiden Nächte: nichts
+	var keep_events := ThreatDirector.events.duplicate(true)
+	var keep_arc: int = ThreatDirector._arc_day
+	var calm := true
+	for night in [1, 2]:
+		ThreatDirector._arc_day = -1
+		ThreatDirector.plan_night(night)
+		calm = calm and ThreatDirector.events.is_empty() and ThreatDirector.night_kind == "quiet"
+	_ok("Nacht 1 und 2 sind ganz ruhig", calm)
+	# Belagerungsnacht: nur die Belagerung
+	var keep_last: int = ThreatDirector.last_siege_day
+	var keep_count: int = ThreatDirector.siege_count
+	ThreatDirector._arc_day = -1
+	ThreatDirector.last_siege_day = -100
+	ThreatDirector.plan_night(maxi(ThreatDirector.config.siege_from_night, 9))
+	var types := ThreatDirector.events.map(func(e: Dictionary) -> String: return e["type"])
+	_ok("Belagerungsnacht: keine anderen Wesen und Vorkommnisse", ThreatDirector.night_kind == "siege" and types == ["siege"], str(types))
+	ThreatDirector.events = keep_events
+	ThreatDirector._arc_day = keep_arc
+	ThreatDirector.last_siege_day = keep_last
+	ThreatDirector.siege_count = keep_count
+	# Sucher kommt nicht ins Kinderzimmer (Punkt am Boden, y ≈ 0)
+	var inside_kids := Vector3(Cabin.KIDS.get_center().x, 0.0, Cabin.KIDS.get_center().y)
+	var out := Seeker.outside(inside_kids)
+	_ok("Sucher: Kinderzimmer zählt als Haus, er bleibt draußen", not Cabin.in_footprint(out.x, out.z, 0.2) and Seeker._blocked(inside_kids))
+	# Belagerung: im Schrank zieht die Spieluhr einen nicht heraus
+	var wardrobe := Node3D.new()
+	wardrobe.set_script(load("res://scripts/dev/hide_stub.gd"))
+	_scene().add_child(wardrobe)
+	var s := SiegeNight.new()
+	s.cfg = ThreatDirector.config
+	s.index = 1
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	s.set_process(false)
+	p.hidden_in = wardrobe
+	var at := p.global_position
+	s._lure_to_door()
+	await _frames(5)
+	_ok("Belagerung: versteckt wird man nicht zur Tür gezogen", p.global_position.distance_to(at) < 0.6 and not p.input_locked and s.strikes == 1,
+		"bewegt %.2f, gesperrt %s, Fehlschläge %d" % [p.global_position.distance_to(at), str(p.input_locked), s.strikes])
+	p.hidden_in = null
+	wardrobe.queue_free()
+	s.finish(true)
+	s.queue_free()
+	# Nach dem Schlafen ist die Uhr aus
+	p.set_flashlight(true)
+	p.hands.screen_mode = true
+	EventBus.sleep_finished.emit()
+	await _frames(2)
+	_ok("Aufwachen: Uhr ist aus, wieder LED-Modus", not p.flashlight.visible and not p.hands.screen_mode)
+	# Trinkwasser-Aufgabe: auch mit aufgefüllten Flaschen
+	var w0 := Inventory.count("water")
+	if w0 > 0:
+		Inventory.remove("water", w0)
+	Inventory.add("water_raw", 2)
+	_ok("Aufgabe Trinkwasser: zwei aufgefüllte Flaschen zählen", Tasks.check("bottles_full>=2"))
+	Inventory.remove("water_raw", 2)
+	if w0 > 0:
+		Inventory.add("water", w0)
+	# Tablet flackert tagsüber nie
+	TimeManager.hour = 12.0
+	var tab := get_tree().get_first_node_in_group("tablet_menu")
+	if tab:
+		tab.call("flicker", 2.0)
+	_ok("Tablet flackert am Tag nicht", tab == null or float(tab.get("_flicker")) <= 0.0)
+	# Aufgabe Versteck nennt E, nicht R
+	var hide_text := ""
+	for g: Dictionary in DataDB.load_json("res://data/tasks/tasks.json").get("goals", []):
+		if g.get("id", "") == "hide":
+			hide_text = String(g.get("text", ""))
+	_ok("Aufgabe Versteck: (E) statt (R)", hide_text.contains("(E)") and not hide_text.contains("(R)"))
+	# Karte zoomt
+	var ms := get_tree().get_first_node_in_group("map_screen")
+	if ms:
+		Inventory.add("hiking_map", 1)
+		ms.call("open")
+		await _frames(2)
+		ms.set("_zoom_i", 2)
+		ms.set("_center", Vector2(100, -200))
+		ms.call("_refresh_view")
+		var w: Vector2 = ms.call("_to_world", ms.call("_to_screen", Vector2(130, -170)))
+		_ok("Karte: Mausrad-Zoom, Ausschnitt stimmt", w.distance_to(Vector2(130, -170)) < 1.0 and float(ms.call("_half")) < WorldMap.limit() * 0.3)
+		ms.call("close")
+		Inventory.remove("hiking_map", 1)
+	# Kinderzimmer: Dach ist fest
+	var c := Vector3(Cabin.KIDS.get_center().x, Cabin.FLOOR_Y + 1.5, Cabin.KIDS.get_center().y)
+	var q := PhysicsRayQueryParameters3D.create(c, c + Vector3(0, 3.0, 0))
+	q.exclude = [p.get_rid()]
+	_ok("Kinderzimmer: man springt nicht durch die Decke", not p.get_world_3d().direct_space_state.intersect_ray(q).is_empty())
+	# Lose Dielen: nicht unter Teppichen oder Möbeln (Christian 14.11.: Teppich im Kinderzimmer, Diele unter der Couch)
+	var rugs := [Rect2(-4.6, 0.6, 2.2, 2.3), Rect2(-4.2, -2.3, 1.6, 1.0), Rect2(-8.0, -2.6, 1.1, 1.2)]
+	var bad_b: Array = []
+	for b: Dictionary in Stealth.boards():
+		if bool(b.get("attic", false)):
+			continue
+		var r := Rect2(float(b["x"]) - 0.55, float(b["z"]) - 0.08, 1.1, 0.16)
+		var bq := PhysicsShapeQueryParameters3D.new()
+		var bx := BoxShape3D.new()
+		bx.size = Vector3(1.0, 0.5, 0.3)
+		bq.shape = bx
+		bq.transform = Transform3D(Basis(), Vector3(float(b["x"]), Cabin.FLOOR_Y + 0.35, float(b["z"])))
+		bq.exclude = [p.get_rid()]
+		if rugs.any(func(g: Rect2) -> bool: return g.intersects(r)) or not p.get_world_3d().direct_space_state.intersect_shape(bq, 1).is_empty():
+			bad_b.append(Vector2(b["x"], b["z"]))
+	_ok("Lose Dielen liegen frei (kein Teppich, keine Möbel darüber)", bad_b.is_empty(), str(bad_b))
+	# Hochsitz neben dem Weg
+	var ti := WorldMap.trail_info(RangerTower.SITE.x, RangerTower.SITE.z)
+	_ok("Hochsitz steht neben dem Weg, nicht darauf", ti.x > 3.0, "%.1f m" % ti.x)
+	# Experiment-Hinweise verständlich
+	_ok("Experiment-Hinweis erklärt „laut“", ResearchMenu._effect_hint("noise").contains("hören"))
+	# Bett: hinlegen und aufstehen
+	TimeManager.set_time(keep_d, 22.5)
+	var bd := _scene().find_child("Bed", true, false)
+	if bd == null:
+		for n in _scene().find_children("*", "Bed", true, false):
+			bd = n
+			break
+	if bd:
+		p.global_position = (bd as Node3D).to_global(Vector3(0.75, 0.2, -0.6))
+		await _frames(3)
+		bd.call("interact", p)
+		await _wait(1.6)
+		var lying: bool = p.head.rotation.x > 0.8 and not p.hands.visible
+		var t := 0.0
+		while (EventBus.sleeping or p.input_locked) and t < 20.0:
+			await _wait(0.5)
+			t += 0.5
+		_ok("Bett: hinlegen (Blick zur Decke), aufwachen und aufstehen", lying and not p.input_locked and p.hands.visible and absf(p.head.rotation.x) < 0.3,
+			"liegt %s, frei nach %.1f s" % [str(lying), t])
+	TimeManager.set_time(keep_d, keep_h)
+	p.global_position = keep

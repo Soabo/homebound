@@ -76,7 +76,7 @@ static func outside(p: Vector3) -> Vector3:
 	var q := p
 	for c: Vector3 in [Vector3.ZERO, Shed.ORIGIN]:
 		var guard := 0
-		while (Cabin.is_inside(q) or Shed.is_inside(q)) and guard < 40:
+		while (Cabin.is_inside(q) or Shed.is_inside(q) or Cabin.blocks_ground(q)) and guard < 40:
 			var dir := Vector3(q.x - c.x, 0, q.z - c.z)
 			if dir.length() < 0.1:
 				dir = Vector3(0, 0, 1)
@@ -88,7 +88,7 @@ static func outside(p: Vector3) -> Vector3:
 
 
 static func _blocked(p: Vector3) -> bool:
-	return Cabin.is_inside(p) or Shed.is_inside(p)
+	return Cabin.is_inside(p) or Shed.is_inside(p) or Cabin.blocks_ground(p)
 
 
 # --- Aussehen ------------------------------------------------------------------

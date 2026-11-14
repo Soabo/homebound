@@ -93,10 +93,20 @@ func begin(m: String) -> void:
 var _leave_at: float = -1.0
 
 
+func _leave_gone() -> void:
+	if not is_instance_valid(self) or is_queued_for_deletion():
+		return
+	if _player and global_position.distance_to(_player.global_position) < 40.0:
+		Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0), true)
+	queue_free()
+
+
 func leave() -> void:
 	if state == State.LEAVE:
 		return
 	state = State.LEAVE
+	# Sicherheitsnetz: Wer nach `leave_timeout` Sekunden noch da ist, verschwindet im Teleporterblitz.
+	get_tree().create_timer(cfg.leave_timeout).timeout.connect(_leave_gone)
 	var away := (global_position * Vector3(1, 0, 1)).normalized()
 	if away.length() < 0.1:
 		away = Vector3(0, 0, -1)
@@ -113,6 +123,9 @@ func _physics_process(delta: float) -> void:
 	_last_rustle_pos = global_position
 	if _player == null or GameState.dead:
 		return
+	# Bei Tag jagt sie nicht: abziehen (außer Belagerung läuft noch)
+	if state != State.LEAVE and not TimeManager.is_night() and SiegeNight.current == null and _stare < 0.0:
+		leave()
 	_timer -= delta
 	_attack_cooldown -= delta
 	_update_posture(delta)

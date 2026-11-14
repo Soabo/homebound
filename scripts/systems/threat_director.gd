@@ -119,13 +119,18 @@ func reset_for_new_scene() -> void:
 func _on_phase_changed(is_night: bool) -> void:
 	var scene := get_tree().current_scene
 	if is_night:
+		roam_meters = 0.0
+		roam_count = 0
+		_roam_warned = false
+		_roam_last = -99.0
 		if scene:
 			Traces.clear(scene)
 		get_tree().call_group("changeling", "dusk")
 		return
 	# Morgengrauen: Kreatur verschwindet, Spuren der Nacht bleiben, nächste Nacht wird geplant.
-	if is_instance_valid(creature):
-		creature.call("leave")
+	# Alle Kreaturen und Drohnen ziehen ab (nicht nur die gemerkte) – bei Tag greift keine mehr an.
+	get_tree().call_group("creature", "leave")
+	get_tree().call_group("drone", "leave")
 	get_tree().call_group("changeling", "dawn")
 	# Nach einer Nacht mit dem Wechselbalg: ein Stuhl im Schlafzimmer, der zum Bett schaut
 	if scene and _changeling_tonight and changeling_count >= 2 and not far_from_home() and _rng.randf() < config.changeling_morning_chance:
@@ -182,19 +187,24 @@ func plan_night(night_day: int) -> void:
 			night_kind = "siege"
 			last_siege_day = night_day
 			siege_count += 1
+		# Die ersten Nächte sind bewusst ganz ruhig: man soll glauben, man kann einfach schlafen (Christian 14.11.)
+		if night_day <= config.calm_first_nights:
+			night_kind = "quiet"
+	var calm := night_day <= config.calm_first_nights
 	night_intensity = int({"quiet": 0, "hints": 1, "sighting": 1, "visit": 2, "hunt": 3, "siege": 3}[night_kind])
 	_appeared_tonight = false
 	events.clear()
 	var start := float(night_day - 1) * 24.0 + TimeManager.config.night_start_hour
 	var night_len := TimeManager.get_night_length_hours()
 	# Kleine, mehrdeutige Ereignisse (GDD 2.3) – in ruhigen Nächten nur ganz wenige
-	var n := 1 if night_kind in ["quiet", "siege"] else _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + mini(night_intensity, 2)
+	# Belagerung: nur die Belagerung – keine anderen Wesen, Vorkommnisse oder Kleinigkeiten (Christian 14.11.)
+	var n := 0 if night_kind == "siege" or calm else 1 if night_kind == "quiet" else _rng.randi_range(config.ambient_events_per_night.x, config.ambient_events_per_night.y) + mini(night_intensity, 2)
 	var pool := _event_pool(night_intensity)
 	for i in n:
 		_add(start + _rng.randf_range(0.6, night_len - 1.0), pool[_rng.randi() % pool.size()])
 	# Nächtliche Vorkommnisse (NightOmens): Hände, wandernde Dinge, Lichter und Sichtungen im Wald …
 	var oc := config.omen_count_quiet if night_kind in ["quiet", "siege"] else config.omen_count_busy
-	for i in _rng.randi_range(oc.x, oc.y):
+	for i in (0 if night_kind == "siege" or calm else _rng.randi_range(oc.x, oc.y)):
 		var kind := _pick_omen(night_day)
 		if kind != "":
 			_add(start + _rng.randf_range(0.3, night_len - 0.8), "omen:" + kind)
@@ -214,14 +224,14 @@ func plan_night(night_day: int) -> void:
 			if night_kind == "hunt" and _rng.randf() < config.outage_chance:
 				_add(start + _rng.randf_range(2.5, 6.0), "outage")
 	# Wechselbalg ab Story-Phase 2 (nicht in Belagerungsnächten – dort ist er eine eigene Aufgabe)
-	if Story.phase >= config.changeling_from_phase and night_kind != "siege" \
+	if Story.phase >= config.changeling_from_phase and night_kind != "siege" and not calm \
 			and (_rng.randf() < config.changeling_chance or changeling_offended_day == night_day):
 		_add(start + _rng.randf_range(0.8, maxf(night_len - 2.0, 1.0)), "changeling")
 	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht) – nicht in ruhigen Nächten
 	var st := WorldState.stage()
 	# Fremde Dinge machen sichtbar (Forschung 2.0): wer viel davon trägt oder nachts forscht, wird eher gefunden
 	var sig := Research.expected_signature()
-	if night_kind != "quiet" or sig >= config.signature_wakes_quiet:
+	if night_kind != "siege" and not calm and (night_kind != "quiet" or sig >= config.signature_wakes_quiet):
 		if (st >= 1 or night_day >= config.drone_from_night) and _rng.randf() < config.drone_chance + config.species_chance_per_stage * st + config.signature_drone_bonus * sig:
 			_add(start + _rng.randf_range(1.5, night_len - 2.0), "drone")
 		if (st >= 1 or night_day >= config.manipulator_from_night) and night_kind == "hints" and _rng.randf() < config.manipulator_chance + config.species_chance_per_stage * st:
@@ -380,6 +390,7 @@ func _process(delta: float) -> void:
 	_check_evening()
 	_check_forest_stalker(delta)
 	_check_mauler(delta)
+	_check_night_roam(delta)
 	_check_tired()
 	_check_changeling_day(delta)
 	var now := TimeManager.get_total_hours()
@@ -450,6 +461,94 @@ func _check_mauler(delta: float) -> void:
 	if far_from_home() and WorldMap.tree_density(p.x, p.z, p.y) >= config.mauler_day_density and _rng.randf() < config.mauler_day_chance_per_hour * dh:
 		var m := Mauler.spawn_near(scene, p)
 		m.set_meta("day_hunt", true)
+
+
+## Nachts weit draußen unterwegs: je mehr man läuft (und je lauter), desto eher stellt sich einem etwas in den Weg.
+## Erst eine Warnung (Schritte, Ast), dann Zerfleischer (ab Phase 2), Sucher oder Kreatur. Werte: ThreatConfig roam_*.
+var roam_meters: float = 0.0
+var roam_count: int = 0
+var _roam_warned := false
+var _roam_last: float = -99.0
+var _roam_check: float = 0.0
+var _roam_prev := Vector3.INF
+
+
+func _check_night_roam(delta: float) -> void:
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var scene := get_tree().current_scene
+	if player == null or scene == null or GameState.dead or not GameState.in_game() or not TimeManager.is_night():
+		_roam_prev = Vector3.INF
+		return
+	var p := player.global_position
+	var outside := not (Cabin.is_inside(p) or Shed.is_inside(p) or player.is_hidden() or player.in_tent != null)
+	if outside and _roam_prev != Vector3.INF:
+		var step := Vector2(p.x - _roam_prev.x, p.z - _roam_prev.z).length()
+		if step < 5.0:   # Teleports (Aufwachen, Laden) zählen nicht
+			roam_meters += step
+	_roam_prev = p
+	_roam_check -= delta
+	if _roam_check > 0.0:
+		return
+	_roam_check = config.roam_check_seconds
+	var chance := roam_chance()
+	if chance <= 0.0 or _rng.randf() >= chance:
+		return
+	_roam_encounter(scene, player)
+
+
+## Chance für den nächsten Wurf (0 = gerade sicher). Auch für Tests.
+func roam_chance() -> float:
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if player == null or not TimeManager.is_night() or siege_tonight() or TimeManager.day <= config.calm_first_nights:
+		return 0.0
+	var p := player.global_position
+	if Vector2(p.x, p.z).length() < config.roam_min_distance or Cabin.is_inside(p) or Shed.is_inside(p) or player.is_hidden() or player.in_tent != null:
+		return 0.0
+	for t in get_tree().get_nodes_in_group("tent_camp"):
+		if (t as Node3D).global_position.distance_to(p) < config.roam_camp_radius:
+			return 0.0
+	if roam_count >= config.roam_max_per_night or TimeManager.get_total_hours() - _roam_last < config.roam_cooldown_hours:
+		return 0.0
+	var c := config.roam_base_chance + config.roam_chance_per_100m * roam_meters / 100.0
+	if player.is_concealed():
+		return 0.0   # wer still im Gebüsch hockt, wird nicht gefunden
+	if Vector2(player.velocity.x, player.velocity.z).length() > player.walk_speed * 1.2:
+		c *= config.roam_run_factor
+	return minf(c, config.roam_max_chance)
+
+
+func _roam_encounter(scene: Node, player: Player) -> void:
+	var p := player.global_position
+	_activity_tonight = true
+	if config.roam_warn_first and not _roam_warned:
+		_roam_warned = true
+		_play_phantom_steps(scene)
+		EventBus.notify("Da war etwas. Hinter mir, zwischen den Bäumen.", 3.5)
+		return
+	_roam_warned = false   # nach einer Begegnung warnt es wieder erst
+	_roam_last = TimeManager.get_total_hours()
+	roam_count += 1
+	var options: Array[String] = []
+	if Story.phase >= 2 and get_tree().get_nodes_in_group("mauler").is_empty():
+		options.append("mauler")
+	if get_tree().get_nodes_in_group("seeker").is_empty():
+		options.append("seeker")
+	if not is_instance_valid(creature) and TimeManager.day >= config.hunt_from_night:
+		options.append("creature")
+	if options.is_empty():
+		_play_phantom_steps(scene)
+		return
+	var pick := options[_rng.randi() % options.size()]
+	if not _kinds_tonight.has(pick):
+		_kinds_tonight.append(pick)
+	match pick:
+		"mauler":
+			Mauler.spawn_near(scene, p)
+		"seeker":
+			Seeker.spawn_for(scene, p)
+		"creature":
+			var away := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)).normalized()
+			spawn_ambush(p + away * 26.0)
 
 
 ## Nach dem Hochschrecken mindestens eine Spielstunde wach bleiben (Gesamtstunde, bis wann).
@@ -632,6 +731,8 @@ func _fire(type: String) -> void:
 ## Hinterhalt / Alarm (Drohne, Manipulator): Kreatur greift an, nahe einer Stelle.
 func spawn_ambush(at: Vector3) -> void:
 	var scene := get_tree().current_scene
+	if not TimeManager.is_night():
+		return   # bei Tag kein Hinterhalt mehr (Drohnen-Alarm im Morgengrauen)
 	# In den ersten Nächten noch keine Jagd: Sie zeigt sich nur – starrend am Waldrand.
 	if TimeManager.day < config.hunt_from_night and not is_instance_valid(creature):
 		Apparition.spawn(scene, "edge")

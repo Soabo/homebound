@@ -28,7 +28,7 @@ const SPOTS := {
 		[Vector3(1.0, Y, -6.6), 100.0, 0.0],               # im Büro am Boden
 	],
 	"mug": [
-		[Vector3(-3.8, Y + 0.44, 1.55), 0.0, 0.0],         # Couchtisch
+		[Vector3(-3.86, Y + 0.44, 1.55), 0.0, 0.0],         # Couchtisch
 		[Vector3(-1.6, Y, 0.6), 0.0, 90.0],                # umgekippt auf dem Boden
 		[Vector3(0.0, Y + 0.76, 2.35), 0.0, 0.0],          # auf dem gegenüber gedeckten Platz
 		[Vector3(-5.55, Y + 0.12, -3.9), 0.0, 0.0],        # neben dem Bett

@@ -69,8 +69,10 @@ func _next_weather(now: float) -> void:
 	var w := {"clear": config.weather_clear, "cloudy": config.weather_cloudy, "rain": config.weather_rain,
 		"fog": config.weather_fog * (config.fog_morning_factor if h >= 4.0 and h < 9.0 else 1.0), "storm": config.weather_storm}
 	# nicht zweimal hintereinander dasselbe Unwetter
+	# nach Regen/Gewitter eher eine Pause (Christian 14.11.: Regen hörte gefühlt nie auf)
 	if weather in ["storm", "rain"]:
 		w["storm"] = float(w["storm"]) * 0.3
+		w["rain"] = float(w["rain"]) * config.rain_repeat_factor
 	var total := 0.0
 	for k: String in w:
 		total += float(w[k])
