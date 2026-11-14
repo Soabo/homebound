@@ -23,9 +23,15 @@ void fragment() {
 	vec3 ground = mix(grass, litter.rgb * 1.6, lm * 0.7);
 	vec3 col = COLOR.rgb * mix(ground, path, m);
 	// Pfützen: in Senken des Wegs (Rauschen), nur wenn nass
-	float puddle = smoothstep(0.62, 0.7, noise * 0.6 + big * 0.5) * m * smoothstep(0.35, 0.9, wetness);
+	// Pfützen: größer auf dem Weg, bei sehr nassem Boden auch kleine in Senken daneben
+	float hollow = noise * 0.6 + big * 0.5;
+	float puddle = smoothstep(0.55, 0.64, hollow) * m * smoothstep(0.3, 0.8, wetness);
+	puddle = max(puddle, smoothstep(0.7, 0.76, hollow) * (1.0 - m) * smoothstep(0.7, 1.0, wetness) * 0.8);
 	col *= mix(1.0, 0.58, wetness * 0.85);
-	col = mix(col, col * 0.35 + vec3(0.02, 0.025, 0.03), puddle);
+	// Wasserfläche: dunkel, spiegelt flach einfallend den hellen Himmel (Fresnel)
+	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
+	vec3 water = col * 0.3 + vec3(0.02, 0.025, 0.03) + vec3(0.32, 0.36, 0.42) * fres * 0.9;
+	col = mix(col, water, puddle);
 	ALBEDO = col;
 	ROUGHNESS = mix(mix(1.0, 0.6, wetness), 0.04, puddle);
 	SPECULAR = mix(0.5, 0.9, max(puddle, wetness * 0.3));

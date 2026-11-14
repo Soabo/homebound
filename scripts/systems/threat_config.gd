@@ -47,6 +47,12 @@ extends Resource
 ## Ab Nacht … und dann frühestens alle … Nächte
 @export var siege_from_night: int = 5
 @export var siege_every: int = 4
+## Endspurt (Schacht offen, Story-Bibel Phase 5): Belagerung frühestens alle N Nächte, ruhige Nächte werden zu Besuch (Chance) oder Jagd
+@export var endgame_siege_every: int = 2
+## Zelt an einem Rastplatz (map.json rest_spots): so nah dran zählt, so viele der Zeltnacht-Ereignisse bleiben
+@export var camp_rest_radius: float = 14.0
+@export var camp_rest_factor: float = 0.5
+@export var endgame_visit_chance: float = 0.6
 ## Von … bis … Uhr durchhalten (Spielzeit)
 @export var siege_start_hour: float = 21.0
 @export var siege_end_hour: float = 5.0

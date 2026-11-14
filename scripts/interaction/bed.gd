@@ -41,6 +41,8 @@ func get_prompt(_player: Node) -> String:
 
 
 func interact(_player: Node) -> void:
+	if EventBus.sleeping:
+		return
 	if ThreatDirector.siege_tonight():
 		EventBus.notify("Heute Nacht kann ich nicht schlafen. Sie kommen.", 2.5)
 		return
@@ -53,4 +55,4 @@ func interact(_player: Node) -> void:
 		return
 	if AtticHatch.down_now:
 		EventBus.notify("Die Dachbodenleiter ist noch unten … hoffentlich kommt da nichts herunter.", 3.0)
-	EventBus.sleep_requested.emit(TimeManager.config.wake_up_hour)
+	EventBus.request_sleep(TimeManager.config.wake_up_hour)

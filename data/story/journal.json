@@ -1,0 +1,31 @@
+{
+  "_info": "Tagebuch auf dem Tablet (Journal). flags: Text für ein Ereignis (Tasks.flag) beim ersten Mal; * am Ende = alle Ereignisse mit diesem Anfang, {name} wird ersetzt (Ort, Analyse, Erkenntnis). nights: Satz zur vergangenen Nacht je night_kind (morgens um 8 Uhr eingetragen). Notizen, erledigte Spuren und gesendete Ergebnisse trägt das Spiel selbst ein.",
+  "flags": {
+    "visit_*": "Zum ersten Mal dort gewesen: {name}.",
+    "link_*": "Erkenntnis: {name}.",
+    "story_phase_2": "Es ist nicht neu hier. Jemand hat es gewusst.",
+    "story_phase_3": "Meine Firma hat daran mitgebaut. Ich habe daran mitgebaut.",
+    "story_phase_4": "Es war kein Unfall.",
+    "story_phase_5": "Ich wohne auf dem Ding. Und es ist bald fertig.",
+    "creature_visited": "Es war am Haus. Ich habe es gehört, ganz nah.",
+    "unrest_night": "Die erste unruhige Nacht. Ich habe kaum geschlafen.",
+    "mast_repaired": "Der Funkmast läuft. Ilse hat geantwortet.",
+    "shaft_open": "Ich habe den Schacht geöffnet. Die Zeit läuft.",
+    "well_descended": "Ich war unten. Ich habe es gesehen.",
+    "truck_repaired": "Der Pickup würde fahren. Ich könnte einfach gehen.",
+    "planted": "Das erste Beet ist gesät.",
+    "w17_installed": "W-17 sitzt im alten Funkgerät. Es liest die Proben.",
+    "mappe_found": "Stefanies Mappe gefunden. Sie hat es gewusst.",
+    "siege_survived": "Die Belagerung überstanden.",
+    "seeker_seen": "Ich habe den Sucher gesehen. Groß, dünn, viele kleine Lichter.",
+    "mauler_seen": "Etwas Neues im Wald. Es jagt."
+  },
+  "nights": {
+    "quiet": "Eine ruhige Nacht.",
+    "hints": "Nachts Geräusche ums Haus. Gesehen habe ich nichts.",
+    "sighting": "Nachts war etwas draußen. Ich habe es gesehen.",
+    "visit": "Es war in der Nacht am Haus und hat gesucht.",
+    "hunt": "Es hat mich gejagt. Ich habe überlebt.",
+    "siege": "Eine Nacht der Belagerung. Bis zum Morgen."
+  }
+}

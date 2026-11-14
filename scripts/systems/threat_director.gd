@@ -153,8 +153,13 @@ func plan_night(night_day: int) -> void:
 	if night_day != _arc_day:
 		_arc_day = night_day
 		night_kind = _choose_night_kind(night_day)
+		# Endspurt (Schacht offen): keine ruhigen Nächte mehr, Belagerungen öfter (Story-Bibel Phase 5)
+		var endgame := Story.shaft_open_day >= 0
+		if endgame and night_kind in ["quiet", "hints", "sighting"]:
+			night_kind = "visit" if _rng.randf() < config.endgame_visit_chance else "hunt"
+		var every := config.endgame_siege_every if endgame else config.siege_every
 		# Belagerungsnacht: ab siege_from_night, frühestens alle siege_every Nächte
-		if night_day >= config.siege_from_night and night_day - last_siege_day >= config.siege_every:
+		if night_day >= config.siege_from_night and night_day - last_siege_day >= every:
 			night_kind = "siege"
 			last_siege_day = night_day
 			siege_count += 1
@@ -698,6 +703,9 @@ func plan_camp_night(camp: Node) -> void:
 	if night_end <= now + 1.0:
 		return
 	var n := _rng.randi_range(config.camp_events.x, config.camp_events.y)
+	# Zelt an einem Rastplatz: ruhigere Nacht
+	if camp is Node3D and RestSpot.near((camp as Node3D).global_position, config.camp_rest_radius, get_tree()):
+		n = maxi(1, int(round(float(n) * config.camp_rest_factor)))
 	for i in n:
 		_add(_rng.randf_range(now + config.camp_first_after, night_end - 0.8), "camp")
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])

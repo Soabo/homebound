@@ -53,7 +53,18 @@ func _ready() -> void:
 			_furnish(t)
 	_flush_multimeshes()
 	_board()
-	print("[WorldTrails] Stege %d, Pfosten %d, Bänke %d" % [bridges.size(), markers.size(), benches.size()])
+	# Rastplätze an den langen Wegen (feste Namen: Feuer und Holz stehen im Spielstand)
+	for r: Dictionary in WorldMap.data().get("rest_spots", []):
+		var q := Vector2(float(r["pos"][0]), float(r["pos"][1]))
+		var spot := RestSpot.new()
+		spot.name = "Rest_" + String(r["id"])
+		spot.spot_id = String(r["id"])
+		spot.title = String(r.get("name", "Rastplatz"))
+		spot.position = Vector3(q.x, Terrain.height_at(q.x, q.y), q.y)
+		var f: Array = r.get("face", [0, 1])
+		spot.rotation.y = atan2(float(f[0]), float(f[1]))
+		add_child(spot)
+	print("[WorldTrails] Stege %d, Pfosten %d, Bänke %d, Rastplätze %d" % [bridges.size(), markers.size(), benches.size(), get_tree().get_nodes_in_group("rest_spot").size()])
 
 
 ## Holzpfosten mit Brettern, je Ziel ein Pfeil in die (Luftlinien-)Richtung mit Entfernung.

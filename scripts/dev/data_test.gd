@@ -5,10 +5,7 @@ extends RefCounted
 ## Start: godot --headless --path . -- --night-test=data
 
 ## Bekannte offene Punkte (angelegt, aber noch nicht fertig gebaut) – werden gemeldet, zählen nicht als Fehler.
-## alien_seeds: „seed: alien“ ist vorbereitet, aber es gibt noch keine Pflanze „alien“ fürs Hochbeet.
-const KNOWN_OPEN := ["Gegenstand alien_seeds: Pflanze „alien“ gibt es nicht (supplies.tres crops)",
-	# Abstieg in den Brunnen kommt mit dem Story-Bau Phase 5 (Enden)
-	"Spur p5_brunnen: Ereignis „well_descended“ meldet nie ein System"]
+const KNOWN_OPEN := []
 
 const NEED_KINDS := ["", "power", "light", "alien", "heat", "night", "day", "water"]
 const EFFECTS := ["", "drain", "noise", "signal", "hurt", "escape"]

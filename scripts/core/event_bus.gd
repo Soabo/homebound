@@ -40,5 +40,23 @@ signal flag_set(name: String)
 signal siege_finished(survived: bool)
 
 
+## Läuft gerade eine Schlafsequenz? Dann wird kein zweiter Schlaf ausgelöst – sonst sprang die Uhr
+## (bei doppeltem E im Zelt) um einen ganzen Tag weiter (Fehler „nach Tag 11 kommt Tag 13“).
+var sleeping: bool = false
+
+
+## Schlafen anfordern (Bett, Zelt). false = es läuft schon eine Schlafsequenz.
+func request_sleep(wake_hour: float) -> bool:
+	if sleeping:
+		return false
+	sleeping = true
+	sleep_requested.emit(wake_hour)
+	return true
+
+
+func _ready() -> void:
+	sleep_finished.connect(func() -> void: sleeping = false)
+
+
 func notify(text: String, duration: float = 3.0) -> void:
 	notification_requested.emit(text, duration)

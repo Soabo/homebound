@@ -15,6 +15,11 @@ static func get_default() -> SurvivalConfig:
 	return _cached
 
 
+@export_group("Hunger und Durst")
+## Abnahme pro Spielstunde (bewusst sanft: eine Konserve reicht gut einen Spieltag)
+@export var hunger_per_hour: float = 1.3
+@export var thirst_per_hour: float = 2.0
+
 @export_group("Auskühlen draußen")
 ## Verlust pro Stunde draußen am Tag / in der Nacht
 @export var outdoor_loss_day: float = 1.5
@@ -52,3 +57,5 @@ static func get_default() -> SurvivalConfig:
 ## Beim Aufwachen durchgefroren: höchstens so viel Schaden, nie unter diese Gesundheit
 @export var sleep_freeze_damage: float = 30.0
 @export var sleep_min_health: float = 20.0
+## Nach dem durchgefrorenen Aufwachen bleibt so viel Wärme über der Erfrier-Grenze (Gnadenfrist)
+@export var wake_grace: float = 8.0

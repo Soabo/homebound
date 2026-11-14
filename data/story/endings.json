@@ -1,0 +1,126 @@
+{
+  "_info": "Endspurt und Enden (Story-Bibel, Abschnitt »Die Enden«). endgame: Frist ab dem Öffnen des Schachts (nights), Warnungen je verbleibender Nacht (warn), Text der letzten Warnung (last_warning), Uhrzeit, zu der in der letzten Nacht »Zu spät« eintritt (late_hour). truck: was der Pickup zum Reparieren braucht. endings: id wie in data/settings/default_settings.json; color = Grundton des Bildschirms, sound = SoundBank-ID im Hintergrund, lines = Schlussszene (eine Zeile nach der anderen), gift = das Geschenk der Kinder wird geöffnet (nur im guten Ende). confirm = Text der Abfrage vorher (»Das ist das Ende deiner Geschichte.«).",
+  "endgame": {
+    "nights": 5,
+    "late_hour": 23.0,
+    "warn": {
+      "4": "Am Himmel hängt ein grünlicher Schimmer, der nicht weggeht. Der Knoten arbeitet. (Noch 4 Nächte)",
+      "3": "Der Nebel kommt jetzt auch am Tag. Im Funk liegt ein Ton unter allem, wie ein Atem. (Noch 3 Nächte)",
+      "2": "Die Vögel sind fort. Der Boden summt, wenn man still steht. (Noch 2 Nächte)",
+      "1": "Morgen früh ist es fertig. Was immer ich tun will – heute Nacht. (Letzte Nacht)"
+    },
+    "last_warning": "Heute Nacht ist die Saat fertig. Wenn ich nichts tue, ist das das Ende meiner Geschichte."
+  },
+  "truck": {
+    "needs": {"car_parts": 2, "battery": 1, "fuel_can": 2},
+    "text": "Mein Pickup. Seit dem Umzug nicht mehr gefahren: Batterie tot, Keilriemen gerissen, der Tank leer."
+  },
+  "confirm": "Das ist das Ende deiner Geschichte.\nDanach gibt es kein Zurück – der Spielstand von vor dieser Entscheidung bleibt erhalten.",
+  "endings": {
+    "gehoert": {
+      "title": "Gehört",
+      "kind": "gut",
+      "color": [0.06, 0.07, 0.09],
+      "sound": "signal",
+      "gift": true,
+      "lines": [
+        "Ich setze W-17 in die Fassung und halte es fest. Drei Atemzüge lang.",
+        "Dann lasse ich nicht los, als es zu sprechen beginnt. Ich spreche zurück: Stefanies Mappe, Seite für Seite, über Kanal 7.",
+        "Der Knoten verstummt. Zum ersten Mal ist es unter der Erde wirklich still.",
+        "Oben rauscht das Funkgerät. Dann Ilse: »Ich hab alles. Ich geb es weiter.«",
+        "Eine zweite Stimme antwortet. Eine dritte. Leute, die ich nicht kenne, in Tälern, die ich nie sehen werde.",
+        "Die Welt ist nicht gerettet. Aber jemand hat es gehört.",
+        "Am Morgen setze ich mich an den Tisch und öffne endlich das Geschenk von Lena und Ben."
+      ]
+    },
+    "stille": {
+      "title": "Stille",
+      "kind": "gemischt",
+      "color": [0.05, 0.06, 0.06],
+      "sound": "static",
+      "lines": [
+        "Säulen aus. Leitung getrennt. W-17 in der Fassung, drei Atemzüge lang.",
+        "Der Knoten wird dunkel, Wurzel für Wurzel.",
+        "Oben hört das Tal auf, sich zu verwandeln. Der Nebel bleibt, aber er wird nicht mehr dichter.",
+        "Das Radio rauscht nur noch. Ob woanders noch Knoten laufen, weiß ich nicht.",
+        "Ich bleibe. Ein Mann in einem stillen Wald, mit einer Mappe, die niemand liest."
+      ]
+    },
+    "abgeholt": {
+      "title": "Abgeholt",
+      "kind": "schlecht",
+      "color": [0.04, 0.04, 0.05],
+      "sound": "static",
+      "lines": [
+        "Ich sende alles: die Akten, die Einsatzpläne, Stefanies Notizen, »Maßnahme 11«.",
+        "Es antwortet nicht Ilse. Es antwortet Kanal 4.",
+        "»Beobachter 4, hier Nord. Bleiben Sie, wo Sie sind. Wir holen Sie ab.«",
+        "Im Morgengrauen stehen Scheinwerfer am Tor.",
+        "Ich höre, wie sie den Riegel aufbrechen."
+      ]
+    },
+    "glut": {
+      "title": "Glut",
+      "kind": "schlecht",
+      "color": [0.1, 0.04, 0.02],
+      "sound": "thunder",
+      "lines": [
+        "Das Überlastungsmodul an W-17, die Ladungen an die drei dicksten Wurzeln.",
+        "Ich drücke, bevor ich es mir anders überlegen kann.",
+        "Der Knoten glüht von innen, erst violett, dann weiß. Der Schacht über mir bricht zusammen.",
+        "Ich komme hier nicht mehr heraus. Das wusste ich vorher.",
+        "Wochen später, auf einer Frequenz, die keiner mehr abhört: »… ein dunkler Fleck im Netz. Messpunkt 4 antwortet nicht mehr …«"
+      ]
+    },
+    "schutzstatus": {
+      "title": "Schutzstatus",
+      "kind": "schlecht",
+      "color": [0.03, 0.06, 0.04],
+      "sound": "creature_breath",
+      "lines": [
+        "4 – 17 – 0 – 9. Der Code von Senns Anlage, die Stefanie herausgerissen hatte.",
+        "Der Knoten leuchtet auf. Er hat mich gehört. Er hat mich angenommen.",
+        "Die Angriffe hören auf. Keine Schläge mehr an den Fenstern, kein Kratzen auf dem Dach.",
+        "Nachts steht die Kreatur im Garten und sieht mir beim Schlafen zu.",
+        "Das Tal wird ganz fremd. Ich lebe weiter. Verschont, wie ein Tier im Gehege."
+      ]
+    },
+    "flucht": {
+      "title": "Flucht",
+      "kind": "schlecht",
+      "color": [0.05, 0.05, 0.07],
+      "sound": "generator",
+      "lines": [
+        "Der Motor springt beim dritten Versuch an.",
+        "Ich fahre die Zufahrt hinunter, ohne mich umzudrehen. Die Hütte, der Brunnen, alles bleibt zurück.",
+        "Die Straße führt aus dem Wald. Die Stadt am Horizont hat keine Lichter mehr, nur dieses Grün.",
+        "Sie sieht nicht mehr aus wie eine Stadt von Menschen.",
+        "Im Rückspiegel: die Drohne. Sie folgt mir, ohne Eile."
+      ]
+    },
+    "zu_spaet": {
+      "title": "Zu spät",
+      "kind": "schlecht",
+      "color": [0.02, 0.05, 0.03],
+      "sound": "sting_creature",
+      "lines": [
+        "In dieser Nacht kommt alles gleichzeitig.",
+        "Die Kreaturen an allen Fenstern. Das Klicken unter dem Boden. Die Wurzeln drücken die Kellermauer ein.",
+        "Aus dem Brunnen steigt Licht, das kein Licht ist.",
+        "Ich warte auf den Morgen.",
+        "Am Morgen ist kein Morgen mehr."
+      ]
+    }
+  },
+  "credits": [
+    "HOMEBOUND",
+    "",
+    "Eine Geschichte von Christian",
+    "",
+    "Für Stefanie, Lena und Ben – die es nur hier gibt.",
+    "",
+    "Gebaut mit Godot und Claude",
+    "",
+    "Danke fürs Spielen."
+  ]
+}

@@ -13,6 +13,10 @@ var steps_active: Dictionary = {}   ## id -> Aufgaben-Tag, an dem die Spur began
 var steps_done: Array = []          ## erledigte Spuren in der Reihenfolge
 var hinted: Array = []              ## Spuren, für die der zweite Hinweis schon kam
 var _check_t: float = 0.0
+## Endspurt (Phase 5): Tag, an dem der Schacht geöffnet wurde (-1 = zu). Ab dann läuft die Frist (endings.json endgame.nights).
+var shaft_open_day: int = -1
+var warned: Array = []              ## schon gezeigte Endspurt-Warnungen (Anzahl Nächte als Text)
+var ending_running: bool = false
 
 
 func _ready() -> void:
@@ -45,6 +49,7 @@ func _process(delta: float) -> void:
 	if get_tree().get_first_node_in_group("player") == null:
 		return   # Hauptmenü
 	update(true)
+	_check_deadline()
 
 
 ## Alles einmal prüfen: Hinweise, Phasen, Spuren. announce = Gedanken/Meldungen zeigen.
@@ -102,6 +107,7 @@ func _check_steps(announce: bool) -> void:
 			steps_done.append(id)
 			dirty = true
 			if announce:
+				Journal.step(s)
 				_say(String(s.get("finish", "")) if s.has("finish") else "Spur erledigt: " + String(s.get("title", id)), 0.0)
 				SoundBank.play_ui(self, "menu_click", -8.0, 0.8)
 			continue
@@ -220,8 +226,110 @@ func set_phase(n: int) -> void:
 	print("[Story] Phase ", n, ": ", phase_def(n).get("name", ""))
 
 
+# --- Endspurt und Enden ---------------------------------------------------------
+
+func endings_data() -> Dictionary:
+	return DataDB.load_json("res://data/story/endings.json")
+
+
+func endgame_nights() -> int:
+	return int(endings_data().get("endgame", {}).get("nights", 5))
+
+
+## Schacht öffnen: ab jetzt läuft die Frist.
+func open_shaft() -> void:
+	if shaft_open_day >= 0:
+		return
+	shaft_open_day = TimeManager.day
+	warned.clear()
+	Tasks.flag("shaft_open")
+	EventBus.notify("Die Bretter sind weg, die Winde sitzt. Von unten kommt warme Luft – und ein Ton wie ein Atem. Ich habe vielleicht fünf Nächte.", 8.0)
+
+
+## Verbleibende Nächte bis »Zu spät« (-1 = Schacht noch zu). Die Nacht von Tag X zählt zu Tag X.
+func nights_left() -> int:
+	if shaft_open_day < 0:
+		return -1
+	return maxi(shaft_open_day + endgame_nights() - TimeManager.day, 0)
+
+
+## 0..1: wie weit die Saat ist (für Himmel, Nebel, Funk). 0 = Schacht zu.
+func saat_progress() -> float:
+	if shaft_open_day < 0:
+		return 0.0
+	var total := float(endgame_nights())
+	var passed := float(TimeManager.day - shaft_open_day) + clampf((TimeManager.hour - 8.0) / 24.0, 0.0, 1.0)
+	return clampf(passed / total, 0.0, 1.0)
+
+
+func _check_deadline() -> void:
+	if shaft_open_day < 0 or ending_running:
+		return
+	var eg: Dictionary = endings_data().get("endgame", {})
+	var left := nights_left()
+	# Morgens eine Warnung je verbleibender Nacht
+	var key := str(left)
+	if TimeManager.hour >= 8.0 and not warned.has(key) and (eg.get("warn", {}) as Dictionary).has(key):
+		warned.append(key)
+		EventBus.notify(String(eg["warn"][key]), 9.0)
+	if left <= 0:
+		if TimeManager.hour >= 8.0 and not warned.has("last"):
+			warned.append("last")
+			EventBus.notify(String(eg.get("last_warning", "")), 10.0)
+		if TimeManager.hour >= float(eg.get("late_hour", 23.0)) or TimeManager.day > shaft_open_day + endgame_nights():
+			start_ending("zu_spaet", false)
+
+
+## Welche Wege an der Fassung im Knoten offen sind (Story-Bibel »Die Enden«). Rückgabe: Liste von
+## {id, label, ending, ok, why} – ok = false heißt: sichtbar, aber es fehlt noch etwas (why).
+func socket_options() -> Array:
+	var has_w17 := Inventory.count("w17") > 0
+	var shutdown_known := Tasks.check("note:ast_abschaltfolge1") and Tasks.check("note:tunnel_abschaltfolge2")
+	var shutdown_ready := shutdown_known and Tasks.check("ws:structure_off") and Tasks.check("ws:source_dead")
+	var mappe := Tasks.check("note:stef_mappe")
+	var ilse := Tasks.check("flag:mast_repaired")
+	var code := Tasks.check("note:ast_schutzstatus") and mappe
+	var overload := Inventory.count("overload_module") > 0 and Inventory.count("blast_charge") > 0
+	var out: Array = []
+	if shutdown_known:
+		out.append({"id": "shutdown", "label": "Den Knoten abschalten", "ending": "stille", "ok": shutdown_ready,
+			"why": "Erst die Säulen der Struktur abschalten und die Leitung in der Höhle trennen."})
+	if shutdown_known and mappe:
+		out.append({"id": "shutdown_send", "label": "Abschalten und Stefanies Mappe über den Knoten senden",
+			"ending": "gehoert" if ilse else "abgeholt", "ok": shutdown_ready,
+			"why": "Erst die Säulen der Struktur abschalten und die Leitung in der Höhle trennen."})
+	if mappe:
+		out.append({"id": "send", "label": "Nur die Beweise senden, ohne abzuschalten", "ending": "abgeholt", "ok": true, "why": ""})
+	if Inventory.count("overload_module") > 0 or Inventory.count("blast_charge") > 0 or Tasks.check("got:overload_module"):
+		out.append({"id": "overload", "label": "Den Knoten überlasten (Überlastungsmodul + Sprengladung)", "ending": "glut", "ok": overload,
+			"why": "Dafür brauche ich das Überlastungsmodul und eine Sprengladung."})
+	if code:
+		out.append({"id": "code", "label": "Den Code aus Senns Anlage eingeben", "ending": "schutzstatus", "ok": true, "why": ""})
+	if not has_w17:
+		for o: Dictionary in out:
+			o["ok"] = false
+			o["why"] = "Die Fassung ist leer. Hier gehört W-17 hinein – ich muss es bei mir tragen."
+	return out
+
+
+## Ein Ende beginnen. confirmed = die Abfrage »Das ist das Ende deiner Geschichte« ist schon beantwortet
+## (bei »Zu spät« gibt es keine Abfrage, die Warnungen kamen vorher).
+func start_ending(id: String, save_before: bool = true) -> void:
+	if ending_running:
+		return
+	ending_running = true
+	# Der Spielstand von vor der Entscheidung bleibt (nur, wenn der Spieler entschieden hat)
+	if save_before:
+		GameState.save_game(true)
+	GameState.ending_lock = true
+	var screen := EndingScreen.new()
+	screen.ending_id = id
+	get_tree().root.add_child(screen)
+
+
 func get_state() -> Dictionary:
-	return {"phase": phase, "active": steps_active.duplicate(), "done": steps_done.duplicate(), "hinted": hinted.duplicate()}
+	return {"phase": phase, "active": steps_active.duplicate(), "done": steps_done.duplicate(), "hinted": hinted.duplicate(),
+		"shaft_open_day": shaft_open_day, "warned": warned.duplicate()}
 
 
 func set_state(s: Dictionary) -> void:
@@ -229,6 +337,9 @@ func set_state(s: Dictionary) -> void:
 	steps_active = (s.get("active", {}) as Dictionary).duplicate()
 	steps_done = (s.get("done", []) as Array).duplicate()
 	hinted = (s.get("hinted", []) as Array).duplicate()
+	shaft_open_day = int(s.get("shaft_open_day", -1))
+	warned = (s.get("warned", []) as Array).duplicate()
+	ending_running = false
 	# Alter Spielstand ohne Spuren: was schon stimmt, still nachziehen (keine Gedanken-Flut nach dem Laden)
 	if not s.has("active"):
 		update(false)

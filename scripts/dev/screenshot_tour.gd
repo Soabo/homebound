@@ -94,6 +94,10 @@ const SHOTS := [
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
 	{"name": "86_keller", "hour": 14.0, "pos": Vector3(0.2, -2.1, -2.6), "look": Vector3(1.6, -1.3, -3.6), "lights": true, "cellar_open": true},
+	{"name": "C0_knotenkammer", "hour": 14.0, "pos": Vector3(13.5 - 5.6, -35.95, -13.0 + 1.5), "abs_y": true, "look": Vector3(13.5, -34.4, -13.0), "shaft_open": true},
+	{"name": "C1_fassung", "hour": 14.0, "pos": Vector3(13.5 - 4.0, -35.95, -13.0 - 0.6), "abs_y": true, "look": Vector3(13.5 - 2.3, -35.0, -13.0), "shaft_open": true},
+	{"name": "C2_brunnen_offen", "day": 6, "hour": 18.2, "pos": Vector3(10.8, 0.0, -10.6), "look": Vector3(13.5, 0.6, -13.0), "shaft_open": true, "saat_days": 3},
+	{"name": "C3_pickup", "hour": 11.0, "pos": Vector3(2.4, 0.0, 9.6), "look": Vector3(6.5, 0.9, 13.6)},
 	{"name": "8A_kellerleiter", "hour": 14.0, "pos": Vector3(0.9, -2.1, -3.1), "look": Vector3(0.9, -0.6, -5.8), "lights": true, "cellar_open": true},
 	{"name": "8B_regal_speis", "hour": 14.0, "pos": Vector3(0.9, 0.45, -2.9), "look": Vector3(-0.8, 1.1, -2.9), "lights": true},
 	{"name": "87_speis", "hour": 14.0, "pos": Vector3(1.3, 0.45, -1.3), "look": Vector3(0.3, 1.1, -6.0), "lights": true, "cellar_open": true},
@@ -144,6 +148,8 @@ func _run() -> void:
 		if not only.is_empty() and not (String(shot["name"]).left(2) in only):
 			continue
 		TimeManager.set_time(int(shot.get("day", 1)), shot["hour"])
+		# Endspurt-Bilder: Schacht offen (Brunnen, Kammer, Himmel)
+		Story.shaft_open_day = int(shot.get("day", 1)) - int(shot.get("saat_days", 0)) if shot.get("shaft_open", false) else -1
 		WorldState.set_weather(String(shot.get("weather", "clear")), 10.0)
 		WorldState.wetness = float(shot.get("wet", 0.0))
 		var wfx := get_tree().current_scene.find_child("WeatherFx", true, false)
@@ -187,7 +193,7 @@ func _run() -> void:
 			pos.y = Terrain.height_at(pos.x, pos.z)
 			look = base + shot.get("look_off", Vector3(0, 1, -10))
 			look.y = base.y + float(shot.get("look_off", Vector3(0, 1, -10)).y) + 1.6
-		elif pos.y <= 0.0:
+		elif pos.y <= 0.0 and not shot.get("abs_y", false):
 			pos.y = Terrain.height_at(pos.x, pos.z)
 		# große Welt: Gelände und Wald um den Standpunkt sofort laden
 		var terrain := get_tree().current_scene.get_node_or_null("Terrain") as Terrain

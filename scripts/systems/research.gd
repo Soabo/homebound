@@ -655,6 +655,8 @@ func home_signature(assume_night: bool = false) -> float:
 				s += float(analysis(id).get("signature", 0.0))
 		if charger_built:
 			s += float(lab_def().get("charger", {}).get("signature", 0.3))
+		# leuchtende Fremdpflanzen in den Hochbeeten
+		s += Supplies.alien_bed_signature()
 	if now() < flare_until:
 		s += 0.5
 	return s
@@ -782,6 +784,7 @@ func learn_blueprint(id: String) -> bool:
 func read_note(id: String) -> void:
 	if not notes.has(id):
 		notes.append(id)
+		Journal.note(id)
 		changed.emit()
 
 

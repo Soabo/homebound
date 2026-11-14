@@ -134,11 +134,44 @@ func _place_marks() -> void:
 	var all := WorldMap.places()
 	var full := Inventory.count("hiking_map") > 0
 	var targets := Story.map_targets()
+	var me_xz := Vector2(_player.global_position.x, _player.global_position.z) if _player else Vector2.ZERO
 	for t: Dictionary in targets:
 		var ring := Ring.new()
 		ring.main = bool(t["main"])
 		ring.position = _to_screen(t["pos"]) - Vector2(22, 22)
 		_marks.add_child(ring)
+		# Marschplanung: Entfernung und Gehzeit zum Spur-Ziel
+		var dist := me_xz.distance_to(t["pos"])
+		if dist > 60.0:
+			var eta := Label.new()
+			eta.text = march_text(dist)
+			eta.add_theme_font_size_override("font_size", 12)
+			eta.add_theme_color_override("font_color", Color(1.0, 0.7, 0.6))
+			eta.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+			eta.add_theme_constant_override("outline_size", 4)
+			eta.position = _to_screen(t["pos"]) + Vector2(-20, 16)
+			_marks.add_child(eta)
+	# Rastplätze (nur auf der Wanderkarte)
+	if full:
+		for r: Dictionary in WorldMap.data().get("rest_spots", []):
+			var rl := Label.new()
+			rl.text = "△"
+			rl.tooltip_text = String(r.get("name", "Rastplatz"))
+			rl.add_theme_font_size_override("font_size", 14)
+			rl.add_theme_color_override("font_color", Color(0.75, 0.95, 0.7))
+			rl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+			rl.add_theme_constant_override("outline_size", 4)
+			rl.position = _to_screen(Vector2(float(r["pos"][0]), float(r["pos"][1]))) - Vector2(5, 10)
+			_marks.add_child(rl)
+	# Unten: was man für einen Marsch dabei hat und wie lange es noch hell ist
+	var plan := Label.new()
+	plan.text = supply_text()
+	plan.add_theme_font_size_override("font_size", 16)
+	plan.add_theme_color_override("font_color", Color(0.9, 0.88, 0.8))
+	plan.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	plan.add_theme_constant_override("outline_size", 4)
+	plan.position = Vector2(24, get_viewport().get_visible_rect().size.y - 34)
+	_marks.add_child(plan)
 	for id: String in all:
 		var p: Dictionary = all[id]
 		var alias: String = {"absturz": "visit_crash", "struktur": "visit_structure", "hoehle": "visit_cave", "hochsitz": "visit_tower"}.get(id, "-")
@@ -174,6 +207,29 @@ func _place_marks() -> void:
 		me.add_theme_constant_override("outline_size", 5)
 		me.position = _to_screen(Vector2(_player.global_position.x, _player.global_position.z)) - Vector2(6, 12)
 		_marks.add_child(me)
+
+
+## Entfernung + ungefähre Gehzeit in Spielstunden (Wege sind länger als die Luftlinie: ×1,3)
+static func march_text(dist: float) -> String:
+	var real_s := dist * 1.3 / 3.0
+	var game_h := real_s * 12.0 / (TimeManager.config.day_duration_minutes * 60.0)
+	return "%.1f km · ca. %s zu Fuß" % [dist / 1000.0, ("%d Std." % int(round(game_h))) if game_h >= 1.0 else ("%d Min." % int(round(game_h * 60.0 / 10.0) * 10))]
+
+
+## Zeit bis zur Nacht und Proviant im Rucksack
+static func supply_text() -> String:
+	var h := TimeManager.hour
+	var night := TimeManager.config.night_start_hour
+	var light := "Es ist Nacht." if TimeManager.is_night() else "Hell noch ca. %d Std." % int(maxf(night - h, 0.0))
+	var food := 0
+	for id: String in ["food", "ration", "radish", "carrot", "potato", "meat_cooked", "baked_potato", "veg_soup", "stew", "honey", "alien_fruit"]:
+		food += Inventory.count(id)
+	var water := Inventory.count("water") + Inventory.count("water_raw")
+	var parts := ["%s" % light, "Essen %d" % food, "Wasser %d" % water,
+		"Zelt " + ("ja" if Inventory.count("tent") > 0 else "nein"),
+		"Schlafsack " + ("ja" if Inventory.count("sleeping_bag") > 0 else "nein"),
+		"Brennstoff %d" % Inventory.count_fuel()]
+	return "Marsch:  " + "   ·   ".join(parts) + ("     △ = Rastplatz (Feuerstelle, ruhigere Zeltnacht)" if Inventory.count("hiking_map") > 0 else "")
 
 
 ## Bleistiftkreis um ein Spur-Ziel (zweimal leicht versetzt gezogen, wie von Hand).

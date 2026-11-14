@@ -41,6 +41,11 @@ func _ready() -> void:
 	add_child(Wind.new())
 	add_child(WeatherFx.new())
 	add_child(AirFx.new())
+	# Endspurt: Kammer des Wurzelknotens unter dem Brunnen, Christians Pickup auf dem Hof
+	add_child(RootChamber.new())
+	var truck := EscapeTruck.new()
+	truck.position = EscapeTruck.HOME
+	add_child(truck)
 	add_child(WindAmbience.new())
 	add_child(NatureAmbience.new())
 	add_child(RetroFilter.new())

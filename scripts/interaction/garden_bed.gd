@@ -7,7 +7,7 @@ extends Interactable
 ##  vertrocknet:[E] abräumen
 ## Unter fremdem Einfluss werden die Blätter grau – die Ernte ist dann verdorben.
 
-const SEEDS := ["seeds_radish", "seeds_carrot", "seed_potato"]
+const SEEDS := ["seeds_radish", "seeds_carrot", "seed_potato", "alien_seeds"]
 
 @export var index: int = 0
 @export var size: Vector3 = Vector3(2.4, 0.42, 1.4)
@@ -75,6 +75,8 @@ func get_prompt(_p: Node) -> String:
 			var info := "%s – noch %d Tag%s" % [crop.get("name", ""), left, "" if left == 1 else "e"]
 			if b["alien"]:
 				info += ", die Blätter sind grau"
+			if bool(crop.get("no_water", false)):
+				return "Hochbeet: %s  (wächst von selbst, braucht kein Wasser)" % info
 			if b["watered"]:
 				return "Hochbeet: %s  (heute gegossen)" % info
 			if Inventory.count("watering_can") <= 0:
@@ -124,6 +126,8 @@ func interact(_p: Node) -> void:
 
 ## Braucht das Beet heute noch Wasser (und hat man eine gefüllte Kanne in der Hand)?
 func needs_water() -> bool:
+	if bool(Supplies.config.crops.get(_bed()["crop"], {}).get("no_water", false)):
+		return false
 	return Supplies.bed_state(index) == "growing" and not bool(_bed()["watered"]) \
 		and Inventory.equipped() == "watering_can" and Supplies.can_water > 0
 
@@ -165,6 +169,9 @@ func refresh() -> void:
 		return
 	var crop: Dictionary = Supplies.config.crops.get(b["crop"], {})
 	var t := clampf(float(b["growth"]) / maxf(float(crop.get("days", 3)), 1.0), 0.0, 1.0)
+	if String(b["crop"]) == "alien":
+		_refresh_alien(t, st == "ripe")
+		return
 	var mat := _leaf_dry if st == "withered" else (_leaf_grey if b["alien"] else _leaf)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = index * 97 + 13
@@ -187,3 +194,31 @@ func refresh() -> void:
 					"radish": BuildKit.sphere(plant, 0.03, Vector3(0, 0.015, 0), BuildKit.color_mat(Color(0.85, 0.15, 0.25), 0.5), Vector3.ONE, 6)
 					"carrot": BuildKit.cylinder(plant, 0.025, 0.04, Vector3(0, 0.01, 0), BuildKit.color_mat(Color(0.95, 0.5, 0.1), 0.6), false, Vector3.ZERO, 0.02, 6)
 					"potato": BuildKit.sphere(plant, 0.035, Vector3(0.05, 0.01, 0), BuildKit.color_mat(Color(0.6, 0.45, 0.28), 0.9), Vector3(1.2, 0.8, 1.0), 6)
+
+
+## Fremdpflanze: schwarzgrüne, gedrehte Stiele mit glimmenden Knollen; nachts ein schwaches grünes Licht.
+func _refresh_alien(t: float, ripe: bool) -> void:
+	var stem := BuildKit.color_mat(Color(0.08, 0.14, 0.1), 0.35, 0.3)
+	var bulb := BuildKit.emissive_mat(Color(0.45, 0.95, 0.6), 0.6 + t * 1.2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = index * 131 + 7
+	var top := size.y + 0.03
+	for i in 4:
+		for j in 2:
+			var at := Vector3(-0.8 + i * 0.53 + rng.randf_range(-0.1, 0.1), top, -0.3 + j * 0.6 + rng.randf_range(-0.08, 0.08))
+			var h := lerpf(0.08, 0.5, t)
+			var plant := Node3D.new()
+			_plants.add_child(plant)
+			plant.position = at
+			plant.rotation.y = rng.randf() * TAU
+			for k in 2:
+				BuildKit.box(plant, Vector3(0.02, h, 0.02), Vector3((k - 0.5) * 0.04, h * 0.5, 0), stem, false,
+						Vector3(rng.randf_range(-14, 14), k * 90.0, rng.randf_range(-14, 14)))
+			if t > 0.4:
+				BuildKit.sphere(plant, lerpf(0.02, 0.055, t) * (1.3 if ripe else 1.0), Vector3(0, h, 0), bulb, Vector3(1.0, 1.3, 1.0), 6)
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(0.5, 1.0, 0.65)
+	glow.light_energy = 0.15 + t * 0.35
+	glow.omni_range = 2.6
+	glow.position = Vector3(0, size.y + 0.4, 0)
+	_plants.add_child(glow)

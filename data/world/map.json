@@ -111,6 +111,21 @@
     {"note": "wendt_kp6", "place": "see", "nr": 6}
   ],
   "trail_kit": {"marker_every_path": 55, "marker_every_track": 85, "bench_every": 270, "polter_every": 210, "step_slope": 0.2, "view_range": 170, "board_pos": [-8.5, 22]},
+  "rest_spots": [
+    {"id": "nord_35", "name": "Rastplatz Nordweg", "pos": [60.9, -344.5], "face": [-0.998, -0.06]},
+    {"id": "nord_70", "name": "Rastplatz Nordweg", "pos": [-21.7, -661.3], "face": [-0.894, 0.447]},
+    {"id": "ilse_35", "name": "Rastplatz Bergpfad", "pos": [-443.6, -892.9], "face": [0.132, 0.991]},
+    {"id": "ilse_70", "name": "Rastplatz Bergpfad", "pos": [-689.5, -858.2], "face": [0.141, 0.99]},
+    {"id": "grat_50", "name": "Rastplatz am Grat", "pos": [671.8, -720.5], "face": [-0.707, -0.707]},
+    {"id": "tunnel_50", "name": "Rastplatz Fahrweg Ost", "pos": [553.5, -247.1], "face": [-0.152, -0.988]},
+    {"id": "moor_35", "name": "Rastplatz am Moorweg", "pos": [-638.2, -167.9], "face": [0.996, 0.091]},
+    {"id": "gewaechshaus_50", "name": "Rastplatz Südwestpfad", "pos": [-693.5, 435.4], "face": [0.669, 0.743]},
+    {"id": "gw_sued_35", "name": "Rastplatz Südweg", "pos": [-570.5, 787.5], "face": [0.148, -0.989]},
+    {"id": "gw_sued_70", "name": "Rastplatz Südweg", "pos": [-264.9, 693.2], "face": [-0.406, -0.914]},
+    {"id": "wal_50", "name": "Rastplatz am Hang", "pos": [500.5, 658.5], "face": [0.569, -0.822]},
+    {"id": "funkmast_50", "name": "Rastplatz Kahler Kopf", "pos": [-324.1, -375.5], "face": [-0.664, 0.747]},
+    {"id": "steinbruch_nord_50", "name": "Rastplatz Steinbruchweg", "pos": [721.6, -25.3], "face": [-0.894, -0.447]}
+  ],
   "signs": [
     {"pos": [7.5, -22], "to": ["hochsitz", "messstelle", "kapelle", "aussenstelle"]},
     {"pos": [25, -124], "to": ["messstelle", "windwurf", "hochsitz"]},

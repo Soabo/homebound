@@ -59,7 +59,7 @@
 - Kreatur auf der Jagd bleibt `hunt_hours`, nur mit `whole_night_chance` die ganze Nacht (CreatureConfig).
 - Möbel stehen so, dass man an jedes Fenster treten kann (Prüfung im `--walk-test`: „FENSTER … frei“).
   Werkbank Ostwand nördlich vom Fenster, Generator an der Westwand des Technikraums, Esstisch weg vom Wohnzimmerfenster.
-- TEST-Knopf im Pausenmenü „zu Tag 10 springen“ (`PauseMenu._test_jump_to_day`) – auf Christians Wunsch später entfernen.
+- TEST-Knopf „zu Tag 10 springen“ ist entfernt (14.11.), `PauseMenu._test_jump_to_day` nur noch für Tests.
 - Andere Gegner ebenfalls unberechenbar: Drohne mit zufälligen Mustern (Bahnen, Kreisen, Suchen, vor Fenster
   schweben und hineinleuchten) und reagiert auf Geräusche; Manipulator wechselt ungesehen die Stelle, nähert sich
   manchmal, schweigt manchmal lange, ahmt Hausgeräusche nach; Organismus wächst verzweigt mit wechselnden Zielen,
@@ -224,7 +224,6 @@
 ## Prüfrunde „runder und fehlerfreier“ (11/2026)
 - Alle Tests auf einmal: `tools/run_tests.sh [ordner]` (Nacht-Tests, Lauftests, Daten, Rückfall-Prüfungen, Bildrate, Durchlauf).
 - `--night-test=data` (`DataTest`): prüft alle Dateien unter `data/` gegeneinander und gegen die gebaute Welt.
-  Bekannter offener Punkt (kein Fehler): `alien_seeds` hat `seed: alien`, aber es gibt noch keine Pflanze „alien“.
 - `--night-test=regress` (`RegressTest`): je behobenem Fehler eine Prüfung. Neue Fehler → dort eine Prüfung ergänzen (`_t_more`).
 - `--night-test=playthrough` (`PlaythroughTest`, optional `--days=N`): spielt 15 Tage automatisch, sichert und lädt nach jedem Tag,
   vergleicht alles vorher/nachher.
@@ -404,7 +403,7 @@
   Weihnachtstruhe `XmasTrunk` auf dem Dachboden (Mappe erst ab Phase 4), Wendts Funkgerät in der Höhle (`hoehle_funkgeraet`),
   Kontrollrunde am Hochsitz (`wendt_runde`), Sattelzug an der Raststätte (`lkw_raststation`). Stefanies alte Mails im Posteingang
   (`old`, gelten als gelesen, nur „Kommst du nach?“ ungelesen, `Couch.is_unread`).
-- Offen: Abstieg in den Brunnen (`flag:well_descended`) und die Enden – DataTest führt das als bekannt offen.
+- Abstieg in den Brunnen und die Enden: siehe „Endspurt und Enden“.
   Prüfung `RegressTest._t_story`, Tour-Bilder 96–99.
 
 ## Lebendiger Wald + Tarnung im Gebüsch (Christian, 13.11.2026)
@@ -449,6 +448,42 @@
 - Leitern: Dachbodenleiter hängt an der Nordkante (`AtticHatch.LADDER_TOP_Z/LADDER_FOOT_Z`), Deckel klappt nach oben (`LID_OPEN`);
   Kellerleiter an der Nordkante (`CellarHatch.LADDER_RUN`). Kletterwege `climb_points()` – Kopf oberhalb der Decke immer in der Öffnung.
 - Wasserhahn-Spuk: E am Küchenhahn dreht zu (`WaterSource.running_ghost`). Prüfung `RegressTest._t_fixes_1311`, Tour-Bilder 8A/8B.
+
+## Endspurt und Enden (Christian: „alle Punkte“, 14.11.2026, nach Story-Bibel)
+- Inhalte: `data/story/endings.json` (endgame: nights 5, Warnungen je Restnacht, late_hour; truck.needs; confirm-Text;
+  endings mit title/kind/color/sound/lines/gift; credits). Ids wie in `default_settings.json`.
+- `Story`: `shaft_open_day`, `warned`, `open_shaft()`, `nights_left()`, `saat_progress()` (Himmel/Nebel/Farbstich in
+  DayNightEnvironment), `_check_deadline()` (Warnungen morgens, letzte Nacht ab late_hour → „zu_spaet“), `socket_options()`
+  (Bedingungen der Enden), `start_ending(id)` (speichert vorher, dann `GameState.ending_lock` = nichts mehr speichern).
+- Brunnen `WellShaft` (Places/brunnen, ersetzt WellInspect): ab Phase 5 mit `shaft_winch` → ChoiceDialog-Warnung → offen
+  (Bretter weg, Winde+Seil, violettes Licht). Hinab = `ScreenFade.teleport` in `RootChamber` (CENTER (13.5,-36,-13), geschlossen,
+  Wurzeln, pulsierender Knoten, `RopeUp`, `NodeSocket`). Player-Rettung „durchgefallen“ ignoriert die Kammer. Unter der Erde kein Himmelslicht.
+- Fassung: shutdown → Stille (Abschaltfolge 1+2 + structure_off + source_dead), shutdown_send → Gehört (mit mast_repaired) sonst
+  Abgeholt, send → Abgeholt, overload → Glut (overload_module + blast_charge), code → Schutzstatus (ast_schutzstatus + stef_mappe;
+  das Blatt mit dem Code liegt in Stefanies Mappe). Ohne getragenes W-17 alles gesperrt. Vor jedem Ende: „Das ist das Ende deiner Geschichte.“
+- Flucht: `EscapeTruck` (Christians Pickup, `EscapeTruck.HOME` (6.5, 0, 13.6), persistent): Autoteile 2, Batterie, Benzin 2 → repariert → wegfahren.
+- `EndingScreen` (Schlussszene Zeile für Zeile, Titel „Ende: …“, Abspann, `Settings.reach_ending`, Hauptmenü; Tests: `EndingScreen.speed`,
+  ohne Speicherplatz bleibt man im Spiel). `ChoiceDialog` (Auswahlfenster, Esc = zurück, Pausenmenü gesperrt).
+- Endspurt-Druck: ThreatConfig `endgame_siege_every` (2), `endgame_visit_chance` – keine ruhigen Nächte mehr.
+- Prüfung `RegressTest._t_endings`, Tour-Bilder C0–C3 (Kammer, Fassung, offener Brunnen, Pickup; Schlüssel `shaft_open`, `abs_y`).
+
+## Weitere Punkte 14.11.2026
+- Test-Knopf „zu Tag 10“ aus dem Pausenmenü entfernt (Funktion bleibt nur für `--night-test=changes`).
+- Pfützen größer + Fresnel-Glanz (ground.gdshader), Abendsonne goldener/kräftiger (DayNightEnvironment).
+- Fremdpflanze: supplies.tres crops `alien` (no_water, stage_bonus, signature) aus `alien_seeds`: wächst ohne Wasser, wird nie grau,
+  nachts grünes Licht + Signatur (`Supplies.alien_bed_signature` in `Research.home_signature`), Ernte `alien_fruit`.
+- Tagebuch: Autoload `Journal` (data/story/journal.json: Texte zu Ereignissen + Nächten), Einträge aus Tasks.flag, Notizen, Spuren,
+  morgens die Nacht; Tablet-Reiter „Tagebuch“; im Spielstand („journal“).
+- Mehrtagesmärsche: Rastplätze map.json `rest_spots` (13, auf halbem Weg der langen Pfade), `RestSpot` (Feuerstelle `RestFire`,
+  Sitzstämme, Holz, Schild) aus WorldTrails; Zelt in `camp_rest_radius` → weniger Zeltnacht-Ereignisse (`camp_rest_factor`).
+  Karte: △ Rastplätze (Wanderkarte), Entfernung + Gehzeit an Spur-Zielen (`MapScreen.march_text`), Proviantzeile (`supply_text`).
+
+## Fehler im 15-Tage-Durchlauf (14.11.2026, behoben)
+- „Nach Tag 11 kommt Tag 13“ war echt: zweites Einschlafen (E im Zelt während der Abblende) sprang zum übernächsten Morgen.
+  Jetzt `EventBus.request_sleep()` + `EventBus.sleeping` (Bett und Zelt), zurückgesetzt in `GameState._apply`.
+- Durchgefroren aufwachen tötete Sekunden später (Wärme 0): jetzt Gnadenfrist `SurvivalConfig.wake_grace`.
+- Hunger/Durst-Abnahme steht jetzt in `data/survival/survival.tres` (`hunger_per_hour`, `thirst_per_hour`) statt im Code.
+- 15-Tage-Durchlauf: 0 Tode, 0 Fehler. Beobachtung: Der Bot tankt erst spät nach (Tank tagelang 0) – im Spiel hilft der Holzvergaser.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

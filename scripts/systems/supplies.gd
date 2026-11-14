@@ -88,7 +88,7 @@ func _process(_delta: float) -> void:
 	# Übelkeit: Hunger und Durst sinken schneller
 	if is_sick():
 		var f := (config.sick_drain_factor - 1.0) * dh
-		Survival.drain(Survival.HUNGER_PER_HOUR * f, Survival.THIRST_PER_HOUR * f)
+		Survival.drain(Survival.cfg.hunger_per_hour * f, Survival.cfg.thirst_per_hour * f)
 
 
 func _on_day_changed(_day: int) -> void:
@@ -98,6 +98,14 @@ func _on_day_changed(_day: int) -> void:
 		if b["crop"] == "" or b["withered"]:
 			continue
 		var crop: Dictionary = config.crops.get(b["crop"], {})
+		if bool(crop.get("no_water", false)):
+			# Fremdpflanze: braucht kein Wasser, wird nie grau, wächst auf verwandeltem Boden schneller
+			b["growth"] = float(b["growth"]) + 1.0 + float(crop.get("stage_bonus", 0.0)) * stage
+			b["dry"] = 0
+			b["watered"] = false
+			if float(b["growth"]) >= float(crop.get("days", 3)):
+				b["growth"] = float(crop.get("days", 3))
+			continue
 		if b["watered"]:
 			b["growth"] = float(b["growth"]) + 1.0
 			b["dry"] = 0
@@ -168,8 +176,19 @@ func plant(i: int, seed_item: String) -> bool:
 	return true
 
 
+## Nachts leuchtende Fremdpflanzen in den Beeten (für Research.home_signature)
+func alien_bed_signature() -> float:
+	var s := 0.0
+	for b: Dictionary in beds:
+		if b["crop"] != "" and not b["withered"]:
+			s += float(config.crops.get(b["crop"], {}).get("signature", 0.0))
+	return s
+
+
 func water_bed(i: int) -> bool:
 	if beds[i]["crop"] == "" or beds[i]["watered"] or bed_state(i) in ["ripe", "withered"]:
+		return false
+	if bool(config.crops.get(beds[i]["crop"], {}).get("no_water", false)):
 		return false
 	if can_water <= 0 or Inventory.equipped() != "watering_can":
 		return false

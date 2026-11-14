@@ -329,10 +329,14 @@ func _t_discard() -> void:
 
 ## Saatgut ohne passende Pflanze (Fremde Samen) darf kein kaputtes Beet hinterlassen.
 func _t_plant_unknown() -> void:
+	# Seit 14.11. gibt es die Fremdpflanze – für die Prüfung kurz herausnehmen
+	var crop: Dictionary = Supplies.config.crops.get("alien", {})
+	Supplies.config.crops.erase("alien")
 	Inventory.add("alien_seeds", 1)
 	Supplies.beds[0] = Supplies._empty_bed()
 	var planted := Supplies.plant(0, "alien_seeds")
 	_ok("Hochbeet: unbekannte Pflanze wird nicht gesät", not planted and Supplies.bed_state(0) == "empty" and Inventory.count("alien_seeds") >= 1)
+	Supplies.config.crops["alien"] = crop
 	Inventory.remove("alien_seeds", Inventory.count("alien_seeds"))
 	_ok("Rucksack: kein Eintrag ohne Namen", not Inventory.items.has(""))
 
@@ -358,6 +362,203 @@ func _t_more() -> void:
 	await _t_cover()
 	await _t_atmosphere()
 	await _t_fixes_1311()
+	await _t_endings()
+
+
+## Endspurt und Enden (14.11.): Brunnen öffnen, Kammer, Fassung, Frist, Pickup, Abschluss-Bildschirm.
+func _t_endings() -> void:
+	var p := _player()
+	var keep_phase := Story.phase
+	var keep_seen := Settings.endings_seen.duplicate()
+	var keep_pos := p.global_position
+	# Daten: sieben Enden wie im Hauptmenü, jedes mit Schlussszene
+	var data: Dictionary = Story.endings_data()
+	var all_ok := true
+	for e: Dictionary in Settings.endings():
+		var d: Dictionary = data.get("endings", {}).get(e["id"], {})
+		if (d.get("lines", []) as Array).size() < 3:
+			all_ok = false
+	_ok("Enden: alle sieben haben eine Schlussszene", all_ok and Settings.endings().size() == 7)
+	# Fassung: ohne Wissen keine Wege, mit Wissen die richtigen Enden
+	Story.phase = 5
+	var notes := ["ast_abschaltfolge1", "tunnel_abschaltfolge2", "stef_mappe", "ast_schutzstatus"]
+	var keep_notes: Array = []
+	for n: String in notes:
+		if Research.notes.has(n):
+			keep_notes.append(n)
+		Research.notes.erase(n)
+	_ok("Fassung: ohne Abschaltfolge/Mappe keine Möglichkeiten", Story.socket_options().is_empty())
+	for n: String in notes:
+		Research.notes.append(n)
+	Inventory.add("w17", 1)
+	var opts: Array = Story.socket_options()
+	var by_id := {}
+	for o: Dictionary in opts:
+		by_id[o["id"]] = o
+	_ok("Fassung: Abschalten erst nach Säulen + Höhle", by_id.has("shutdown") and (not bool(by_id["shutdown"]["ok"]) or (Tasks.check("ws:structure_off") and Tasks.check("ws:source_dead"))))
+	_ok("Fassung: Senden ohne Ilse = Abgeholt, Code = Schutzstatus", by_id.has("send") and by_id["send"]["ending"] == "abgeholt" \
+			and by_id.has("code") and by_id["code"]["ending"] == "schutzstatus")
+	var keep_mast := Tasks.check("flag:mast_repaired")
+	Tasks.flag("mast_repaired")
+	var with_ilse := ""
+	for o: Dictionary in Story.socket_options():
+		if o["id"] == "shutdown_send":
+			with_ilse = o["ending"]
+	_ok("Fassung: Abschalten + Senden mit Ilse = Gehört", with_ilse == "gehoert", with_ilse)
+	if not keep_mast:
+		Tasks.flags.erase("mast_repaired")
+	# Brunnen: mit Schachtwinde öffnen (Frist beginnt), dann hinab in die Kammer und wieder hinauf
+	var shaft := get_tree().get_first_node_in_group("well_shaft") as WellShaft
+	Story.shaft_open_day = -1
+	Inventory.add("shaft_winch", 1)
+	var prompt := shaft.get_prompt(p) if shaft else ""
+	if shaft:
+		shaft._on_choice("open")
+	_ok("Brunnen: Schachtwinde montieren öffnet den Schacht, Frist läuft", shaft != null and prompt.contains("Schachtwinde") \
+			and Story.shaft_open_day == TimeManager.day and Story.nights_left() == Story.endgame_nights() \
+			and Inventory.count("shaft_winch") == 0 and not shaft.boards.visible and shaft.winch.visible)
+	shaft.descend(p)
+	await get_tree().create_timer(1.6).timeout
+	var down := RootChamber.is_inside(p.global_position)
+	await get_tree().physics_frame
+	await get_tree().create_timer(0.5).timeout
+	var still_down := RootChamber.is_inside(p.global_position)
+	_ok("Schacht: unten in der Kammer des Wurzelknotens, man fällt nicht durch", down and still_down, str(p.global_position))
+	var rope := get_tree().get_first_node_in_group("root_chamber").find_child("RopeUp", true, false) as Interactable
+	rope.interact(p)
+	await get_tree().create_timer(1.6).timeout
+	_ok("Schacht: am Seil wieder hinauf neben den Brunnen", not RootChamber.is_inside(p.global_position) and p.global_position.distance_to(Vector3(13.5, p.global_position.y, -13.0)) < 4.0)
+	# Frist: am letzten Abend tritt »Zu spät« ein; Abschluss-Bildschirm läuft bis zum Ende, speichert nichts
+	EndingScreen.speed = 40.0
+	var keep_h := TimeManager.hour
+	var keep_day := TimeManager.day
+	TimeManager.day = 10
+	TimeManager.hour = 23.5
+	Story.shaft_open_day = TimeManager.day - Story.endgame_nights()
+	Story._check_deadline()
+	await get_tree().process_frame
+	var screen := get_tree().get_first_node_in_group("ending_screen") as EndingScreen
+	var started := screen != null and screen.ending_id == "zu_spaet" and GameState.ending_lock
+	var waited := 0.0
+	while is_instance_valid(screen) and not screen.finished and waited < 20.0:
+		await get_tree().create_timer(0.25, true, false, true).timeout
+		waited += 0.25
+	_ok("Frist abgelaufen: »Zu spät« mit Schlussszene und Abspann", started and Settings.endings_seen.has("zu_spaet"), "%.1f s" % waited)
+	_ok("Ende: Spiel läuft danach weiter (nicht angehalten)", not get_tree().paused)
+	# Pickup: reparieren, dann wegfahren = Flucht
+	Story.ending_running = false
+	GameState.ending_lock = false
+	Story.shaft_open_day = -1
+	TimeManager.hour = keep_h
+	TimeManager.day = keep_day
+	var truck := get_tree().get_first_node_in_group("escape_truck") as EscapeTruck
+	var keep_rep := truck.repaired if truck else false
+	if truck:
+		truck.repaired = false
+		for id: String in truck.needs():
+			Inventory.add(id, int(truck.needs()[id]))
+		truck.interact(p)
+	_ok("Pickup: mit Autoteilen, Batterie, Benzin repariert", truck != null and truck.repaired)
+	if truck:
+		truck._confirmed("yes")
+		await get_tree().process_frame
+		var s2 := get_tree().get_first_node_in_group("ending_screen") as EndingScreen
+		var ok2 := s2 != null and s2.ending_id == "flucht"
+		waited = 0.0
+		while is_instance_valid(s2) and not s2.finished and waited < 20.0:
+			await get_tree().create_timer(0.25, true, false, true).timeout
+			waited += 0.25
+		_ok("Pickup: wegfahren = Ende »Flucht«", ok2 and Settings.endings_seen.has("flucht"))
+		truck.repaired = keep_rep
+		truck._update_visuals()
+	# Fremdpflanze (alien_seeds): wächst ohne Wasser, wird nie grau, lockt nachts (Signatur)
+	var keep_bed: Dictionary = Supplies.beds[0].duplicate()
+	Supplies.beds[0] = Supplies._empty_bed()
+	Inventory.add("alien_seeds", 1)
+	var planted := Supplies.plant(0, "alien_seeds")
+	var sig_before := Supplies.alien_bed_signature()
+	for d in 4:
+		Supplies._on_day_changed(TimeManager.day)
+	_ok("Fremdpflanze: wächst ohne Gießen, wird reif und lockt nachts", planted and Supplies.bed_state(0) == "ripe" \
+			and not bool(Supplies.beds[0]["alien"]) and sig_before > 0.0, Supplies.bed_state(0))
+	var fruit_before := Inventory.count("alien_fruit")
+	Supplies.harvest(0)
+	_ok("Fremdpflanze: Ernte = Fremdfrüchte", Inventory.count("alien_fruit") > fruit_before)
+	Supplies.beds[0] = keep_bed
+	# Rastplätze: an den langen Wegen, Feuerstelle wärmt, Zeltnacht dort ruhiger, Marschplanung auf der Karte
+	var spots := get_tree().get_nodes_in_group("rest_spot")
+	var rf := (spots[0] as Node).find_child("RestFire", false, false) if not spots.is_empty() else null
+	var lit_ok := false
+	if rf:
+		Inventory.add("wood", 1)
+		rf.interact(p)
+		lit_ok = rf.burning() and rf.heat_at(rf.global_position + Vector3(1, 0, 0)) > 0.0
+		rf.put_out()
+	_ok("Rastplätze: an den Wegen, Feuerstelle brennt und wärmt", spots.size() == (WorldMap.data().get("rest_spots", []) as Array).size() \
+			and spots.size() >= 10 and lit_ok)
+	var near_rest := RestSpot.near((spots[0] as Node3D).global_position + Vector3(4, 0, 0), ThreatDirector.config.camp_rest_radius, get_tree())
+	var far_rest := RestSpot.near(Vector3(0, 0, 0), ThreatDirector.config.camp_rest_radius, get_tree())
+	_ok("Rastplätze: Zelt daneben zählt, an der Hütte nicht", near_rest and not far_rest)
+	var mt := MapScreen.march_text(1000.0)
+	_ok("Karte: Marschplanung mit Entfernung, Gehzeit und Proviant", mt.contains("km") and mt.contains("zu Fuß") \
+			and MapScreen.supply_text().contains("Wasser"), mt)
+	# Doppelter Schlaf (Zelt, zweimal E): die Uhr darf nur bis zum nächsten Morgen springen (früher: Tag 11 → 13)
+	var d0 := TimeManager.day
+	TimeManager.set_time(d0, 22.0)
+	var first := EventBus.request_sleep(7.0)
+	await get_tree().create_timer(0.3).timeout
+	var second := EventBus.request_sleep(7.0)
+	var slept := 0.0
+	while EventBus.sleeping and slept < 12.0:
+		await get_tree().create_timer(0.25).timeout
+		slept += 0.25
+	_ok("Schlafen: zweites Einschlafen wird ignoriert, nur ein Tag vergeht", first and not second and TimeManager.day <= d0 + 1,
+			"Tag %d → %d" % [d0, TimeManager.day])
+	p.input_locked = false
+	TimeManager.set_time(d0, keep_h)
+	# Zeltnacht ohne Schlafsack: durchgefroren aufwachen verletzt, aber man erfriert nicht gleich danach
+	var keep_w := Survival.warmth
+	var keep_hp := p.health
+	Survival.warmth = 40.0
+	p.health = 100.0
+	Survival._sleep_from = TimeManager.get_total_hours() - 9.0
+	Survival._sleep_rate = -20.0
+	Survival._sleep_fire_hours = 0.0
+	Survival._on_woke()
+	_ok("Kälte im Zelt: verletzt, aber Gnadenfrist zum Aufwärmen", p.health >= Survival.cfg.sleep_min_health and p.health < 100.0 \
+			and Survival.warmth > Survival.cfg.freeze_below and Survival.starvation_damage() == 0.0 or Survival.hunger <= 0.0 or Survival.thirst <= 0.0,
+			"Wärme %.0f, Gesundheit %.0f" % [Survival.warmth, p.health])
+	Survival.warmth = keep_w
+	p.health = keep_hp
+	# Tagebuch: Ereignisse, Notizen, Nacht – im Spielstand
+	var keep_j := Journal.get_state()
+	Journal.entries.clear()
+	Journal._on_flag("visit_kapelle")
+	Journal.note("stef_mappe")
+	Journal._on_flag("story_phase_4")
+	var texts: Array = []
+	for e: Dictionary in Journal.entries:
+		texts.append(e["text"])
+	var st_j := Journal.get_state()
+	Journal.set_state({})
+	Journal.set_state(st_j)
+	_ok("Tagebuch: Orte, Funde und Erkenntnisse stehen drin und bleiben im Spielstand", texts.size() == 3 \
+			and String(texts[0]).contains(String(WorldMap.places()["kapelle"]["name"])) and Journal.entries.size() == 3 \
+			and Journal.by_day().size() == 1, str(texts))
+	Journal.set_state(keep_j)
+	# aufräumen
+	EndingScreen.speed = 1.0
+	Story.ending_running = false
+	GameState.ending_lock = false
+	Story.phase = keep_phase
+	Inventory.remove("w17", 1)
+	for n: String in notes:
+		if not keep_notes.has(n):
+			Research.notes.erase(n)
+	Settings.endings_seen = keep_seen
+	p.input_locked = false
+	p.global_position = keep_pos
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
 ## Fehler vom 13.11. abends: Regal-Clipping, Lampen zu tief, Leitern, Wasserhahn-Spuk, Brummton am Tag.
@@ -505,8 +706,10 @@ func _t_atmosphere() -> void:
 		var keep_b := cur._win.barricade
 		cur._win.health = 0.0
 		cur._win.barricade = 0.0
-		await get_tree().create_timer(0.6).timeout
-		var swing := absf(cur.panels[0].rotation.x)
+		var swing := 0.0
+		for k in 12:
+			await get_tree().create_timer(0.1).timeout
+			swing = maxf(swing, absf(cur.panels[0].rotation.x))
 		cur._win.health = keep_h
 		cur._win.barricade = keep_b
 		_ok("Hütte: zerbrochenes Fenster = Vorhang bläht sich", swing > 0.12, "%.2f" % swing)

@@ -603,10 +603,9 @@
       "phase": 5,
       "main": true,
       "title": "Der alte Brunnen",
-      "text": "»MP4 – B«, in den Brunnenrand geritzt. Mit der Seilwinde aus Schacht B komme ich hinunter. Wenn ich das tue, gibt es kein Zurück mehr.",
+      "text": "»MP4 – B«, in den Brunnenrand geritzt. Mit der Schachtwinde aus Schacht B komme ich hinunter. Sobald ich den Schacht öffne, läuft die Zeit – ich sollte vorher alles beisammen haben.",
       "start": [
-        "step:p5_saeulen",
-        "step:p5_hoehle"
+        "phase>=5"
       ],
       "done": [
         "flag:well_descended"

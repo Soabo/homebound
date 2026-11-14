@@ -5,9 +5,7 @@ extends Node
 
 signal changed
 
-## Abnahme pro Spielstunde
-const HUNGER_PER_HOUR := 1.3
-const THIRST_PER_HOUR := 2.0
+## Abnahme pro Spielstunde: data/survival/survival.tres (hunger_per_hour, thirst_per_hour)
 const STAMINA_MAX := 100.0
 
 var hunger: float = 80.0   ## 100 = satt
@@ -36,8 +34,8 @@ func _process(delta: float) -> void:
 	if not TimeManager.running:
 		return
 	var hours := delta * TimeManager.get_hours_per_second() * (TimeManager.config.debug_fast_forward_multiplier if TimeManager.fast_forward else 1.0)
-	hunger = maxf(hunger - HUNGER_PER_HOUR * hours, 0.0)
-	thirst = maxf(thirst - THIRST_PER_HOUR * hours, 0.0)
+	hunger = maxf(hunger - cfg.hunger_per_hour * hours, 0.0)
+	thirst = maxf(thirst - cfg.thirst_per_hour * hours, 0.0)
 	if hunger < 20.0 and not _warned_hunger:
 		_warned_hunger = true
 		EventBus.notify("Du hast Hunger. Im Vorratsraum gibt es Konserven.", 4.0)
@@ -137,6 +135,9 @@ func _on_woke() -> void:
 		if p:
 			var h := float(p.get("health"))
 			p.set("health", maxf(h - cfg.sleep_freeze_damage, minf(h, cfg.sleep_min_health)))
+		# Gnadenfrist: durchgefroren, aber nicht gleich weiter erfrieren – Zeit für Feuer, Bewegung, Heimweg
+		# (Christian: Zeltnacht verletzt, tötet aber nicht)
+		warmth = maxf(warmth, cfg.freeze_below + cfg.wake_grace)
 		EventBus.notify("Durchgefroren aufgewacht. Ich spüre meine Finger kaum. (Schlafsack? Feuer?)", 5.0)
 	elif warmth < cfg.cold_warn:
 		EventBus.notify("Kalt geschlafen. Ein Schlafsack wäre gut.", 3.5)

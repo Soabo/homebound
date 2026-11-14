@@ -101,6 +101,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _try_sleep() -> void:
+	if EventBus.sleeping:
+		return
 	if not TimeManager.can_sleep():
 		EventBus.notify("Ich bin noch nicht müde.", 2.0)
 		return
@@ -110,7 +112,7 @@ func _try_sleep() -> void:
 		return
 	ThreatDirector.plan_camp_night(self)
 	Tasks.flag("slept_outside")
-	EventBus.sleep_requested.emit(TimeManager.config.wake_up_hour)
+	EventBus.request_sleep(TimeManager.config.wake_up_hour)
 
 
 ## Licht im Zelt: leuchtet nach außen (für den Sucher).

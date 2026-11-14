@@ -26,6 +26,8 @@ var _snapshot: Dictionary = {}
 var _pending_world: Dictionary = {}
 var _fresh: Dictionary = {}        ## Zustand beim Programmstart (für „Neues Spiel“)
 var dead: bool = false
+## Ein Ende läuft: nichts mehr speichern (Story.start_ending)
+var ending_lock: bool = false
 var slot: int = -1                 ## aktiver Speicherplatz (-1 = keiner, z. B. in Tests)
 var play_seconds: float = 0.0      ## gespielte Zeit in diesem Spielstand
 
@@ -83,6 +85,7 @@ func take_state() -> Dictionary:
 		"supplies": Supplies.get_state(),
 		"tasks": Tasks.get_state(),
 		"story": Story.get_state(),
+		"journal": Journal.get_state(),
 		"world": collect_world(),
 	}
 
@@ -134,11 +137,14 @@ func _apply(snap: Dictionary, morning: Dictionary) -> void:
 	Supplies.set_state(snap.get("supplies", {}))
 	Tasks.set_state(snap.get("tasks", {}))
 	Story.set_state(snap.get("story", {}))
+	Journal.set_state(snap.get("journal", {}))
 	_pending_world = snap.get("world", {})
 	_snapshot = morning
 	_restoring = false
 	ThreatDirector.reset_for_new_scene()
 	dead = false
+	ending_lock = false
+	EventBus.sleeping = false
 	get_tree().paused = false
 
 
@@ -166,7 +172,8 @@ func _read(n: int) -> Dictionary:
 
 ## Speichert in den aktiven Platz. current = true: der Stand jetzt (beim Beenden), sonst der Tagesbeginn.
 func save_game(current: bool = true) -> bool:
-	if slot < 0 or dead:
+	# Während eines Endes wird nichts mehr gespeichert: der Stand von vor der Entscheidung bleibt
+	if slot < 0 or dead or ending_lock:
 		return false
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 	var now := take_state() if current else _snapshot.duplicate(true)

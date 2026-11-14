@@ -38,7 +38,14 @@ var moon_visible: float = 0.0
 
 func _player_indoors() -> bool:
 	var player := get_tree().get_first_node_in_group("player") as Node3D
-	return player != null and (Cabin.is_inside(player.global_position) or Shed.is_inside(player.global_position))
+	return player != null and (Cabin.is_inside(player.global_position) or Shed.is_inside(player.global_position) \
+			or RootChamber.is_inside(player.global_position))
+
+
+## Unter der Erde (Kammer des Wurzelknotens): kein Himmelslicht
+func _player_underground() -> bool:
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	return player != null and RootChamber.is_inside(player.global_position)
 
 
 func _ready() -> void:
@@ -176,9 +183,10 @@ func _apply(h: float, delta: float) -> void:
 	var morning := 1.0 if h < 12.0 else 0.0
 
 	sun.visible = sun_strength > 0.001
-	sun.light_energy = sun_strength * 1.25
+	# Abends etwas kräftiger, damit das goldene Licht trägt
+	sun.light_energy = sun_strength * 1.25 * (1.0 + low_sun * 0.35 * (1.0 - morning))
 	# Abend golden, Morgen kühl-rosa, mittags fast weiß
-	var low_col := Color(1.0, 0.72, 0.62).lerp(Color(1.0, 0.55, 0.3), 1.0 - morning)
+	var low_col := Color(1.0, 0.72, 0.62).lerp(Color(1.0, 0.5, 0.22), 1.0 - morning)
 	sun.light_color = low_col.lerp(Color(1.0, 0.96, 0.9), smoothstep(2.0, 22.0, alt))
 	# Lichtstrahlen durch die Kronen: tief stehende Sonne streut stärker im Nebel
 	sun.light_volumetric_fog_energy = lerpf(1.0, 3.2, low_sun) * (1.0 - clouds * 0.6)
@@ -215,7 +223,8 @@ func _apply(h: float, delta: float) -> void:
 	sky_mat.set_shader_parameter("moon_phase", phase)
 	sky_mat.set_shader_parameter("night", night * (1.0 - foggy * 0.85))
 	sky_mat.set_shader_parameter("clouds", clouds)
-	sky_mat.set_shader_parameter("alien", clampf(float(WorldState.stage()) / 4.0, 0.0, 1.0))
+	# Endspurt: die Saat färbt den Himmel immer stärker
+	sky_mat.set_shader_parameter("alien", clampf(maxf(float(WorldState.stage()) / 4.0, Story.saat_progress() * 1.2), 0.0, 1.0))
 
 	# Blitz klingt schnell ab
 	_flash = move_toward(_flash, 0.0, delta * 5.0)
@@ -231,6 +240,10 @@ func _apply(h: float, delta: float) -> void:
 	var target_indoor := 1.0 if indoor else 0.0
 	_indoor = move_toward(_indoor, target_indoor, delta * 1.5)
 	env.ambient_light_energy = lerpf(lerpf(0.02, 0.07, moon_up * moon_clear), 0.6 - clouds * 0.15, day) * lerpf(1.0, 0.85, _indoor) + _flash * 0.4
+	if _player_underground():
+		env.ambient_light_energy = 0.015
+		sun.light_energy = 0.0
+		moon.light_energy = 0.0
 	# Grundlicht in der Hütte folgt dem Tageslicht – nachts bleibt es drinnen dunkel.
 	for probe in get_tree().get_nodes_in_group("interior_probe"):
 		(probe as ReflectionProbe).ambient_color_energy = lerpf(0.03, 1.0, day) * (1.0 - clouds * 0.3)
@@ -240,7 +253,7 @@ func _apply(h: float, delta: float) -> void:
 
 	# Nebel: Terraforming ab Stufe 2 nachts dichter, Nebeltage (~30 m Sicht), Regen leicht diesig,
 	# Bodennebel in den Morgen- und Abendstunden (liegt unten in Senken und über dem Bach)
-	var fog_mult := 1.0 + (0.9 if WorldState.stage() >= 2 else 0.0) * (1.0 - day)
+	var fog_mult := (1.0 + (0.9 if WorldState.stage() >= 2 else 0.0) * (1.0 - day)) * (1.0 + Story.saat_progress() * 1.4)
 	var ground_fog := maxf(1.0 - absf(h - 6.5) / 2.2, 0.0) + maxf(1.0 - absf(h - 19.5) / 1.8, 0.0) * 0.7
 	env.fog_density = (lerpf(0.016, 0.004, day) + foggy * 0.05 + rainy * 0.008) * fog_mult
 	env.fog_height_density = ground_fog * 0.35 + foggy * 0.2
@@ -249,9 +262,9 @@ func _apply(h: float, delta: float) -> void:
 
 	# Farbabstimmung je Tageszeit: mittags klar, abends golden, morgens kühl, nachts kalt blau,
 	# bei fremder Nähe/Terraforming ein leicht kranker Grünstich
-	var alien := clampf(float(WorldState.stage()) * 0.06 + _alien_near() * 0.25, 0.0, 0.5)
+	var alien := clampf(float(WorldState.stage()) * 0.06 + _alien_near() * 0.25 + Story.saat_progress() * 0.3, 0.0, 0.6)
 	var tint := Color(1.0, 1.0, 1.0)
-	tint = tint.lerp(Color(1.08, 0.97, 0.85) if morning < 0.5 else Color(0.98, 0.98, 1.06), low_sun)
+	tint = tint.lerp(Color(1.14, 0.95, 0.76) if morning < 0.5 else Color(0.98, 0.98, 1.06), low_sun)
 	tint = tint.lerp(Color(0.82, 0.92, 1.12), night)
 	tint = tint.lerp(Color(0.93, 0.96, 1.0), clouds * day * 0.6)
 	tint = tint.lerp(Color(0.9, 1.08, 0.88), alien)

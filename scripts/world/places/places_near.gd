@@ -27,9 +27,20 @@ static func _brunnen(root: Node3D) -> void:
 	BuildKit.cylinder(root, 0.92, 0.82, Vector3(0, y + 0.41, 0), PlaceKit.mat("dark"), false, Vector3.ZERO, -1.0, 14).visible = false
 	var body := BuildKit.collider_box(root, Vector3(1.8, 0.85, 1.8), Vector3(0, y + 0.42, 0))
 	body.name = "WellCollider"
-	# Abdeckung aus Brettern, zugenagelt
+	# Abdeckung aus Brettern, zugenagelt (verschwindet, wenn der Schacht geöffnet wird)
+	var boards := Node3D.new()
+	boards.name = "Boards"
+	root.add_child(boards)
 	for k in 5:
-		BuildKit.box(root, Vector3(1.6, 0.04, 0.3), Vector3(0, y + 0.83, -0.6 + k * 0.3), wood, false, Vector3(0, randf_range(-4, 4), 0))
+		BuildKit.box(boards, Vector3(1.6, 0.04, 0.3), Vector3(0, y + 0.83, -0.6 + k * 0.3), wood, false, Vector3(0, randf_range(-4, 4), 0))
+	# Offen: dunkles Loch, Schachtwinde mit Seil (erscheint erst nach dem Öffnen)
+	var winch := Node3D.new()
+	winch.name = "Winch"
+	root.add_child(winch)
+	BuildKit.cylinder(winch, 0.6, 0.04, Vector3(0, y + 0.8, 0), PlaceKit.mat("dark"), false, Vector3.ZERO, -1.0, 14)
+	BuildKit.box(winch, Vector3(0.5, 0.35, 0.35), Vector3(0.0, y + 1.0, -0.62), PlaceKit.mat("metal"), false)
+	BuildKit.cylinder(winch, 0.12, 0.5, Vector3(0.0, y + 1.25, -0.62), PlaceKit.mat("rust"), false, Vector3(0, 0, 90), -1.0, 10)
+	BuildKit.cylinder(winch, 0.015, 1.1, Vector3(0.0, y + 1.35, 0.0), PlaceKit.mat("fabric"), false, Vector3.ZERO, -1.0, 6)
 	# Dach mit Kurbel
 	for sx: float in [-1.0, 1.0]:
 		BuildKit.box(root, Vector3(0.1, 1.6, 0.1), Vector3(sx * 0.85, y + 1.6, 0), wood, true)
@@ -37,9 +48,12 @@ static func _brunnen(root: Node3D) -> void:
 	BuildKit.box(root, Vector3(0.05, 0.3, 0.05), Vector3(0.98, y + 1.78, 0.0), PlaceKit.mat("rust"), false)
 	for sx: float in [-1.0, 1.0]:
 		BuildKit.box(root, Vector3(1.0, 0.04, 2.0), Vector3(sx * 0.45, y + 2.55, 0), PlaceKit.mat("shingles"), false, Vector3(0, 0, -sx * 32.0))
-	var ins := PlaceKit.inspect(root, "WellInspect", "[E] Alten Brunnen ansehen",
-			"Mit Brettern zugenagelt. Durch die Ritzen kommt kalte Luft herauf – und ein ganz leises Summen.", Vector3(0, y, 0), Vector3(1.8, 1.0, 1.8))
-	ins.done_flag = "visit_brunnen"
+	var shaft := WellShaft.new()
+	shaft.name = "WellShaft"
+	shaft.position = Vector3(0, y, 0)
+	shaft.boards = boards
+	shaft.winch = winch
+	root.add_child(shaft)
 	PlaceKit.note(root, "brunnen_hinweis", Vector3(0.0, y + 0.55, 0.86), true)
 
 

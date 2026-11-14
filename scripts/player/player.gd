@@ -326,7 +326,8 @@ func _physics_process(delta: float) -> void:
 	camera.rotation.z = lerpf(camera.rotation.z, sway, clampf(delta * 6.0, 0.0, 1.0))
 	_update_lean(delta)
 
-	if global_position.y < Terrain.height_at(global_position.x, global_position.z) - 25.0:
+	# Durchgefallen? Zurück auf den Hof – außer in der Kammer des Wurzelknotens (liegt absichtlich tief)
+	if global_position.y < Terrain.height_at(global_position.x, global_position.z) - 25.0 and not RootChamber.is_inside(global_position):
 		global_position = Vector3(-3.0, 1.0, 11.5)
 		velocity = Vector3.ZERO
 

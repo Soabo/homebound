@@ -35,10 +35,6 @@ func _ready() -> void:
 
 	var resume := _button(box, "Weiter")
 	resume.pressed.connect(func() -> void: set_paused(false))
-	# TEST – wird später wieder entfernt: zu Tag 10 springen, um die späten Tage anzusehen
-	var jump := _button(box, "TEST: zu Tag 10 springen")
-	jump.modulate = Color(1.0, 0.8, 0.5)
-	jump.pressed.connect(_test_jump_to_day.bind(10))
 	var settings := _button(box, "Einstellungen")
 	settings.pressed.connect(_toggle_settings)
 	var menu := _button(box, "Speichern und zum Hauptmenü")
@@ -70,6 +66,9 @@ func _button(parent: Control, text: String) -> Button:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause_menu"):
 		get_viewport().set_input_as_handled()
+		# Während eines Endes oder eines Auswahlfensters kein Pausenmenü
+		if Story.ending_running or not get_tree().get_nodes_in_group("choice_dialog").is_empty():
+			return
 		# offene Karte: Esc schließt erst die Karte
 		var map := get_tree().get_first_node_in_group("map_screen")
 		if not get_tree().paused and map and map.call("is_open"):
@@ -102,7 +101,8 @@ func _menu_needs_mouse() -> bool:
 
 ## TEST: Sprung zu einem späteren Tag (7 Uhr morgens). Spannungsbogen, Talverwandlung und Wucherungen
 ## laufen für die übersprungenen Tage mit; Hunger, Durst, Ausdauer und Gesundheit voll.
-## Ressourcen werden nicht mitgenommen/ergänzt. Wird später wieder entfernt.
+## Ressourcen werden nicht mitgenommen/ergänzt. Der Knopf im Pausenmenü ist entfernt (Christian, 14.11.) –
+## nur noch die automatischen Tests (--night-test=changes) benutzen den Sprung.
 func _test_jump_to_day(target: int) -> void:
 	set_paused(false)
 	if TimeManager.day >= target:

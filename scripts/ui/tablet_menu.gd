@@ -81,7 +81,7 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"]]:
+	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"], ["journal", "Tagebuch"]]:
 		var tb := Button.new()
 		tb.text = t[1]
 		tb.toggle_mode = true
@@ -223,6 +223,10 @@ func _refresh() -> void:
 			_hint.text = "Ergebnisse kommen vom Analysegerät in der Werkstatt.     [E] Tablet weglegen und aufstehen"
 			ResearchMenu.fill_archive(_wide)
 			Research.mark_tablet_seen.call_deferred()
+		elif _tab == "journal":
+			_title.text = "Tagebuch"
+			_hint.text = "Was an welchem Tag passiert ist – neueste Tage oben.     [E] Tablet weglegen und aufstehen"
+			_fill_journal(_wide)
 		else:
 			_title.text = "Notizen"
 			_hint.text = "[E] Tablet weglegen und aufstehen"
@@ -247,6 +251,20 @@ func _refresh() -> void:
 		_list.add_child(b)
 	if _list.get_child_count() == 0:
 		_list.add_child(_label("Keine Nachrichten.", 16, Color(0.6, 0.6, 0.65)))
+
+
+## Reiter „Tagebuch“: Einträge nach Tagen (Journal)
+func _fill_journal(box: VBoxContainer) -> void:
+	var days := Journal.by_day()
+	if days.is_empty():
+		box.add_child(_label("   Noch keine Einträge.", 17, Color(0.6, 0.6, 0.65)))
+	for d: Array in days:
+		box.add_child(_label("TAG %d" % int(d[0]), 17, Color(1.0, 0.82, 0.45)))
+		for t: String in d[1]:
+			var l := _label("   ·  " + t, 18, Color(0.88, 0.9, 0.94))
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			box.add_child(l)
+		box.add_child(_spacer())
 
 
 ## Reiter „Aufgaben“: Spur (roter Faden der Story), Tagesroutine, offene Ziele, erledigte Ziele.
