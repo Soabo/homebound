@@ -26,6 +26,12 @@ func _ready() -> void:
 		cb.button_pressed = Settings.fullscreen
 		cb.toggled.connect(func(on: bool) -> void: Settings.set_value("fullscreen", on))
 		r2.add_child(cb)
+	var r3 := _row("Schleich-Anzeige")
+	var sh := CheckBox.new()
+	sh.button_pressed = Settings.stealth_hud
+	sh.tooltip_text = "Kleines Auge über dem Schnellplatz: wie sehr dich etwas bemerkt, wie sichtbar und wie laut du bist."
+	sh.toggled.connect(func(on: bool) -> void: Settings.set_value("stealth_hud", on))
+	r3.add_child(sh)
 	var hint := Label.new()
 	hint.text = "Niedrig rechnet mit kleinerer Auflösung und weniger Schatten – gut für ältere Rechner und den Browser."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

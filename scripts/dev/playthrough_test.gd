@@ -246,6 +246,8 @@ func _chop_wood() -> void:
 	Inventory.select(slot)
 	var n := 0
 	for t in _scene().find_children("WoodLog_*", "", true, false):
+		if _restarted or not is_instance_valid(t):
+			return   # gestorben, die Szene wurde neu geladen
 		var node := t as ResourceNode
 		if node == null or node.amount <= 0 or n >= 2:
 			continue

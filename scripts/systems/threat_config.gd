@@ -78,6 +78,10 @@ extends Resource
 @export var siege_hit_damage: float = 30.0
 @export var siege_hide_seconds: float = 14.0
 @export var siege_outside_seconds: float = 8.0
+## Schleichen: Lautes im Haus (Schritte, knarrende Dielen) hört es auf dem Dach/vor dem Fenster – Druck je 9 m Hörweite
+@export var siege_noise_pressure: float = 0.05
+## Im Versteck, wenn es davorsteht: Atem länger als so viele Sekunden nicht angehalten (Alt) = es findet dich
+@export var siege_breath_grace: float = 2.0
 
 @export_group("Nächtliche Vorkommnisse (NightOmens)")
 ## Wie viele pro Nacht: ruhige Nacht / alle anderen
@@ -183,6 +187,8 @@ extends Resource
 ## Schaden, wenn die Hand durch den Reißverschluss greift / wenn man sich beim Atem bewegt (nie unter camp_min_health)
 @export var camp_hand_damage: float = 14.0
 @export var camp_still_damage: float = 8.0
+## Stillhalten im Zelt: so viele Sekunden darf man hörbar atmen (Alt nicht gedrückt), bevor es einen bemerkt
+@export var camp_breath_grace: float = 2.0
 @export var camp_min_health: float = 15.0
 @export var camp_first_after: float = 0.4
 

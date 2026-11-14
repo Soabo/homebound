@@ -31,6 +31,9 @@ static func get_default() -> MaulerConfig:
 @export_group("Jagd")
 ## Ab dieser Entfernung sprintet er los
 @export var charge_distance: float = 22.0
+## Sichtweite (Faktor auf Stealth sight_min..sight_max je nach Sichtbarkeit) und Hörfaktor (Stealth)
+@export var sight_factor: float = 1.0
+@export var hearing: float = 1.5
 ## Vor dem Sprint: kurz stehen, Kopf heben, kreischen (Sekunden) – die faire Warnung
 @export var charge_warning: float = 1.4
 ## Reichweite der Klauen

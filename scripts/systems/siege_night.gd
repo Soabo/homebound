@@ -38,6 +38,9 @@ var _stalker_t := 8.0
 var _barricade_hit_t := 0.0
 var _outside_t := 0.0
 var _finished := false
+var _breath_heard := 0.0           # im Versteck: Sekunden hörbarer Atem, während es davorsteht
+var _noise_note_t := 0.0
+var _breath_warned := false
 
 
 func _ready() -> void:
@@ -56,6 +59,7 @@ func _ready() -> void:
 	EventBus.notify("Sie kommen. Halte die Hütte bis zum Morgengrauen.", 5.0)
 	SoundBank.play_ui(self, "sting_creature", -4.0)
 	get_tree().call_group("music_box", "start_siege")
+	EventBus.noise_made.connect(_on_noise)
 	print("[Siege] Nacht %d beginnt, Aufgaben: %s" % [index, str(tasks.keys().filter(func(k: String) -> bool: return tasks[k]["on"]))])
 
 
@@ -352,6 +356,8 @@ func _strike(why: String, from: Vector3) -> void:
 ## „Es ist im Haus“: verstecken (Schrank/Spind, Keller mit geschlossener Luke, Dachboden mit hochgezogener Leiter) oder sterben.
 func _start_intrusion(from: Vector3) -> void:
 	_intrusion = 0.0
+	_breath_heard = 0.0
+	_breath_warned = false
 	EventBus.notify("Es ist im Haus! Versteck dich – Schrank, Spind, Keller oder Dachboden!", 5.0)
 	SoundBank.play_ui(self, "heartbeat", 0.0)
 	CreatureSounds.play(get_parent(), "shriek", from, 4.0, 0.85)
@@ -363,6 +369,21 @@ func _start_intrusion(from: Vector3) -> void:
 	if not Cabin.is_inside(start):
 		start = Vector3(-3.0, Cabin.FLOOR_Y, 3.6)
 	_intruder.global_position = start
+
+
+## Schleichen: Was man im Haus laut macht (Schritte, knarrende Dielen), hören sie – oben auf dem Dach und am Fenster.
+func _on_noise(pos: Vector3, radius: float) -> void:
+	if _finished or _intrusion >= 0.0 or radius < 2.5 or not Cabin.is_inside(pos):
+		return
+	var add := cfg.siege_noise_pressure * radius / 9.0
+	if active("attic"):
+		_set_p("attic", pressure("attic") + add)
+	if active("window"):
+		_set_p("window", pressure("window") + add * 0.5)
+	if radius >= 6.0 and _t - _noise_note_t > 40.0 and (active("attic") or active("window")):
+		_noise_note_t = _t
+		SoundBank.play_at(get_parent(), "scratch", Vector3(pos.x, Cabin.WALL_TOP + 0.6, pos.z), -6.0, 0.8)
+		EventBus.notify("Oben hört das Kratzen kurz auf. Dann ist es genau über dir. Leise sein!", 3.5)
 
 
 func is_safe(p: Player) -> bool:
@@ -393,7 +414,23 @@ func _update_intrusion(delta: float) -> void:
 	if _intrusion < cfg.siege_hide_seconds:
 		return
 	if safe:
-		# Es sucht … und zieht ab
+		# Es sucht … steht vor deinem Versteck und lauscht (Alt: Atem anhalten) … und zieht ab
+		if _player.is_hidden() and is_instance_valid(_intruder):
+			var spot := (_player.hidden_in as Node3D).global_position
+			spot.y = Cabin.FLOOR_Y
+			var to := spot - _intruder.global_position
+			to.y = 0.0
+			if to.length() > 1.3:
+				_intruder.global_position += to.normalized() * minf(1.0 * delta, to.length() - 1.3)
+				_intruder.look_at(_intruder.global_position + to.normalized(), Vector3.UP)
+			elif not _breath_warned:
+				_breath_warned = true
+				EventBus.notify("Es steht direkt vor dir. [Alt] Atem anhalten!", 3.0)
+			if to.length() <= 1.6 and not _player.holding_breath:
+				_breath_heard += delta
+				if _breath_heard > cfg.siege_breath_grace:
+					_found_hidden()
+					return
 		if _intrusion >= cfg.siege_hide_seconds + 8.0:
 			if is_instance_valid(_intruder):
 				Apparition.flash(get_tree().current_scene, _intruder.global_position + Vector3(0, 1.3, 0))
@@ -412,6 +449,23 @@ func _update_intrusion(delta: float) -> void:
 	_player.take_damage(9999.0, _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position)
 	if is_instance_valid(_intruder):
 		_intruder.queue_free()
+
+
+## Im Versteck gefunden, weil man geatmet hat: tut weh, dann ist es weg (der Schrank hält es nicht auf, der Atem schon).
+func _found_hidden() -> void:
+	_breath_heard = 0.0
+	_intrusion = -1.0
+	strikes = 1
+	var from := _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position
+	CreatureSounds.play(get_parent(), "shriek", from, 6.0)
+	_player.take_damage(cfg.siege_hit_damage, from)
+	EventBus.screen_shake.emit(0.7)
+	EventBus.notify("Es hat dich atmen gehört! Die Schranktür fliegt auf – dann ist es mit einem Blitz weg.", 4.5)
+	if is_instance_valid(_intruder):
+		Apparition.flash(get_tree().current_scene, _intruder.global_position + Vector3(0, 1.3, 0))
+		_intruder.queue_free()
+	for id: String in tasks:
+		_set_p(id, minf(pressure(id), 0.3))
 
 
 # --- Ende ----------------------------------------------------------------------

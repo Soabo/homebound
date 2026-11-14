@@ -8,7 +8,7 @@ extends Node3D
 ## Wahrnehmung (GDD 9.4): Sicht (abhängig von Licht), Geräusche, Taschenlampe.
 ## Der Threat Director entscheidet nur, DASS sie kommt – hier entscheidet sie, WIE.
 
-enum State { ARRIVE, OBSERVE, PROWL, GO_ENTRY, HIT_ENTRY, REACH, CHASE, RECOIL, LEAVE }
+enum State { ARRIVE, OBSERVE, PROWL, GO_ENTRY, HIT_ENTRY, REACH, CHASE, RECOIL, LEAVE, SUSPECT, INVESTIGATE }
 
 ## Werte (Tempo, Schaden, Entdecken, Klang) in data/creatures/creature.tres
 var _last_rustle_pos := Vector3.ZERO
@@ -54,6 +54,10 @@ var _unseen_time: float = 0.0
 var _crawl: bool = false           ## gerade gebückt auf allen Vieren
 var _crawl_blend: float = 0.0      ## 0 = aufrecht, 1 = auf allen Vieren (weicher Übergang)
 var _posture_timer: float = 3.0
+## Verdacht in Stufen (Stealth): stutzt → sieht nach → entdeckt
+var awareness := Awareness.new()
+var _look_pos: Vector3 = Vector3.INF   ## wohin der Kopf beim Stutzen schaut (INF = zum Spieler)
+var _see_part: float = 0.0
 
 
 ## Baut das Modell (auch für Trugbilder auf den Kameras verwendet).
@@ -65,6 +69,7 @@ func _ready() -> void:
 	_rng.randomize()
 	_parts = build_model(self)
 	add_to_group("creature")
+	add_to_group("aware")
 	_player = get_tree().get_first_node_in_group("player") as Player
 	EventBus.noise_made.connect(_on_noise)
 
@@ -116,10 +121,7 @@ func _physics_process(delta: float) -> void:
 	_sounds(delta, moving)
 	var sees := _can_see_player()
 	_update_light(delta)
-	# Bemerkt den Spieler: Kopf dreht sich ruckartig zu ihm
-	if sees and not _saw_player:
-		_head_track = 4.0
-		CreatureSounds.play(get_parent(), "head_snap", global_position + Vector3(0, 1.9, 0), -1.0, _rng.randf_range(0.9, 1.1))
+	_perceive(delta, sees)
 	_saw_player = sees
 	_head_track -= delta
 	_check_vanish(delta)
@@ -165,7 +167,7 @@ func _physics_process(delta: float) -> void:
 				_timer = _rng.randf_range(25.0, 50.0) if mode == "observe" else _rng.randf_range(12.0, 25.0)
 		State.OBSERVE:
 			_face(_player.global_position)
-			if _player_outside() and sees and mode != "observe" and _dist() < cfg.spot_distance_observe:
+			if _player_outside() and sees and awareness.alert() and mode != "observe" and _dist() < cfg.spot_distance_observe:
 				_spotted()
 			elif _timer <= 0.0:
 				if mode == "observe":
@@ -173,12 +175,12 @@ func _physics_process(delta: float) -> void:
 				else:
 					_start_prowl()
 		State.PROWL:
-			if _player_outside() and sees and _dist() < cfg.spot_distance_prowl:
+			if _player_outside() and sees and awareness.alert() and _dist() < cfg.spot_distance_prowl:
 				_spotted()
 			elif not moving:
 				_choose_entry()
 		State.GO_ENTRY:
-			if _player_outside() and sees and _dist() < cfg.spot_distance_entry:
+			if _player_outside() and sees and awareness.alert() and _dist() < cfg.spot_distance_entry:
 				_spotted()
 			elif not moving:
 				state = State.HIT_ENTRY
@@ -229,7 +231,7 @@ func _physics_process(delta: float) -> void:
 			var inside: Vector3 = _target_entry.call("inside_point")
 			_face(inside)
 			var reach_dist := 1.4 if mode == "probe" else 2.6
-			if _player.global_position.distance_to(inside) < reach_dist and _attack_cooldown <= 0.0:
+			if _player.global_position.distance_to(inside) < reach_dist and _attack_cooldown <= 0.0 and _reach_clear():
 				_attack()
 			if mode == "probe" and _timer > 6.0:
 				_timer = 6.0  # In der Erkundungsnacht nur kurz hineinstarren
@@ -258,6 +260,29 @@ func _physics_process(delta: float) -> void:
 				if mode == "observe":
 					leave()
 				else:
+					_start_prowl()
+		State.SUSPECT:
+			# hält inne und lauscht/schaut dorthin, wo etwas war
+			if _look_pos != Vector3.INF:
+				_face(_look_pos)
+			if _player_outside() and sees and awareness.alert() and _dist() < cfg.spot_distance_prowl:
+				_spotted()
+			elif _timer <= 0.0:
+				if awareness.stage() >= Awareness.Stage.INVESTIGATE:
+					_start_investigate()
+				else:
+					_look_pos = Vector3.INF
+					_start_prowl()
+		State.INVESTIGATE:
+			if _player_outside() and sees and awareness.alert() and _dist() < cfg.spot_distance_prowl:
+				_spotted()
+			elif not moving:
+				# am Verdachtsort: umsehen, dann weiter
+				if _look_pos != Vector3.INF:
+					_face(_look_pos)
+				if _timer <= 0.0:
+					awareness.calm_down()
+					_look_pos = Vector3.INF
 					_start_prowl()
 		State.LEAVE:
 			if not moving:
@@ -364,7 +389,7 @@ func _start_chase() -> void:
 
 
 ## Wählt einen Zugang: schwächere Stellen und solche, die noch nicht blockiert waren, bevorzugt.
-func _choose_entry() -> void:
+func _choose_entry(near: Vector3 = Vector3.INF) -> void:
 	var entries := get_tree().get_nodes_in_group("entry_point")
 	if entries.is_empty():
 		leave()
@@ -375,6 +400,8 @@ func _choose_entry() -> void:
 		var s: float = e.call("strength")
 		s += float(ThreatDirector.blocked_memory.get(e.call("entry_name"), 0)) * 60.0
 		s += _rng.randf_range(0.0, 40.0)
+		if near != Vector3.INF:
+			s += (e as Node3D).global_position.distance_to(near) * 25.0
 		if e == _target_entry and state == State.HIT_ENTRY:
 			s += 80.0
 		if s < best_score:
@@ -390,6 +417,17 @@ func _choose_entry() -> void:
 	route.append(goal)
 	_go(route, cfg.prowl_speed)
 	state = State.GO_ENTRY
+
+
+## Kommt sie durch die Öffnung an den Spieler heran? Wer seitlich neben dem Fenster an der Wand steht, nicht.
+func _reach_clear() -> bool:
+	if not is_instance_valid(_target_entry):
+		return false
+	var chest := _player.global_position + Vector3(0, _player.body_height() * 0.6, 0)
+	# waagrecht durch die Öffnung in Brusthöhe: wer geduckt unter dem Fenster sitzt, ist auch nicht zu greifen
+	var from: Vector3 = _target_entry.call("outside_point")
+	from.y = chest.y
+	return Stealth.line_clear(get_world_3d(), from, chest, [_player.get_rid()])
 
 
 func _strike() -> void:
@@ -423,17 +461,68 @@ func _can_see_player() -> bool:
 	if not _player.detectable_from(global_position, cfg.cover_sniff_range):
 		return false   # versteckt oder getarnt im Gebüsch
 	var d := _dist()
-	var lit := _player.light_shining() or _player_near_light()
-	var range_m := 34.0 if lit else 13.0
-	if Research.buff_active("scent"):
-		range_m *= float(Research.gadget("scent_mask", "sight_factor", 0.5))
-	if d > range_m:
+	if d > _sight_range():
+		_see_part = 0.0
 		return false
-	var eye := global_position + Vector3(0, 2.0, 0)
-	var target := _player.global_position + Vector3(0, 1.5, 0)
-	var q := PhysicsRayQueryParameters3D.create(eye, target)
-	q.exclude = [_player.get_rid()]
-	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+	# Freie Sicht? Glas lässt durch; lehnt man um eine Kante, sieht sie nur den Kopf (Stealth.seen_part)
+	_see_part = Stealth.seen_part(get_world_3d(), global_position + Vector3(0, body_height(2.0), 0), _player)
+	return _see_part > 0.0
+
+
+## Wie weit sie gerade sieht: hängt davon ab, wie sichtbar der Spieler ist (Dunkelheit, Mond, Licht, Schatten …).
+func _sight_range() -> float:
+	var f := 1.0
+	if Research.buff_active("scent"):
+		f = float(Research.gadget("scent_mask", "sight_factor", 0.5))
+	return Stealth.sight_range(_player.visibility, f)
+
+
+## Verdacht sammeln (Sehen, Atem) und je nach Stufe reagieren: stutzen, nachsehen, zuschlagen.
+func _perceive(delta: float, sees: bool) -> void:
+	if sees:
+		awareness.see(delta, _player.global_position, _see_part, _dist(), _sight_range())
+	var br := Stealth.breath_radius(_player)
+	if br > 0.0 and _dist() < br and not _player.is_hidden():
+		awareness.hear_breath(delta, _player.global_position)
+	var changed := awareness.tick(delta)
+	if changed < 0 or changed <= awareness.prev_stage or state in [State.LEAVE, State.CHASE, State.HIT_ENTRY, State.REACH, State.RECOIL] or _stare >= 0.0:
+		return
+	if changed >= Awareness.Stage.SUSPECT:
+		# Kopf ruckt herum – zum Spieler, wenn sie ihn sieht, sonst zum Geräusch
+		_head_track = 3.0
+		_look_pos = awareness.last_pos
+		CreatureSounds.play(get_parent(), "head_snap", global_position + Vector3(0, 1.9, 0), -1.0 if changed >= Awareness.Stage.ALERT else -6.0, _rng.randf_range(0.9, 1.1))
+	if mode == "observe":
+		return   # Beobachter schauen nur
+	if changed == Awareness.Stage.ALERT and not _player_outside():
+		# Durchs Fenster gesehen oder gehört, wo du im Haus bist: sie geht zum Zugang, der dir am nächsten ist
+		awareness.calm_down(0.55)
+		_choose_entry(_player.global_position)
+		return
+	if state not in [State.ARRIVE, State.PROWL, State.GO_ENTRY, State.SUSPECT, State.INVESTIGATE, State.OBSERVE]:
+		return
+	if changed == Awareness.Stage.SUSPECT and state != State.SUSPECT and state != State.INVESTIGATE:
+		state = State.SUSPECT
+		_path.clear()
+		_timer = _rng.randf_range(2.5, 4.5)
+	elif changed >= Awareness.Stage.INVESTIGATE and state != State.INVESTIGATE and not (changed == Awareness.Stage.ALERT and sees):
+		_start_investigate()
+
+
+## Nachsehen: zum letzten Reiz gehen (liegt er im Haus, zum nächsten Zugang).
+func _start_investigate() -> void:
+	var pos := awareness.last_pos
+	if pos == Vector3.INF:
+		_start_prowl()
+		return
+	_look_pos = pos
+	if Cabin.is_inside(pos) or Cabin.in_footprint(pos.x, pos.z, 1.0):
+		_choose_entry(pos)
+		return
+	var c := Stealth.cfg()
+	_timer = _rng.randf_range(c.investigate_time.x, c.investigate_time.y)
+	_go([_ground(pos + (global_position - pos).normalized() * 1.5)], cfg.prowl_speed)
+	state = State.INVESTIGATE
 
 
 func _player_near_light() -> bool:
@@ -502,18 +591,11 @@ func _check_vanish(delta: float) -> void:
 			queue_free()
 
 
+## Ein Geräusch: je näher und lauter, desto mehr Verdacht (die Stufen in _perceive entscheiden, was sie tut).
 func _on_noise(pos: Vector3, radius: float) -> void:
 	if state in [State.LEAVE, State.CHASE, State.HIT_ENTRY, State.REACH, State.RECOIL]:
 		return
-	if global_position.distance_to(pos) > radius * 1.5 or mode == "observe":
-		return
-	# Neugierig: schaut nach, woher das Geräusch kam
-	var goal := _ground(pos + (global_position - pos).normalized() * 3.0)
-	if Cabin.is_inside(goal) or Cabin.in_footprint(goal.x, goal.z, 1.0):
-		_choose_entry()
-	else:
-		_go([goal], cfg.prowl_speed)
-		state = State.PROWL
+	awareness.hear(pos, radius, global_position.distance_to(pos), 1.5, clampf(radius / 8.0, 0.5, 1.6))
 
 
 # --- Bewegung -----------------------------------------------------------
@@ -792,7 +874,7 @@ func _animate(delta: float, moving: bool) -> void:
 		head.rotation_degrees.x = -8.0 if state == State.OBSERVE else 0.0
 		if _head_track > 0.0 and _player:
 			# Kopf blickt direkt in die Kamera des Spielers
-			var local := to_local(_player.camera.global_position)
+			var local := to_local(_look_pos if _look_pos != Vector3.INF and not _saw_player else _player.camera.global_position)
 			var yaw := clampf(rad_to_deg(atan2(local.x, local.z)), -80.0, 80.0)
 			head.rotation_degrees.y = lerpf(head.rotation_degrees.y, yaw, clampf(delta * 14.0, 0.0, 1.0))
 			head.rotation_degrees.z *= 0.2

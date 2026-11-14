@@ -3,7 +3,7 @@ extends CanvasLayer
 ## Bildschirmanzeige: Uhr, Fadenkreuz, Benutzen-Hinweis, Meldungen, Inventar,
 ## Verletzungs-Effekt, Monitor-Ansicht (Kameras), Schlaf- und Todesbildschirm.
 
-const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Leertaste  Springen\n" + \
+const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Alt  Langsam + Atem anhalten        Leertaste  Springen\n" + \
 		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe        Y / X  Lehnen\n" + \
 		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        Esc  Menü        F1  Hilfe"
 
@@ -51,6 +51,7 @@ func _ready() -> void:
 
 	root.add_child(InteractFrame.new())
 	root.add_child(HotbarHud.new())
+	root.add_child(StealthHud.new())
 
 	var cross := ColorRect.new()
 	cross.color = Color(1, 1, 1, 0.55)
@@ -245,10 +246,10 @@ func _on_sleep_requested(wake_hour: float) -> void:
 	var to_total := from_total + fposmod(wake_hour - TimeManager.hour, 24.0)
 	# Störung während des Schlafs? Dann wacht man vorher auf (GDD 4.4).
 	var disturb := ThreatDirector.first_disturbance(from_total, to_total)
-	var target_hour := wake_hour if disturb < 0.0 else fmod(disturb, 24.0) + 0.02
+	var target_total := to_total if disturb < 0.0 else disturb + 0.02
 	var tw := create_tween()
 	tw.tween_property(_fade, "color:a", 1.0, 1.4)
-	tw.tween_callback(func() -> void: TimeManager.skip_to_hour(target_hour))
+	tw.tween_callback(func() -> void: TimeManager.skip_to_total(target_total))
 	tw.tween_interval(1.6 if disturb < 0.0 else 0.5)
 	tw.tween_callback(func() -> void:
 		if disturb >= 0.0:

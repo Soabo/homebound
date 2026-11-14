@@ -11,6 +11,8 @@ var mouse: float = 1.0
 var brightness: float = 1.0
 var quality: String = "high"
 var fullscreen: bool = true
+## Schleich-Anzeige (Auge/Licht/Geräusch über dem Schnellplatz)
+var stealth_hud: bool = true
 var endings_seen: Dictionary = {}   ## Ende-ID -> Datum
 
 
@@ -22,6 +24,7 @@ func _ready() -> void:
 	brightness = float(d.get("brightness", brightness))
 	quality = String(d.get("quality", quality))
 	fullscreen = bool(d.get("fullscreen", fullscreen))
+	stealth_hud = bool(d.get("stealth_hud", stealth_hud))
 	var cfg := ConfigFile.new()
 	if cfg.load(FILE) == OK:
 		volume = float(cfg.get_value("audio", "volume", volume))
@@ -29,6 +32,7 @@ func _ready() -> void:
 		brightness = float(cfg.get_value("video", "brightness", brightness))
 		quality = String(cfg.get_value("video", "quality", quality))
 		fullscreen = bool(cfg.get_value("video", "fullscreen", fullscreen))
+		stealth_hud = bool(cfg.get_value("game", "stealth_hud", stealth_hud))
 		endings_seen = cfg.get_value("profile", "endings", {})
 	apply.call_deferred()
 
@@ -44,6 +48,7 @@ func save() -> void:
 	cfg.set_value("video", "brightness", brightness)
 	cfg.set_value("video", "quality", quality)
 	cfg.set_value("video", "fullscreen", fullscreen)
+	cfg.set_value("game", "stealth_hud", stealth_hud)
 	cfg.set_value("profile", "endings", endings_seen)
 	cfg.save(FILE)
 

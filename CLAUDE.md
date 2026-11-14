@@ -55,7 +55,7 @@
 - Bach: Ufer immer über Wasser (Terrain `BANK_HEIGHT`, `WATER_LEVEL`, `WATER_HALF_WIDTH`), Prüfung `--walk-test --stream`.
 - Truhe `StorageChest` (Cabin/StorageChest, Werkstatt unter der Werkzeugwand, persistent), Menü in GameMenus („chest“).
 - Bildchen für Gegenstände: `ItemIcons` lädt `assets/icons/items/<id>.png|jpg|webp`, sonst Platzhalter (Kategorie-Farbe + Kürzel).
-- Alt = langsam und leise gehen (`walk_slow`, `Player.SLOW_FACTOR`). Sprint nur, solange Shift wirklich gedrückt ist.
+- Alt = langsam und leise gehen und Atem anhalten (`walk_slow`, `Player.SLOW_FACTOR`, siehe „Schleichen“). Sprint nur, solange Shift wirklich gedrückt ist.
 - Kreatur auf der Jagd bleibt `hunt_hours`, nur mit `whole_night_chance` die ganze Nacht (CreatureConfig).
 - Möbel stehen so, dass man an jedes Fenster treten kann (Prüfung im `--walk-test`: „FENSTER … frei“).
   Werkbank Ostwand nördlich vom Fenster, Generator an der Westwand des Technikraums, Esstisch weg vom Wohnzimmerfenster.
@@ -507,7 +507,37 @@
 - Durchgefroren aufwachen tötete Sekunden später (Wärme 0): jetzt Gnadenfrist `SurvivalConfig.wake_grace`.
 - Hunger/Durst-Abnahme steht jetzt in `data/survival/survival.tres` (`hunger_per_hour`, `thirst_per_hour`) statt im Code.
 - Testprogramm: Zeitraffer des Bots pro Bild auf 0,1 Std. begrenzt (Ruckler ließen die Uhr über 21:30 springen → „Tag 2 → 4“).
+- Zweiter Fall „Tag 8 → 10“ (14.11. nachmittags): Weckte ein Ereignis gleich nach dem Einschlafen, war der Weckzeitpunkt nach der
+  Abblende schon vorbei und `skip_to_hour` sprang einen Tag weiter. Hud schläft jetzt mit `TimeManager.skip_to_total` (Vergangenes = nichts).
+  Dazu `Story.multi_trip_target` (Skriptfehler bei Spur-Zielen, `str()` statt `String()`).
 - 15-Tage-Durchlauf: 0 Tode, 0 Fehler. Beobachtung: Der Bot tankt erst spät nach (Tank tagelang 0) – im Spiel hilft der Holzvergaser.
+
+## Schleichen (Christian 14.11.2026: Punkte 1, 2, 4, 5, 6, 7)
+- Zwei Fragen für alles: wie laut, wie sichtbar? Spieler-Seite `Stealth` (scripts/player/stealth.gd), Gegner-Seite `Awareness`
+  (scripts/creature/awareness.gd). Alle Werte `data/stealth/stealth.tres` (`StealthConfig`).
+- Hören: jeder Schritt meldet `Player.make_noise` (Hörweite = Gangart sneak|slow|walk|run × Untergrund `surface_factor`, im Haus
+  × `indoor_factor`); im Wald knackt manchmal ein Ast. Knarrende Dielen: data/house/house.json `creaky_boards` (helle lose Bretter
+  `CreakyBoard_N`, `Cabin._build_creaky_boards`), normal gehen = immer laut, geduckt/Alt = selten leise. Wind-Böen und Regen
+  übertönen (`Stealth.mask_at`).
+- Atem (Christian: Alt = langsam gehen UND Atem anhalten zugleich): `Player.holding_breath`, kostet Ausdauer (`breath_drain`), Herz
+  wird lauter; ohne Puste lautes Luftschnappen (`gasp_radius`, dann `breath_recover` Sekunden Sperre). Hörbarer Atem aus der Nähe
+  (`breath_radius`, außer Atem nach Rennen `breath_radius_panting`). Atemwolke (AirFx) nur ohne Anhalten, macht etwas sichtbarer.
+  Läuft in `Player._process` (auch im Sitzen/auf der Couch). Zeltnacht „breath_still“: Alt halten (ThreatConfig `camp_breath_grace`).
+  Belagerung: im Versteck steht es davor – wer länger als `siege_breath_grace` atmet, wird gefunden (Schaden, dann weg).
+- Sehen: `Player.visibility` 0..1 (Dunkel, Mond `Stealth.moonlight`, Schatten unter Kronen `Stealth.canopy`, eigenes Licht,
+  Lampe/Feuer in `near_light_range`, beleuchteter Raum, geduckt, rennen). Sichtweite der Gegner `Stealth.sight_range(vis)`.
+  Fensterglas lässt Blicke durch (Gruppe `see_through`, `Stealth.line_clear`) – wer im hellen Zimmer steht, wird gesehen;
+  seitlich neben dem Fenster nicht, und dort (oder geduckt unterm Fenster) greift die Kreatur nicht hinein (`Creature._reach_clear`).
+- Lehnen (Y/X): `Stealth.seen_part` – ist der Körper verdeckt und nur der Kopf frei, zählt man nur `peek_lean` (lehnend) / `peek_head`.
+- Verdacht: `Awareness` (Stufen CALM → SUSPECT ab `suspect_at` → INVESTIGATE ab `investigate_at` → ALERT bei 1), Sehen
+  (`notice_close/far`), Geräusche (`noise_gain`, laute zählen mehr), Atem, Abklingen. Kreatur: neue Zustände SUSPECT (hält inne,
+  Kopf zum Reiz) und INVESTIGATE (geht hin, sucht `investigate_time`); entdeckt erst bei ALERT + Sicht; sieht/hört sie dich im
+  Haus, geht sie zum nächsten Zugang (`_choose_entry(near)`). Zerfleischer greift erst an, wenn er dich bemerkt hat
+  (MaulerConfig `sight_factor`, `hearing`), Sucher sieht nach ab INVESTIGATE. Belagerung: Lärm im Haus erhöht Dachboden-/Fensterdruck
+  (ThreatConfig `siege_noise_pressure`).
+- Anzeige `StealthHud` über dem Schnellplatz (Auge = höchster Verdacht in Gruppe „aware“, Punkt = Sichtbarkeit + Atem-Ring,
+  Wellen = letztes Geräusch), abschaltbar: Einstellungen „Schleich-Anzeige“ (`Settings.stealth_hud`).
+- Prüfung `RegressTest._t_stealth`.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

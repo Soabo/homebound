@@ -356,19 +356,26 @@ func _breath_still() -> void:
 	challenge = {"kind": "breath_still"}
 	var side := 1.0 if _rng.randf() < 0.5 else -1.0
 	var at := camp.global_position + camp.global_transform.basis * Vector3(side * 0.7, 0.6, -0.3)
-	_prompt("Atem, direkt neben meinem Kopf. Nicht bewegen.")
+	_prompt("Atem, direkt neben meinem Kopf. Nicht bewegen.   [Alt] Atem anhalten!")
 	CreatureSounds.play_phrase(_scene(), "breath", at, -2.0, 9.0, 8.0)
 	EventBus.fear_changed.emit(0.9)
 	var yaw0 := p.rotation.y
 	var pitch0 := p.head.rotation.x
 	var t := 0.0
 	var moved := false
+	var breathed := 0.0
 	while t < 9.0 and is_inside_tree():
 		await get_tree().create_timer(0.1).timeout
 		t += 0.1
 		if _player() == null or p.light_shining() or absf(angle_difference(p.rotation.y, yaw0)) > 0.35 or absf(p.head.rotation.x - pitch0) > 0.3:
 			moved = true
 			break
+		# Atem hörbar (nach einer Schrecksekunde): es hört dich
+		if t > 1.2 and not p.holding_breath:
+			breathed += 0.1
+			if breathed > cfg.camp_breath_grace:
+				moved = true
+				break
 	challenge = {}
 	_restore_prompt()
 	if moved:

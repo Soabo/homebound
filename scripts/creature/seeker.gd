@@ -40,8 +40,12 @@ static func spawn_for(scene: Node, near: Vector3) -> Seeker:
 	return sk
 
 
+## Verdacht in Stufen (Stealth)
+var awareness := Awareness.new()
+
 func _ready() -> void:
 	add_to_group("seeker")
+	add_to_group("aware")
 	cfg = SeekerConfig.get_default()
 	_rng.randomize()
 	_player = get_tree().get_first_node_in_group("player") as Player
@@ -257,11 +261,16 @@ func _start_search() -> void:
 	_go(pts)
 
 
+## Geräusche bringen Verdacht (Stealth): ab „sieht nach“ geht er hin, vorher hält er nur inne.
 func _on_noise(pos: Vector3, radius: float) -> void:
 	if state in [State.STRIKE, State.LEAVE]:
 		return
-	if pos.distance_to(global_position) < radius * cfg.hearing:
-		_investigate(pos)
+	if awareness.hear(pos, radius, pos.distance_to(global_position), cfg.hearing, clampf(radius / 8.0, 0.5, 1.6)):
+		awareness.tick(0.0)
+		if awareness.stage() >= Awareness.Stage.INVESTIGATE:
+			_investigate(pos)
+		elif awareness.stage() >= Awareness.Stage.SUSPECT:
+			_hold = maxf(_hold, 1.5)
 
 
 ## Reize: Licht (Uhr, Zelt, Feuer), W-17, den Spieler direkt sehen.
@@ -300,8 +309,18 @@ func _sense() -> void:
 			target = fp
 			_investigate(fp)
 			return
-	if camp == null and d < (cfg.sight_lit if lit else cfg.sight_dark) and _sees(pp):
-		_investigate(pp)
+	# Sehen und Atem: Verdacht in Stufen (dunkel, im Schatten, hinter einer Kante lehnend sieht er dich später)
+	if camp == null:
+		var range_m := lerpf(cfg.sight_dark * 0.4, cfg.sight_lit, _player.visibility)
+		if d < range_m:
+			var part := Stealth.seen_part(get_world_3d(), global_position + Vector3(0, 2.3, 0), _player)
+			awareness.see(0.5, pp, part, d, range_m)
+	var br := Stealth.breath_radius(_player)
+	if br > 0.0 and d < br:
+		awareness.hear_breath(0.5, pp)
+	awareness.tick(0.5)
+	if awareness.stage() >= Awareness.Stage.INVESTIGATE:
+		_investigate(awareness.last_pos)
 
 
 func _sees(p: Vector3) -> bool:

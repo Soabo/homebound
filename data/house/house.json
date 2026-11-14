@@ -1,5 +1,61 @@
 {
-  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden. wood_basket: Holzkorb am Kamin, max = Platz (höchstens 6), start = Holz beim Spielstart.",
-  "fireplace": {"burn_hours": 12, "fade_hours": 6, "wood": 1},
-  "wood_basket": {"max": 6, "start": 1}
+  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden. wood_basket: Holzkorb am Kamin, max = Platz (höchstens 6), start = Holz beim Spielstart. creaky_boards: knarrende Dielen (Schleichen, Stealth): x/z Mitte, r Radius in m, attic = auf dem Dachboden. Beim normalen Gehen knarren sie immer, geduckt/mit Alt nur manchmal leise.",
+  "fireplace": {
+    "burn_hours": 12,
+    "fade_hours": 6,
+    "wood": 1
+  },
+  "wood_basket": {
+    "max": 6,
+    "start": 1
+  },
+  "creaky_boards": [
+    {
+      "x": -2.4,
+      "z": 2.4,
+      "r": 0.45
+    },
+    {
+      "x": -0.6,
+      "z": 0.3,
+      "r": 0.45
+    },
+    {
+      "x": 3.8,
+      "z": 1.6,
+      "r": 0.45
+    },
+    {
+      "x": -3.4,
+      "z": -2.9,
+      "r": 0.45
+    },
+    {
+      "x": 0.5,
+      "z": -2.0,
+      "r": 0.4
+    },
+    {
+      "x": -7.5,
+      "z": -2.4,
+      "r": 0.45
+    },
+    {
+      "x": 2.3,
+      "z": -6.1,
+      "r": 0.45
+    },
+    {
+      "x": 0.0,
+      "z": -1.2,
+      "r": 0.5,
+      "attic": true
+    },
+    {
+      "x": -3.2,
+      "z": 1.5,
+      "r": 0.5,
+      "attic": true
+    }
+  ]
 }

@@ -8,7 +8,7 @@ extends Control
 const TITLE_IMAGE := "res://assets/ui/title.jpg"
 const AMBER := Color(1.0, 0.78, 0.48)
 const CONTROLS := [
-	["W A S D", "Gehen"], ["Shift (halten)", "Rennen"], ["Alt (halten)", "Langsam und leise gehen"], ["C / Strg", "Ducken"],
+	["W A S D", "Gehen"], ["Shift (halten)", "Rennen"], ["Alt (halten)", "Langsam gehen und Atem anhalten"], ["C / Strg", "Ducken"], ["Y / X (halten)", "Nach links / rechts lehnen (spähen)"],
 	["Leertaste", "Springen"], ["Maus", "Umsehen"], ["E", "Benutzen, aufheben, öffnen"], ["R", "Zweite Aktion (z. B. hineinlegen, hinsetzen)"],
 	["Linksklick", "Werkzeug in der Hand benutzen, schlagen"], ["Rechtsklick", "Blocken (Gießkanne: füllen)"], ["1 – 9 / Mausrad", "Schnellplatz wählen"],
 	["F (kurz)", "Uhrlicht an/aus"], ["F (halten)", "Uhrlicht: LED oder weißes Display"], ["Tab / I", "Rucksack und Werkbank"],

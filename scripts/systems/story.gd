@@ -243,10 +243,11 @@ func multi_trip_target() -> String:
 		if s.has("target"):
 			ids.append(s["target"])
 		ids.append_array(s.get("targets", []))
-		for id: Variant in ids:
-			var pl: Dictionary = WorldMap.places().get(String(id), {})
-			if pl.get("ring", "") == "multi" and not Tasks.flags.has("visit_" + String(id)):
-				return String(id)
+		for v: Variant in ids:
+			var id := str(v)
+			var pl: Dictionary = WorldMap.places().get(id, {})
+			if pl.get("ring", "") == "multi" and not Tasks.flags.has("visit_" + id):
+				return id
 	return ""
 
 

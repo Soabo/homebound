@@ -36,6 +36,8 @@ var _head: Node3D
 var _jaw: Node3D
 var _arms: Array[Node3D] = []
 var _legs: Array[Node3D] = []
+## Verdacht (Stealth): erst wenn er dich wirklich bemerkt hat, richtet er sich auf und greift an
+var awareness := Awareness.new()
 
 
 ## Erscheint außer Sicht im Wald rund um den Spieler (nur einer gleichzeitig).
@@ -51,6 +53,8 @@ static func spawn_near(scene: Node, player_pos: Vector3) -> Mauler:
 
 func _ready() -> void:
 	add_to_group("mauler")
+	add_to_group("aware")
+	EventBus.noise_made.connect(_on_noise)
 	cfg = MaulerConfig.get_default()
 	_rng.randomize()
 	_player = get_tree().get_first_node_in_group("player") as Player
@@ -216,6 +220,7 @@ func _process(delta: float) -> void:
 			return
 	# Wer im Haus, im Versteck oder im Zelt ist, den verliert er
 	var reachable := _player_reachable()
+	_perceive(delta, dist, reachable)
 	match state:
 		State.STALK:
 			if not reachable:
@@ -223,7 +228,7 @@ func _process(delta: float) -> void:
 			else:
 				_cues(delta, dist)
 				_move_toward(_player.global_position, cfg.stalk_speed, delta)
-				if dist < cfg.charge_distance and _clear_line():
+				if dist < cfg.charge_distance and _clear_line() and awareness.alert():
 					_enter(State.WARN)
 		State.WARN:
 			# sich aufrichten, Maul auf, kreischen – dann losrennen
@@ -429,6 +434,26 @@ func _player_sees(p: Vector3) -> bool:
 	var cam := _player.camera.global_transform
 	var to := (p + Vector3(0, 1.3, 0)) - cam.origin
 	return rad_to_deg((-cam.basis.z).angle_to(to.normalized())) < 50.0 and to.length() < 40.0
+
+
+## Sehen (Sichtbarkeit, Lehnen) und Hören sammeln Verdacht; Atem hört er aus der Nähe.
+func _perceive(delta: float, dist: float, reachable: bool) -> void:
+	if reachable:
+		var range_m := Stealth.sight_range(_player.visibility, cfg.sight_factor)
+		if dist < range_m:
+			var part := Stealth.seen_part(get_world_3d(), global_position + Vector3(0, 1.5, 0), _player)
+			awareness.see(delta, _player.global_position, part, dist, range_m)
+		var br := Stealth.breath_radius(_player)
+		if br > 0.0 and dist < br:
+			awareness.hear_breath(delta, _player.global_position)
+	var ch := awareness.tick(delta)
+	if ch >= Awareness.Stage.SUSPECT and ch > awareness.prev_stage and state == State.STALK:
+		CreatureSounds.play(self, "click", global_position + Vector3(0, 1.5, 0), -4.0, 0.7, 30.0)
+
+
+func _on_noise(pos: Vector3, radius: float) -> void:
+	if state in [State.STALK, State.PROWL, State.CIRCLE]:
+		awareness.hear(pos, radius, pos.distance_to(global_position), cfg.hearing, clampf(radius / 8.0, 0.5, 1.6))
 
 
 func _clear_line() -> bool:

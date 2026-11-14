@@ -344,6 +344,7 @@ func _t_plant_unknown() -> void:
 ## Weitere Prüfungen (später gefundene Fehler).
 func _t_more() -> void:
 	await _frames(1)
+	_t_sleep_wake_passed()
 	await _t_seat_first_time()
 	_t_window_face()
 	await _t_forest_steps()
@@ -365,6 +366,7 @@ func _t_more() -> void:
 	await _t_endings()
 	await _t_camp_events()
 	await _t_packing()
+	await _t_stealth()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -479,12 +481,24 @@ func _t_camp_events() -> void:
 	_ok("Marder: Licht verscheucht ihn, ohne Licht ist Essen weg", kept and Inventory.count("food") < food0)
 	# Atem: stillhalten = nichts passiert
 	p.health = 100.0
+	Survival.stamina = 100.0
+	EventBus.sleeping = false
+	Input.action_press("walk_slow")
 	camp.events.run("breath_still")
 	w0 = 0.0
 	while camp.events.busy() and w0 < 11.0:
 		await get_tree().create_timer(0.25).timeout
 		w0 += 0.25
-	_ok("Atem am Kopf: wer stillhält, bleibt heil", p.health == 100.0)
+	Input.action_release("walk_slow")
+	_ok("Atem am Kopf: wer stillhält und den Atem anhält (Alt), bleibt heil", p.health == 100.0)
+	# … wer dabei atmet, wird bemerkt
+	camp.events.run("breath_still")
+	w0 = 0.0
+	while camp.events.busy() and w0 < 11.0:
+		await get_tree().create_timer(0.25).timeout
+		w0 += 0.25
+	_ok("Atem am Kopf: wer hörbar atmet, wird bemerkt", p.health < 100.0)
+	p.health = 100.0
 	# Wecken: leise Vorfälle wecken nicht, laute schon
 	var now := TimeManager.get_total_hours()
 	var keep_ev := ThreatDirector.events.duplicate(true)
@@ -1706,3 +1720,185 @@ func _t_hands() -> void:
 	Supplies.beds = beds_before
 	Supplies.can_water = can_before
 	Supplies.changed.emit()
+
+
+## Schleichen (Christian 14.11.): Untergrund, Wind/Regen, Atem anhalten (Alt), Licht und Schatten, Lehnen/Fenster, Verdacht in Stufen.
+func _t_stealth() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_rot := p.rotation
+	var keep_w: String = WorldState.weather
+	var keep_h := TimeManager.hour
+	var sc := Stealth.cfg()
+	# Zustand aus früheren Prüfungen (Zelt, Sitzen, Schlaf) zurücksetzen
+	p.set_physics_process(true)
+	p.input_locked = false
+	p.look_only = false
+	p.in_tent = null
+	p.hidden_in = null
+	EventBus.sleeping = false
+	var keep_wind := Wind.current.strength if Wind.current else 0.0
+	if Wind.current:
+		Wind.current.strength = 0.0
+	_ok("Schleichen: Werte geladen (data/stealth/stealth.tres)", ResourceLoader.exists(StealthConfig.PATH) and sc.step_walk > sc.step_slow)
+	_ok("Schleichen: knarrende Dielen im Haus (mit losen Brettern)", Stealth.boards().size() >= 6 and _scene().find_child("CreakyBoard_0", true, false) != null)
+	var b0: Dictionary = Stealth.boards()[0]
+	var bp := Vector3(float(b0["x"]), Cabin.FLOOR_Y + 0.05, float(b0["z"]))
+	_ok("Schleichen: Diele knarrt nur an ihrer Stelle", Stealth.creaky_board(bp) and not Stealth.creaky_board(bp + Vector3(1.5, 0, 0)))
+	# Untergrund und Gangart
+	WorldState.weather = "clear"
+	var o := Vector3(-40, 0, 40)
+	var g := Stealth.step_radius(o, "walk", "gravel")
+	var gr := Stealth.step_radius(o, "walk", "grass")
+	_ok("Schleichen: Kies lauter als Wiese, Laub lauter als Erde", g > gr and Stealth.step_radius(o, "walk", "forest") > Stealth.step_radius(o, "walk", "soil"))
+	_ok("Schleichen: Rennen > Gehen > langsam > geduckt", Stealth.step_radius(o, "run", "forest") > Stealth.step_radius(o, "walk", "forest") \
+		and Stealth.step_radius(o, "walk", "forest") > Stealth.step_radius(o, "slow", "forest") and Stealth.step_radius(o, "slow", "forest") > Stealth.step_radius(o, "sneak", "forest"))
+	_ok("Schleichen: Im Haus dämpfen die Wände", Stealth.step_radius(bp, "walk", "wood") < Stealth.step_radius(o, "walk", "wood"))
+	var dry := Stealth.mask_at(o)
+	WorldState.weather = "rain"
+	var wet := Stealth.mask_at(o)
+	WorldState.weather = "storm"
+	_ok("Schleichen: Regen und Gewitter übertönen Schritte", wet >= dry + 0.3 and Stealth.mask_at(o) > wet and Stealth.step_radius(o, "walk", "gravel") < g * 0.6)
+	WorldState.weather = "clear"
+	# Sichtbarkeit
+	TimeManager.hour = 23.5
+	p.global_position = Vector3(-30, Terrain.height_at(-30, 30) + 0.1, 30)
+	p.velocity = Vector3.ZERO
+	p.flashlight.visible = false
+	for i in 6:
+		await get_tree().physics_frame
+	AirFx.breath_cloud_until = 0
+	var dark := Stealth.visibility(p)
+	p.flashlight.visible = true
+	for i in 6:
+		await get_tree().physics_frame
+	var lit := p.visibility if p.light_shining() else 1.0
+	p.flashlight.visible = false
+	TimeManager.hour = 13.0
+	for i in 4:
+		await get_tree().physics_frame
+	var day := p.visibility
+	_ok("Schleichen: nachts im Dunkeln kaum, mit Licht und am Tag gut zu sehen", dark < 0.45 and lit > 0.9 and day > 0.4, "%.2f / %.2f / %.2f" % [dark, lit, day])
+	TimeManager.hour = 23.5
+	Input.action_press("crouch")
+	for i in 40:
+		await get_tree().physics_frame
+	AirFx.breath_cloud_until = 0
+	var low := Stealth.visibility(p)
+	_ok("Schleichen: geduckt weniger sichtbar", low < dark, "%.2f < %.2f" % [low, dark])
+	Input.action_release("crouch")
+	_ok("Schleichen: Sichtweite der Gegner hängt an der Sichtbarkeit", Stealth.sight_range(dark) < 15.0 and Stealth.sight_range(1.0) > 30.0)
+	_ok("Schleichen: unter Bäumen Schatten, auf dem Hof nicht", Stealth.canopy(Vector3(0, 0, 0)) == 0.0)
+	# Atem anhalten (Alt) + Luftschnappen
+	for i in 30:
+		await get_tree().physics_frame
+	Survival.stamina = 100.0
+	_ok("Atem: ohne Alt hört man ihn aus der Nähe", Stealth.breath_radius(p) > 0.0)
+	Input.action_press("walk_slow")
+	for i in 30:
+		await get_tree().physics_frame
+	_ok("Atem: Alt hält ihn an (unhörbar) und kostet Puste", p.holding_breath and Stealth.breath_radius(p) == 0.0 and Survival.stamina < 100.0)
+	var n0 := p.last_noise_msec
+	Survival.stamina = sc.breath_gasp_at - 1.0
+	for i in 4:
+		await get_tree().physics_frame
+	_ok("Atem: ohne Puste schnappt man laut nach Luft und kann kurz nicht anhalten", not p.holding_breath and p.last_noise_msec > n0 and p.last_noise_radius > 3.0)
+	Input.action_release("walk_slow")
+	Survival.stamina = 100.0
+	p._gasp_block = 0.0
+	# Verdacht in Stufen
+	var aw := Awareness.new()
+	aw.see(0.5, Vector3.ZERO, 1.0, 1.0, 30.0)
+	_ok("Verdacht: ganz nah und voll sichtbar schnell bemerkt", aw.stage() >= Awareness.Stage.INVESTIGATE)
+	var aw2 := Awareness.new()
+	aw2.see(0.5, Vector3.ZERO, sc.peek_lean, 25.0, 30.0)
+	_ok("Verdacht: nur der Kopf schaut hervor, weit weg = kaum", aw2.stage() == Awareness.Stage.CALM)
+	var aw3 := Awareness.new()
+	aw3.hear(Vector3.ZERO, 7.0, 2.0)
+	_ok("Verdacht: ein Schritt nah = stutzt", aw3.stage() == Awareness.Stage.SUSPECT)
+	aw3.hear(Vector3.ZERO, 7.0, 2.0)
+	_ok("Verdacht: zweiter Schritt = sieht nach", aw3.stage() >= Awareness.Stage.INVESTIGATE)
+	for i in 40:
+		aw3.tick(0.5)
+	_ok("Verdacht: klingt ohne neue Reize ab", aw3.stage() == Awareness.Stage.CALM)
+	# Kreatur: Geräusch → stutzt / sieht nach statt sofort hinzulaufen
+	var c := Creature.new()
+	_scene().add_child(c)
+	c.mode = "attack"
+	c.state = Creature.State.PROWL
+	p.global_position = Vector3(-30, Terrain.height_at(-30, 30) + 0.1, 30)
+	c.global_position = Creature._ground(p.global_position + Vector3(60, 0, 0))
+	await get_tree().physics_frame
+	c._path.clear()
+	c._on_noise(c.global_position + Vector3(0, 0, 3), 7.0)
+	for i in 3:
+		await get_tree().physics_frame
+	var s1: int = c.state
+	c._on_noise(c.global_position + Vector3(0, 0, 6), 10.0)
+	for i in 3:
+		await get_tree().physics_frame
+	_ok("Kreatur: leises Geräusch = hält inne, lautes = kommt nachsehen", s1 == Creature.State.SUSPECT and c.state == Creature.State.INVESTIGATE,
+		"%s / %s" % [Creature.State.keys()[s1], Creature.State.keys()[c.state]])
+	# Fenster: Glas lässt durchsehen, neben dem Fenster ist man verdeckt und nicht zu greifen
+	var win := _scene().find_child("WindowLiving", true, false) as CabinWindow
+	if win == null:
+		for w in get_tree().get_nodes_in_group("entry_point"):
+			if w is CabinWindow:
+				win = w
+				break
+	var eye: Vector3 = win.outside_point() + Vector3(0, 1.6, 0)
+	var front: Vector3 = win.inside_point()
+	front.y = Cabin.FLOOR_Y + 0.05
+	var side_dir := win.global_transform.basis.x.normalized()
+	var beside := front + side_dir * (win.width * 0.5 + 0.55) + (win.outside_point() - win.inside_point()).normalized() * 0.4
+	beside.y = Cabin.FLOOR_Y + 0.05
+	p.global_position = front
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var seen_front := Stealth.seen_part(p.get_world_3d(), eye, p)
+	c._target_entry = win
+	var reach_front := c._reach_clear()
+	p.global_position = beside
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var seen_side := Stealth.seen_part(p.get_world_3d(), eye, p)
+	var reach_side := c._reach_clear()
+	_ok("Fenster: durchs Glas sichtbar, seitlich daneben verdeckt", seen_front > 0.0 and seen_side == 0.0, "%.2f / %.2f" % [seen_front, seen_side])
+	_ok("Fenster: davor greift sie hinein, daneben nicht", reach_front and not reach_side)
+	c.queue_free()
+	# Lehnen: Kopf schaut hervor = nur ein Teil sichtbar
+	p._lean = 1.0
+	_ok("Lehnen: spähen zählt weniger als ganz gesehen", sc.peek_lean < sc.peek_head and sc.peek_head < 1.0 and p.leaning())
+	p._lean = 0.0
+	# Belagerung: Lärm im Haus hört es oben
+	var s := SiegeNight.new()
+	s.cfg = ThreatDirector.config
+	s.index = 9
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	s.set_process(false)
+	var ap := s.pressure("attic")
+	EventBus.noise_made.emit(bp, 9.0)
+	_ok("Belagerung: Knarren im Haus erhöht den Druck auf dem Dachboden", s.pressure("attic") > ap or not s.active("attic"))
+	s.queue_free()
+	WorldState.weather = keep_w
+	TimeManager.hour = keep_h
+	if Wind.current:
+		Wind.current.strength = keep_wind
+	p.global_position = keep
+	p.rotation = keep_rot
+
+
+## Fehler 14.11. (15-Tage-Durchlauf „Tag 8 → 10“): Weckt ein Ereignis gleich nach dem Einschlafen, war der Weckzeitpunkt nach der
+## Abblende schon vorbei – skip_to_hour sprang dann einen ganzen Tag weiter. Jetzt skip_to_total: Vergangenes = nichts tun.
+func _t_sleep_wake_passed() -> void:
+	var d := TimeManager.day
+	var h := TimeManager.hour
+	var t0 := TimeManager.get_total_hours()
+	TimeManager.skip_to_total(t0 - 0.01)
+	_ok("Schlaf: knapp verpasster Weckzeitpunkt springt nicht einen Tag weiter", TimeManager.day == d and is_equal_approx(TimeManager.hour, h))
+	TimeManager.skip_to_total(t0 + 0.5)
+	_ok("Schlaf: Weckzeitpunkt in der Zukunft wird erreicht", is_equal_approx(TimeManager.get_total_hours(), t0 + 0.5))
+	TimeManager.set_time(d, h)
+	# Packliste: Ziele der Spur sind Texte (Fehler „Invalid call 'String' constructor“ im Durchlauf)
+	_ok("Packliste: Mehrtagesziel ohne Skriptfehler", Story.multi_trip_target() is String)

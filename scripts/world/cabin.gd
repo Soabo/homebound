@@ -522,6 +522,20 @@ static func stain_texture() -> Texture2D:
 	return _stain_tex
 
 
+## Knarrende Dielen (Schleichen): etwas hellere, lose Bretter mit zwei Nagelköpfen – man lernt, sie zu meiden.
+func _build_creaky_boards() -> void:
+	var board := BuildKit.tex_mat("planks_h", 1.0, Color(0.78, 0.7, 0.6))
+	var nail := BuildKit.color_mat(Color(0.2, 0.19, 0.18), 0.5)
+	var i := 0
+	for b: Dictionary in Stealth.boards():
+		var top := WALL_TOP + 0.1 if bool(b.get("attic", false)) else FLOOR_Y
+		var c := Vector3(float(b["x"]), top + 0.006, float(b["z"]))
+		BuildKit.box(self, Vector3(1.1, 0.012, 0.15), c, board, false).name = "CreakyBoard_%d" % i
+		for sx: float in [-0.46, 0.46]:
+			BuildKit.box(self, Vector3(0.025, 0.008, 0.025), c + Vector3(sx, 0.008, 0.0), nail, false)
+		i += 1
+
+
 func _stain(pos: Vector3, size: Vector3, col: Color, rot_deg: Vector3 = Vector3.ZERO, n: String = "") -> Decal:
 	var d := Decal.new()
 	if n != "":
@@ -540,6 +554,7 @@ func _stain(pos: Vector3, size: Vector3, col: Color, rot_deg: Vector3 = Vector3.
 
 func _build_wear() -> void:
 	var y := FLOOR_Y
+	_build_creaky_boards()
 	var trail := Color(0.32, 0.26, 0.18, 0.55)
 	# Laufweg von der Haustür in den Wohnraum und zur Küche (ausgetretenes Holz)
 	_stain(Vector3(-3.5, y, 3.6), Vector3(1.1, 0.3, 1.6), trail)

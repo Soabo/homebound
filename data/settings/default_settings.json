@@ -1,10 +1,11 @@
 {
-  "_info": "Startwerte der Einstellungen (Hauptmenü/Pause). Gespeichert wird beim Spieler in user://settings.cfg. volume 0..1, mouse = Faktor auf die Mausempfindlichkeit, brightness = Faktor auf die Belichtung, quality low|medium|high (Auflösungsfaktor + Schatten), fullscreen nur Windows.",
+  "_info": "Startwerte der Einstellungen (Hauptmenü/Pause). Gespeichert wird beim Spieler in user://settings.cfg. volume 0..1, mouse = Faktor auf die Mausempfindlichkeit, brightness = Faktor auf die Belichtung, quality low|medium|high (Auflösungsfaktor + Schatten), fullscreen nur Windows. stealth_hud = Schleich-Anzeige (Auge, Licht, Geräusch) ein/aus.",
   "volume": 0.85,
   "mouse": 1.0,
   "brightness": 1.0,
   "quality": "high",
   "fullscreen": true,
+  "stealth_hud": true,
   "quality_levels": {
     "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false},
     "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false},

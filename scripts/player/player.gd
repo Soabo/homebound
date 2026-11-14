@@ -59,6 +59,13 @@ var _heart_timer: float = 0.0
 var _exhausted: bool = false
 ## Gefahrenzone (z. B. Wucherung): 1 = stark verlangsamt; wird von außen gesetzt und klingt ab
 var hazard: float = 0.0
+## Schleichen (Stealth): wie gut man gerade zu sehen ist (0..1), Atem angehalten (Alt), zuletzt gemachtes Geräusch
+var visibility: float = 0.3
+var holding_breath: bool = false
+var breath_held: float = 0.0          ## Sekunden, seit der Atem angehalten wird
+var _gasp_block: float = 0.0
+var last_noise_radius: float = 0.0
+var last_noise_msec: int = -100000
 
 
 func _ready() -> void:
@@ -177,7 +184,7 @@ func _update_concealment() -> void:
 	if not _concealed and now - _rustle_msec > 900 and Vector2(velocity.x, velocity.z).length() > 2.6 and Cover.at(global_position) > 0.0:
 		_rustle_msec = now
 		SoundBank.play_at(get_parent(), "twig", global_position, -8.0, randf_range(0.8, 1.1))
-		EventBus.noise_made.emit(global_position, 9.0)
+		make_noise(9.0 * (1.0 - Stealth.mask_at(global_position)))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -285,10 +292,10 @@ func _physics_process(delta: float) -> void:
 		_exhausted = false
 	var sprinting := wants_sprint and not _exhausted and Survival.use_stamina(20.0 * delta)
 	_update_breathing(sprinting)
-	if not sprinting:
+	if not sprinting and not holding_breath:
 		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
 	var speed := crouch_speed if crouching else (sprint_speed if sprinting else walk_speed)
-	# Alt gedrückt: langsam und leise gehen
+	# Alt gedrückt: langsam und leise gehen (und dabei den Atem anhalten, siehe _update_breath_hold)
 	if slow and not crouching:
 		speed = walk_speed * SLOW_FACTOR
 	speed *= 1.0 - 0.55 * hazard
@@ -319,7 +326,7 @@ func _physics_process(delta: float) -> void:
 		bob = sin(_bob_time) * 0.035 * clampf(horizontal / walk_speed, 0.0, 1.5)
 		# Ein Schritt bei jedem Nulldurchgang der Kopfbewegung (links, rechts)
 		if signf(before) != signf(sin(_bob_time)):
-			_footstep(horizontal, crouching)
+			_footstep(horizontal, crouching, slow)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
 	# Leichtes Wiegen beim Gehen (Kopf neigt sich mit jedem Schritt ein wenig zur Seite)
 	var sway := cos(_bob_time * 0.5) * 0.006 * clampf(horizontal / walk_speed, 0.0, 1.5)
@@ -370,6 +377,9 @@ func _update_lean(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	# Schleichen: Atem anhalten und Sichtbarkeit laufen auch im Sitzen, auf der Couch oder am Monitor weiter
+	_update_breath_hold(delta)
+	visibility = Stealth.visibility(self)
 	# Kamerawackeln
 	_shake = move_toward(_shake, 0.0, delta * 1.5)
 	camera.h_offset = randf_range(-1.0, 1.0) * _shake * 0.05
@@ -383,6 +393,9 @@ func _process(delta: float) -> void:
 			target_fear = clampf(1.0 - d / 20.0, 0.2, 1.0)
 		elif d < 8.0:
 			target_fear = 0.4
+	# Atem angehalten: das Herz schlägt mit jeder Sekunde lauter
+	if holding_breath and breath_held > 2.0:
+		target_fear = maxf(target_fear, clampf((breath_held - 2.0) / 10.0, 0.0, 0.7))
 	_fear = move_toward(_fear, target_fear, delta * (0.8 if target_fear > _fear else 0.15))
 	if _fear > 0.05:
 		_heart_timer -= delta
@@ -392,13 +405,82 @@ func _process(delta: float) -> void:
 	EventBus.fear_changed.emit(_fear)
 
 
-func _footstep(speed: float, crouching: bool = false) -> void:
-	var indoor := Cabin.is_inside(global_position) or Shed.is_inside(global_position) or global_position.y > 0.35
+func _footstep(speed: float, crouching: bool = false, slow: bool = false) -> void:
 	var gait := "sneak" if crouching or speed < crouch_speed + 0.4 else ("run" if speed > walk_speed + 0.5 else "walk")
 	Footsteps.play(get_parent(), global_position, gait)
-	# Rennen draußen ist laut (GDD 9.4)
-	if speed > walk_speed + 0.5 and not indoor:
-		EventBus.noise_made.emit(global_position, 16.0)
+	# Wie laut war der Schritt? Gangart × Untergrund, Wind und Regen übertönen (Stealth)
+	var noise_gait := "slow" if slow and gait == "sneak" and not crouching else gait
+	var surface := Footsteps.surface_at(global_position)
+	var r := Stealth.step_radius(global_position, noise_gait, surface)
+	var sc := Stealth.cfg()
+	# Knarrende Diele im Haus: beim normalen Gehen immer, leise nur manchmal
+	if Stealth.creaky_board(global_position):
+		var soft := noise_gait in ["sneak", "slow"]
+		if not soft or randf() < sc.creak_soft_chance:
+			SoundBank.play_at(get_parent(), "floor_creak", global_position, -10.0 if soft else -2.0, randf_range(0.85, 1.1))
+			r = maxf(r, sc.creak_soft_radius if soft else sc.creak_radius)
+	# Im Wald knackt manchmal ein Ast
+	elif surface == "forest" and noise_gait in ["walk", "run"] and randf() < sc.twig_chance:
+		SoundBank.play_at(get_parent(), "twig", global_position, -6.0, randf_range(0.8, 1.15))
+		r *= sc.twig_factor
+	if r >= 1.0:
+		make_noise(r)
+
+
+## Geräusch des Spielers: Gegner hören es (EventBus.noise_made); die Schleich-Anzeige zeigt es.
+func make_noise(radius: float) -> void:
+	if radius <= 0.0:
+		return
+	last_noise_radius = radius
+	last_noise_msec = Time.get_ticks_msec()
+	EventBus.noise_made.emit(global_position, radius)
+
+
+## Atem anhalten (Christian: Alt = langsam gehen und Atem anhalten zugleich). Kostet Ausdauer, das Herz schlägt
+## lauter; ist die Puste weg, schnappt man hörbar nach Luft und kann eine Weile nicht mehr anhalten.
+func _update_breath_hold(delta: float) -> void:
+	var sc := Stealth.cfg()
+	_gasp_block = maxf(_gasp_block - delta, 0.0)
+	var want := Input.is_action_pressed("walk_slow") and not GameState.dead and not EventBus.sleeping \
+			and not get_tree().paused and _gasp_block <= 0.0
+	if want and Survival.stamina <= sc.breath_gasp_at:
+		_gasp()
+		want = false
+	if want:
+		Survival.use_stamina(sc.breath_drain * delta)
+		breath_held += delta
+	elif holding_breath and breath_held > 1.5 and _gasp_block <= 0.0:
+		PlayerSounds.play_phrase(self, "breath", -24.0, 1.2)   # leise ausatmen
+	if not want:
+		breath_held = 0.0
+	holding_breath = want
+
+
+func _gasp() -> void:
+	var sc := Stealth.cfg()
+	_gasp_block = sc.breath_recover
+	breath_held = 0.0
+	PlayerSounds.play_phrase(self, "breath", -6.0, 2.2)
+	make_noise(sc.gasp_radius * (1.0 - Stealth.mask_at(global_position)))
+	EventBus.notify("Keine Luft mehr – du schnappst laut nach Atem.", 2.0)
+
+
+## Außer Atem (nach dem Rennen): man atmet hörbar
+func panting() -> bool:
+	return _out_of_breath
+
+
+func crouching() -> bool:
+	return _height < STAND_HEIGHT - 0.3
+
+
+func body_height() -> float:
+	return _height
+
+
+## Lehnt man gerade deutlich zur Seite (Y/X)?
+func leaning() -> bool:
+	return absf(_lean) > 0.4
 
 
 ## Außer Atem: nach langem Rennen schweres Atmen, bis die Ausdauer wieder da ist.

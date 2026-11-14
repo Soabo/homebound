@@ -12,6 +12,8 @@ var _leaves: CPUParticles3D
 var _breath: CPUParticles3D
 var _mist: CPUParticles3D
 var _breath_t: float = 2.0
+## Bis wann die letzte Atemwolke zu sehen ist (ms) – macht den Spieler etwas sichtbarer (Stealth)
+static var breath_cloud_until: int = 0
 var _player: Player
 var _rng := RandomNumberGenerator.new()
 
@@ -168,11 +170,12 @@ func _process(delta: float) -> void:
 	# Atem: kalte Nächte, Kälte, Höhe
 	_breath_t -= delta
 	var cold := outside and (night or Survival.warmth < 55.0 or pp.y > 120.0 or w == "fog")
-	if cold and _breath_t <= 0.0:
+	if cold and _breath_t <= 0.0 and not _player.holding_breath:
 		_breath_t = _rng.randf_range(3.2, 4.6) * (0.6 if Input.is_action_pressed("sprint") else 1.0)
 		_breath.global_position = cam.origin + (-cam.basis.z) * 0.32 - cam.basis.y * 0.12
 		_breath.direction = -cam.basis.z + Vector3(0, 0.3, 0)
 		_breath.restart()
+		breath_cloud_until = Time.get_ticks_msec() + 1500
 	# Dunst über dem Bach: Dämmerung, ruhiger Wind, nahe am Wasser
 	var sd := Terrain.stream_distance(pp.x, pp.z)
 	var misty_hour := (h > 4.5 and h < 9.0) or (h > 18.5 and h < 21.5) or w == "fog"

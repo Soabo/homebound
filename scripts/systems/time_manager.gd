@@ -107,6 +107,18 @@ func skip_to_hour(target_hour: float) -> void:
 	time_skipped.emit(from_total, get_total_hours())
 
 
+## Bis zu einem festen Zeitpunkt (Gesamtstunden) vorspulen; liegt er schon zurück, passiert nichts.
+## (Schlaf: während der Abblende läuft die Uhr weiter – mit skip_to_hour wäre ein knapp verpasster Weckzeitpunkt
+## ein ganzer Tag später.)
+func skip_to_total(target_total: float) -> void:
+	var from_total := get_total_hours()
+	var diff := target_total - from_total
+	if diff <= 0.0:
+		return
+	advance_hours(diff)
+	time_skipped.emit(from_total, get_total_hours())
+
+
 func set_time(new_day: int, new_hour: float) -> void:
 	day = new_day
 	hour = fposmod(new_hour, 24.0)

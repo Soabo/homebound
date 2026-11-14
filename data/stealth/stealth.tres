@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="StealthConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/player/stealth_config.gd" id="1_oeyqn"]
+
+[resource]
+script = ExtResource("1_oeyqn")
+surface_factor = {"wood": 1.0, "carpet": 0.4, "porch": 1.2, "grass": 0.7, "forest": 1.3, "gravel": 1.5, "soil": 0.6, "stone": 0.9, "water": 1.8}
+step_sneak = 1.5
+step_slow = 2.0
+step_walk = 7.0
+step_run = 18.0
+indoor_factor = 0.5
+twig_chance = 0.12
+twig_factor = 2.0
+creak_radius = 9.0
+creak_soft_chance = 0.3
+creak_soft_radius = 3.0
+wind_mask_from = 0.25
+wind_mask_full = 0.7
+wind_mask_max = 0.6
+rain_mask = 0.45
+storm_mask = 0.65
+mask_max = 0.75
+breath_drain = 6.0
+breath_gasp_at = 4.0
+gasp_radius = 8.0
+breath_recover = 5.0
+breath_radius = 2.5
+breath_radius_panting = 6.0
+vis_dark = 0.22
+vis_moon = 0.35
+vis_day = 1.0
+vis_own_light = 1.0
+vis_near_light = 0.9
+near_light_range = 6.0
+vis_inside_lit = 0.9
+vis_inside_dark = 0.2
+canopy_shade = 0.5
+crouch_factor = 0.7
+run_bonus = 0.15
+breath_cloud_bonus = 0.1
+peek_lean = 0.25
+peek_head = 0.5
+suspect_at = 0.3
+investigate_at = 0.6
+notice_close = 0.7
+notice_far = 4.5
+noise_gain = 0.7
+breath_gain = 0.35
+decay = 0.12
+decay_delay = 2.5
+sight_min = 4.0
+sight_max = 34.0
+investigate_time = Vector2(6.0, 11.0)

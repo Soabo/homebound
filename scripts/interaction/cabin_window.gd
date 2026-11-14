@@ -49,6 +49,7 @@ func _ready() -> void:
 			Vector3(0, height * 0.5, 0), BuildKit.glass_mat(), false)
 	_glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_glass_body = _make_body(Vector3(width - f * 2.0, height - f * 2.0, 0.05), Vector3(0, height * 0.5, 0))
+	_glass_body.add_to_group("see_through")   # Glas: Gegner sehen hindurch (Stealth.line_clear)
 
 	# Risse (unsichtbar, bis das Glas beschädigt ist)
 	_cracks = Node3D.new()
