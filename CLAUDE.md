@@ -373,7 +373,7 @@
 - Fehlschläge: 1. = Schaden `siege_hit_damage`; ab 2. „Es ist im Haus“: `siege_hide_seconds` Zeit für Versteck (HideSpot, Keller
   mit geschlossener Luke, Dachboden mit hochgezogener Leiter – `SiegeNight.is_safe`), sonst Tod; versteckt → zieht ab, Strikes = 1.
   Draußen länger als `siege_outside_seconds` = Fehlschlag.
-- Übersicht: `Babyfon` (Empfänger auf Stefanies Schreibtisch, Balken Kind/Dach/Keller, braucht Strom; Sender in den drei Räumen)
+- Übersicht: `Babyfon` (Empfänger auf Stefanies Schreibtisch, Balken Kind/Dach/Keller, läuft mit Batterien auch ohne Strom; Sender in den drei Räumen)
   und zweiter Monitor `OfficeMonitorStation` (MonitorStation hat jetzt `screen_rot_y`, `chair_feet`, `face_dir`).
 - Prüfung `RegressTest._t_siege` (inkl. Echtzeit-Lauf mit schnellen Werten).
 
@@ -606,6 +606,17 @@
 - Regen-Schleife nahtlos (`SoundBank._seamless`), nach Regen seltener gleich wieder Regen. Gras wächst nicht durch Anbau-Böden
   (`Forest._add_multimesh` filtert `Cabin.in_footprint`). Wege schneiden sich als Hohlweg ins Gelände (`Terrain.TRAIL_CUT_REACH`).
 - Prüfung `RegressTest._t_village`, `_t_batch3_1411`.
+
+## Christians vierte Liste 14.11. nachts
+- Hauptmenü: Knopf „Test: ab Tag 15“ (Platz wählen) → `GameState.new_game(n, 15)` → `GameState.test_start(day)`: Nächte fortschreiben,
+  Tag 15 um `TEST_START_HOUR`, Marschgepäck `TEST_KIT` (Zelt, Schlafsack, Lagerfeuer, Holz, Essen, Wasser, Karte, Axt …), heute Nacht
+  keine Belagerung. Das Zelt im normalen Spiel liegt in der Kantine im Ferienlager (Lagerweg, blaue Markierung).
+- Archiv: unerforschte Funde ohne Bild, nur Platzhalter „???“ (`ResearchMenu.unknown_picture`); Zeile nennt den Platz.
+  Analysegerät listet Funde, die woanders untersucht werden (`ResearchMenu.elsewhere_lines`, z. B. Vogel ohne Augen → Mikroskop im Labor).
+- Wärme: Kamin und Küchenofen haben `heat_at` (SurvivalConfig `hearth_radius`), direkt davor lädt sie mit `fire_gain` (90/Std.) auf.
+- Babyfon läuft mit Batterien (ohne Strom). Holzstapel am Schuppen: data/house/house.json `woodpile` (`refill_days` 2, `ResourceNode.refill_days`).
+- Schlaf heilt: SurvivalConfig `sleep_heal_per_hour` (nicht mit leerem Magen/Durst), in `Survival._on_woke`.
+- Prüfung `RegressTest._t_batch4_1411` (dazu Sprungprobe im Büro in `_t_fixes_1411`).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

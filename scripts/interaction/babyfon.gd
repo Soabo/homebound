@@ -56,7 +56,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var on := PowerManager.has_power()
+	var on := true   # läuft mit Batterien – auch bei Stromausfall (Christian 14.11.)
 	_power_led.emission_energy_multiplier = 1.5 if on else 0.0
 	var levels: Array = SiegeNight.current.monitor_levels() if SiegeNight.current else [-1.0, -1.0, -1.0]
 	var loud := 0.0
@@ -77,8 +77,6 @@ func _process(_delta: float) -> void:
 
 
 func get_prompt(_p: Node) -> String:
-	if not PowerManager.has_power():
-		return "Babyfon – kein Strom"
 	if SiegeNight.current == null:
 		return "Babyfon (Kinderzimmer · Dachboden · Keller)"
 	var l: Array = SiegeNight.current.monitor_levels()

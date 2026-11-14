@@ -1,5 +1,5 @@
 {
-  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden. wood_basket: Holzkorb am Kamin, max = Platz (höchstens 6), start = Holz beim Spielstart. creaky_boards: knarrende Dielen (Schleichen, Stealth): x/z Mitte, r Radius in m, attic = auf dem Dachboden. Beim normalen Gehen knarren sie immer, geduckt/mit Alt nur manchmal leise.",
+  "_info": "Gegenstände im Haus. fireplace: Brenndauer in Spielstunden, die letzten fade_hours wird es dunkler und leiser; wood = Holz pro Anzünden. wood_basket: Holzkorb am Kamin, max = Platz (höchstens 6), start = Holz beim Spielstart. woodpile: Holzstapel am Schuppen, amount trockene Scheite, per_take pro Griff, refill_days = alle so viele Tage wieder trocken. creaky_boards: knarrende Dielen (Schleichen, Stealth): x/z Mitte, r Radius in m, attic = auf dem Dachboden. Beim normalen Gehen knarren sie immer, geduckt/mit Alt nur manchmal leise.",
   "fireplace": {
     "burn_hours": 12,
     "fade_hours": 6,
@@ -8,6 +8,11 @@
   "wood_basket": {
     "max": 6,
     "start": 1
+  },
+  "woodpile": {
+    "amount": 4,
+    "per_take": 2,
+    "refill_days": 2
   },
   "creaky_boards": [
     {

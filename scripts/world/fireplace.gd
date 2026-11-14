@@ -94,6 +94,15 @@ func heats_cabin() -> bool:
 	return strength() > 0.15
 
 
+## Wärme direkt vor dem Kamin (0..1, Reichweite SurvivalConfig.hearth_radius).
+func heat_at(pos: Vector3) -> float:
+	var st := strength()
+	if st <= 0.0:
+		return 0.0
+	var d := to_global(Vector3(0.35, 0.45, 0)).distance_to(pos)
+	return clampf(1.0 - d / SurvivalConfig.get_default().hearth_radius, 0.0, 1.0) * clampf(st * 2.0, 0.3, 1.0)
+
+
 func strength() -> float:
 	var left := burn_until - TimeManager.get_total_hours()
 	return clampf(left / maxf(float(_cfg.get("fade_hours", 6.0)), 0.01), 0.0, 1.0)

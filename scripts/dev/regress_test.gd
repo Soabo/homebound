@@ -378,6 +378,7 @@ func _t_more() -> void:
 	await _t_fixes_1411()
 	_t_village()
 	await _t_batch3_1411()
+	await _t_batch4_1411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2109,6 +2110,85 @@ func _t_window_sides() -> void:
 
 
 ## Christians Testrunde 14.11. abends (erste Belagerung + 15 Punkte).
+## Christians vierte Liste 14.11. nachts: Archiv-Platzhalter, Vogel, Wärme am Feuer, Babyfon, Holzstapel, Schlaf, Teststart.
+func _t_batch4_1411() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_d := TimeManager.day
+	var keep_h := TimeManager.hour
+	# Archiv: nicht erforschte Funde ohne Bild, nur „???“; der Vogel steht drin, mit seinem Platz
+	Inventory.add("blind_bird", 1)
+	await _frames(2)
+	var list := VBoxContainer.new()
+	add_child(list)
+	ResearchMenu.fill_archive(list)
+	var texts := ""
+	var pics := 0
+	var unknown := 0
+	for n in list.find_children("*", "", true, false):
+		if n is Label:
+			texts += (n as Label).text + "\n"
+		elif n is TextureRect:
+			pics += 1
+		if n.name == "UnknownPicture":
+			unknown += 1
+	_ok("Archiv: Vogel ohne Augen steht drin (mit Platz)", texts.contains("Vogel ohne Augen") and texts.contains("Mikroskop"), "")
+	_ok("Archiv: unerforschte Funde zeigen kein Bild, nur ???", unknown > 0 and pics <= Research.done.filter(func(id: String) -> bool: return Research.is_sent(id)).size(), "Bilder %d, ??? %d" % [pics, unknown])
+	list.queue_free()
+	var el := ResearchMenu.elsewhere_lines("device")
+	_ok("Analysegerät: sagt, wo der Vogel untersucht wird", Array(el).any(func(l: String) -> bool: return l.contains("Vogel")), str(el))
+	Inventory.remove("blind_bird", 1)
+	# Wärme: direkt am Kamin deutlich schneller als nur in geheizter Hütte
+	var fp := _scene().find_child("Fireplace", true, false) as Fireplace
+	if fp:
+		var keep_burn := fp.burn_until
+		fp.burn_until = TimeManager.get_total_hours() + 10.0
+		p.global_position = fp.to_global(Vector3(1.4, 0.0, 0.0))
+		p.global_position.y = Cabin.FLOOR_Y + 0.05
+		var near := Survival.warmth_rate(p)
+		p.global_position = Vector3(4.0, Cabin.FLOOR_Y + 0.05, 2.5)
+		var far := Survival.warmth_rate(p)
+		_ok("Wärme: am Kamin schneller (%.0f) als im Rest der Hütte (%.0f)" % [near, far], near > far * 2.0)
+		fp.burn_until = keep_burn
+	# Babyfon ohne Strom
+	var bf := _scene().find_child("Babyfon", true, false)
+	if bf:
+		_ok("Babyfon: kein „kein Strom“ mehr", not String(bf.call("get_prompt", p)).contains("Strom"))
+	# Holzstapel: alle zwei Tage wieder trocken
+	var pile := _scene().find_child("Woodpile", true, false) as ResourceNode
+	if pile:
+		var keep_a := pile.amount
+		pile.amount = 0
+		pile._on_day_changed(3)
+		var odd := pile.amount
+		pile._on_day_changed(4)
+		_ok("Holzstapel: jeden zweiten Tag wieder Scheite (%d → %d)" % [odd, pile.amount], odd == 0 and pile.amount == pile.max_amount)
+		pile.amount = keep_a
+	# Schlaf heilt
+	var keep_hp := p.health
+	p.health = 30.0
+	Survival.hunger = maxf(Survival.hunger, 50.0)
+	Survival.thirst = maxf(Survival.thirst, 50.0)
+	p.global_position = Vector3(4.0, Cabin.FLOOR_Y + 0.05, 2.5)
+	Survival._sleep_from = TimeManager.get_total_hours() - 6.0
+	Survival._sleep_rate = 0.0
+	Survival._on_woke()
+	_ok("Schlaf heilt (30 → %.0f nach 6 Stunden)" % p.health, p.health >= 90.0)
+	p.health = keep_hp
+	# Teststart ab Tag 15: Zelt, Schlafsack, keine Belagerung heute Nacht
+	var keep_inv := Inventory.items.duplicate(true)
+	var keep_threat: Dictionary = ThreatDirector.get_state()
+	GameState.test_start(15)
+	_ok("Teststart: Tag 15 mit Zelt und Schlafsack, heute keine Belagerung",
+		TimeManager.day == 15 and Inventory.count("tent") >= 1 and Inventory.count("sleeping_bag") >= 1 and not ThreatDirector.siege_tonight() and ThreatDirector.night_kind != "siege",
+		"Tag %d, Nacht %s" % [TimeManager.day, ThreatDirector.night_kind])
+	Inventory.items = keep_inv
+	Inventory.changed.emit()
+	ThreatDirector.set_state(keep_threat)
+	TimeManager.set_time(keep_d, keep_h)
+	p.global_position = keep
+
+
 ## Christians dritte Liste 14.11.: Regen nahtlos, Spieluhr, Dosen, Morgengrauen, nachts im Wald.
 func _t_batch3_1411() -> void:
 	var p := _player()
@@ -2330,6 +2410,29 @@ func _t_fixes_1411() -> void:
 	var q := PhysicsRayQueryParameters3D.create(c, c + Vector3(0, 3.0, 0))
 	q.exclude = [p.get_rid()]
 	_ok("Kinderzimmer: man springt nicht durch die Decke", not p.get_world_3d().direct_space_state.intersect_ray(q).is_empty())
+	# Büro und Kinderzimmer: überall ist über dem Kopf etwas Festes (Raster, auch an den Rändern)
+	var holes: Array = []
+	for room: Rect2 in [Cabin.OFFICE, Cabin.KIDS]:
+		for ix in 9:
+			for iz in 9:
+				var pt := Vector3(room.position.x + 0.25 + (room.size.x - 0.5) * ix / 8.0, Cabin.FLOOR_Y + 1.2, room.position.y + 0.25 + (room.size.y - 0.5) * iz / 8.0)
+				var rq := PhysicsRayQueryParameters3D.create(pt, pt + Vector3(0, 4.0, 0))
+				rq.exclude = [p.get_rid()]
+				var hit := p.get_world_3d().direct_space_state.intersect_ray(rq)
+				if hit.is_empty() or float(hit["position"].y) > Cabin.FLOOR_Y + 2.9:
+					holes.append(Vector2(snappedf(pt.x, 0.1), snappedf(pt.z, 0.1)))
+	_ok("Anbauten: keine Lücke in der Decke (%d)" % holes.size(), holes.is_empty(), str(holes.slice(0, 12)))
+	# echter Sprung im Büro, nah an der Hauswand (dort ist das Pultdach am höchsten), doppelt so kräftig wie normal
+	var top := -99.0
+	for spot: Vector2 in [Vector2(0.5, -4.9), Vector2(-1.5, -7.5), Vector2(2.8, -6.0)]:
+		p.global_position = Vector3(spot.x, Cabin.FLOOR_Y + 0.1, spot.y)
+		p.velocity = Vector3.ZERO
+		await _frames(10)
+		p.velocity.y = p.jump_velocity * 2.0
+		for i in 60:
+			await get_tree().physics_frame
+			top = maxf(top, p.global_position.y)
+	_ok("Büro: kräftiger Sprung bleibt unter dem Dach (%.2f)" % top, top < CabinRooms.ROOF_HI)
 	# Lose Dielen: nicht unter Teppichen oder Möbeln (Christian 14.11.: Teppich im Kinderzimmer, Diele unter der Couch)
 	var rugs := [Rect2(-4.6, 0.6, 2.2, 2.3), Rect2(-4.2, -2.3, 1.6, 1.0), Rect2(-8.0, -2.6, 1.1, 1.2)]
 	var bad_b: Array = []
@@ -2343,7 +2446,11 @@ func _t_fixes_1411() -> void:
 		bq.shape = bx
 		bq.transform = Transform3D(Basis(), Vector3(float(b["x"]), Cabin.FLOOR_Y + 0.35, float(b["z"])))
 		bq.exclude = [p.get_rid()]
-		if rugs.any(func(g: Rect2) -> bool: return g.intersects(r)) or not p.get_world_3d().direct_space_state.intersect_shape(bq, 1).is_empty():
+		# nur feste Möbel der Hütte zählen (Gegner/Bauteile aus früheren Prüfungen stehen manchmal noch herum)
+		var cabin := _scene().get_node_or_null("Cabin")
+		var furn := p.get_world_3d().direct_space_state.intersect_shape(bq, 8).filter(func(h: Dictionary) -> bool:
+			return cabin != null and cabin.is_ancestor_of(h.collider as Node))
+		if rugs.any(func(g: Rect2) -> bool: return g.intersects(r)) or not furn.is_empty():
 			bad_b.append(Vector2(b["x"], b["z"]))
 	_ok("Lose Dielen liegen frei (kein Teppich, keine Möbel darüber)", bad_b.is_empty(), str(bad_b))
 	# Hochsitz neben dem Weg

@@ -10,6 +10,8 @@ extends Interactable
 @export var amount: int = 5
 @export var max_amount: int = 5
 @export var regrow_per_day: int = 0
+## Alle so viele Tage wieder ganz voll (0 = nie), z. B. Holzstapel am Schuppen jeden zweiten Tag
+@export var refill_days: int = 0
 @export var tool: String = ""
 @export var action_label: String = "Sammeln"
 @export var action_time: float = 1.2
@@ -38,8 +40,10 @@ func _ready() -> void:
 	TimeManager.day_changed.connect(_on_day_changed)
 
 
-func _on_day_changed(_day: int) -> void:
+func _on_day_changed(day: int) -> void:
 	amount = mini(amount + regrow_per_day, max_amount)
+	if refill_days > 0 and day % refill_days == 0:
+		amount = max_amount
 
 
 func get_prompt(_player: Node) -> String:

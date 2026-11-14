@@ -94,10 +94,12 @@ func _ready() -> void:
 	var pile := ResourceNode.new()
 	pile.name = "Woodpile"
 	pile.item_id = "wood"
-	pile.per_action = 2
-	pile.amount = 4   # nur ein paar trockene Scheite, der Rest ist nass
-	pile.max_amount = 4
-	pile.empty_text = "Unbrauchbar, die Scheite sind nass"
+	var wp: Dictionary = DataDB.load_json("res://data/house/house.json").get("woodpile", {})
+	pile.per_action = int(wp.get("per_take", 2))
+	pile.amount = int(wp.get("amount", 4))   # nur ein paar trockene Scheite, der Rest ist nass
+	pile.max_amount = pile.amount
+	pile.refill_days = int(wp.get("refill_days", 2))   # nach zwei Tagen sind wieder welche trocken
+	pile.empty_text = "Unbrauchbar, die Scheite sind nass – in ein, zwei Tagen sind wieder welche trocken"
 	pile.action_label = "Brennholz nehmen"
 	pile.action_time = 0.6
 	pile.sound = "step_wood"

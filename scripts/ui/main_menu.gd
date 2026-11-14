@@ -172,6 +172,7 @@ func _build_buttons() -> void:
 	_button(box, "Neues Spiel").pressed.connect(func() -> void: _show_slots("new"))
 	if latest >= 0:
 		_button(box, "Spiel laden").pressed.connect(func() -> void: _show_slots("load"))
+	_button(box, "Test: ab Tag 15", "mit Zelt und Schlafsack").pressed.connect(func() -> void: _show_slots("test15"))
 	_button(box, "Einstellungen").pressed.connect(_show_settings)
 	_button(box, "Steuerung").pressed.connect(_show_controls)
 	_button(box, "Gesehene Enden").pressed.connect(_show_endings)
@@ -262,7 +263,7 @@ func _show_slots(mode: String) -> void:
 
 
 func _fill_slots(mode: String) -> void:
-	_open_panel("Neues Spiel – Platz wählen" if mode == "new" else "Spiel laden")
+	_open_panel({"new": "Neues Spiel – Platz wählen", "test15": "Test ab Tag 15 – Platz wählen"}.get(mode, "Spiel laden"))
 	for n in GameState.SLOTS:
 		var info := GameState.slot_info(n)
 		var row := HBoxContainer.new()
@@ -278,7 +279,7 @@ func _fill_slots(mode: String) -> void:
 			var mins := int(float(info.get("play_seconds", 0.0)) / 60.0)
 			col.add_child(_label("Tag %d, %02d:%02d Uhr   ·   gespielt %d Std. %02d Min." % [int(info.get("day", 1)), int(h), int(fmod(h, 1.0) * 60.0), mins / 60, mins % 60], 17))
 			col.add_child(_label("gespeichert " + _nice_date(String(info.get("saved_at", ""))), 15, Color(0.6, 0.6, 0.56)))
-		if mode == "new":
+		if mode == "new" or mode == "test15":
 			var key := "new%d" % n
 			var text := "Hier beginnen" if info.is_empty() else ("Wirklich überschreiben?" if _confirm == key else "Überschreiben")
 			var b := Button.new()
@@ -286,7 +287,7 @@ func _fill_slots(mode: String) -> void:
 			b.custom_minimum_size = Vector2(230, 42)
 			b.pressed.connect(func() -> void:
 				if info.is_empty() or _confirm == key:
-					GameState.new_game(n)
+					GameState.new_game(n, 15 if mode == "test15" else 1)
 				else:
 					_confirm = key
 					_fill_slots(mode))

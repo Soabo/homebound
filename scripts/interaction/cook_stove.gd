@@ -44,6 +44,14 @@ func heats_cabin() -> bool:
 	return lit()
 
 
+## Wärme am Küchenofen (schwächer als der Kamin).
+func heat_at(pos: Vector3) -> float:
+	if not lit():
+		return 0.0
+	var d := to_global(anchor).distance_to(pos)
+	return clampf(1.0 - d / SurvivalConfig.get_default().hearth_radius, 0.0, 1.0) * 0.7
+
+
 func lit() -> bool:
 	return TimeManager.get_total_hours() < burn_until
 

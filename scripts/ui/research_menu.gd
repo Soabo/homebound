@@ -260,9 +260,35 @@ func _fill_station() -> void:
 			if st == "device" and Research.done.is_empty():
 				hint += " Draußen im Wald soll etwas abgestürzt sein …"
 			_list.add_child(_text(hint, 18, Color(0.6, 0.7, 0.7)))
+		# Funde im Rucksack, die an einen anderen Platz gehören (z. B. Vogel ohne Augen → Mikroskop im Labor)
+		for line: String in elsewhere_lines(st):
+			_list.add_child(_text(line, 16, Color(0.75, 0.7, 0.55)))
 		if locked > 0:
 			_list.add_child(_text("Noch %d Projekt(e) an diesem Platz gesperrt – Voraussetzungen stehen im Forschungsbaum auf dem Tablet." % locked, 15, Color(0.55, 0.6, 0.62)))
 	_add_send_button()
+
+
+## Hinweiszeilen: Funde, die man dabei hat, die aber an einem anderen Platz untersucht werden.
+static func elsewhere_lines(st: String) -> PackedStringArray:
+	var out: PackedStringArray = []
+	var shown := {}
+	var analyses: Dictionary = Research.data().get("analyses", {})
+	for id: String in analyses:
+		var a: Dictionary = analyses[id]
+		var find := String(a.get("find", ""))
+		var other := Research.station_of(id)
+		if find == "" or other == st or shown.has(find) or Research.done.has(id) or Research.running_at(id) != "" or Inventory.count(find) <= 0:
+			continue
+		if not Research.requirements_met(id):
+			continue
+		shown[find] = true
+		var where := Research.station_name(other)
+		if other != "device" and not Research.lab_built:
+			where += " im Labor (das Labor im Bad ist noch nicht eingerichtet)"
+		elif other != "device" and not Research.station_built(other):
+			where += " im Labor (noch nicht gebaut)"
+		out.append("%s – wird hier nicht untersucht, sondern: %s" % [Inventory.display_name(find), where])
+	return out
 
 
 func _tags(id: String) -> String:
@@ -463,7 +489,7 @@ static func fill_archive(list: VBoxContainer) -> void:
 				listed_finds[find + "/" + str(a.get("requires", []).is_empty())] = true
 				var pr := Research.progress_of(id)
 				var title := ("Fund: %s" % Inventory.display_name(find)) if (a.get("requires", []) as Array).is_empty() else ("%s (%s)" % [a.get("name", id), Inventory.display_name(find)])
-				col.add_child(_text("○ %s – noch nicht untersucht%s" % [title, (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else ""], 17, Color(0.7, 0.7, 0.65)))
+				col.add_child(_text("○ %s – noch nicht untersucht%s  (Platz: %s)" % [title, (" (%d %%)" % int(pr * 100.0)) if pr > 0.0 else "", Research.station_name(Research.station_of(id))], 17, Color(0.7, 0.7, 0.65)))
 			else:
 				continue
 			any = true
@@ -471,25 +497,26 @@ static func fill_archive(list: VBoxContainer) -> void:
 				col.add_child(_text("· %s: %s" % [exp.get("label", ""), exp.get("text", "")], 15, Color(0.6, 0.75, 0.75)))
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation", 14)
-			var pic := research_picture(find)
+			# Bild erst, wenn das Ergebnis gesendet ist – vorher nur ein Platzhalter „???“ (Christian 14.11.)
+			var pic := research_picture(find) if revealed else null
 			if pic:
 				var tr := TextureRect.new()
 				tr.texture = pic
 				tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 				tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-				tr.custom_minimum_size = Vector2(210, 210) if revealed else Vector2(90, 90)
+				tr.custom_minimum_size = Vector2(210, 210)
 				tr.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-				tr.modulate = Color.WHITE if revealed else Color(0.25, 0.27, 0.3)
-				if revealed:
-					# anklicken = groß ansehen
-					tr.mouse_filter = Control.MOUSE_FILTER_STOP
-					tr.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-					tr.tooltip_text = "Anklicken: groß ansehen"
-					var title2 := String(a.get("name", id))
-					tr.gui_input.connect(func(ev: InputEvent) -> void:
-						if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
-							show_big_picture(tr, pic, title2))
+				# anklicken = groß ansehen
+				tr.mouse_filter = Control.MOUSE_FILTER_STOP
+				tr.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+				tr.tooltip_text = "Anklicken: groß ansehen"
+				var title2 := String(a.get("name", id))
+				tr.gui_input.connect(func(ev: InputEvent) -> void:
+					if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+						show_big_picture(tr, pic, title2))
 				row.add_child(tr)
+			elif not revealed:
+				row.add_child(unknown_picture())
 			row.add_child(col)
 			list.add_child(row)
 		if not any:
@@ -565,6 +592,24 @@ static func show_big_picture(from: Control, pic: Texture2D, title: String) -> vo
 		if ev is InputEventMouseButton and ev.pressed:
 			over.queue_free())
 	layer.add_child(over)
+
+
+## Platzhalter für noch nicht erforschte Funde: dunkles Feld mit „???“.
+static func unknown_picture() -> Control:
+	var box := PanelContainer.new()
+	box.name = "UnknownPicture"
+	box.custom_minimum_size = Vector2(90, 90)
+	box.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.09, 0.1)
+	sb.border_color = Color(0.3, 0.33, 0.35)
+	sb.set_border_width_all(1)
+	box.add_theme_stylebox_override("panel", sb)
+	var l := _text("???", 26, Color(0.45, 0.5, 0.52))
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	box.add_child(l)
+	return box
 
 
 ## Bild zum Fund aus assets/research/<id>.jpg|png (KI-Bilder von Christian), sonst null.

@@ -206,15 +206,47 @@ func load_game(n: int) -> bool:
 
 
 ## Neues Spiel in einen Platz (überschreibt ihn beim ersten Speichern).
-func new_game(n: int) -> void:
+## start_day > 1 = Teststart (Hauptmenü): gleich an diesem Tag, mit Zelt, Schlafsack und Marschgepäck.
+func new_game(n: int, start_day: int = 1) -> void:
 	slot = n
 	play_seconds = 0.0
 	_apply(_fresh.duplicate(true), _fresh.duplicate(true))
 	get_tree().change_scene_to_file(GAME_SCENE)
 	# gleich einmal sichern, damit „Fortsetzen“ den Platz kennt
 	await get_tree().create_timer(1.0).timeout
+	if start_day > 1:
+		test_start(start_day)
 	take_snapshot()
 	save_game(false)
+
+
+## Teststart (Christian 14.11.): Nächte bis start_day fortschreiben, Tag start_day um TEST_START_HOUR,
+## volles Marschgepäck. Heute Nacht keine Belagerung, damit man draußen zelten kann.
+const TEST_START_HOUR := 14.0
+const TEST_KIT := {"tent": 1, "sleeping_bag": 1, "campfire": 1, "wood": 6, "food": 4, "water": 4,
+		"hiking_map": 1, "axe": 1, "medkit": 1, "planks": 2, "nails": 6}
+
+
+func test_start(day: int) -> void:
+	for d in range(TimeManager.day, day):
+		ThreatDirector.plan_night(d)   # Spannungsbogen der übersprungenen Nächte fortschreiben
+		TimeManager.set_time(d + 1, 8.0)
+		WorldState._on_day_changed(d + 1)
+	ThreatDirector.last_siege_day = day   # heute Nacht keine Belagerung
+	ThreatDirector._arc_day = -1
+	ThreatDirector._planned_for_day = -1
+	TimeManager.set_time(day, TEST_START_HOUR)
+	ThreatDirector._on_phase_changed(false)
+	Survival.hunger = 100.0
+	Survival.thirst = 100.0
+	Survival.warmth = 100.0
+	Survival.stamina = Survival.STAMINA_MAX
+	for id: String in TEST_KIT:
+		Inventory.add(id, int(TEST_KIT[id]))
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if player:
+		player.health = Player.MAX_HEALTH
+	EventBus.notify("TEST: Tag %d, %s. Im Rucksack: Zelt, Schlafsack, Lagerfeuer, Holz, Essen, Wasser, Wanderkarte. Bau das Zelt draußen mit B auf (weit weg von der Hütte)." % [day, TimeManager.get_clock_text()], 9.0)
 
 
 func delete_slot(n: int) -> void:

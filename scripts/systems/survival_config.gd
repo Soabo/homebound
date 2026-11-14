@@ -41,11 +41,17 @@ static func get_default() -> SurvivalConfig:
 
 @export_group("Feuer")
 ## Gewinn pro Stunde direkt am Feuer (nimmt mit der Entfernung ab)
-@export var fire_gain: float = 30.0
+@export var fire_gain: float = 90.0
 @export var campfire_radius: float = 5.0
+## So weit (m) wärmen Kamin und Küchenofen in der Hütte spürbar schneller
+@export var hearth_radius: float = 3.5
 ## Lagerfeuer: so lange brennt es (Stunden), so viel länger je Holz
 @export var campfire_hours: float = 3.0
 @export var campfire_hours_per_wood: float = 1.5
+
+@export_group("Schlaf")
+## Heilung pro geschlafener Stunde (8 Stunden Schlaf = fast ganz gesund)
+@export var sleep_heal_per_hour: float = 12.0
 
 @export_group("Folgen")
 ## Unter diesem Wert friert man (Hinweis, Zittern, weniger Ausdauer)

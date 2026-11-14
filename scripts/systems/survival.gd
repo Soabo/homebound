@@ -62,6 +62,9 @@ func warmth_rate(p: Node3D) -> float:
 		if n.has_method("heat_at"):
 			heat = maxf(heat, float(n.call("heat_at", pos)))
 	if Cabin.is_inside(pos):
+		# direkt am Kamin/Ofen lädt sich die Wärme schnell auf (Christian 14.11.)
+		if heat > 0.05:
+			return maxf(cfg.cabin_heated_gain, heat * cfg.fire_gain)
 		if cabin_heated:
 			return cfg.cabin_heated_gain
 		return cfg.cabin_unheated_gain_night if night else cfg.cabin_unheated_gain_day
@@ -125,6 +128,10 @@ func _on_woke() -> void:
 		return
 	var hours := maxf(TimeManager.get_total_hours() - _sleep_from, 0.0)
 	_sleep_from = -1.0
+	# Schlaf heilt (Christian 14.11.): pro geschlafener Stunde, nicht mit leerem Magen/Durst
+	var pl := get_tree().get_first_node_in_group("player")
+	if pl and hunger > 0.0 and thirst > 0.0:
+		pl.set("health", minf(float(pl.get("health")) + hours * cfg.sleep_heal_per_hour, Player.MAX_HEALTH))
 	if _sleep_rate >= 0.0:
 		warmth = maxf(warmth, 70.0)
 		return
