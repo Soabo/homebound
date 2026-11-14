@@ -150,6 +150,9 @@ func _process(delta: float) -> void:
 func flash(strength: float, dir: Vector3) -> void:
 	_flash = maxf(_flash, strength)
 	_flash_dir = dir.normalized()
+	# Im Blitz ist der Wechselbalg für ein Bild so zu sehen, wie er wirklich ist
+	if strength > 0.3:
+		get_tree().call_group("changeling", "on_lightning")
 
 
 ## Sonnenhöhe in Grad: 0 kurz nach 7 Uhr und kurz vor 19 Uhr, Höchststand um 13 Uhr.

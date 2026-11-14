@@ -12,7 +12,8 @@ extends Node
 
 static var current: SiegeNight
 
-const TASK_ORDER := ["window", "music", "attic", "cellar"]
+## fake = Wechselbalg: eins der Dinge im Haus ist nicht echt (ab Story-Phase 2)
+const TASK_ORDER := ["window", "music", "attic", "cellar", "fake"]
 
 var cfg: ThreatConfig
 var index: int = 1                 # wievielte Belagerung (bestimmt, wie viele Aufgaben laufen)
@@ -41,6 +42,10 @@ var _finished := false
 var _breath_heard := 0.0           # im Versteck: Sekunden hörbarer Atem, während es davorsteht
 var _noise_note_t := 0.0
 var _breath_warned := false
+var fake: Changeling = null        # das falsche Ding im Haus
+var _fake_wait := 20.0
+var _fake_start_d := 8.0
+var _fake_told := false
 
 
 func _ready() -> void:
@@ -53,6 +58,8 @@ func _ready() -> void:
 	var ch := get_tree().get_first_node_in_group("cellar_hatch") as CellarHatch
 	if ch == null or not ch.rug_moved:
 		order.erase("cellar")
+	if Story.phase < cfg.changeling_from_phase:
+		order.erase("fake")
 	for i in order.size():
 		tasks[order[i]] = {"p": 0.0, "on": i < n}
 	wind = 1.0
@@ -103,6 +110,8 @@ func _process(delta: float) -> void:
 		_update_cellar(delta)
 	if active("window"):
 		_update_window(delta)
+	if active("fake"):
+		_update_fake(delta)
 	# Draußen ist man Freiwild
 	if not Cabin.is_inside(_player.global_position):
 		_outside_t += delta
@@ -347,7 +356,7 @@ func _strike(why: String, from: Vector3) -> void:
 		CreatureSounds.play(get_parent(), "shriek", from, 2.0)
 		var msg := {"window": "Das Fenster ist durch – etwas hat dich gepackt!", "attic": "Die Luke bricht auf – es kommt herunter!",
 			"cellar": "Die Kellermauer gibt nach, Wurzeln brechen durch!", "door": "Die Tür ist offen. Etwas hat nur darauf gewartet.",
-			"outside": "Draußen bist du Beute!"}
+			"outside": "Draußen bist du Beute!", "fake": "Das falsche Ding steht direkt hinter dir – es reißt dich zu Boden!"}
 		EventBus.notify(String(msg.get(why, "Es hat dich erwischt!")) + "  Beim nächsten Mal kommt es herein.", 4.0)
 		return
 	_start_intrusion(from)
@@ -451,6 +460,46 @@ func _update_intrusion(delta: float) -> void:
 		_intruder.queue_free()
 
 
+## Wechselbalg: ein Ding im Haus ist nicht echt und rückt bei jedem Wegsehen näher. Uhr-LED drauf = er flieht.
+## Druck = wie nah er schon ist. Erreicht er dich: Fehlschlag.
+func _update_fake(delta: float) -> void:
+	var ccfg := ChangelingConfig.get_default()
+	if not is_instance_valid(fake):
+		fake = null
+		_set_p("fake", maxf(pressure("fake") - delta * 0.2, 0.0))
+		_fake_wait -= delta
+		if _fake_wait > 0.0:
+			return
+		var pool := Changeling.spots("siege")
+		pool.shuffle()
+		for sp: Dictionary in pool:
+			var at := Vector3(float(sp["pos"][0]), _player.global_position.y, float(sp["pos"][1]))
+			if at.distance_to(_player.global_position) > 4.5:
+				fake = Changeling.spawn_spot(get_parent(), sp, {"mode": "siege", "approach": true, "fast": true, "stop_distance": 1.0,
+					"subtle": ThreatDirector.changeling_stage() >= 3})
+				_fake_start_d = maxf(fake.dist(), 3.0)
+				break
+		if fake and not _fake_told:
+			_fake_told = true
+			EventBus.notify(Changeling.text("siege_start"), 5.0)
+		return
+	var d := fake.dist()
+	_set_p("fake", clampf(1.0 - (d - 1.3) / maxf(_fake_start_d - 1.3, 0.5), 0.0, 1.0))
+	if fake.lit_time >= ccfg.siege_led_time:
+		fake.flee()
+		fake = null
+		_set_p("fake", 0.0)
+		_fake_wait = _rng.randf_range(ccfg.siege_respawn.x, ccfg.siege_respawn.y)
+		return
+	if d < 1.4:
+		var at := fake.global_position + Vector3(0, 1.0, 0)
+		fake.flee()
+		fake = null
+		_set_p("fake", 0.0)
+		_fake_wait = _rng.randf_range(ccfg.siege_respawn.x, ccfg.siege_respawn.y)
+		_strike("fake", at)
+
+
 ## Im Versteck gefunden, weil man geatmet hat: tut weh, dann ist es weg (der Schrank hält es nicht auf, der Atem schon).
 func _found_hidden() -> void:
 	_breath_heard = 0.0
@@ -477,6 +526,8 @@ func finish(survived: bool) -> void:
 	_hide_stalker(false)
 	if is_instance_valid(_intruder):
 		_intruder.queue_free()
+	if is_instance_valid(fake):
+		fake.queue_free()
 	if _player:
 		_player.mind_extra = 0.0
 	get_tree().call_group("music_box", "end_siege")

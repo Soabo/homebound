@@ -56,6 +56,15 @@ MAP = [
     ("Scare creature appears *", "sting_creature", "one", None),
     ("Scare sound of dawn *", "sting_dawn", "one", None),
     ("Scare sound of dusk *", "sting_dusk", "one", None),
+    # Wechselbalg (Christian nimmt auf: Dateinamen wie in der Wunschliste)
+    ("schleifen_laub*", "changeling_drag_forest", "loop", None),
+    ("schleifen_holz*", "changeling_drag", "loop", None),
+    ("gelenke*", "changeling_joints", "one", None),
+    ("atmen_leise*", "changeling_breath", "one", None),
+    ("setzen*", "changeling_sit", "one", None),
+    ("entfalten*", "changeling_unfold", "one", None),
+    ("ziehen*", "changeling_pull", "loop", None),
+    ("schrei*", "changeling_shriek", "one", None),
 ]
 
 hp = butter(4, 40, "highpass", fs=SR, output="sos")

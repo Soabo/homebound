@@ -1,6 +1,7 @@
 extends Node
 ## Schnelle Vorschau einer Gegner-Figur ohne die ganze Welt:
 ## xvfb-run godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=/pfad/bild.png --pose=warn|charge|stalk --angle=0
+## Wechselbalg: --changeling=masks (alle Tarnungen, oben deutlicher Fehler, unten feiner) | --changeling=true (wahre Gestalt)
 
 func _ready() -> void:
 	_run.call_deferred()
@@ -37,6 +38,16 @@ func _run() -> void:
 	fm.albedo_color = Color(0.3, 0.38, 0.25)
 	floor.material_override = fm
 	world.add_child(floor)
+	var cl := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--changeling="): cl = a.get_slice("=", 1)
+	if cl != "":
+		_changeling_lineup(world, cl, angle)
+		for i in 12:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_png(out)
+		get_tree().quit()
+		return
 	var m := Mauler.new()
 	world.add_child(m)
 	m.set_process(false)
@@ -55,3 +66,30 @@ func _run() -> void:
 		await get_tree().process_frame
 	get_viewport().get_texture().get_image().save_png(out)
 	get_tree().quit()
+
+
+func _changeling_lineup(world: Node3D, what: String, angle: float) -> void:
+	var cam := Camera3D.new()
+	world.add_child(cam)
+	if what == "true":
+		for i in 2:
+			var r := Node3D.new()
+			world.add_child(r)
+			r.position = Vector3(-0.9 + i * 1.8, 0, 0)
+			r.rotation_degrees.y = angle - 20.0 + i * 40.0
+			ChangelingModel.build_true(r, "crouch" if i == 0 else "stand")
+		cam.position = Vector3(0, 1.3, 4.2)
+		cam.look_at(Vector3(0, 0.95, 0))
+		cam.fov = 50
+		return
+	var kinds := ChangelingModel.KINDS
+	for row in 2:
+		for i in kinds.size():
+			var r := Node3D.new()
+			world.add_child(r)
+			r.position = Vector3(-6.75 + i * 1.5, 0, -row * 2.6)
+			r.rotation_degrees.y = angle
+			ChangelingModel.build(r, kinds[i], row == 1)
+	cam.position = Vector3(0, 3.2, 8.5)
+	cam.look_at(Vector3(0, 0.6, -1.3))
+	cam.fov = 58

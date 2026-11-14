@@ -212,3 +212,19 @@ extends Resource
 @export var rustle_silence_seconds: float = 18.0
 ## Danach knackt manchmal ein Ast hinter dir
 @export var rustle_twig_chance: float = 0.35
+
+@export_group("Wechselbalg (wann; Verhalten: data/creatures/changeling.tres)")
+## Ab dieser Story-Phase gibt es ihn; Chance pro Nacht (außer Belagerung)
+@export var changeling_from_phase: int = 2
+@export var changeling_chance: float = 0.4
+## Ab so vielen Nächten mit ihm: feine Fehler, rückt bei jedem Wegsehen, Echo-Schritte (Stufe 3)
+@export var changeling_subtle_after: int = 3
+## Ab dieser Nacht packt er zu und entführt (nur Stufe 3)
+@export var changeling_abduct_from_night: int = 12
+## Endspurt (Schacht offen): so viele falsche Dinge gleichzeitig
+@export var changeling_multi: int = 3
+## Morgen nach einer Nacht mit ihm: Stuhl im Schlafzimmer, der zum Bett schaut
+@export var changeling_morning_chance: float = 0.45
+## Tagsüber maskiert unterwegs (zweite Bank, falscher Wegweiser): Chance pro Tag, Abstand zum Spieler beim Aufstellen
+@export var changeling_day_chance: float = 0.35
+@export var changeling_day_distance: Vector2 = Vector2(45.0, 140.0)

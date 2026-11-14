@@ -32,6 +32,8 @@ static func get_default() -> StealthConfig:
 ## Im Wald knackt beim Gehen/Rennen manchmal ein Ast (Wahrscheinlichkeit pro Schritt, Hörweite × Faktor)
 @export var twig_chance: float = 0.12
 @export var twig_factor: float = 2.0
+## Schlag mit Faust/Werkzeug gegen etwas Festes (Hörweite)
+@export var melee_noise: float = 9.0
 
 @export_group("Knarrende Dielen")
 ## Dielen (Orte in data/house/house.json „creaky_boards“): Hörweite beim normalen Gehen / Rennen

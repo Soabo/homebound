@@ -1,6 +1,11 @@
 {
   "_info": "Tagebuch auf dem Tablet (Journal). flags: Text für ein Ereignis (Tasks.flag) beim ersten Mal; * am Ende = alle Ereignisse mit diesem Anfang, {name} wird ersetzt (Ort, Analyse, Erkenntnis). nights: Satz zur vergangenen Nacht je night_kind (morgens um 8 Uhr eingetragen). Notizen, erledigte Spuren und gesendete Ergebnisse trägt das Spiel selbst ein.",
   "flags": {
+    "changeling_seen": "Ein Ding im Haus, das nicht stimmt. Ich habe es lange angesehen. Es hat sich nicht gerührt. Erst als ich wegsah.",
+    "changeling_revealed": "Ich habe auf einen Stuhl eingeschlagen. Er war kein Stuhl. Ich nenne es den Wechselbalg, wie im Märchen, das ich Ben vorgelesen habe.",
+    "changeling_grabbed": "Es hat mich von hinten gepackt. Ich spüre die Finger noch, zu viele, zu lang.",
+    "changeling_escaped": "Losgerissen. Es hat sich zusammengefaltet und war weg.",
+    "abducted": "Ich bin im Wald aufgewacht. Ich weiß nicht, wie ich dorthin gekommen bin. Doch, ich weiß es.",
     "visit_*": "Zum ersten Mal dort gewesen: {name}.",
     "link_*": "Erkenntnis: {name}.",
     "story_phase_2": "Es ist nicht neu hier. Jemand hat es gewusst.",

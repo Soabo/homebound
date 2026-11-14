@@ -74,6 +74,13 @@ func _action(name: String) -> InputEventAction:
 func _run() -> void:
 	await _wait_scene()
 	ThreatDirector.set_process(false)
+	# Nur eine Prüfung (schneller beim Entwickeln): -- --night-test=regress --only=_t_changeling
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--only="):
+			await call(arg.get_slice("=", 1))
+			print("REGRESS TEST: %d Prüfungen, %d Fehler" % [checks, failed])
+			get_tree().quit(1 if failed > 0 else 0)
+			return
 	await _t_persist_names()
 	await _t_chapel_stones()
 	await _t_cameras()
@@ -367,6 +374,7 @@ func _t_more() -> void:
 	await _t_camp_events()
 	await _t_packing()
 	await _t_stealth()
+	await _t_changeling()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -1902,3 +1910,183 @@ func _t_sleep_wake_passed() -> void:
 	TimeManager.set_time(d, h)
 	# Packliste: Ziele der Spur sind Texte (Fehler „Invalid call 'String' constructor“ im Durchlauf)
 	_ok("Packliste: Mehrtagesziel ohne Skriptfehler", Story.multi_trip_target() is String)
+
+
+## Wechselbalg (Christian 14.11.): Tarnungen mit Fehler, nur ungesehen bewegen, Enttarnen, Zupacken/Entführen, Tag, Zelt, Belagerung, Forschung.
+func _t_changeling() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_rot := p.rotation
+	var keep_phase := Story.phase
+	var keep_count := ThreatDirector.changeling_count
+	var keep_h := TimeManager.hour
+	var keep_d := TimeManager.day
+	var keep_health := p.health
+	p.set_physics_process(true)
+	p.input_locked = false
+	p.in_tent = null
+	p.hidden_in = null
+	Story.phase = 2
+	var cfg := ChangelingConfig.get_default()
+	_ok("Wechselbalg: Werte geladen", ResourceLoader.exists(ChangelingConfig.PATH) and cfg.grab_seconds > 0.0)
+	# Alle Tarnungen bauen, deutlich und fein
+	var built := 0
+	for k: String in ChangelingModel.KINDS:
+		for sub: bool in [false, true]:
+			var r := Node3D.new()
+			_scene().add_child(r)
+			var info := ChangelingModel.build(r, k, sub)
+			if float(info.get("height", 0.0)) > 0.4 and r.find_children("*", "MeshInstance3D", true, false).size() >= 3:
+				built += 1
+			else:
+				print("  Tarnung zu klein: ", k, " ", sub, " ", info)
+			r.queue_free()
+	_ok("Wechselbalg: alle %d Tarnungen mit deutlichem und feinem Fehler" % ChangelingModel.KINDS.size(), built == ChangelingModel.KINDS.size() * 2)
+	var tf := Node3D.new()
+	_scene().add_child(tf)
+	_ok("Wechselbalg: wahre Gestalt mit Gesicht", ChangelingModel.build_true(tf, "stand").get("head") != null)
+	tf.queue_free()
+	_ok("Wechselbalg: Gedanken zu jeder Tarnung", ChangelingModel.KINDS.all(func(k: String) -> bool: return Changeling.data().get("thoughts", {}).has(k)))
+	# Orte im Haus: nichts steckt in Möbeln oder Wänden
+	var bad: Array = []
+	for where: String in ["house", "morning", "siege", "yard"]:
+		for sp: Dictionary in Changeling.spots(where):
+			var ch := Changeling.spawn_spot(_scene(), sp)
+			ch.set_process(false)
+			await get_tree().physics_frame
+			var q := PhysicsShapeQueryParameters3D.new()
+			var box := BoxShape3D.new()
+			box.size = ch._size * Vector3(0.8, 0.8, 0.8) - Vector3(0, 0.1, 0)
+			q.shape = box
+			q.transform = Transform3D(ch.global_basis, ch.global_position + Vector3(0, ch._size.y * 0.5 + 0.08, 0))
+			q.exclude = [ch._body.get_rid(), p.get_rid()]
+			if not ch.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty():
+				bad.append(sp["id"])
+			ch.queue_free()
+	_ok("Wechselbalg: Tarn-Orte frei (keine Möbel/Wände)", bad.is_empty(), str(bad))
+	# Kameras zeigen die wahre Gestalt, der Spieler die Tarnung
+	var sv := _scene().find_child("Surveillance", true, false)
+	var cam_mask := int(sv.get("camera").cull_mask) if sv and sv.get("camera") else 0
+	_ok("Wechselbalg: Überwachungskamera sieht die wahre Gestalt, nicht die Tarnung",
+		cam_mask & Changeling.MASK_LAYER == 0 and cam_mask & Changeling.PHANTOM_BIT != 0 and p.camera.cull_mask & Changeling.MASK_LAYER != 0)
+	# Bewegt sich nur ungesehen
+	var sp0: Dictionary = Changeling.spots("house").filter(func(s: Dictionary) -> bool: return s["id"] == "dining_third")[0]
+	var c := Changeling.spawn_spot(_scene(), sp0, {"mode": "night", "approach": true, "fast": true})
+	p.global_position = Vector3(-3.5, Cabin.FLOOR_Y + 0.05, 2.6)
+	p.velocity = Vector3.ZERO
+	_look(p, c.global_position + Vector3(0, 0.5, 0))
+	var at0 := c.global_position
+	var unseen_frames := 0
+	for i in 210:
+		await get_tree().process_frame
+		if not c.is_seen():
+			unseen_frames += 1
+	print("  ungesehen in Bildern: ", unseen_frames, "  Abstand ", c.dist())
+	_ok("Wechselbalg: angesehen rührt er sich nicht", c.is_seen() and c.global_position.distance_to(at0) < 0.05, "gesehen %s, bewegt %.2f" % [c.is_seen(), c.global_position.distance_to(at0)])
+	_look(p, p.global_position + Vector3(-3, 0, 0))
+	await _wait(6.0)
+	var moved := c.global_position.distance_to(at0)
+	_ok("Wechselbalg: ungesehen rückt er näher", moved > 0.5 and c.dist() < at0.distance_to(p.global_position), "%.2f m" % moved)
+	c._try_step()
+	_look(p, c.global_position + Vector3(0, 0.5, 0))
+	await _wait(0.3)
+	_ok("Wechselbalg: Hinsehen – Schleifen bricht ab", not c._moving and not c._drag.playing)
+	# Uhr-LED: falscher Schatten
+	p.flashlight.visible = true
+	await _wait(1.0)
+	_ok("Wechselbalg: im Uhrlicht ein falscher Schatten", (c._shadow.visible and c.lit_time > 0.3) or not p.light_shining())
+	p.flashlight.visible = false
+	# Echtheitsprüfer
+	_ok("Wechselbalg: Echtheitsprüfer piept beim Hinsehen", GadgetHud.fake_text(p) != "")
+	# Axt: enttarnt, flieht, hinterlässt Gelenkhaut
+	Changeling._skin_day = -100
+	var drops := AlienDrops.get_for(get_tree())
+	var n0: int = drops.entries.size() if drops else 0
+	c.on_melee_hit("axe")
+	_ok("Wechselbalg: Treffer zeigt die wahre Gestalt", not c._mask.visible and c._fleeing)
+	await _wait(1.2)
+	_ok("Wechselbalg: danach weg, Gelenkhaut liegt da", not is_instance_valid(c) and drops and drops.entries.size() > n0 and String(drops.entries[-1]["item"]) == "changeling_skin")
+	# Tagsüber geschlagen: gekränkt, kommt in der Nacht sicher
+	TimeManager.hour = 13.0
+	var ev0 := ThreatDirector.events.duplicate(true)
+	var d := Changeling.spawn(_scene(), "bench", Vector3(30, 0, 30), {"mode": "day"})
+	d.on_melee_hit("axe")
+	_ok("Wechselbalg: tagsüber geschlagen – gekränkt", ThreatDirector.changeling_offended_day == TimeManager.day)
+	ThreatDirector.events = ev0
+	ThreatDirector.changeling_offended_day = -100
+	_ok("Wechselbalg: Tagestarnung findet einen Platz (Bank/Wegweiser)", not ThreatDirector.changeling_day_spot(Vector3(0, 0, 0), RandomNumberGenerator.new()).is_empty())
+	# Stufen
+	ThreatDirector.changeling_count = 0
+	var s1 := ThreatDirector.changeling_stage()
+	ThreatDirector.changeling_count = 1
+	var s2 := ThreatDirector.changeling_stage()
+	ThreatDirector.changeling_count = 5
+	_ok("Wechselbalg: Stufen 1 (Hof) → 2 (Haus) → 3 (fein, schnell)", s1 == 1 and s2 == 2 and ThreatDirector.changeling_stage() == 3)
+	# Zupacken: Axt befreit
+	TimeManager.hour = 23.0
+	p.global_position = Vector3(-3.5, Cabin.FLOOR_Y + 0.05, 2.6)
+	var g := Changeling.spawn(_scene(), "lamp", p.global_position + Vector3(1.0, 0, 0), {"mode": "night", "can_grab": true})
+	await _frames(2)
+	g._start_grab()
+	_ok("Wechselbalg: packt zu – du hängst fest", Changeling.grabbing == g and p.grabbed_by == g and g._stand.visible)
+	g.struggle_hit("axe")
+	await _frames(3)
+	_ok("Wechselbalg: Axthieb befreit", Changeling.grabbing == null and p.grabbed_by == null and not is_instance_valid(g))
+	# Zupacken: [E] halten befreit
+	var g2 := Changeling.spawn(_scene(), "lamp", p.global_position + Vector3(1.0, 0, 0), {"mode": "night", "can_grab": true})
+	await _frames(2)
+	g2._start_grab()
+	Input.action_press("interact")
+	await _wait(cfg.grab_seconds - 0.5)
+	Input.action_release("interact")
+	_ok("Wechselbalg: [E] halten reißt dich los", Changeling.grabbing == null and not is_instance_valid(g2), "Balken %.2f" % (g2._struggle if is_instance_valid(g2) else -1.0))
+	# Entführt: Aufwachen im Wald, nicht weit, verletzt, Sachen verstreut, Morgen
+	Inventory.add("wood", 3)
+	p.health = 100.0
+	var g3 := Changeling.spawn(_scene(), "lamp", p.global_position + Vector3(1.0, 0, 0), {"mode": "night", "can_grab": true})
+	await _frames(2)
+	g3._start_grab()
+	g3._abduct()
+	await _wait(2.0)
+	var r := Vector2(p.global_position.x, p.global_position.z).length()
+	_ok("Wechselbalg: entführt – Aufwachen im Wald, nicht weit von der Hütte", r >= cfg.abduct_distance.x - 1.0 and r <= cfg.abduct_distance.y + 1.0 and not Cabin.is_inside(p.global_position), "%.0f m" % r)
+	_ok("Wechselbalg: verletzt, Morgen, Merker", p.health < 100.0 and p.health >= cfg.abduct_min_health and not TimeManager.is_night() and Tasks.flags.has("abducted") and not p.input_locked)
+	# Zelt: Vorfälle da
+	var ids := CampEvents.data().map(func(e: Dictionary) -> String: return e["id"])
+	_ok("Wechselbalg: drei Zeltnacht-Vorfälle", ids.has("cl_backpack") and ids.has("cl_stump") and ids.has("cl_tent"))
+	# Belagerung: falsches Ding im Haus, Licht vertreibt
+	TimeManager.set_time(keep_d, 23.0)
+	p.global_position = Vector3(-3.5, Cabin.FLOOR_Y + 0.05, 2.6)
+	var s := SiegeNight.new()
+	s.cfg = ThreatDirector.config
+	s.index = 9
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	s.set_process(false)
+	s._fake_wait = 0.0
+	s._update_fake(0.1)
+	_ok("Belagerung: Aufgabe „falsches Ding“ ab Phase 2", s.active("fake") and is_instance_valid(s.fake))
+	if is_instance_valid(s.fake):
+		s.fake.lit_time = 99.0
+		s._update_fake(0.1)
+		_ok("Belagerung: Uhr-LED vertreibt das falsche Ding", s.fake == null and s.pressure("fake") == 0.0)
+	s.finish(true)
+	s.queue_free()
+	# Forschung
+	_ok("Wechselbalg: Forschung Gelenkhaut → Nachahmer → Echtheitsprüfer", Research.data().get("analyses", {}).has("an_changeling_skin") \
+		and Research.data().get("links", {}).has("link_mimic") and DataDB.item("fake_probe").size() > 0)
+	_ok("Wechselbalg: Stand im Spielstand", ThreatDirector.get_state().has("changeling_count"))
+	for n in get_tree().get_nodes_in_group("changeling"):
+		n.queue_free()
+	Story.phase = keep_phase
+	ThreatDirector.changeling_count = keep_count
+	TimeManager.set_time(keep_d, keep_h)
+	p.health = keep_health
+	p.global_position = keep
+	p.rotation = keep_rot
+
+
+func _look(p: Player, at: Vector3) -> void:
+	var d := at - p.camera.global_position
+	p.rotation.y = atan2(-d.x, -d.z)
+	p.head.rotation.x = atan2(d.y, Vector2(d.x, d.z).length())

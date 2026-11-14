@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="ChangelingConfig" format=3]
+
+[ext_resource type="Script" path="res://scripts/creature/changeling_config.gd" id="1_cl"]
+
+[resource]
+script = ExtResource("1_cl")
+look_cone = 40.0
+look_range = 45.0
+unseen_delay = 1.0
+move_interval_slow = Vector2(4.0, 8.0)
+move_interval_fast = Vector2(1.0, 2.2)
+step_slow = 0.9
+step_fast = 1.8
+step_time = 0.9
+stop_distance = 1.8
+grab_range = 1.5
+echo_range = 14.0
+echo_delay = 0.17
+echo_db = -7.0
+echo_stop_chance = 0.5
+breath_range = 4.5
+sit_chance = 0.03
+sit_range = 9.0
+drag_db = -4.0
+drag_range = 22.0
+led_range = 12.0
+led_cone = 16.0
+reveal_hit = 0.8
+reveal_lightning = 0.18
+reveal_mirror = 0.5
+grab_seconds = 7.0
+struggle_rise = 0.22
+struggle_fall = 0.08
+struggle_led_factor = 2.0
+struggle_fist = 0.25
+pull_speed = 0.9
+abduct_distance = Vector2(80.0, 200.0)
+abduct_damage = 25.0
+abduct_min_health = 15.0
+abduct_cold = 35.0
+abduct_drops = 3
+siege_led_time = 1.5
+siege_respawn = Vector2(35.0, 70.0)

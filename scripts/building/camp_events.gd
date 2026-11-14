@@ -148,7 +148,26 @@ func run(kind: String) -> void:
 		"drone_scan": _drone_scan()
 		"mauler_prowl": _mauler_prowl()
 		"lure": _lure()
+		"cl_backpack": _changeling("backpack", 1.1, false)
+		"cl_stump": _changeling("stump", 9.0, true)
+		"cl_tent": camp._rec()["second_tent"] = true
 		_: camp.camp_event("steps")
+
+
+## Wechselbalg am Zelt: ein zweiter Rucksack am Eingang, oder ein Baumstumpf, der bei jedem Wegsehen näher rückt.
+## Zeltnacht-Regel: er packt hier nicht zu.
+func _changeling(kind: String, dist: float, moves: bool) -> void:
+	var at := _door(dist, 0.0) if not moves else _around(dist, 0.0)
+	if not moves:
+		at += camp.global_transform.basis.x * 0.7
+	var ch := Changeling.spawn(_scene(), kind, at, {"mode": "camp", "approach": moves, "fast": moves, "stop_distance": 2.2,
+		"subtle": ThreatDirector.changeling_stage() >= 3, "echo": false})
+	ch.face_dir(camp.global_position - at)
+	if moves:
+		SoundBank.play_at(_scene(), "changeling_drag_forest" if SoundBank.has_recording("changeling_drag_forest") else "changeling_drag", at, -6.0, 0.9)
+		EventBus.notify("Draußen schleift etwas über das Laub. Dann ist es still.", 3.5)
+	else:
+		EventBus.notify("Am Eingang raschelt es kurz. Wie wenn jemand etwas abstellt.", 3.0)
 
 
 # --- Stimmung: Geräusche, Tiere, Bewegungen ---------------------------------------
@@ -503,6 +522,13 @@ func _lure() -> void:
 ## Morgens nach der Zeltnacht: Folgen einzelner Vorfälle.
 func morning(scene: Node) -> void:
 	var rec := camp._rec()
+	if bool(rec.get("second_tent", false)):
+		rec["second_tent"] = false
+		var a := _rng.randf() * TAU
+		var at := camp.global_position + Vector3(cos(a) * 7.5, 0, sin(a) * 7.5)
+		var t := Changeling.spawn(scene, "tent", at, {"mode": "morning", "vanish_when_unseen": true, "subtle": _rng.randf() < 0.4})
+		t.global_rotation.y = camp.global_rotation.y
+		EventBus.notify("Draußen ist etwas anders. Ich sehe lieber zweimal hin.", 4.0)
 	if bool(rec.get("gear_moved", false)):
 		rec["gear_moved"] = false
 		var stones := BuildKit.tex_mat("stone", 0.4)

@@ -957,5 +957,19 @@
     "weight": 0.1,
     "stack": 1,
     "category": "Werkzeug"
+  },
+  "changeling_skin": {
+    "name": "Gelenkhaut",
+    "weight": 0.1,
+    "stack": 3,
+    "category": "Fund",
+    "signature": 0.04
+  },
+  "fake_probe": {
+    "name": "Echtheitsprüfer",
+    "weight": 0.3,
+    "stack": 1,
+    "category": "Werkzeug",
+    "signature": 0.05
   }
 }

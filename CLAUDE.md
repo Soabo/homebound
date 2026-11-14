@@ -539,6 +539,38 @@
   Wellen = letztes Geräusch), abschaltbar: Einstellungen „Schleich-Anzeige“ (`Settings.stealth_hud`).
 - Prüfung `RegressTest._t_stealth`.
 
+## Wechselbalg (Christian 14.11.2026: „alle Ideen“)
+- Christians Entscheidungen: Name Wechselbalg; Entführen = Aufwachen im Wald, nicht weit von der Hütte; tagsüber maskiert ja;
+  ab Story-Phase 2; Axt geht immer (auch tagsüber); Töne nimmt Christian auf (Wunschliste: schleifen_holz/schleifen_laub, gelenke,
+  atmen_leise, setzen, entfalten, ziehen, schrei → tools/audio/sfx.py MAP → SoundBank-IDs changeling_*; bis dahin Ersatzklänge).
+- `Changeling` (scripts/creature/changeling.gd), Modelle `ChangelingModel` (10 Tarnungen chair, office_chair, broom, lamp,
+  coat_stand, bench, stump, backpack, signpost, tent – je ein deutlicher und ein feiner Fehler; wahre Gestalt build_true
+  crouch|stand: zu viele Gelenke, schiefer Kopf, Lächeln bis zu den Ohren, aufgerissene Augen in dunklen Höhlen).
+  Orte/Gedanken/Texte: data/creatures/changeling.json (spots where yard|house|morning|siege). Verhalten: data/creatures/changeling.tres
+  (`ChangelingConfig`), wann: ThreatConfig `changeling_*`.
+- Regeln: bewegt sich nur ungesehen (`is_seen`: Blickkegel + freie Sicht auf oben/Mitte/unten), rückt ruckweise näher (Schleifen
+  bricht beim Hinsehen ab), dreht sich dabei zu dir. Tarnung auf Ebene `MASK_LAYER` (Überwachungskameras sehen sie nicht),
+  wahre Gestalt auf PHANTOM-Ebene (nur Kameras). Wahre Gestalt sonst nur: Blitz (`DayNightEnvironment.flash` → `on_lightning`),
+  Badezimmerspiegel (Gesichtsbild `face_texture`), Axthieb (`on_melee_hit`, über PlayerHands._melee_hit), Zupacken.
+  Uhr-LED zeigt einen falschen Schatten (Decal mit langen Fingern). Töne: Echo-Schritte (Player-Signal `stepped`), leises Atmen nur
+  beim eigenen Atem-Anhalten, Stuhl knarrt „als setze sich jemand“, Gelenkknacken beim Rücken.
+- Stufen (`ThreatDirector.changeling_stage`, `changeling_count` im Spielstand): 1 = „ein Ding zu viel“ auf dem Hof (verschwindet
+  ungesehen), 2 = im Haus mit deutlichem Fehler, rückt langsam, 3 = feiner Fehler, rückt bei jedem Wegsehen, Echo-Schritte;
+  ab `changeling_abduct_from_night` packt er von hinten zu. Endspurt: `changeling_multi` gleichzeitig. Morgens manchmal ein Stuhl,
+  der zum Bett schaut. Tagsüber (`changeling_day_*`): zweite Bank neben Wanderbank/Rastplatz oder falscher Wegweiser, folgt dir.
+- Zupacken: `Changeling.grabbing`, `Player.grabbed_by` (Zug weg von der Hütte), [E] halten / LED auf ihn / Faust = Balken,
+  Axt = sofort frei. Sonst `_abduct`: Abblende, Aufwachen `abduct_distance` von der Hütte, Morgen, Schaden (nie unter
+  `abduct_min_health`), kalt, `abduct_drops` Sachen verstreut auf dem Weg (`scatter_items`, nie Einzelstücke). Merker abducted.
+- Axt/Faust auf die Tarnung: enttarnt, Schrei, Blitz, weg, Gelenkhaut `changeling_skin` (1× pro Tag). Tagsüber geschlagen =
+  gekränkt (`changeling_offended`): in der Nacht kommt er sicher und schneller. Schlag gegen echte Dinge = laut (`melee_noise`).
+- Zelt (camp_events.json, needs phase2): cl_backpack (zweiter Rucksack), cl_stump (Stumpf rückt näher), cl_tent (morgens ein zweites
+  Zelt). Er packt am Zelt nicht zu. Belagerung: Aufgabe „fake“ (5. Aufgabe, ab Phase 2): falsches Ding rückt näher, LED
+  `siege_led_time` vertreibt es, erreicht es dich = Fehlschlag.
+- Forschung: an_changeling_skin (Gelenkhaut) + an_membrane → link_mimic „Nachahmer“ → Rezept `fake_probe` (Echtheitsprüfer,
+  `GadgetHud.fake_text`, piept beim Hinsehen). Drop nach Nächten mit ihm (after „changeling“).
+- Prüfung `RegressTest._t_changeling` (einzeln: `-- --night-test=regress --only=_t_changeling`). Vorschau der Modelle:
+  `creature_preview.tscn -- --changeling=masks|true`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

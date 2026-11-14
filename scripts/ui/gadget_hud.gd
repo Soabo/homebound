@@ -54,6 +54,14 @@ func _process(delta: float) -> void:
 		var s := seeker_text(_player.global_position, _player.camera.global_transform.basis)
 		if s != "":
 			lines.append(s)
+	if Inventory.count("fake_probe") > 0:
+		var f := fake_text(_player)
+		if f != "":
+			lines.append(f)
+			_beep -= 0.25
+			if _beep <= 0.0:
+				_beep = 0.75
+				SoundBank.play_ui(self, "motion_click", -12.0, 1.8)
 	if Research.buff_active("scent"):
 		lines.append("Geruchstarnung  noch %d Std." % int(ceil(float(Research.buffs.get("scent", 0.0)) - Research.now())))
 	_label.text = "\n".join(lines)
@@ -94,6 +102,22 @@ static func seeker_text(at: Vector3, view: Basis) -> String:
 	if best == null:
 		return ""
 	return "Fadenpendel spannt sich – etwas Hohes, %s (~%d m)" % [_direction(at, view, best.global_position), int(round(best_d / 5.0) * 5.0)]
+
+
+var _beep := 0.0
+
+
+## Echtheitsprüfer (Forschung „Nachahmer“): piept, wenn man ein Ding ansieht, das nicht echt ist (Wechselbalg).
+static func fake_text(p: Player) -> String:
+	var range_m := float(Research.gadget("fake_probe", "range", 12.0))
+	var cone := float(Research.gadget("fake_probe", "cone", 22.0))
+	var cam := p.camera.global_transform
+	for n in p.get_tree().get_nodes_in_group("changeling"):
+		var ch := n as Changeling
+		var to := (ch.global_position + Vector3(0, 0.6, 0)) - cam.origin
+		if to.length() < range_m and (-cam.basis.z).dot(to.normalized()) > cos(deg_to_rad(cone)):
+			return "Echtheitsprüfer piept – das da ist nicht echt (~%d m)" % int(round(to.length()))
+	return ""
 
 
 ## Grobe Richtung eines Ziels aus Sicht des Spielers.

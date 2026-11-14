@@ -8,7 +8,7 @@ const RATE := 22050
 const SFX_DIR := "res://assets/audio/sfx"
 ## Klangflächen, die endlos wiederholt werden
 const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", "wind", "gusts", "silence",
-		"drip", "monitor_hum", "fire", "static"]
+		"drip", "monitor_hum", "fire", "static", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
 ## Lautstärke-Ausgleich der Aufnahmen (dB) – feinjustiert nach Gehör
 const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
 		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,
@@ -114,6 +114,18 @@ static func get_generated(id: String) -> AudioStreamWAV:
 			s = _rain(true)
 			loop = true
 		"thunder": s = _thunder()
+		# Wechselbalg (Ersatz, bis Christians Aufnahmen da sind)
+		"changeling_drag", "changeling_drag_forest":
+			s = _cl_drag(id == "changeling_drag_forest")
+			loop = true
+		"changeling_pull":
+			s = _cl_drag(true, 0.5)
+			loop = true
+		"changeling_joints": s = _cl_joints()
+		"changeling_breath": s = _cl_breath()
+		"changeling_sit": s = _cl_sit()
+		"changeling_unfold": s = _cl_unfold()
+		"changeling_shriek": s = _cl_shriek()
 		_: s = PackedFloat32Array([0.0])
 	var wav := _to_wav(s, loop)
 	_cache[id] = wav
@@ -610,3 +622,105 @@ static func _to_wav(samples: PackedFloat32Array, loop: bool) -> AudioStreamWAV:
 		wav.loop_begin = 0
 		wav.loop_end = samples.size()
 	return wav
+
+
+# --- Wechselbalg -------------------------------------------------------------------
+
+## Schleifen: Holz über Holz (oder Laub), ruckelig mit kleinen Pausen – Haften und Rutschen.
+static func _cl_drag(leaves: bool, speed: float = 1.0) -> PackedFloat32Array:
+	var b := _buf(2.4)
+	var r := RandomNumberGenerator.new()
+	r.seed = 71 if leaves else 70
+	var lp := 0.0
+	var hp := 0.0
+	var phase := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		# Ruckeln: Haften und Rutschen mit unregelmäßigen Pausen
+		var jerk := pow(maxf(sin(TAU * (1.7 * speed) * t + sin(t * 2.3) * 1.5), 0.0), 3.0)
+		var n := r.randf() * 2.0 - 1.0
+		lp += (n - lp) * (0.35 if leaves else 0.08)
+		hp = n - lp
+		phase += TAU * (95.0 + jerk * 60.0 + sin(t * 31.0) * 12.0) / RATE
+		var grind := sin(phase) * 0.35 * jerk if not leaves else 0.0
+		var body := (hp * 0.5 if leaves else lp * 2.2) * (0.25 + jerk)
+		var crackle := ((r.randf() - 0.5) * (0.8 if leaves else 0.4)) if r.randf() < 0.004 * (1.0 + jerk * 3.0) else 0.0
+		b[i] = (body + grind + crackle) * 0.55
+	return b
+
+
+## Gelenke: Knacken und Knirschen (wie gebrochene Selleriestangen).
+static func _cl_joints() -> PackedFloat32Array:
+	var b := _buf(0.9)
+	var r := RandomNumberGenerator.new()
+	r.seed = 72
+	for k in 6:
+		var start := int(r.randf_range(0.0, 0.75) * RATE)
+		var lp := 0.0
+		for i in int(0.06 * RATE):
+			var t := float(i) / RATE
+			lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.6
+			if start + i < b.size():
+				b[start + i] += lp * exp(-t * 70.0) * 0.9
+	return b
+
+
+## Ganz leises, flaches Atmen durch die Nase.
+static func _cl_breath() -> PackedFloat32Array:
+	var b := _buf(3.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 73
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var env := pow(maxf(sin(PI * t / 1.5), 0.0), 3.0) * (1.0 if t < 1.5 else 0.7)
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.25
+		b[i] = lp * env * 0.35
+	return b
+
+
+## Ein alter Holzstuhl knarrt, als setze sich jemand.
+static func _cl_sit() -> PackedFloat32Array:
+	var b := _buf(1.1)
+	var r := RandomNumberGenerator.new()
+	r.seed = 74
+	var phase := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var f := 210.0 + sin(t * 9.0) * 40.0 - t * 60.0
+		phase += TAU * f / RATE
+		var env := minf(t * 12.0, 1.0) * exp(-t * 2.6)
+		var stick := 0.6 + 0.4 * sin(TAU * 23.0 * t)
+		b[i] = (sin(phase) * 0.5 + sin(phase * 2.7) * 0.2 + (r.randf() - 0.5) * 0.15) * env * stick * 0.6
+	return b
+
+
+## Entfalten: nasses Leder, ausgewrungen, dazu Knacken.
+static func _cl_unfold() -> PackedFloat32Array:
+	var b := _buf(1.3)
+	var r := RandomNumberGenerator.new()
+	r.seed = 75
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var squelch := pow(maxf(sin(TAU * 3.1 * t + sin(t * 11.0)), 0.0), 2.0)
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.12
+		var crack := ((r.randf() - 0.5) * 1.2) if r.randf() < 0.006 else 0.0
+		b[i] = (lp * 1.8 * squelch + crack) * minf(t * 6.0, 1.0) * exp(-t * 0.9) * 0.7
+	return b
+
+
+## Kurzer, hoher, gepresster Laut – nicht ganz menschlich.
+static func _cl_shriek() -> PackedFloat32Array:
+	var b := _buf(0.9)
+	var r := RandomNumberGenerator.new()
+	r.seed = 76
+	var phase := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var f := 880.0 + sin(t * 47.0) * 140.0 - t * 300.0
+		phase += TAU * f / RATE
+		var env := minf(t * 20.0, 1.0) * exp(-t * 3.0)
+		var grit := 1.0 + (r.randf() - 0.5) * 0.9
+		b[i] = (sin(phase) * 0.4 + sin(phase * 1.49) * 0.35 + sin(phase * 3.03) * 0.15) * env * grit * 0.7
+	return b

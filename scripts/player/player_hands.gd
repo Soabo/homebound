@@ -620,6 +620,21 @@ func _melee_hit(kind: String) -> void:
 	var cfg: Dictionary = MELEE[kind]
 	var cam := player.camera.global_transform
 	var fwd := -cam.basis.z
+	# Wechselbalg hält dich fest: jeder Schlag hilft beim Losreißen (Axt = sofort frei)
+	if Changeling.grabbing != null and is_instance_valid(Changeling.grabbing):
+		Changeling.grabbing.struggle_hit(kind)
+		EventBus.screen_shake.emit(0.2)
+		return
+	# Schlag auf eine Tarnung des Wechselbalgs: enttarnt ihn
+	for n in get_tree().get_nodes_in_group("changeling"):
+		var ch := n as Changeling
+		var tc := ch.global_position - player.global_position
+		tc.y = 0.0
+		var fh := Vector3(fwd.x, 0.0, fwd.z).normalized()
+		if tc.length() < float(cfg["reach"]) + 0.5 and fh.dot(tc.normalized()) > 0.55:
+			ch.on_melee_hit(kind)
+			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else "thud", ch.global_position + Vector3(0, 0.6, 0), -2.0, 1.2)
+			return
 	var c: Creature = (ThreatDirector.creature as Creature) if is_instance_valid(ThreatDirector.creature) else null
 	if c:
 		# waagerecht prüfen: Abstand und ob sie vor dem Spieler steht (ganz nah genügt "grob vorne")
@@ -638,7 +653,8 @@ func _melee_hit(kind: String) -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	if not hit.is_empty():
 		_impact_sound(hit["collider"] as Node, hit["position"])
-		EventBus.noise_made.emit(hit["position"], 6.0)
+		# Schlag gegen ein echtes Ding: dumpf und laut – nachts hören das auch andere (Stealth melee_noise)
+		player.make_noise(Stealth.cfg().melee_noise * (1.0 - Stealth.mask_at(hit["position"])))
 
 
 ## Genau ein Klang beim Treffer – je nach Material wie ein Schritt auf Holz, Kies, Stein …; Metall klingt metallisch.

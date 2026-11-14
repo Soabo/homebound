@@ -545,6 +545,18 @@
       "gives": {
         "seeker_alarm": 1
       }
+    },
+    {
+      "id": "fake_probe",
+      "requires": "link_mimic",
+      "needs": {
+        "changeling_skin": 1,
+        "bottle_empty": 1,
+        "scrap": 1
+      },
+      "gives": {
+        "fake_probe": 1
+      }
     }
   ]
 }

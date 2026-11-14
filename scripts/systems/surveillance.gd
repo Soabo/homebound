@@ -50,7 +50,7 @@ func _ready() -> void:
 	camera.fov = 72.0
 	camera.far = 120.0
 	# ohne Kameragehäuse (sonst sieht man die eigene Kamera von innen)
-	camera.cull_mask = 0xFFFFF & ~SecurityCamera.BODY_LAYER
+	camera.cull_mask = 0xFFFFF & ~SecurityCamera.BODY_LAYER & ~Changeling.MASK_LAYER   # Wechselbalg: Kameras zeigen die wahre Gestalt
 	viewport.add_child(camera)
 	_env = Environment.new()
 	_env.background_mode = Environment.BG_COLOR

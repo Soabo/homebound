@@ -12,6 +12,7 @@ step_run = 18.0
 indoor_factor = 0.5
 twig_chance = 0.12
 twig_factor = 2.0
+melee_noise = 9.0
 creak_radius = 9.0
 creak_soft_chance = 0.3
 creak_soft_radius = 3.0

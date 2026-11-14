@@ -1320,6 +1320,28 @@
           "text": "Die Asche ordnet sich zu einem Ring um das Metall. Sie will irgendwo ankommen."
         }
       ]
+    },
+    "an_changeling_skin": {
+      "find": "changeling_skin",
+      "name": "Gelenkhaut",
+      "area": "Spezies und Verhalten",
+      "station": "microscope",
+      "hours": 10,
+      "summary": "Ein Fetzen Haut, zäh wie Leder, mit kleinen Knoten darin. Er lag dort, wo eben noch ein Stuhl stand.",
+      "experiments": [
+        {
+          "id": "look",
+          "label": "Unter dem Mikroskop",
+          "needs": "light",
+          "text": "Die Knoten sind Gelenke. Hunderte, winzig, jedes in alle Richtungen beweglich. Diese Haut kann jede Form annehmen – solange niemand hinsieht."
+        },
+        {
+          "id": "watch",
+          "label": "Unter Beobachtung liegen lassen",
+          "needs": "night",
+          "text": "Solange ich hinsehe, rührt sie sich nicht. Als ich vom Okular aufsehe und wieder hineinschaue, liegt sie anders. Gefaltet. Wie ein winziges Stuhlbein."
+        }
+      ]
     }
   },
   "links": {
@@ -1738,6 +1760,18 @@
       ],
       "text": "Die Blitzasche und die Erde in der Sondenkapsel tragen dieselben Körner. Der Sucher verschwindet nicht ins Nichts. Er springt von Sonde zu Sonde, und der Ton pro Stunde ist sein Leuchtfeuer. Wo ein Kern offen liegt, kann er ankommen.",
       "unlocks": []
+    },
+    "link_mimic": {
+      "name": "Nachahmer",
+      "area": "Spezies und Verhalten",
+      "needs": [
+        "an_changeling_skin",
+        "an_membrane"
+      ],
+      "text": "Die Klangmembran ahmt Geräusche nach, die Gelenkhaut ahmt Dinge nach. Beide schwingen auf derselben Frequenz, wenn man sie nebeneinanderlegt. Eine Probe davon in einem Glas, an einen Draht gehängt, zittert und piept, sobald man ein Ding ansieht, das nicht echt ist.",
+      "unlocks": [
+        "fake_probe"
+      ]
     }
   },
   "notes": {
@@ -2162,6 +2196,12 @@
       "after": "mauler",
       "chance": 0.4,
       "where": "forest"
+    },
+    {
+      "item": "changeling_skin",
+      "after": "changeling",
+      "chance": 0.25,
+      "where": "porch"
     }
   ],
   "gadgets": {
@@ -2206,6 +2246,10 @@
     },
     "seeker_alarm": {
       "range": 60.0
+    },
+    "fake_probe": {
+      "range": 12.0,
+      "cone": 22.0
     }
   }
 }

@@ -1,5 +1,8 @@
 class_name Player
 extends CharacterBody3D
+
+## Jeder Schritt (für Echo-Schritte des Wechselbalgs)
+signal stepped(gait: String, pos: Vector3)
 ## First-Person-Steuerung (GDD 18.2): Gehen, Rennen, Ducken, Springen,
 ## Benutzen (E / R), Smartwatch-Lampe (F), Hände (Linksklick/Rechtsklick, 1–9, Mausrad).
 
@@ -66,6 +69,8 @@ var breath_held: float = 0.0          ## Sekunden, seit der Atem angehalten wird
 var _gasp_block: float = 0.0
 var last_noise_radius: float = 0.0
 var last_noise_msec: int = -100000
+## Wechselbalg hält dich fest und zieht (Changeling.pull_vector) – nur noch umsehen, nicht gehen
+var grabbed_by: Node = null
 
 
 func _ready() -> void:
@@ -277,7 +282,7 @@ func _physics_process(delta: float) -> void:
 	var input := Vector2.ZERO
 	if not input_locked:
 		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching:
+		if Input.is_action_just_pressed("jump") and is_on_floor() and not crouching and grabbed_by == null:
 			velocity.y = jump_velocity
 			Footsteps.play_jump(get_parent(), global_position)
 	# Sicherung gegen „hängende“ Shift-Taste: rennen nur, wenn Shift wirklich gerade gedrückt ist
@@ -309,6 +314,12 @@ func _physics_process(delta: float) -> void:
 	var accel := 10.0 if is_on_floor() else 2.0
 	velocity.x = lerpf(velocity.x, dir.x * speed, clampf(accel * delta, 0.0, 1.0))
 	velocity.z = lerpf(velocity.z, dir.z * speed, clampf(accel * delta, 0.0, 1.0))
+	if is_instance_valid(grabbed_by):
+		var pv: Vector3 = grabbed_by.call("pull_vector")
+		velocity.x = pv.x
+		velocity.z = pv.z
+	elif grabbed_by != null:
+		grabbed_by = null
 	var fall_speed := -velocity.y
 	var was_airborne := not is_on_floor()
 	move_and_slide()
@@ -408,6 +419,7 @@ func _process(delta: float) -> void:
 func _footstep(speed: float, crouching: bool = false, slow: bool = false) -> void:
 	var gait := "sneak" if crouching or speed < crouch_speed + 0.4 else ("run" if speed > walk_speed + 0.5 else "walk")
 	Footsteps.play(get_parent(), global_position, gait)
+	stepped.emit(gait, global_position)
 	# Wie laut war der Schritt? Gangart × Untergrund, Wind und Regen übertönen (Stealth)
 	var noise_gait := "slow" if slow and gait == "sneak" and not crouching else gait
 	var surface := Footsteps.surface_at(global_position)

@@ -1,0 +1,42 @@
+{
+  "_info": "Wechselbalg (Christian 14.11.2026): Tarn-Orte und Gedanken. spots: id, where (yard = Hof, Stufe 1 | house = im Haus | morning = am Morgen im Schlafzimmer | siege = Belagerung), disguise (chair | office_chair | broom | lamp | coat_stand | bench | stump | backpack | signpost | tent), pos [x, z], face [x, z] = wohin die Vorderseite schaut, lean [x, z] = Richtung der Wand, an der er lehnt. thoughts: Gedanke beim ersten genauen Hinsehen (obvious = deutlicher Fehler, subtle = feiner Fehler). Werte: data/creatures/changeling.tres, wann: ThreatConfig changeling_*.",
+  "spots": [
+    {"id": "porch_chair", "where": "yard", "disguise": "chair", "pos": [0.6, 5.9], "face": [0, 1]},
+    {"id": "yard_bench", "where": "yard", "disguise": "bench", "pos": [7.5, 12.0], "face": [-1, 0]},
+    {"id": "wall_broom", "where": "yard", "disguise": "broom", "pos": [6.75, -2.6], "lean": [-1, 0]},
+    {"id": "dining_third", "where": "house", "disguise": "chair", "pos": [0.55, 2.05], "face": [-1, 0]},
+    {"id": "living_lamp", "where": "house", "disguise": "lamp", "pos": [-2.6, 4.05]},
+    {"id": "hall_coat", "where": "house", "disguise": "coat_stand", "pos": [-1.6, 4.1]},
+    {"id": "kitchen_broom", "where": "house", "disguise": "broom", "pos": [1.75, 0.6], "lean": [1, 0]},
+    {"id": "office_chair2", "where": "house", "disguise": "office_chair", "pos": [0.3, -6.1], "face": [0, 1]},
+    {"id": "workshop_chair", "where": "house", "disguise": "chair", "pos": [4.6, 0.4], "face": [-1, 0]},
+    {"id": "bedroom_chair", "where": "morning", "disguise": "chair", "pos": [-3.3, -2.9], "face": [-1, -0.6]},
+    {"id": "siege_lamp", "where": "siege", "disguise": "lamp", "pos": [-1.0, 0.0]},
+    {"id": "siege_coat", "where": "siege", "disguise": "coat_stand", "pos": [-1.6, 4.1]},
+    {"id": "siege_chair", "where": "siege", "disguise": "chair", "pos": [4.6, 0.4], "face": [-1, 0]},
+    {"id": "siege_office", "where": "siege", "disguise": "office_chair", "pos": [0.3, -6.1], "face": [0, 1]}
+  ],
+  "thoughts": {
+    "chair": {"obvious": "Der Stuhl … die Seitenlehnen sind unter der Sitzfläche. So baut doch niemand einen Stuhl.", "subtle": "Mit dem Stuhl stimmt etwas nicht. Ich zähle die Beine. Fünf."},
+    "office_chair": {"obvious": "Stefanies Bürostuhl. Ein zweiter. Die Lehne zeigt nach unten, unter den Sitz.", "subtle": "Der Fuß des Stuhls hat sieben Rollen. Ich habe nie darauf geachtet. Oder doch?"},
+    "broom": {"obvious": "Ein Besen mit zwei Köpfen. Oben und unten.", "subtle": "Die Borsten des Besens zeigen nach oben. Wer stellt einen Besen so hin?"},
+    "lamp": {"obvious": "Die Stehlampe hat zwei Schirme. Einer davon unten, verkehrt herum.", "subtle": "Der Lampenschirm sitzt verkehrt herum. Und die Lampe hat kein Kabel."},
+    "coat_stand": {"obvious": "An der Garderobe hängt eine Jacke mit drei Ärmeln.", "subtle": "Die Haken der Garderobe zeigen alle nach unten. Da kann nichts hängen bleiben."},
+    "bench": {"obvious": "Die Bank hat zwei Rückenlehnen. Auf beiden Seiten.", "subtle": "Die Bank steht auf drei Beinen. Gerade. Ohne zu kippeln."},
+    "stump": {"obvious": "Aus dem Baumstumpf wachsen auch oben Wurzeln.", "subtle": "Der Stumpf war vorhin weiter weg. Ganz sicher."},
+    "backpack": {"obvious": "Neben meinem Rucksack liegt ein zweiter. Genau gleich. Mit Trägern auf beiden Seiten.", "subtle": "Der Rucksack hat zwei Griffe oben. Meiner hat einen."},
+    "signpost": {"obvious": "Beide Schilder sagen „Hütte“. Und zeigen in entgegengesetzte Richtungen.", "subtle": "Das Schild nach „Hütte“ zeigt in den dichten Wald. Da ist keine Hütte."},
+    "tent": {"obvious": "Da steht ein zweites Zelt. Wie meins. Es hat auf beiden Seiten einen Eingang.", "subtle": "Ein zweites Zelt. Ohne Heringe. Es steht einfach."}
+  },
+  "texts": {
+    "first_sighting": "Da war vorhin nichts. Ich bin mir sicher, dass da vorhin nichts war.",
+    "grabbed": "Etwas hat mich von hinten gepackt!   [E] halten: losreißen   [F] anleuchten   Axt: zuschlagen",
+    "freed": "Ich reiße mich los. Hinter mir faltet sich etwas zusammen – und ist mit einem Blitz weg.",
+    "abducted": "Ich wache im nassen Laub auf. Wald. Kalt. Meine Sachen liegen verstreut auf dem Weg. Die Hütte kann nicht weit sein.",
+    "revealed": "Für einen Augenblick ist es kein Ding mehr. Gelenke, zu viele Gelenke – und ein Gesicht, das lächelt.",
+    "offended": "Ich habe es geschlagen. Es wird sich das merken.",
+    "mirror": "Im Spiegel steht hinter mir etwas, das im Raum nicht da ist.",
+    "lightning": "",
+    "siege_start": "Eins der Dinge im Haus ist nicht echt. Es kommt näher, sobald ich wegsehe. Finde es und leuchte es an!"
+  }
+}

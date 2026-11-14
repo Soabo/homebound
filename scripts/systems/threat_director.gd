@@ -45,6 +45,14 @@ var _rng := RandomNumberGenerator.new()
 var last_siege_day: int = -100
 var siege_count: int = 0
 var siege_done_day: int = -1
+## Wechselbalg: in wie vielen Nächten er schon da war (bestimmt die Stufe), Tag, an dem man ihn tagsüber geschlagen hat
+var changeling_count: int = 0
+var changeling_offended_day: int = -100
+var _changeling_tonight := false
+var _changeling_day_rolled: int = -1
+var _changeling_day_wanted := false
+var _changeling_day_check: float = 20.0
+var _day_changeling: Node = null
 
 
 func _ready() -> void:
@@ -72,7 +80,8 @@ func get_state() -> Dictionary:
 	return {"night_kind": night_kind, "nights_since": nights_since_appearance, "quiet_left": quiet_left,
 		"arc_day": _arc_day, "last_inside_day": _last_inside_day, "forest_day": _forest_day_done,
 		"scared_until": scared_until, "blocked": blocked_memory.duplicate(), "mauler_until": mauler_until,
-		"last_siege": last_siege_day, "siege_count": siege_count, "siege_done": siege_done_day}
+		"last_siege": last_siege_day, "siege_count": siege_count, "siege_done": siege_done_day,
+		"changeling_count": changeling_count, "changeling_offended": changeling_offended_day}
 
 
 func set_state(s: Dictionary) -> void:
@@ -87,6 +96,8 @@ func set_state(s: Dictionary) -> void:
 	last_siege_day = int(s.get("last_siege", -100))
 	siege_count = int(s.get("siege_count", 0))
 	siege_done_day = int(s.get("siege_done", -1))
+	changeling_count = int(s.get("changeling_count", 0))
+	changeling_offended_day = int(s.get("changeling_offended", -100))
 	blocked_memory = (s.get("blocked", {}) as Dictionary).duplicate()
 
 
@@ -110,10 +121,18 @@ func _on_phase_changed(is_night: bool) -> void:
 	if is_night:
 		if scene:
 			Traces.clear(scene)
+		get_tree().call_group("changeling", "dusk")
 		return
 	# Morgengrauen: Kreatur verschwindet, Spuren der Nacht bleiben, nächste Nacht wird geplant.
 	if is_instance_valid(creature):
 		creature.call("leave")
+	get_tree().call_group("changeling", "dawn")
+	# Nach einer Nacht mit dem Wechselbalg: ein Stuhl im Schlafzimmer, der zum Bett schaut
+	if scene and _changeling_tonight and changeling_count >= 2 and not far_from_home() and _rng.randf() < config.changeling_morning_chance:
+		var sp := Changeling.spots("morning")
+		if not sp.is_empty():
+			Changeling.spawn_spot(scene, sp[_rng.randi() % sp.size()], {"mode": "morning", "vanish_when_unseen": true, "subtle": changeling_count >= config.changeling_subtle_after})
+	_changeling_tonight = false
 	# Merker für Baupläne: erste unruhige Nacht, erster Besuch der Kreatur am Haus
 	if _activity_tonight:
 		Tasks.flag("unrest_night")
@@ -194,6 +213,10 @@ func plan_night(night_day: int) -> void:
 				_add(start + _rng.randf_range(2.0, night_len - 1.5), "attic")
 			if night_kind == "hunt" and _rng.randf() < config.outage_chance:
 				_add(start + _rng.randf_range(2.5, 6.0), "outage")
+	# Wechselbalg ab Story-Phase 2 (nicht in Belagerungsnächten – dort ist er eine eigene Aufgabe)
+	if Story.phase >= config.changeling_from_phase and night_kind != "siege" \
+			and (_rng.randf() < config.changeling_chance or changeling_offended_day == night_day):
+		_add(start + _rng.randf_range(0.8, maxf(night_len - 2.0, 1.0)), "changeling")
 	# Phase 8: neue Arten, sobald sich das Tal verändert (oder ab der dritten Nacht) – nicht in ruhigen Nächten
 	var st := WorldState.stage()
 	# Fremde Dinge machen sichtbar (Forschung 2.0): wer viel davon trägt oder nachts forscht, wird eher gefunden
@@ -358,6 +381,7 @@ func _process(delta: float) -> void:
 	_check_forest_stalker(delta)
 	_check_mauler(delta)
 	_check_tired()
+	_check_changeling_day(delta)
 	var now := TimeManager.get_total_hours()
 	for e in events:
 		if not e["done"] and now >= e["at"]:
@@ -475,6 +499,9 @@ func _fire(type: String) -> void:
 		s.index = siege_count
 		s.end_total = float(_planned_for_day) * 24.0 + config.siege_end_hour
 		scene.add_child(s)
+		return
+	if type == "changeling":
+		_spawn_changeling(scene, player as Player)
 		return
 	if type.begins_with("omen:"):
 		var kind := type.substr(5)
@@ -775,3 +802,117 @@ func _random_wall_point() -> Vector3:
 ## Lernverhalten: Zugang wurde verstärkt vorgefunden.
 func remember_blocked(entry_name: String) -> void:
 	blocked_memory[entry_name] = int(blocked_memory.get(entry_name, 0)) + 1
+
+
+# --- Wechselbalg ------------------------------------------------------------------
+
+## Stufe: 1 = nur „ein Ding zu viel“ auf dem Hof, 2 = im Haus mit deutlichem Fehler, rückt langsam,
+## 3 = feine Fehler, rückt bei jedem Wegsehen, Echo-Schritte.
+func changeling_stage() -> int:
+	if changeling_count <= 0:
+		return 1
+	if changeling_count < config.changeling_subtle_after:
+		return 2
+	return 3
+
+
+## Tagsüber geschlagen: in der nächsten Nacht kommt er sicher (und schneller).
+func changeling_offended() -> void:
+	changeling_offended_day = TimeManager.day
+	if _planned_for_day == TimeManager.day and not events.any(func(e: Dictionary) -> bool: return e["type"] == "changeling" and not e["done"]):
+		var start := float(TimeManager.day - 1) * 24.0 + TimeManager.config.night_start_hour
+		_add(start + _rng.randf_range(1.0, 3.0), "changeling")
+
+
+func _spawn_changeling(scene: Node, player: Player) -> void:
+	if far_from_home() or player == null:
+		return   # draußen im Zelt: eigene Zeltnacht-Vorfälle
+	var stage := changeling_stage()
+	var night := current_night()
+	changeling_count += 1
+	_changeling_tonight = true
+	_activity_tonight = true
+	if not _kinds_tonight.has("changeling"):
+		_kinds_tonight.append("changeling")
+	var offended := changeling_offended_day == night
+	if stage == 1:
+		var yard := Changeling.spots("yard")
+		Changeling.spawn_spot(scene, yard[_rng.randi() % yard.size()], {"mode": "yard", "vanish_when_unseen": true})
+		return
+	var inside := Cabin.is_inside(player.global_position)
+	var pool: Array = Changeling.spots("house" if inside else "yard")
+	pool.shuffle()
+	var n := config.changeling_multi if Story.shaft_open_day >= 0 else 1
+	for i in mini(n, pool.size()):
+		var sp: Dictionary = pool[i]
+		var at := Vector3(float(sp["pos"][0]), player.global_position.y, float(sp["pos"][1]))
+		if at.distance_to(player.global_position) < 3.0 and pool.size() > n:
+			continue
+		Changeling.spawn_spot(scene, sp, {"mode": "night", "subtle": stage >= 3, "approach": true,
+			"fast": stage >= 3 or offended, "echo": stage >= 3,
+			"can_grab": stage >= 3 and night >= config.changeling_abduct_from_night})
+	print("[Changeling] Nacht %d, Stufe %d, %d Stück" % [night, stage, mini(n, pool.size())])
+
+
+## Tagsüber: harmlos maskiert als zweite Bank oder falscher Wegweiser – und er folgt dir zum nächsten Ort.
+func _check_changeling_day(delta: float) -> void:
+	_changeling_day_check -= delta
+	if _changeling_day_check > 0.0:
+		return
+	_changeling_day_check = 15.0
+	if TimeManager.is_night() or Story.phase < config.changeling_from_phase or not GameState.in_game():
+		return
+	var scene := get_tree().current_scene
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if scene == null or player == null:
+		return
+	if _changeling_day_rolled != TimeManager.day:
+		_changeling_day_rolled = TimeManager.day
+		_changeling_day_wanted = _rng.randf() < config.changeling_day_chance
+	if not _changeling_day_wanted:
+		return
+	var ch := _day_changeling as Changeling if is_instance_valid(_day_changeling) else null
+	if ch:
+		# Folgen: gesehen und weit hinter dir? Dann steht er beim nächsten Ort wieder da.
+		if ch.was_seen and ch.dist() > config.changeling_day_distance.y and not ch.is_seen():
+			ch.queue_free()
+			ch = null
+		else:
+			return
+	var spot := changeling_day_spot(player.global_position, _rng)
+	if spot.is_empty():
+		return
+	_day_changeling = Changeling.spawn(scene, String(spot["disguise"]), spot["pos"], {"mode": "day", "subtle": _rng.randf() < 0.5})
+	(_day_changeling as Changeling).face_dir(spot["face"])
+
+
+## Ort für die Tagestarnung: neben einer Wanderbank (zweite Bank) oder einem Wegweiser (falsches Schild),
+## in changeling_day_distance vom Spieler und nicht gerade in seinem Blick.
+func changeling_day_spot(at: Vector3, rng: RandomNumberGenerator) -> Dictionary:
+	var cands: Array = []
+	for b: Vector3 in WorldTrails.benches:
+		cands.append({"disguise": "bench", "pos": b + Vector3(2.1, 0, 0.4), "face": at - b})
+	for sg: Dictionary in WorldMap.data().get("signs", []):
+		var p := Vector3(float(sg["pos"][0]), 0, float(sg["pos"][1]))
+		cands.append({"disguise": "signpost", "pos": p + Vector3(1.2, 0, 0.8), "face": at - p})
+	for r: Dictionary in WorldMap.data().get("rest_spots", []):
+		var p := Vector3(float(r["pos"][0]), 0, float(r["pos"][1]))
+		cands.append({"disguise": "bench", "pos": p + Vector3(2.5, 0, -1.5), "face": at - p})
+	cands.shuffle()
+	var player := get_tree().get_first_node_in_group("player") as Player
+	for c: Dictionary in cands:
+		var p: Vector3 = c["pos"]
+		var d := Vector2(p.x - at.x, p.z - at.z).length()
+		if d < config.changeling_day_distance.x or d > config.changeling_day_distance.y:
+			continue
+		if player:
+			var to := p - player.camera.global_position
+			to.y = 0.0
+			var f := -player.camera.global_transform.basis.z
+			f.y = 0.0
+			if f.normalized().dot(to.normalized()) > 0.6:
+				continue
+		p.y = Terrain.height_at(p.x, p.z)
+		c["pos"] = p
+		return c
+	return {}

@@ -1,5 +1,5 @@
 {
-  "_info": "Vorfälle der Zeltnacht (Christian 14.11.: umfangreicher und bedrohlicher, Geräusche, Bewegungen, Tiere, Dinge zum Handeln). weight = wie oft, from_night = frühestens ab Nacht N, wakes = weckt den Schlafenden (sonst nur erlebbar, wenn man wach im Zelt sitzt), needs = Bedingung (fire = ein Feuer brennt in der Nähe, phase2 = Story-Phase 2, dictaphone = Diktiergerät dabei), act = was der Spieler tun kann (nur Beschreibung). Wie viele pro Nacht und wie viele wecken: ThreatConfig camp_events, camp_wake_max.",
+  "_info": "Vorfälle der Zeltnacht (Christian 14.11.: umfangreicher und bedrohlicher, Geräusche, Bewegungen, Tiere, Dinge zum Handeln). weight = wie oft, from_night = frühestens ab Nacht N, wakes = weckt den Schlafenden (sonst nur erlebbar, wenn man wach im Zelt sitzt), needs = Bedingung (fire = ein Feuer brennt in der Nähe, phase2 = Story-Phase 2, dictaphone = Diktiergerät dabei; cl_* = Wechselbalg), act = was der Spieler tun kann (nur Beschreibung). Wie viele pro Nacht und wie viele wecken: ThreatConfig camp_events, camp_wake_max.",
   "events": [
     {"id": "steps",        "weight": 3, "wakes": true,  "act": "–"},
     {"id": "shadow",       "weight": 2, "wakes": true,  "act": "–"},
@@ -24,6 +24,9 @@
     {"id": "breath_still", "weight": 2, "wakes": true,  "act": "stillhalten: nicht umsehen, kein Licht, nicht hinaus"},
     {"id": "drone_scan",   "weight": 1, "wakes": true,  "from_night": 3, "act": "Licht aus, sonst kommt später der Sucher"},
     {"id": "mauler_prowl", "weight": 1, "wakes": true,  "needs": "phase2", "act": "mit der Uhr-LED zum Eingang hinausleuchten"},
-    {"id": "lure",         "weight": 1, "wakes": true,  "act": "drinnen bleiben – wer der Stimme folgt, verliert das Zelt"}
+    {"id": "lure",         "weight": 1, "wakes": true,  "act": "drinnen bleiben – wer der Stimme folgt, verliert das Zelt"},
+    {"id": "cl_backpack",  "weight": 2, "wakes": false, "needs": "phase2", "act": "Zweiter Rucksack am Eingang – hinsehen, mit der Axt enttarnen (Wechselbalg)"},
+    {"id": "cl_stump",     "weight": 2, "wakes": true,  "needs": "phase2", "act": "Baumstumpf rückt bei jedem Wegsehen näher; Licht zeigt den falschen Schatten (Wechselbalg)"},
+    {"id": "cl_tent",      "weight": 1, "wakes": false, "needs": "phase2", "act": "Am Morgen steht ein zweites Zelt da (Wechselbalg)"}
   ]
 }
