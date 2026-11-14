@@ -568,6 +568,8 @@
   `siege_led_time` vertreibt es, erreicht es dich = Fehlschlag.
 - Forschung: an_changeling_skin (Gelenkhaut) + an_membrane → link_mimic „Nachahmer“ → Rezept `fake_probe` (Echtheitsprüfer,
   `GadgetHud.fake_text`, piept beim Hinsehen). Drop nach Nächten mit ihm (after „changeling“).
+- OFFEN: Im 15-Tage-Durchlauf vom 14.11. abends einmal „Lambda capture at index 0/4 was freed“ (Tag 10, nach dem Neuladen,
+  Ausflug Außenstelle) – Herkunft noch nicht gefunden, kein Absturz.
 - Prüfung `RegressTest._t_changeling` (einzeln: `-- --night-test=regress --only=_t_changeling`). Vorschau der Modelle:
   `creature_preview.tscn -- --changeling=masks|true`.
 
