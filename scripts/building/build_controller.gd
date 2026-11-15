@@ -233,6 +233,10 @@ func _physics_process(_delta: float) -> void:
 		Inventory.display_name(type), "" if _valid else "\nHier geht es nicht."])
 
 
+func _build_type() -> String:
+	return String(DataDB.item(type).get("build", type))
+
+
 func _check_valid(p: Vector3) -> bool:
 	# Nicht im Haus, auf der Veranda/Treppe oder im Schuppen – geprüft wird die ganze Grundfläche des Bauteils
 	var size := _preview.size
@@ -244,10 +248,14 @@ func _check_valid(p: Vector3) -> bool:
 				return false
 		if absf(c.x - Shed.ORIGIN.x) < Shed.HALF.x + 0.3 and absf(c.z - Shed.ORIGIN.z) < Shed.HALF.y + 0.3:
 			return false
-	if absf(p.x) > 100.0 or absf(p.z) > 100.0:
+	# Zelt, Lagerfeuer, Fallen … dürfen überall stehen (Mehrtagesmärsche), alles andere nur im Tal um die Hütte
+	var limit := 1095.0 if bool(DataDB.buildable(_build_type()).get("anywhere", false)) else 100.0
+	if absf(p.x) > limit or absf(p.z) > limit:
 		return false
 	if Terrain.stream_distance(p.x, p.z) < 2.0:
 		return false
+	if Terrain.water_level_at(p.x, p.z) > p.y - 0.05:
+		return false   # nicht im Wasser (Seen, Tümpel)
 	# Nicht zu steil
 	var dx := Vector3(cos(_rot), 0, -sin(_rot)) * size.x * 0.5
 	var h1 := Terrain.height_at(p.x + dx.x, p.z + dx.z)

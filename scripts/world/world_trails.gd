@@ -83,6 +83,8 @@ func _sign(at: Vector2, targets: Array) -> void:
 		var p := WorldMap.place_pos(id)
 		var dir := p - dirs_from
 		var dist := dir.length()
+		if dist < 60.0:
+			continue   # man steht schon da („Imkerei Brandl 0 m“) – kein Arm (Christian 15.11.)
 		var yaw := rad_to_deg(atan2(-dir.x, -dir.y))
 		var arm := Node3D.new()
 		arm.position = Vector3(0, y, 0)

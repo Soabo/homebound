@@ -1,5 +1,5 @@
 {
-  "_info": "Bauobjekte fürs Grundstück (GDD 7.2/7.3). health = Lebenspunkte gegen Kreaturen, obstacle = versperrt den Weg.",
+  "_info": "Bauobjekte fürs Grundstück (GDD 7.2/7.3). health = Lebenspunkte gegen Kreaturen, obstacle = versperrt den Weg. anywhere = darf überall auf der Karte stehen (sonst nur im Tal um die Hütte, ±100 m).",
   "fence_panel": {
     "name": "Holzzaun",
     "health": 90,
@@ -42,7 +42,8 @@
     ],
     "trap": true,
     "player_damage": 25,
-    "creature_damage": 30
+    "creature_damage": 30,
+    "anywhere": true
   },
   "snare": {
     "name": "Kleintierschlinge",
@@ -52,7 +53,8 @@
       0.5,
       0.3,
       0.5
-    ]
+    ],
+    "anywhere": true
   },
   "can_alarm": {
     "name": "Dosenalarm",
@@ -126,7 +128,8 @@
       2.0,
       1.25,
       2.4
-    ]
+    ],
+    "anywhere": true
   },
   "campfire": {
     "name": "Lagerfeuer",
@@ -136,7 +139,8 @@
       1.2,
       0.5,
       1.2
-    ]
+    ],
+    "anywhere": true
   },
   "drone_decoy": {
     "name": "Drohnenköder",
@@ -147,7 +151,8 @@
       1.4,
       0.5
     ],
-    "range": 60
+    "range": 60,
+    "anywhere": true
   },
   "light_lure": {
     "name": "Lichtköder",
@@ -158,6 +163,7 @@
       0.6,
       0.4
     ],
-    "range": 70
+    "range": 70,
+    "anywhere": true
   }
 }

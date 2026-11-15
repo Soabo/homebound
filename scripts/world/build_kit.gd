@@ -203,6 +203,15 @@ static func box_mm(parent: Node, from: Vector3, to: Vector3, mat: Material, coll
 	return box(parent, hi - lo, (lo + hi) * 0.5, mat, collide, Vector3.ZERO, node_name)
 
 
+## Vierkant-Balken von a nach b (lokale Koordinaten des Elternknotens).
+static func beam_between(parent: Node, a: Vector3, b: Vector3, thick: float, mat: Material) -> MeshInstance3D:
+	var d := b - a
+	var bx := box(parent, Vector3(thick, thick, d.length()), (a + b) * 0.5, mat, false)
+	var n := d.normalized()
+	bx.transform = Transform3D(Basis.looking_at(n, Vector3.UP if absf(n.y) < 0.95 else Vector3.RIGHT), (a + b) * 0.5)
+	return bx
+
+
 static func cylinder(parent: Node, radius: float, height: float, pos: Vector3, mat: Material,
 		collide: bool = false, rot_deg: Vector3 = Vector3.ZERO, top_radius: float = -1.0,
 		segments: int = 16) -> MeshInstance3D:

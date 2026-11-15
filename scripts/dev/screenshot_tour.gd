@@ -82,6 +82,8 @@ const SHOTS := [
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
 		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
+	{"name": "E0_zelt", "hour": 14.0, "pos": Vector3(-1.2, 0.0, 28.5), "look": Vector3(-3.0, 0.5, 24.0), "build": [["tent", Vector3(-3.0, 0.0, 24.0), 0.0]], "clean": true},
+	{"name": "E1_huette_dach", "hour": 14.0, "pos": Vector3(-2.0, 0.0, 16.0), "look": Vector3(0.0, 4.0, 0.0), "clean": true},
 	{"name": "73_zerfleischer_tag", "hour": 15.5, "pos": Vector3(4.0, 0.0, 16.5), "look": Vector3(4.0, 1.3, 11.5), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_pose": "warn", "clean": true},
 	{"name": "74_zerfleischer_seite", "hour": 15.5, "pos": Vector3(9.0, 0.0, 12.5), "look": Vector3(4.0, 1.1, 12.0), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_face": Vector3(4.0, 0.0, 17.0), "mauler_pose": "charge", "clean": true},
 	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true},

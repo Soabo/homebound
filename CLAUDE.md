@@ -618,6 +618,10 @@
 - Babyfon läuft mit Batterien (ohne Strom). Holzstapel am Schuppen: data/house/house.json `woodpile` (`refill_days` 2, `ResourceNode.refill_days`).
 - Schlaf heilt: SurvivalConfig `sleep_heal_per_hour` (nicht mit leerem Magen/Durst), in `Survival._on_woke`.
 - Prüfung `RegressTest._t_batch4_1411` (dazu Sprungprobe im Büro in `_t_fixes_1411`).
+- 15.11. abends: Zelt-Modell richtig herum (Planen vom First nach außen, Rückwand als Dreieck, Firststange), Bauteile mit
+  buildables.json `anywhere` (Zelt, Lagerfeuer, Fallen, Köder) dürfen überall auf der Karte stehen (sonst ±100 m), nie im Wasser.
+  Dorf-Balken lagen an der Hütte (look_at in Weltkoordinaten) → `BuildKit.beam_between` / lokale Basis. Wegweiser ohne Arm
+  für Orte unter 60 m. Tour-Bilder E0 (Zelt), E1 (Hüttendach).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

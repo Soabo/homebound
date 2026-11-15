@@ -289,12 +289,25 @@ func _build_tent() -> void:
 	var l := size.z
 	var slope := sqrt(w * w + h * h)
 	var ang := rad_to_deg(atan2(h, w))
+	# Dachflächen: vom First (Mitte oben) schräg nach außen unten (Christian 15.11.: vorher verkehrt herum gekippt)
 	for sx: float in [-1.0, 1.0]:
-		var side := BuildKit.box(self, Vector3(slope, 0.02, l), Vector3(sx * w * 0.5, h * 0.5, 0), canvas, false, Vector3(0, 0, sx * ang))
+		var side := BuildKit.box(self, Vector3(slope + 0.06, 0.02, l), Vector3(sx * w * 0.5, h * 0.5, 0), canvas, false, Vector3(0, 0, -sx * ang))
 		side.name = "CanvasR" if sx > 0.0 else "CanvasL"
-	# Rückwand (Dreieck angedeutet durch zwei schräge Stücke)
+	# Rückwand: echtes Dreieck
+	var back := MeshInstance3D.new()
+	back.name = "CanvasBack"
+	var prism := PrismMesh.new()
+	prism.size = Vector3(w * 2.0, h, 0.02)
+	prism.left_to_right = 0.5
+	back.mesh = prism
+	back.material_override = canvas
+	back.position = Vector3(0, h * 0.5, -l * 0.5)
+	add_child(back)
+	# Eingang vorn: Planen zur Seite gerollt
 	for sx: float in [-1.0, 1.0]:
-		BuildKit.box(self, Vector3(w, h * 0.72, 0.02), Vector3(sx * w * 0.4, h * 0.36, -l * 0.5), canvas, false, Vector3(0, 0, sx * 12.0))
+		BuildKit.beam_between(self, Vector3(sx * w * 0.15, h * 0.85, l * 0.5 + 0.02), Vector3(sx * w * 0.8, h * 0.18, l * 0.5 + 0.02), 0.05, canvas)
+	# Firststange
+	BuildKit.beam_between(self, Vector3(0, h, -l * 0.5), Vector3(0, h, l * 0.5), 0.025, pole)
 	for z: float in [-l * 0.5, l * 0.5]:
 		BuildKit.cylinder(self, 0.015, h, Vector3(0, h * 0.5, z), pole, false, Vector3.ZERO, -1.0, 6)
 	BuildKit.box(self, Vector3(0.6, 0.03, l * 0.85), Vector3(-0.25, 0.015, 0), BuildKit.color_mat(Color(0.2, 0.3, 0.5), 0.8), false)

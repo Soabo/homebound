@@ -305,7 +305,9 @@ func _apply_torn() -> void:
 		r.visible = not torn
 	var l := structure.get_node_or_null("CanvasL") as Node3D if structure else null
 	if l:
-		l.rotation_degrees.z = -60.0 if torn else rad_to_deg(atan2(structure.size.y, structure.size.x * 0.5)) * -1.0
+		# Linke Plane: normal schräg vom First nach außen, zerrissen hängt sie flach durch
+		l.rotation_degrees.z = 12.0 if torn else rad_to_deg(atan2(structure.size.y, structure.size.x * 0.5))
+		l.position.y = structure.size.y * (0.22 if torn else 0.5)
 
 
 ## Am Morgen nach einer unruhigen Nacht: Spuren ums Zelt.

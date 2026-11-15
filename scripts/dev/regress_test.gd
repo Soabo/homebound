@@ -2175,6 +2175,23 @@ func _t_batch4_1411() -> void:
 	Survival._on_woke()
 	_ok("Schlaf heilt (30 → %.0f nach 6 Stunden)" % p.health, p.health >= 90.0)
 	p.health = keep_hp
+	# Zelt: weit draußen im Wald aufstellbar (früher nur ±100 m um die Hütte), Dachflächen vom First nach außen
+	var bc := _scene().get_node("BuildController") as BuildController
+	Inventory.add("tent", 1)
+	bc.start("tent")
+	await _frames(2)
+	var far_ok := false
+	for spot: Vector2 in [Vector2(-420, 180), Vector2(300, -350), Vector2(-250, -500), Vector2(500, 300)]:
+		var fp2 := Vector3(spot.x, Terrain.height_at(spot.x, spot.y), spot.y)
+		if bc._check_valid(fp2):
+			far_ok = true
+			break
+	_ok("Zelt: lässt sich weit weg von der Hütte aufstellen", far_ok)
+	var cr := bc._preview.get_node_or_null("CanvasR") as Node3D
+	var cl := bc._preview.get_node_or_null("CanvasL") as Node3D
+	_ok("Zelt: Planen fallen vom First nach außen ab", cr != null and cl != null and cr.rotation.z < 0.0 and cl.rotation.z > 0.0)
+	bc.stop()
+	Inventory.remove("tent", 1)
 	# Wechselbalg kommt öfter, wenn man nachts wach ist – aber nur einmal pro Nacht und nicht im Schlaf
 	var keep_phase := Story.phase
 	var keep_cl := ThreatDirector._changeling_tonight
@@ -2314,6 +2331,13 @@ func _t_village() -> void:
 		if r and r.get_child_count() > 20:
 			ruins += 1
 	_ok("Dorf: sechs ausgebaute Hausruinen (%d)" % ruins, ruins == 6)
+	# Balken landeten an der Hütte (look_at in Weltkoordinaten) – alle Teile müssen beim Dorf liegen
+	var dorf := _scene().get_node_or_null("Places/dorf") as Node3D
+	var stray := 0
+	for m in dorf.find_children("*", "MeshInstance3D", true, false):
+		if Vector2((m as Node3D).global_position.x, (m as Node3D).global_position.z).length() < 120.0:
+			stray += 1
+	_ok("Dorf: kein Teil fliegt woanders herum (%d)" % stray, stray == 0)
 
 
 func _t_fixes_1411() -> void:

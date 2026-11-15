@@ -64,7 +64,8 @@ static func beam(parent: Node3D, a: Vector3, b: Vector3, r: float, mat: Material
 	var mid := (a + b) * 0.5
 	var d := b - a
 	var bx := BuildKit.box(parent, Vector3(r, r, d.length()), mid, mat, false)
-	bx.look_at_from_position(mid, b, Vector3.UP if absf(d.normalized().y) < 0.95 else Vector3.RIGHT)
+	# lokal ausrichten (look_at arbeitet in Weltkoordinaten – dann landeten die Balken an der Hütte)
+	bx.transform = Transform3D(Basis.looking_at(d.normalized(), Vector3.UP if absf(d.normalized().y) < 0.95 else Vector3.RIGHT), mid)
 
 
 # --- Häuser ---------------------------------------------------------------------
