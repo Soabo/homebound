@@ -2217,6 +2217,15 @@ func _t_batch5_1511() -> void:
 	_ok("Tag weit draußen: Gefahr (%.2f), aber nicht gleich am Morgen (%.2f)" % [day_c, dawn_c], day_c > 0.0 and dawn_c == 0.0)
 	Story.phase = keep_phase
 	ThreatDirector.roam_meters = 0.0
+	# Hände/Axt im Dunkeln: das Streulicht der Hände folgt der Umgebung
+	var hands := p.hands
+	p.global_position = Vector3(-60, Terrain.height_at(-60, 40) + 0.2, 40)
+	p.set_flashlight(false)
+	TimeManager.set_time(maxi(keep_d, 8), 23.0)
+	var night_lv := hands.ambient_level()
+	TimeManager.set_time(maxi(keep_d, 8), 13.0)
+	var day_lv := hands.ambient_level()
+	_ok("Hände: nachts kaum Streulicht (%.2f), am Tag voll (%.2f)" % [night_lv, day_lv], night_lv < 0.2 and day_lv > 0.6)
 	# Todes-Bildschirm: jede Ursache hat Text und Ratschläge
 	var missing: Array = []
 	for c: String in ["creature", "mauler", "mind", "siege_found", "siege_fail", "attic", "gap_hand", "trap", "hunger", "thirst", "cold", "bog", "unknown", "gibtsnicht"]:

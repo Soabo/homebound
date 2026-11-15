@@ -98,6 +98,36 @@ var _sway_vel := Vector2.ZERO
 var _bob_pos := Vector3.ZERO   # Wippen beim Gehen (wird in _avoid_walls mit dem Zurückziehen verrechnet)
 var _last_yaw: float = 0.0
 var _last_pitch: float = 0.0
+var _fill: OmniLight3D
+var _fill_t := 0.0
+var _fill_target := 1.0
+
+
+## Wie hell es um die Hände ist (0 = stockdunkel, 1 = Tag/Lampe) – das Streulicht folgt der Umgebung.
+func ambient_level() -> float:
+	var p := player.global_position
+	var lamp := Stealth.near_light(get_tree(), p)
+	if Cabin.is_inside(p) or Shed.is_inside(p):
+		return 1.0 if lamp else clampf(Stealth.daylight() * 0.7, 0.0, 1.0)
+	var shade := 1.0 - Stealth.canopy(p) * Stealth.cfg().canopy_shade
+	var v := maxf(Stealth.daylight() * shade, Stealth.moonlight() * 0.35 * shade)
+	if lamp:
+		v = maxf(v, 0.8)
+	return clampf(v, 0.0, 1.0)
+
+
+func _update_fill(delta: float) -> void:
+	if _fill == null:
+		return
+	_fill_t -= delta
+	if _fill_t <= 0.0:
+		_fill_t = 0.25
+		var c := Stealth.cfg()
+		var lv := ambient_level()
+		if player.flashlight and player.flashlight.visible:
+			lv = maxf(lv, c.hand_fill_watch)
+		_fill_target = c.hand_fill_energy * maxf(lv, c.hand_fill_min)
+	_fill.light_energy = move_toward(_fill.light_energy, _fill_target, delta * 0.3)
 
 
 func _ready() -> void:
@@ -120,6 +150,7 @@ func _ready() -> void:
 	fill.light_energy = 0.25
 	fill.light_color = Color(1.0, 0.92, 0.8)
 	add_child(fill)
+	_fill = fill
 	_tag_layers(self)
 	Inventory.hotbar_changed.connect(_on_hotbar_changed)
 	Inventory.changed.connect(_on_hotbar_changed)
@@ -705,6 +736,7 @@ func _process(delta: float) -> void:
 	if player == null:
 		return
 	_time += delta
+	_update_fill(delta)
 	_cooldown = maxf(_cooldown - delta, 0.0)
 	_hint_cooldown = maxf(_hint_cooldown - delta, 0.0)
 	_compass_jam = maxf(_compass_jam - delta, 0.0)

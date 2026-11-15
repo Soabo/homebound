@@ -78,6 +78,13 @@ static func get_default() -> StealthConfig:
 @export var vis_inside_dark: float = 0.2
 ## Unter dichten Baumkronen (Schatten) wird Mond- und Tageslicht so stark gedämpft
 @export var canopy_shade: float = 0.5
+
+@export_group("Hände im Dunkeln (Christian 15.11.: Axt & Co. sollen von der Umgebung beleuchtet werden)")
+## Streulicht nur für die Hände: so hell bei vollem Tageslicht / Lampe, im Stockdunkeln nur hand_fill_min davon
+@export var hand_fill_energy: float = 0.25
+@export var hand_fill_min: float = 0.04
+## Mit eingeschalteter Uhr bekommen die Hände etwas Licht vom Handgelenk
+@export var hand_fill_watch: float = 0.35
 ## Geduckt / rennend
 @export var crouch_factor: float = 0.7
 @export var run_bonus: float = 0.15

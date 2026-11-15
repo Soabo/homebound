@@ -641,6 +641,8 @@
 - Todes-Bildschirm: `Player.death_cause` (take_damage(…, cause), Hunger/Durst/Kälte/Hirn/Moor), Texte `data/ui/deaths.json`
   (title + tips), `Hud.death_info`; weiter mit E/Leertaste/Klick (`GameState.death_continue`, nach `DEATH_MIN_WAIT`), Tests ohne
   Speicherplatz wie bisher nach 4,5 s.
+- Hände/Gegenstände im Dunkeln: Streulicht der Hände folgt der Umgebung (`PlayerHands.ambient_level`, StealthConfig `hand_fill_*`,
+  mit Uhr an etwas heller). Tour-Schlüssel `hold` (Gegenstand in der Hand), Bilder E2/E3.
 - Prüfung `RegressTest._t_batch5_1511`.
 
 ## Technik

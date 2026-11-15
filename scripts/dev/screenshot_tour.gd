@@ -82,6 +82,8 @@ const SHOTS := [
 	{"name": "69_imkerei", "hour": 12.0, "place": "imkerei", "off": Vector3(10.0, 0.0, 14.0), "look_off": Vector3(-2.0, 0.5, 0.0)},
 	{"name": "70_sucher_am_lager", "hour": 21.2, "pos": Vector3(5.0, 0.0, 9.0), "look": Vector3(9.0, 1.9, 14.5),
 		"build": [["tent", Vector3(10.5, 0.0, 11.0), -0.9], ["campfire", Vector3(7.5, 0.0, 12.0), 0.0]], "seeker_at": Vector3(9.3, 0.0, 15.0)},
+	{"name": "E2_axt_nacht", "hour": 23.5, "pos": Vector3(-40.0, 0.0, 30.0), "look": Vector3(-46.0, 1.4, 22.0), "hold": "axe"},
+	{"name": "E3_axt_tag", "hour": 13.0, "pos": Vector3(-40.0, 0.0, 30.0), "look": Vector3(-46.0, 1.4, 22.0), "hold": "axe"},
 	{"name": "E0_zelt", "hour": 14.0, "pos": Vector3(-1.2, 0.0, 28.5), "look": Vector3(-3.0, 0.5, 24.0), "build": [["tent", Vector3(-3.0, 0.0, 24.0), 0.0]], "clean": true},
 	{"name": "E1_huette_dach", "hour": 14.0, "pos": Vector3(-2.0, 0.0, 16.0), "look": Vector3(0.0, 4.0, 0.0), "clean": true},
 	{"name": "73_zerfleischer_tag", "hour": 15.5, "pos": Vector3(4.0, 0.0, 16.5), "look": Vector3(4.0, 1.3, 11.5), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_pose": "warn", "clean": true},
@@ -383,6 +385,10 @@ func _run() -> void:
 			if shot.get("lurk", false):
 				get_tree().call_group("surveillance", "spawn_lurker", int(shot.get("lurk_spot", -1)))
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
+		if shot.has("hold"):
+			Inventory.add(String(shot["hold"]), 1)
+			Inventory.set_slot(0, String(shot["hold"]))
+			Inventory.select(0)
 		# Titelbild ohne Retro-Filter (Christian 15.11.)
 		for rf in get_tree().get_nodes_in_group("retro_filter"):
 			var want := not bool(shot.get("no_retro", false))
