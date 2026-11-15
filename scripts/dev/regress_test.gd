@@ -379,6 +379,7 @@ func _t_more() -> void:
 	_t_village()
 	await _t_batch3_1411()
 	await _t_batch4_1411()
+	await _t_batch5_1511()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2110,6 +2111,123 @@ func _t_window_sides() -> void:
 
 
 ## Christians Testrunde 14.11. abends (erste Belagerung + 15 Punkte).
+## Christians Liste 15.11. abends: Stacheln im Wald, Zerfleischer am Morgen, Steine, Türspion, Esc am Monitor, Lagerfeuer-Vorschau, Uhr im Zelt.
+func _t_batch5_1511() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_d := TimeManager.day
+	var keep_h := TimeManager.hour
+	# Wurzelanläufe, Aststummel, Zweige: nichts darf senkrecht als Stachel aus dem Boden ragen
+	var parts := TreeKit.Parts.new()
+	for i in 30:
+		TreeKit.build(TreeKit.make(float(i) * 7.0, 0.0, 0.0, "spruce" if i % 2 == 0 else "oak", 0.8, float(i), 100 + i), 2, parts, null)
+	var spikes := 0
+	for t: Transform3D in parts.trunks:
+		# dünne Teile (keine Stämme): höchstens so hoch wie lang schräg
+		var w := t.basis.x.length()
+		var up := absf(t.basis.y.y)
+		if w < 0.08 and up > 1.2 and t.origin.y < 1.0:
+			spikes += 1
+	_ok("Wald: keine senkrechten Stacheln an Bäumen (%d)" % spikes, spikes == 0)
+	# Zerfleischer zieht im Morgengrauen ab
+	TimeManager.set_time(keep_d, 23.0)
+	p.global_position = Vector3(-140, Terrain.height_at(-140, 60) + 0.2, 60)
+	var m := Mauler.spawn_near(_scene(), p.global_position)
+	await _frames(3)
+	TimeManager.set_time(keep_d, 8.0)
+	ThreatDirector._on_phase_changed(false)
+	await _frames(2)
+	_ok("Morgengrauen: Zerfleischer zieht ab", is_instance_valid(m) and m.state == Mauler.State.LEAVE)
+	if is_instance_valid(m):
+		m.queue_free()
+	# Steine im Wald
+	var drops := AlienDrops.get_for(get_tree())
+	var before := drops.entries.filter(func(e: Dictionary) -> bool: return e["item"] == "stone").size() if drops else 0
+	Supplies._on_day_changed(TimeManager.day)
+	var after := drops.entries.filter(func(e: Dictionary) -> bool: return e["item"] == "stone").size() if drops else 0
+	_ok("Wald: neue lose Steine (%d → %d)" % [before, after], after > before)
+	# Türspion: von innen benutzbar, zeigt etwas, E/Esc schließt
+	var ph := _scene().find_child("Peephole", true, false) as Peephole
+	_ok("Türspion: an der Haustür", ph != null)
+	if ph:
+		TimeManager.set_time(maxi(keep_d, 8), 23.0)
+		p.global_position = Vector3(-3.0, Cabin.FLOOR_Y + 0.05, 3.6)
+		_ok("Türspion: Hinweis von innen", ph.get_prompt(p) != "")
+		Peephole._night_key = -1
+		ph.interact(p)
+		await _frames(3)
+		var cam_ok := get_viewport().get_camera_3d() != p.camera and Peephole.current == ph and p.input_locked
+		ph._kind = "back"
+		ph._start_scare()
+		await _frames(2)
+		var scare_ok := ph._scare != null
+		var closed := ph.esc_close()
+		await _frames(2)
+		_ok("Türspion: Blick hinaus, etwas steht da, Esc schließt", cam_ok and scare_ok and closed and Peephole.current == null and get_viewport().get_camera_3d() == p.camera and not p.input_locked)
+		p.global_position = Vector3(-3.0, 0.2, 7.5)
+		_ok("Türspion: von außen nicht benutzbar", ph.get_prompt(p) == "")
+		var counts := {}
+		Peephole._night_key = -1
+		for i in 200:
+			Peephole._night_count = 0
+			var k := ph._pick_scare()
+			counts[k] = int(counts.get(k, 0)) + 1
+		_ok("Türspion: meist leer, manchmal etwas (%s)" % str(counts), int(counts.get("", 0)) > 80 and counts.size() >= 4)
+	# Monitor: Esc schließt
+	var hud := _scene().find_child("Hud", true, false)
+	if hud == null:
+		hud = get_tree().get_first_node_in_group("hud")
+	get_tree().call_group("surveillance", "install_defaults")
+	hud.call("open_monitor")
+	await _frames(2)
+	_ok("Monitor: Esc schließt", bool(hud.call("esc_close")) and not bool(hud.get("_monitor_open")))
+	# Lagerfeuer-Vorschau hat Teile (sonst kein grün/rot)
+	var pv := Structure.new()
+	pv.type = "campfire"
+	pv.preview = true
+	add_child(pv)
+	_ok("Lagerfeuer: Vorschau sichtbar", pv.find_children("*", "GeometryInstance3D", true, false).size() > 4)
+	pv.queue_free()
+	# Uhr: F halten wechselt LED/Display auch, wenn die Bewegung ruht (Zelt, Sitzen)
+	p.set_physics_process(false)
+	p.set_flashlight(true)
+	var mode := p.hands.screen_mode
+	p._f_down = true
+	p._f_used = false
+	p._f_held = 0.0
+	Input.action_press("flashlight")
+	await _wait(Player.LIGHT_MODE_HOLD + 0.3)
+	Input.action_release("flashlight")
+	_ok("Uhr: LED/Display wechseln ohne Laufen (Zelt)", p.hands.screen_mode != mode)
+	p.set_physics_process(true)
+	if p.hands.screen_mode != mode:
+		p.hands.toggle_screen_mode()
+	p.set_flashlight(false)
+	# Tagsüber weit draußen: auch dann kann der Zerfleischer kommen (nicht direkt nach dem Morgengrauen)
+	var keep_phase := Story.phase
+	Story.phase = 2
+	TimeManager.set_time(maxi(keep_d, 8), 14.0)
+	ThreatDirector._roam_last = -99.0
+	ThreatDirector.roam_count = 0
+	ThreatDirector.roam_meters = 500.0
+	p.global_position = Vector3(-420, Terrain.height_at(-420, 180) + 0.2, 180)
+	var day_c := ThreatDirector.roam_chance()
+	TimeManager.set_time(maxi(keep_d, 8), 8.0)
+	var dawn_c := ThreatDirector.roam_chance()
+	_ok("Tag weit draußen: Gefahr (%.2f), aber nicht gleich am Morgen (%.2f)" % [day_c, dawn_c], day_c > 0.0 and dawn_c == 0.0)
+	Story.phase = keep_phase
+	ThreatDirector.roam_meters = 0.0
+	# Todes-Bildschirm: jede Ursache hat Text und Ratschläge
+	var missing: Array = []
+	for c: String in ["creature", "mauler", "mind", "siege_found", "siege_fail", "attic", "gap_hand", "trap", "hunger", "thirst", "cold", "bog", "unknown", "gibtsnicht"]:
+		var info := Hud.death_info(c)
+		if String(info.get("title", "")) == "" or Array(info.get("tips", [])).size() < 2:
+			missing.append(c)
+	_ok("Todes-Bildschirm: Ursache und Ratschläge für alles (%s)" % str(missing), missing.is_empty())
+	TimeManager.set_time(keep_d, keep_h)
+	p.global_position = keep
+
+
 ## Christians vierte Liste 14.11. nachts: Archiv-Platzhalter, Vogel, Wärme am Feuer, Babyfon, Holzstapel, Schlaf, Teststart.
 func _t_batch4_1411() -> void:
 	var p := _player()

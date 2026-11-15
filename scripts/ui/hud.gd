@@ -32,12 +32,14 @@ var _hum_player: AudioStreamPlayer
 
 # Todesbildschirm
 var _death: Label
+var _death_tips: Label
 
 
 func _ready() -> void:
 	name = "Hud"
 	layer = 5
 	add_to_group("hud")
+	add_to_group("esc_close")
 	var root := Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -140,11 +142,21 @@ func _ready() -> void:
 
 	_death = _label(root, 34, HORIZONTAL_ALIGNMENT_CENTER)
 	_death.anchor_right = 1.0
-	_death.anchor_top = 0.42
-	_death.anchor_bottom = 0.42
+	_death.anchor_top = 0.34
+	_death.anchor_bottom = 0.34
 	_death.offset_bottom = 120
 	_death.add_theme_color_override("font_color", Color(0.85, 0.2, 0.15))
 	_death.modulate.a = 0.0
+	_death_tips = _label(root, 22, HORIZONTAL_ALIGNMENT_CENTER)
+	_death_tips.anchor_right = 1.0
+	_death_tips.anchor_top = 0.56
+	_death_tips.anchor_bottom = 0.56
+	_death_tips.offset_left = 260
+	_death_tips.offset_right = -260
+	_death_tips.offset_bottom = 300
+	_death_tips.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_death_tips.add_theme_color_override("font_color", Color(0.85, 0.8, 0.72))
+	_death_tips.modulate.a = 0.0
 
 	EventBus.interaction_prompt_changed.connect(_on_prompt)
 	EventBus.notification_requested.connect(show_notification)
@@ -303,11 +315,29 @@ func _on_hurt(amount: float) -> void:
 
 func _on_player_died() -> void:
 	close_monitor()
-	_death.text = "Du hast die Nacht nicht überlebt.\nZurück zum Beginn von Tag %d …" % TimeManager.day
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var info := death_info(player.death_cause if player else "")
+	_death.text = "Du bist gestorben.\n%s" % String(info.get("title", ""))
+	_death_tips.text = "Beim nächsten Mal:\n" + "\n".join(PackedStringArray(Array(info.get("tips", [])).map(func(t: Variant) -> String: return "•  " + String(t)))) \
+			+ "\n\nZurück zum Beginn von Tag %d   –   [E] weiter" % TimeManager.day
 	var tw := create_tween()
 	tw.tween_property(_hurt, "color:a", 0.6, 0.3)
 	tw.tween_property(_fade, "color:a", 1.0, 1.8)
 	tw.parallel().tween_property(_death, "modulate:a", 1.0, 1.5)
+	tw.tween_property(_death_tips, "modulate:a", 1.0, 1.0)
+
+
+## Ursache → Überschrift und Ratschläge aus data/ui/deaths.json.
+static func death_info(cause: String) -> Dictionary:
+	var all: Dictionary = DataDB.load_json("res://data/ui/deaths.json")
+	return all.get(cause, all.get("unknown", {}))
+
+
+func _input(event: InputEvent) -> void:
+	if GameState.dead and _death_tips and _death_tips.modulate.a > 0.5:
+		if event.is_action_pressed("interact") or event.is_action_pressed("jump") or (event is InputEventMouseButton and event.pressed):
+			GameState.death_continue()
+			get_viewport().set_input_as_handled()
 
 
 # --- Survival-Anzeige ---------------------------------------------------
@@ -403,7 +433,7 @@ func _build_monitor(root: Control) -> void:
 	hint.anchor_top = 0.9
 	hint.anchor_bottom = 0.9
 	hint.offset_bottom = 40
-	hint.text = "A / D  Kamera wechseln        E  Monitor verlassen"
+	hint.text = "A / D  Kamera wechseln        E / Esc  Monitor verlassen"
 	_static_player = AudioStreamPlayer.new()
 	_static_player.stream = SoundBank.get_sound("static")
 	_static_player.volume_db = -20.0
@@ -428,6 +458,14 @@ func open_monitor() -> void:
 	if SoundBank.has_recording("monitor_hum"):
 		_hum_player.play()
 	SoundBank.play_ui(self, "camera_switch", -6.0)
+
+
+## Esc am Monitor = Monitor verlassen (Christian 15.11.).
+func esc_close() -> bool:
+	if _monitor_open:
+		close_monitor()
+		return true
+	return false
 
 
 func close_monitor() -> void:

@@ -114,6 +114,16 @@ var max_health: float = 180.0
 var upgraded: bool = false
 
 
+## Türspion auf Augenhöhe (Haustür). Hängt am Türblatt und dreht sich mit.
+func add_peephole() -> Peephole:
+	var ph := Peephole.new()
+	ph.name = "Peephole"
+	ph.door = self
+	ph.position = Vector3(0, 1.58 - height * 0.5, 0)
+	_hinge.get_child(0).add_child(ph)
+	return ph
+
+
 func make_entry() -> void:
 	is_entry = true
 	add_to_group("entry_point")

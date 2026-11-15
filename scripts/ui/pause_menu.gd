@@ -69,6 +69,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Während eines Endes oder eines Auswahlfensters kein Pausenmenü
 		if Story.ending_running or not get_tree().get_nodes_in_group("choice_dialog").is_empty():
 			return
+		# Monitor, Türspion …: Esc schließt erst diese Ansicht
+		if not get_tree().paused:
+			for n in get_tree().get_nodes_in_group("esc_close"):
+				if n.has_method("esc_close") and bool(n.call("esc_close")):
+					return
 		# offene Karte: Esc schließt erst die Karte
 		var map := get_tree().get_first_node_in_group("map_screen")
 		if not get_tree().paused and map and map.call("is_open"):

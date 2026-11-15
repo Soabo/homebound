@@ -108,10 +108,27 @@ func kill_player() -> void:
 	if dead:
 		return
 	dead = true
+	_death_go = false
 	player_died.emit()
 	PlayerSounds.play(self, "die", 0.0)
-	await get_tree().create_timer(4.5).timeout
+	# Todes-Bildschirm (Ursache + Ratschläge): im Spiel weiter mit E/Leertaste/Klick (spätestens nach DEATH_MAX_WAIT),
+	# in Tests ohne Speicherplatz nach 4,5 s wie bisher
+	var waited := 0.0
+	var limit := 4.5 if slot < 0 else DEATH_MAX_WAIT
+	while waited < limit and not (_death_go and waited > DEATH_MIN_WAIT):
+		await get_tree().process_frame
+		waited += get_process_delta_time()
 	restart_day()
+
+
+const DEATH_MIN_WAIT := 2.5
+const DEATH_MAX_WAIT := 60.0
+var _death_go := false
+
+
+## Todes-Bildschirm: „Weiter“ gedrückt.
+func death_continue() -> void:
+	_death_go = true
 
 
 func restart_day() -> void:

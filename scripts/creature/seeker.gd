@@ -400,6 +400,12 @@ func _drop_ash(chance: float) -> void:
 		drops.spawn("seeker_ash", _ground(global_position) + Vector3(0, 0.02, 0))
 
 
+## Morgengrauen (ThreatDirector): abziehen.
+func dawn() -> void:
+	if state != State.LEAVE:
+		_leave()
+
+
 func _leave() -> void:
 	state = State.LEAVE
 	_eye_mat.emission_energy_multiplier = 0.8

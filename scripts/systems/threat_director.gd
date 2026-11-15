@@ -131,6 +131,12 @@ func _on_phase_changed(is_night: bool) -> void:
 	# Alle Kreaturen und Drohnen ziehen ab (nicht nur die gemerkte) – bei Tag greift keine mehr an.
 	get_tree().call_group("creature", "leave")
 	get_tree().call_group("drone", "leave")
+	get_tree().call_group("mauler", "dawn")
+	roam_meters = 0.0
+	roam_count = 0
+	_roam_warned = false
+	_roam_last = -99.0
+	get_tree().call_group("seeker", "dawn")
 	get_tree().call_group("changeling", "dawn")
 	# Nach einer Nacht mit dem Wechselbalg: ein Stuhl im Schlafzimmer, der zum Bett schaut
 	if scene and _changeling_tonight and changeling_count >= 2 and not far_from_home() and _rng.randf() < config.changeling_morning_chance:
@@ -358,7 +364,7 @@ func _attic_event(scene: Node, player: Node3D) -> void:
 		CreatureSounds.play(scene, "breath", AtticHatch.FOOT + Vector3(0, 1.6, 0), -4.0, 0.9)
 		var pl := get_tree().get_first_node_in_group("player") as Player
 		if pl and TimeManager.day >= config.attic_hurt_from_night and pl.global_position.distance_to(AtticHatch.FOOT) < 3.5:
-			pl.take_damage(config.attic_damage, AtticHatch.FOOT + Vector3(0, 1.2, 0))
+			pl.take_damage(config.attic_damage, AtticHatch.FOOT + Vector3(0, 1.2, 0), "attic")
 			EventBus.screen_shake.emit(0.6))
 
 
@@ -459,6 +465,12 @@ func _check_mauler(delta: float) -> void:
 		return
 	var dh := now - _mauler_last_hour
 	_mauler_last_hour = now
+	var near_tent := false
+	for t in get_tree().get_nodes_in_group("tent_camp"):
+		if (t as Node3D).global_position.distance_to(p) < config.roam_camp_radius:
+			near_tent = true
+	if TimeManager.hour < config.mauler_day_from_hour or near_tent:
+		return
 	if far_from_home() and WorldMap.tree_density(p.x, p.z, p.y) >= config.mauler_day_density and _rng.randf() < config.mauler_day_chance_per_hour * dh:
 		var m := Mauler.spawn_near(scene, p)
 		m.set_meta("day_hunt", true)
@@ -477,7 +489,7 @@ var _roam_prev := Vector3.INF
 func _check_night_roam(delta: float) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	var scene := get_tree().current_scene
-	if player == null or scene == null or GameState.dead or not GameState.in_game() or not TimeManager.is_night():
+	if player == null or scene == null or GameState.dead or not GameState.in_game():
 		_roam_prev = Vector3.INF
 		return
 	var p := player.global_position
@@ -500,9 +512,13 @@ func _check_night_roam(delta: float) -> void:
 ## Chance für den nächsten Wurf (0 = gerade sicher). Auch für Tests.
 func roam_chance() -> float:
 	var player := get_tree().get_first_node_in_group("player") as Player
-	if player == null or not TimeManager.is_night() or siege_tonight() or TimeManager.day <= config.calm_first_nights:
+	if player == null or siege_tonight() or TimeManager.day <= config.calm_first_nights:
 		return 0.0
 	var p := player.global_position
+	var day := not TimeManager.is_night()
+	# Tagsüber (Christian 15.11.: „die müssen mich holen“): nur weit draußen, erst ab mauler_day_from_hour, schwächer
+	if day and (not far_from_home() or TimeManager.hour < config.mauler_day_from_hour):
+		return 0.0
 	if Vector2(p.x, p.z).length() < config.roam_min_distance or Cabin.is_inside(p) or Shed.is_inside(p) or player.is_hidden() or player.in_tent != null:
 		return 0.0
 	for t in get_tree().get_nodes_in_group("tent_camp"):
@@ -515,6 +531,8 @@ func roam_chance() -> float:
 		return 0.0   # wer still im Gebüsch hockt, wird nicht gefunden
 	if Vector2(player.velocity.x, player.velocity.z).length() > player.walk_speed * 1.2:
 		c *= config.roam_run_factor
+	if day:
+		c *= config.roam_day_factor
 	return minf(c, config.roam_max_chance)
 
 
@@ -530,8 +548,19 @@ func _roam_encounter(scene: Node, player: Player) -> void:
 	_roam_last = TimeManager.get_total_hours()
 	roam_count += 1
 	var options: Array[String] = []
+	var by_day := not TimeManager.is_night()
 	if Story.phase >= 2 and get_tree().get_nodes_in_group("mauler").is_empty():
 		options.append("mauler")
+	if by_day:
+		# bei Tag jagt nur der Zerfleischer (die anderen sind Nachtwesen)
+		if options.is_empty():
+			_play_phantom_steps(scene)
+			return
+		var dm := Mauler.spawn_near(scene, p)
+		dm.set_meta("day_hunt", true)
+		if not _kinds_tonight.has("mauler"):
+			_kinds_tonight.append("mauler")
+		return
 	if get_tree().get_nodes_in_group("seeker").is_empty():
 		options.append("seeker")
 	if not is_instance_valid(creature) and TimeManager.day >= config.hunt_from_night:

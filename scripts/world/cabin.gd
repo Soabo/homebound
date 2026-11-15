@@ -444,6 +444,7 @@ func _build_openings() -> void:
 	front_door.position = Vector3(-3.5, FLOOR_Y, HALF_Z)
 	add_child(front_door)
 	front_door.make_entry()
+	front_door.add_peephole()
 	_door_trim(Vector3(-3.0, FLOOR_Y, HALF_Z), 0.0, 1.0, 2.1, 0.36)
 
 	# Fenster (GDD 18.2: zwei zerstörbare Fenster im Wohnbereich – Schaden folgt später)

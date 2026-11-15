@@ -455,7 +455,7 @@ func _attack() -> void:
 	_attack_cooldown = 2.2
 	_strike()
 	CreatureSounds.play(get_parent(), "shriek", global_position + Vector3(0, 1.8, 0), 3.0, 1.1)
-	_player.take_damage(cfg.hit_damage, global_position)
+	_player.take_damage(cfg.hit_damage, global_position, "creature")
 	EventBus.screen_shake.emit(0.8)
 
 

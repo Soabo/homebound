@@ -57,6 +57,8 @@ extends Resource
 @export_group("Müll im Wald")
 ## Leere Flaschen, die jeden Tag irgendwo im Wald herumliegen (min/max pro Tag)
 @export var litter_bottles_per_day: Vector2i = Vector2i(0, 2)
+## Lose Steine im Wald pro Tag (seltener als am Bach, dort liegen Haufen)
+@export var forest_stones_per_day: Vector2i = Vector2i(1, 3)
 
 @export_group("Metallquellen im Wald")
 ## Höchstens so viele Fundstellen gleichzeitig, neue pro Tag (min/max)

@@ -170,8 +170,20 @@ extends Resource
 @export var mauler_window_hours: float = 2.5
 ## Tagsüber, weit weg von der Hütte im dichten Wald: Chance pro Spielstunde
 @export var mauler_day_chance_per_hour: float = 0.05
+## Tagsüber erst ab dieser Uhrzeit (nach dem Morgengrauen ist erst einmal Ruhe) und nicht am eigenen Zelt
+@export var mauler_day_from_hour: float = 10.0
 ## Ab dieser Baumdichte (WorldMap.tree_density) gilt der Wald als dicht
 @export var mauler_day_density: float = 0.55
+
+@export_group("Türspion (Haustür)")
+## Ab dieser Nacht sieht man manchmal etwas, Chance je Blick, höchstens so oft pro Nacht
+@export var peephole_from_night: int = 3
+@export var peephole_scare_chance: float = 0.35
+@export var peephole_max_per_night: int = 2
+## Tagsüber (ab Nacht 6): Gestalt am Tor
+@export var peephole_day_chance: float = 0.04
+## Was man sieht: eye (Auge vor der Linse), figure (an der Treppe, klopft danach), back (nah, dreht den Kopf), dark (Linse zugehalten)
+@export var peephole_weights: Dictionary = {"eye": 3.0, "figure": 3.0, "back": 2.0, "dark": 2.0}
 
 @export_group("Nachts durch den Wald (Christian 14.11.: einfach durchlaufen darf sich nicht lohnen)")
 ## Ab dieser Entfernung von der Hütte (und abseits vom eigenen Zelt) wird es nachts gefährlich
@@ -191,6 +203,8 @@ extends Resource
 @export var roam_max_per_night: int = 3
 ## So nah am eigenen Zelt (m) gilt man als „im Lager“
 @export var roam_camp_radius: float = 25.0
+## Tagsüber weit draußen (ab mauler_day_from_hour): Chance × diesen Faktor, nur der Zerfleischer kommt
+@export var roam_day_factor: float = 0.5
 
 @export_group("Signatur (Forschung 2.0)")
 ## Zusatzchance pro Signaturpunkt, dass die Drohne kommt (Fremdes tragen, nachts forschen).

@@ -1,0 +1,55 @@
+{
+  "_info": "Todes-Bildschirm (Christian 15.11.): warum man gestorben ist und was man besser machen kann. Schlüssel = Ursache (Player.death_cause), title = Zeile unter der Überschrift, tips = 2–3 Ratschläge. „unknown“ = Rückfall.",
+  "creature": {
+    "title": "Die Kreatur hat dich erwischt.",
+    "tips": ["Nachts drinnen bleiben, Türen schließen und Fenster verbarrikadieren (Werkbank).", "Wenn sie kommt: in den Kleiderschrank oder Spind und die Tür von innen schließen (E).", "Licht aus und leise sein – geduckt oder mit Alt schleichen."]
+  },
+  "mauler": {
+    "title": "Der Zerfleischer hat dich zerrissen.",
+    "tips": ["Halte die LED der Uhr direkt auf ihn (F, nicht das weiße Display) – das vertreibt ihn.", "Nach einem Treffer weicht er zurück: Das ist der Moment zum Leuchten oder Weglaufen.", "Lagerfeuer und helle Lampen halten ihn fern. Nachts weite Wege meiden."]
+  },
+  "mind": {
+    "title": "Du hast es zu lange angesehen.",
+    "tips": ["Sobald das Bild flimmert: sofort wegschauen.", "Leuchte die Kreatur nicht an – im Licht dringt sie schneller in dich ein.", "Das Dämpfer-Stirnband (Forschung) schwächt den Schaden."]
+  },
+  "siege_found": {
+    "title": "Es hat dich im Haus gefunden.",
+    "tips": ["Sobald „Es ist im Haus“ erscheint: sofort verstecken – Schrank/Spind mit geschlossener Tür, Keller mit geschlossener Luke oder Dachboden mit hochgezogener Leiter.", "Im Versteck den Atem anhalten (Alt), wenn es davorsteht.", "Aufgaben rechtzeitig erledigen – das Babyfon im Büro zeigt, wo es drängt."]
+  },
+  "siege_fail": {
+    "title": "Die Belagerung hat dich zermürbt.",
+    "tips": ["Spieluhr aufziehen (E), Dachbodenluke zuhalten oder zunageln, Fenster mit der Uhr-LED anleuchten, Kellerwand abstützen.", "Behalte das Babyfon im Büro im Blick.", "Lärm im Haus macht es schlimmer – leise gehen."]
+  },
+  "attic": {
+    "title": "Etwas kam vom Dachboden herunter.",
+    "tips": ["Vor dem Schlafen die Dachbodenleiter hochziehen (R an der Luke).", "Hörst du oben Schritte: Leiter hoch und Abstand halten."]
+  },
+  "gap_hand": {
+    "title": "Die Hand durch den Spalt hat dich erwischt.",
+    "tips": ["Geh nicht zu nah an Spalten und Ritzen, aus denen Finger kommen.", "Schau die Hand an – dann zieht sie sich zurück."]
+  },
+  "trap": {
+    "title": "Du bist in eine Falle getreten.",
+    "tips": ["Merk dir, wo deine Bärenfallen stehen – sie treffen auch dich.", "Fallen nicht auf Wege und vor Türen stellen, die du selbst nutzt."]
+  },
+  "hunger": {
+    "title": "Du bist verhungert.",
+    "tips": ["Iss regelmäßig: Konserven aus der Speis, Gemüse aus den Hochbeeten, Fang aus Schlingen.", "Auf längere Ausflüge immer Essen für zwei Tage mitnehmen."]
+  },
+  "thirst": {
+    "title": "Du bist verdurstet.",
+    "tips": ["Flaschen am Wasserhahn füllen; Bach- und Regenwasser am Küchenofen abkochen.", "Unterwegs immer mindestens zwei volle Flaschen dabeihaben."]
+  },
+  "cold": {
+    "title": "Du bist erfroren.",
+    "tips": ["Wärme dich am Kamin, Küchenofen oder Lagerfeuer auf – direkt davor geht es am schnellsten.", "Nachts draußen: Zelt mit Schlafsack, Lagerfeuer; nach dem Waten erst trocknen."]
+  },
+  "bog": {
+    "title": "Das Moor hat dich verschluckt.",
+    "tips": ["Im Moor auf den Stegen bleiben.", "Sinkst du ein: sofort umdrehen und zurück auf festen Boden."]
+  },
+  "unknown": {
+    "title": "Du bist gestorben.",
+    "tips": ["Nachts ist es draußen gefährlich – bleib in der Hütte oder im Zelt.", "Achte auf Gesundheit, Essen, Wasser und Wärme."]
+  }
+}

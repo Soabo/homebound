@@ -517,7 +517,7 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 			continue
 		if roll < 0.75:
 			var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, PI * 0.5 + rng.randf_range(-0.1, 0.1))
-			twigs.append(Transform3D(b.scaled(Vector3(rng.randf_range(0.025, 0.05), len, rng.randf_range(0.025, 0.05))), Vector3(x, g + 0.03, z)))
+			twigs.append(Transform3D(b.scaled_local(Vector3(rng.randf_range(0.025, 0.05), len, rng.randf_range(0.025, 0.05))), Vector3(x, g + 0.03, z)))
 			twig_cols.append(Color(0.75, 0.68, 0.6) * rng.randf_range(0.7, 1.0))
 		else:
 			var cap := Color(0.7, 0.35, 0.2) if rng.randf() < 0.4 else Color(0.85, 0.72, 0.5)

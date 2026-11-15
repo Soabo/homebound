@@ -19,6 +19,8 @@ var _bog_time: float = 0.0
 var _deep_warned: float = 0.0
 ## Im Zelt (TentCamp) – fürs Auskühlen und für die Gegner
 var in_tent: Node = null
+## Woran man gestorben ist (Todes-Bildschirm, data/ui/deaths.json): zuletzt gesetzt beim Schaden
+var death_cause: String = ""
 @export var interact_distance: float = 2.4
 
 const STAND_HEIGHT := 1.75
@@ -271,7 +273,6 @@ func _update_light_hold(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_update_light_hold(delta)
 	_update_concealment()
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
@@ -360,6 +361,7 @@ func _physics_process(delta: float) -> void:
 	if starve > 0.0:
 		health -= starve * delta
 		if health <= 0.0 and not GameState.dead:
+			death_cause = "cold" if Survival.warmth < Survival.cfg.freeze_below else ("thirst" if Survival.thirst <= 0.0 else "hunger")
 			GameState.kill_player()
 	elif Survival.hunger > 30.0 and Survival.thirst > 30.0:
 		health = minf(health + delta * 1.5, MAX_HEALTH)
@@ -395,6 +397,8 @@ func _update_lean(delta: float) -> void:
 func _process(delta: float) -> void:
 	# Schleichen: Atem anhalten und Sichtbarkeit laufen auch im Sitzen, auf der Couch oder am Monitor weiter
 	_update_breath_hold(delta)
+	# F halten = LED ↔ Display – auch im Zelt, im Sitzen, im Schrank (dort ruht _physics_process)
+	_update_light_hold(delta)
 	visibility = Stealth.visibility(self)
 	# Kamerawackeln
 	_shake = move_toward(_shake, 0.0, delta * 1.5)
@@ -542,6 +546,7 @@ func _update_mind(delta: float) -> void:
 		health -= cfg.mind_damage_per_second * mind * delta * damp
 		_shake = maxf(_shake, mind * 0.25)
 		if health <= 0.0:
+			death_cause = "mind"
 			input_locked = true
 			set_flashlight(false)
 			GameState.kill_player()
@@ -586,9 +591,11 @@ func light_shining() -> bool:
 	return flashlight.visible and hands.light_shining()
 
 
-func take_damage(amount: float, from: Vector3) -> void:
+func take_damage(amount: float, from: Vector3, cause: String = "") -> void:
 	if GameState.dead:
 		return
+	if cause != "":
+		death_cause = cause
 	var f := hands.block_factor(from)
 	if f < 1.0:
 		amount *= f
@@ -688,6 +695,7 @@ func _wet_factor(delta: float) -> float:
 			if int(_bog_time * 2.0) % 6 == 0:
 				EventBus.notify("Ich sinke ein! Zurück auf den Steg!", 1.0)
 			if health <= 0.0 and not GameState.dead:
+				death_cause = "bog"
 				input_locked = true
 				GameState.kill_player()
 	else:

@@ -254,7 +254,7 @@ func _process(delta: float) -> void:
 			if _t >= 0.28 and _t - delta < 0.28:
 				if dist <= cfg.strike_range + 0.5 and reachable:
 					hits += 1
-					_player.take_damage(cfg.hit_damage, global_position)
+					_player.take_damage(cfg.hit_damage, global_position, "mauler")
 					EventBus.screen_shake.emit(0.35)
 					CreatureSounds.play(self, "shriek", global_position + Vector3(0, 1.5, 0), -2.0, 1.15, 40.0)
 				else:
@@ -370,6 +370,15 @@ func _drop_find(why: String) -> void:
 	elif why == "bright" and _tooth_day != TimeManager.day and _rng.randf() < cfg.tooth_chance:
 		_tooth_day = TimeManager.day
 		drops.spawn("mauler_tooth", at)
+
+
+## Morgengrauen (ThreatDirector): zieht ab und verschwindet spätestens nach 20 s.
+func dawn() -> void:
+	if has_meta("day_hunt"):
+		remove_meta("day_hunt")
+	if state != State.LEAVE:
+		visible = true
+		_enter(State.LEAVE)
 
 
 func _day_hunt_ok() -> bool:

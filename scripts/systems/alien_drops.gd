@@ -78,6 +78,11 @@ func _visual(p: ItemPickup, item: String, loose: bool) -> void:
 	var glow := CrashSite.glow_material()
 	var grey := BuildKit.color_mat(Color(0.42, 0.4, 0.43), 0.6)
 	match item:
+		"stone":
+			# ein paar Feldsteine im Laub (Christian 15.11.: Steine auch im Wald, nicht nur am Bach)
+			var sm := BuildKit.tex_mat("stone", 0.5)
+			BuildKit.sphere(v, 0.13, Vector3(0, 0.05, 0), sm, Vector3(1.2, 0.6, 1.0), 7)
+			BuildKit.sphere(v, 0.09, Vector3(0.18, 0.035, 0.07), sm, Vector3(1.1, 0.7, 1.0), 6)
 		"bottle_empty":
 			# alte grüne Glasflasche im Laub
 			BuildKit.cylinder(v, 0.035, 0.2, Vector3(0, 0.035, 0), _glass(Color(0.25, 0.45, 0.25, 0.75)), false, Vector3(90, 0, 0), -1.0, 8)
@@ -198,6 +203,15 @@ func spot(where: String) -> Variant:
 			"forest":
 				var a := _rng.randf() * TAU
 				p = Vector3(cos(a), 0, sin(a)) * _rng.randf_range(24.0, 55.0)
+			"wild":
+				# irgendwo im Wald: im Tal weiter draußen, oder rund um den Spieler, wenn er unterwegs ist
+				var a4 := _rng.randf() * TAU
+				if player and Vector2(player.global_position.x, player.global_position.z).length() > 110.0:
+					p = player.global_position + Vector3(cos(a4), 0, sin(a4)) * _rng.randf_range(15.0, 60.0)
+				else:
+					p = Vector3(cos(a4), 0, sin(a4)) * _rng.randf_range(30.0, 100.0)
+				if Terrain.water_level_at(p.x, p.z) > Terrain.height_at(p.x, p.z) - 0.1 or Terrain.yard_distance(p.x, p.z) < 2.0:
+					continue
 			"stream":
 				var z := _rng.randf_range(-60.0, 60.0)
 				var sx := Terrain.stream_x_at(z)

@@ -86,7 +86,7 @@ const SHOTS := [
 	{"name": "E1_huette_dach", "hour": 14.0, "pos": Vector3(-2.0, 0.0, 16.0), "look": Vector3(0.0, 4.0, 0.0), "clean": true},
 	{"name": "73_zerfleischer_tag", "hour": 15.5, "pos": Vector3(4.0, 0.0, 16.5), "look": Vector3(4.0, 1.3, 11.5), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_pose": "warn", "clean": true},
 	{"name": "74_zerfleischer_seite", "hour": 15.5, "pos": Vector3(9.0, 0.0, 12.5), "look": Vector3(4.0, 1.1, 12.0), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_face": Vector3(4.0, 0.0, 17.0), "mauler_pose": "charge", "clean": true},
-	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true},
+	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true, "no_retro": true},
 	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
 	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
 	{"name": "80_anbau_nordwest", "hour": 15.0, "pos": Vector3(-15.5, 0.0, -9.5), "look": Vector3(-6.5, 1.8, -3.0)},
@@ -383,6 +383,12 @@ func _run() -> void:
 			if shot.get("lurk", false):
 				get_tree().call_group("surveillance", "spawn_lurker", int(shot.get("lurk_spot", -1)))
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
+		# Titelbild ohne Retro-Filter (Christian 15.11.)
+		for rf in get_tree().get_nodes_in_group("retro_filter"):
+			var want := not bool(shot.get("no_retro", false))
+			if rf.get("enabled") != want:
+				rf.set("enabled", want)
+				(rf.get("_mat") as ShaderMaterial).set_shader_parameter("enabled", 1.0 if want else 0.0)
 		if shot.get("clean", false):
 			# Titelbild: ohne Anzeigen und Hände, Kamin brennt
 			for h in get_tree().get_nodes_in_group("hud"):

@@ -97,7 +97,18 @@ mauler_night_chance = 0.3
 mauler_chance_per_stage = 0.05
 mauler_window_hours = 2.5
 mauler_day_chance_per_hour = 0.05
+mauler_day_from_hour = 10.0
 mauler_day_density = 0.55
+peephole_from_night = 3
+peephole_scare_chance = 0.35
+peephole_max_per_night = 2
+peephole_day_chance = 0.04
+peephole_weights = {
+"back": 2.0,
+"dark": 2.0,
+"eye": 3.0,
+"figure": 3.0
+}
 roam_min_distance = 60.0
 roam_check_seconds = 15.0
 roam_base_chance = 0.04
@@ -108,6 +119,7 @@ roam_warn_first = true
 roam_cooldown_hours = 1.0
 roam_max_per_night = 3
 roam_camp_radius = 25.0
+roam_day_factor = 0.5
 signature_drone_bonus = 0.25
 signature_seeker_bonus = 0.2
 signature_wakes_quiet = 0.8

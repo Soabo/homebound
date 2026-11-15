@@ -624,6 +624,25 @@
   Dorf-Balken lagen an der Hütte (look_at in Weltkoordinaten) → `BuildKit.beam_between` / lokale Basis. Wegweiser ohne Arm
   für Orte unter 60 m. Tour-Bilder E0 (Zelt), E1 (Hüttendach).
 
+## Christians Liste 15.11. abends (nach der ersten Zeltnacht)
+- Stacheln im Wald: Wurzelanläufe, Aststummel, liegende Zweige wurden mit `Basis.scaled` (Weltachsen) gestreckt → senkrechte
+  Stacheln. Jetzt `scaled_local` (TreeKit, WildForest-Zweige). Bei gedrehten Basen immer `scaled_local` nehmen!
+- Morgengrauen: Zerfleischer (`Mauler.dawn`) und Sucher (`Seeker.dawn`) ziehen ab. Zerfleischer bei Tag erst ab
+  ThreatConfig `mauler_day_from_hour`, nicht am eigenen Zelt. Gefahr weit draußen jetzt auch tagsüber (`roam_day_factor`, nur
+  Zerfleischer, ab Phase 2); `roam_*`-Zähler werden auch im Morgengrauen zurückgesetzt.
+- Steine im Wald: SupplyConfig `forest_stones_per_day` (AlienDrops-Ort „wild“: im Tal 30–100 m, unterwegs um den Spieler).
+- Hauptmenü-Titelbild ohne Retro-Filter (Tour-Schlüssel `no_retro`, Bild 00 neu gerendert, leicht aufgehellt).
+- Türspion `Peephole` (scripts/interaction/peephole.gd, an `Door.add_peephole`, Haustür innen, Shader `shaders/peephole.gdshader`):
+  E = Fischaugen-Blick nach draußen, E/Esc zurück. Was man sieht: ThreatConfig `peephole_*` (eye, figure → klopft danach,
+  back → dreht den Kopf, dark → Linse zugehalten + Klopfen; tagsüber selten Gestalt am Tor).
+- Esc schließt Monitor und Türspion: Gruppe `esc_close` mit `esc_close() -> bool`, PauseMenu fragt sie zuerst.
+- Lagerfeuer-Vorschau (Baumodus) hat eigene Umrisse (vorher unsichtbar, kein grün/rot).
+- F halten (LED ↔ Display) läuft in `Player._process` → geht auch im Zelt, im Sitzen, im Schrank.
+- Todes-Bildschirm: `Player.death_cause` (take_damage(…, cause), Hunger/Durst/Kälte/Hirn/Moor), Texte `data/ui/deaths.json`
+  (title + tips), `Hud.death_info`; weiter mit E/Leertaste/Klick (`GameState.death_continue`, nach `DEATH_MIN_WAIT`), Tests ohne
+  Speicherplatz wie bisher nach 4,5 s.
+- Prüfung `RegressTest._t_batch5_1511`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

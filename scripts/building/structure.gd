@@ -123,7 +123,15 @@ func _build_visual() -> void:
 		"tent":
 			_build_tent()
 		"campfire":
-			pass  # baut Campfire selbst
+			# das echte Feuer baut Campfire selbst – die Vorschau braucht eigene Umrisse (sonst unsichtbar, ohne grün/rot)
+			if preview:
+				var st := BuildKit.tex_mat("stone", 0.6)
+				for k in 8:
+					var a := TAU * k / 8.0
+					BuildKit.sphere(self, 0.12, Vector3(cos(a) * 0.45, 0.06, sin(a) * 0.45), st, Vector3(1.2, 0.7, 1.0), 6)
+				var wood := BuildKit.tex_mat("logs", 0.5)
+				for k in 3:
+					BuildKit.cylinder(self, 0.05, 0.6, Vector3(0, 0.12, 0), wood, false, Vector3(70, k * 60.0, 0), -1.0, 6)
 		"stone_wall":
 			var stone := BuildKit.tex_mat("stone", 0.6)
 			for row in 3:
@@ -368,7 +376,7 @@ func _snap(victim: Node3D) -> void:
 	var def := DataDB.buildable(type)
 	if victim is Player:
 		var pl := victim as Player
-		pl.take_damage(float(def.get("player_damage", 25)), pl.global_position + Vector3(0, 0.05, 0))
+		pl.take_damage(float(def.get("player_damage", 25)), pl.global_position + Vector3(0, 0.05, 0), "trap")
 		pl.held_time = 1.6
 		EventBus.notify("Autsch – du bist in die Bärenfalle getreten!", 3.0)
 	else:

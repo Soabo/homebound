@@ -55,6 +55,7 @@ bad_start_fail = 0.5
 fuel_per_wood = 7.0
 fuel_per_cell = 100.0
 litter_bottles_per_day = Vector2i(0, 2)
+forest_stones_per_day = Vector2i(1, 3)
 scrap_spots_max = 7
 scrap_spots_per_day = Vector2i(1, 2)
 scrap_spots_start = 3

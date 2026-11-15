@@ -360,7 +360,7 @@ func _strike(why: String, from: Vector3) -> void:
 	strikes += 1
 	print("[Siege] Fehlschlag %d (%s)" % [strikes, why])
 	if strikes == 1:
-		_player.take_damage(cfg.siege_hit_damage, from)
+		_player.take_damage(cfg.siege_hit_damage, from, "siege_fail")
 		EventBus.screen_shake.emit(0.7)
 		CreatureSounds.play(get_parent(), "shriek", from, 2.0)
 		var msg := {"window": "Das Fenster ist durch – etwas hat dich gepackt!", "attic": "Die Luke bricht auf – es kommt herunter!",
@@ -465,7 +465,7 @@ func _update_intrusion(delta: float) -> void:
 	if is_instance_valid(_intruder):
 		CreatureSounds.play(get_parent(), "shriek", _intruder.global_position + Vector3(0, 1.6, 0), 6.0)
 	_intrusion = -1.0
-	_player.take_damage(9999.0, _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position)
+	_player.take_damage(9999.0, _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position, "siege_found")
 	if is_instance_valid(_intruder):
 		_intruder.queue_free()
 
@@ -517,7 +517,7 @@ func _found_hidden() -> void:
 	strikes = 1
 	var from := _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position
 	CreatureSounds.play(get_parent(), "shriek", from, 6.0)
-	_player.take_damage(cfg.siege_hit_damage, from)
+	_player.take_damage(cfg.siege_hit_damage, from, "siege_fail")
 	EventBus.screen_shake.emit(0.7)
 	EventBus.notify("Es hat dich atmen gehört! Die Schranktür fliegt auf – dann ist es mit einem Blitz weg.", 4.5)
 	if is_instance_valid(_intruder):

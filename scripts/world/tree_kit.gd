@@ -147,7 +147,7 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 				var len := rng.randf_range(1.2, 2.8) * (h / 12.0)
 				var b := Basis(Vector3.UP, ang) * Basis(Vector3.RIGHT, tilt)
 				var mid := Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)
-				p.trunks.append(Transform3D(b.scaled(Vector3(r * 0.22, len, r * 0.22)), mid))
+				p.trunks.append(Transform3D(b.scaled_local(Vector3(r * 0.22, len, r * 0.22)), mid))
 				p.trunk_cols.append(grey)
 		"young_spruce":
 			var green := Color(0.08, 0.15, 0.08).lerp(Color(0.13, 0.21, 0.1), rng.randf())
@@ -167,7 +167,7 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 			var len := r * rng.randf_range(3.0, 5.0)
 			var bx := v.cross(Vector3.UP).normalized()
 			var bz := bx.cross(v).normalized()
-			var b := Basis(bx, v, bz).scaled(Vector3(r * 0.42, len, r * 0.42))
+			var b := Basis(bx, v, bz).scaled_local(Vector3(r * 0.42, len, r * 0.42))   # lokal skalieren – global wurden daraus senkrechte Stacheln
 			arr.append(Transform3D(b, Vector3(x, g + 0.12, z) + v * len * 0.42))
 			cols.append(bark_col * rng.randf_range(0.85, 1.05))
 	if near and kind == "spruce":
@@ -176,7 +176,7 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 			var ay := g + h * rng.randf_range(0.12, 0.3)
 			var len := rng.randf_range(0.4, 1.0)
 			var b := Basis(Vector3.UP, a) * Basis(Vector3.RIGHT, rng.randf_range(1.3, 1.7))
-			p.trunks.append(Transform3D(b.scaled(Vector3(0.025, len, 0.025)), Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)))
+			p.trunks.append(Transform3D(b.scaled_local(Vector3(0.025, len, 0.025)), Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)))
 			p.trunk_cols.append(Color(0.6, 0.56, 0.52))
 	if body and r > 0.06:
 		var cs := CollisionShape3D.new()

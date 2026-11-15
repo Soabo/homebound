@@ -137,6 +137,10 @@ func _on_day_changed(_day: int) -> void:
 			var bp: Variant = drops.spot("forest")
 			if bp != null:
 				drops.spawn("bottle_empty", bp)
+		for i in _rng.randi_range(config.forest_stones_per_day.x, config.forest_stones_per_day.y):
+			var sp: Variant = drops.spot("wild")
+			if sp != null:
+				drops.spawn("stone", sp)
 	# neue Metall-Fundstellen
 	var n := _rng.randi_range(config.scrap_spots_per_day.x, config.scrap_spots_per_day.y)
 	for i in n:

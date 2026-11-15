@@ -159,7 +159,7 @@ class GapHand extends Node3D:
 		# zu nah: kratzt
 		if not _hurt and _out > 0.6 and _player.global_position.distance_to(tip) < 1.3:
 			_hurt = true
-			_player.take_damage(damage, tip)
+			_player.take_damage(damage, tip, "gap_hand")
 			EventBus.player_hurt.emit(damage)
 			CreatureSounds.play(get_parent(), "recoil", tip, -6.0, 1.2)
 			_leave()
