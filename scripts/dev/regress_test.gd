@@ -2175,6 +2175,26 @@ func _t_batch4_1411() -> void:
 	Survival._on_woke()
 	_ok("Schlaf heilt (30 → %.0f nach 6 Stunden)" % p.health, p.health >= 90.0)
 	p.health = keep_hp
+	# Wechselbalg kommt öfter, wenn man nachts wach ist – aber nur einmal pro Nacht und nicht im Schlaf
+	var keep_phase := Story.phase
+	var keep_cl := ThreatDirector._changeling_tonight
+	var keep_kind := ThreatDirector.night_kind
+	Story.phase = 2
+	ThreatDirector.night_kind = "visit"
+	ThreatDirector._changeling_tonight = false
+	TimeManager.set_time(maxi(keep_d, 8), 23.5)
+	p.global_position = Vector3(4.0, Cabin.FLOOR_Y + 0.05, 2.5)
+	var awake_ok := ThreatDirector.changeling_awake_possible()
+	EventBus.sleeping = true
+	var asleep_ok := ThreatDirector.changeling_awake_possible()
+	EventBus.sleeping = false
+	ThreatDirector._changeling_tonight = true
+	var twice_ok := ThreatDirector.changeling_awake_possible()
+	_ok("Wechselbalg: kommt, wenn man wach ist (nicht im Schlaf, nur einmal pro Nacht)", awake_ok and not asleep_ok and not twice_ok)
+	Story.phase = keep_phase
+	ThreatDirector._changeling_tonight = keep_cl
+	ThreatDirector.night_kind = keep_kind
+	TimeManager.set_time(keep_d, keep_h)
 	# Teststart ab Tag 15: Zelt, Schlafsack, keine Belagerung heute Nacht
 	var keep_inv := Inventory.items.duplicate(true)
 	var keep_threat: Dictionary = ThreatDirector.get_state()

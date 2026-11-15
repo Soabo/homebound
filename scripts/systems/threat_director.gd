@@ -393,6 +393,7 @@ func _process(delta: float) -> void:
 	_check_night_roam(delta)
 	_check_tired()
 	_check_changeling_day(delta)
+	_check_changeling_awake(delta)
 	var now := TimeManager.get_total_hours()
 	for e in events:
 		if not e["done"] and now >= e["at"]:
@@ -600,7 +601,8 @@ func _fire(type: String) -> void:
 		scene.add_child(s)
 		return
 	if type == "changeling":
-		_spawn_changeling(scene, player as Player)
+		if not _changeling_tonight:   # war er heute schon da (weil man wach war), kommt er nicht noch einmal
+			_spawn_changeling(scene, player as Player)
 		return
 	if type.begins_with("omen:"):
 		var kind := type.substr(5)
@@ -953,6 +955,33 @@ func _spawn_changeling(scene: Node, player: Player) -> void:
 			"fast": stage >= 3 or offended, "echo": stage >= 3,
 			"can_grab": stage >= 3 and night >= config.changeling_abduct_from_night})
 	print("[Changeling] Nacht %d, Stufe %d, %d Stück" % [night, stage, mini(n, pool.size())])
+
+
+## Nachts wach (nicht im Bett/Zelt eingeschlafen): ab und zu kommt er von selbst, einmal pro Nacht.
+var _changeling_awake_t := 0.0
+
+
+func _check_changeling_awake(delta: float) -> void:
+	_changeling_awake_t -= delta
+	if _changeling_awake_t > 0.0:
+		return
+	_changeling_awake_t = config.changeling_awake_check
+	if not changeling_awake_possible():
+		return
+	if _rng.randf() < config.changeling_awake_chance:
+		var scene := get_tree().current_scene
+		_spawn_changeling(scene, get_tree().get_first_node_in_group("player") as Player)
+
+
+## Kann er gerade kommen, weil man wach ist? (auch für Tests)
+func changeling_awake_possible() -> bool:
+	if not GameState.in_game() or GameState.dead or not TimeManager.is_night() or EventBus.sleeping:
+		return false
+	if Story.phase < config.changeling_from_phase or night_kind == "siege" or _changeling_tonight:
+		return false
+	if current_night() <= config.calm_first_nights or far_from_home():
+		return false
+	return get_tree().get_nodes_in_group("changeling").is_empty()
 
 
 ## Tagsüber: harmlos maskiert als zweite Bank oder falscher Wegweiser – und er folgt dir zum nächsten Ort.

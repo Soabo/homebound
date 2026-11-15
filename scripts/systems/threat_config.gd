@@ -250,4 +250,8 @@ extends Resource
 @export var changeling_morning_chance: float = 0.45
 ## Tagsüber maskiert unterwegs (zweite Bank, falscher Wegweiser): Chance pro Tag, Abstand zum Spieler beim Aufstellen
 @export var changeling_day_chance: float = 0.35
+## Wer nachts wach bleibt, dem begegnet er öfter (Christian 15.11.): alle so viele Sekunden ein Wurf mit dieser Chance,
+## höchstens einmal pro Nacht, zusätzlich zur geplanten Nacht (changeling_chance)
+@export var changeling_awake_check: float = 30.0
+@export var changeling_awake_chance: float = 0.06
 @export var changeling_day_distance: Vector2 = Vector2(45.0, 140.0)

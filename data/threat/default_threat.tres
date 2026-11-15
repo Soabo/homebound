@@ -136,4 +136,6 @@ changeling_abduct_from_night = 12
 changeling_multi = 3
 changeling_morning_chance = 0.45
 changeling_day_chance = 0.35
+changeling_awake_check = 30.0
+changeling_awake_chance = 0.06
 changeling_day_distance = Vector2(45, 140)

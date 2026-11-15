@@ -558,7 +558,8 @@
 - Stufen (`ThreatDirector.changeling_stage`, `changeling_count` im Spielstand): 1 = „ein Ding zu viel“ auf dem Hof (verschwindet
   ungesehen), 2 = im Haus mit deutlichem Fehler, rückt langsam, 3 = feiner Fehler, rückt bei jedem Wegsehen, Echo-Schritte;
   ab `changeling_abduct_from_night` packt er von hinten zu. Endspurt: `changeling_multi` gleichzeitig. Morgens manchmal ein Stuhl,
-  der zum Bett schaut. Tagsüber (`changeling_day_*`): zweite Bank neben Wanderbank/Rastplatz oder falscher Wegweiser, folgt dir.
+  der zum Bett schaut. Wach nachts (nicht eingeschlafen): zusätzlich `changeling_awake_check/chance` (Christian 15.11.: öfter, wenn
+  man wach ist), höchstens einmal pro Nacht (`changeling_awake_possible`). Tagsüber (`changeling_day_*`): zweite Bank neben Wanderbank/Rastplatz oder falscher Wegweiser, folgt dir.
 - Zupacken: `Changeling.grabbing`, `Player.grabbed_by` (Zug weg von der Hütte), [E] halten / LED auf ihn / Faust = Balken,
   Axt = sofort frei. Sonst `_abduct`: Abblende, Aufwachen `abduct_distance` von der Hütte, Morgen, Schaden (nie unter
   `abduct_min_health`), kalt, `abduct_drops` Sachen verstreut auf dem Weg (`scatter_items`, nie Einzelstücke). Merker abducted.
