@@ -8,6 +8,7 @@
 - Offene Designfragen aus GDD Kap. 21 nicht eigenmächtig festschreiben – nachfragen.
 - Tempo vor Kontrollbildern: Bei kleinen Änderungen (Kamera drehen, Farbe, Lautstärke …) keine Screenshots,
   nur die schnellen Tests; Christian prüft selbst im Spiel. Screenshots nur bei größeren Umbauten oder auf Wunsch.
+- Christian 15.11.: Immer alles gleich hochladen (nach Tests committen und pushen, nicht auf „hochladen“ warten).
 - Nach jedem Update immer die Links ausschreiben (nicht nur „der gewohnte Link“):
   Windows: https://github.com/Soabo/homebound/releases/tag/neueste-version
   Browser: https://soabo.github.io/homebound/
