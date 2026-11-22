@@ -76,6 +76,7 @@ MAP = [
     ("Player hurt *", "hurt", "one", None),
     # Wechselbalg (Christian nimmt auf: Dateinamen wie in der Wunschliste)
     ("schleifen_laub*", "changeling_drag_forest", "loop", None),
+    ("schleifen_wald*", "changeling_drag_forest", "loop", None),
     ("schleifen_holz*", "changeling_drag", "loop", None),
     ("gelenke*", "changeling_joints", "one", None),
     ("atmen_leise*", "changeling_breath", "one", None),
@@ -145,8 +146,11 @@ def clip(x, secs):
 src = sys.argv[1]
 os.makedirs(OUT, exist_ok=True)
 for pattern, sid, mode, extra in MAP:
-    files = sorted(glob.glob(os.path.join(src, pattern + ".mp3")) + glob.glob(os.path.join(src, pattern.rstrip("*").rstrip() + ".mp3")))
-    files = sorted(set(files))
+    # Groß-/Kleinschreibung egal ("Gelenke 1.mp3" passt zu "gelenke*")
+    import fnmatch
+    pl = pattern.lower()
+    files = sorted(os.path.join(src, n) for n in os.listdir(src) if n.lower().endswith(".mp3")
+            and (fnmatch.fnmatch(n.lower()[:-4], pl) or n.lower()[:-4] == pl.rstrip("*").rstrip()))
     if not files:
         print("FEHLT:", pattern)
         continue

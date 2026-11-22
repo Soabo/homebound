@@ -680,6 +680,9 @@
   `SoundBank.ALIAS` nutzt vorhandene Aufnahmen anderer Ordner (Herzschlag, Kreatur-Atem, Schritte). Wunschliste 22.11. für
   ElevenLabs: neue MAP-Einträge in sfx.py (bed_creak, door_creak, glass_crack, thud, bang, scratch, switch, hammer, wood_crack,
   trap_snap, rain, rain_roof, thunder, rustle, signal, static, hurt) + Wechselbalg + Kinderstimme (`prepare.py oneshot child`).
+  22.11. geliefert und eingebaut: signal, static, hurt, alle 8 Wechselbalg-Klänge (schleifen_wald = Laub), child. sfx.py ignoriert
+  jetzt Groß-/Kleinschreibung. NOCH OFFEN: bed_creak, door_creak, glass_crack, thud, bang, scratch, switch, hammer, wood_crack,
+  trap_snap, rain, rain_roof, thunder, rustle.
 
 ## Befehle (Cloud-Workspace)
 ```bash
