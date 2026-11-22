@@ -681,8 +681,8 @@
   ElevenLabs: neue MAP-Einträge in sfx.py (bed_creak, door_creak, glass_crack, thud, bang, scratch, switch, hammer, wood_crack,
   trap_snap, rain, rain_roof, thunder, rustle, signal, static, hurt) + Wechselbalg + Kinderstimme (`prepare.py oneshot child`).
   22.11. geliefert und eingebaut: signal, static, hurt, alle 8 Wechselbalg-Klänge (schleifen_wald = Laub), child. sfx.py ignoriert
-  jetzt Groß-/Kleinschreibung. NOCH OFFEN: bed_creak, door_creak, glass_crack, thud, bang, scratch, switch, hammer, wood_crack,
-  trap_snap, rain, rain_roof, thunder, rustle.
+  jetzt Groß-/Kleinschreibung. 22.11. abends Rest geliefert (Sound_Pack_II): alle 14 eingebaut – damit sind alle Wunsch-Klänge echt.
+  Wind-Rascheln braucht eine Schleife: `rustle_loop` (aus den 4 Rascheln-Clips zusammengeblendet, 10,6 s), Einzelclips `rustle` fürs Zelt.
 
 ## Befehle (Cloud-Workspace)
 ```bash

@@ -8,7 +8,7 @@ const RATE := 22050
 const SFX_DIR := "res://assets/audio/sfx"
 ## Klangflächen, die endlos wiederholt werden
 const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", "wind", "gusts", "silence",
-		"drip", "monitor_hum", "fire", "static", "rain", "rain_roof", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
+		"drip", "monitor_hum", "fire", "static", "rain", "rain_roof", "rustle_loop", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
 ## Lautstärke-Ausgleich der Aufnahmen (dB) – feinjustiert nach Gehör
 const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
 		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,

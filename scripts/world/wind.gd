@@ -248,6 +248,7 @@ func _looking_at(p: Vector3) -> bool:
 
 ## Laubrascheln als Schleife (eigene Aufnahme „rustle“, sonst aus Rauschen gebaut).
 static func _rustle_stream() -> AudioStream:
-	if SoundBank.has_recording("rustle"):
-		return SoundBank.get_sound("rustle")
+	# Schleife aus Christians Rascheln-Aufnahmen zusammengesetzt (die Einzelclips sind zu kurz für eine wandernde Böe)
+	if SoundBank.has_recording("rustle_loop"):
+		return SoundBank.get_sound("rustle_loop")
 	return SoundBank.get_generated("rustle")
