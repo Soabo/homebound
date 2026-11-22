@@ -8,7 +8,7 @@ const RATE := 22050
 const SFX_DIR := "res://assets/audio/sfx"
 ## Klangflächen, die endlos wiederholt werden
 const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", "wind", "gusts", "silence",
-		"drip", "monitor_hum", "fire", "static", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
+		"drip", "monitor_hum", "fire", "static", "rain", "rain_roof", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
 ## Lautstärke-Ausgleich der Aufnahmen (dB) – feinjustiert nach Gehör
 const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
 		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,
@@ -21,12 +21,20 @@ static var _last: Dictionary = {}
 
 
 ## Alle Aufnahmen zu einer ID (leer = keine, dann Ersatzklang).
+## Klänge, für die es schon passende Aufnahmen an anderer Stelle gibt (Ordner/Dateianfang)
+const ALIAS := {"heartbeat": "res://assets/audio/player/heartbeat", "creature_breath": "res://assets/audio/creature/breath",
+		"step_grass": "res://assets/audio/steps/grass/walk", "step_wood": "res://assets/audio/steps/wood/walk",
+		"step_soil": "res://assets/audio/steps/soil/walk", "step_creature": "res://assets/audio/creature/step"}
+
+
 static func recorded(id: String) -> Array:
 	if _recorded.has(id):
 		return _recorded[id]
 	var list: Array = []
 	for i in range(1, 25):
 		var path := "%s/%s_%02d.ogg" % [SFX_DIR, id, i]
+		if not ResourceLoader.exists(path) and ALIAS.has(id):
+			path = "%s_%02d.ogg" % [ALIAS[id], i]
 		if not ResourceLoader.exists(path):
 			break
 		var st := load(path) as AudioStream

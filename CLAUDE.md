@@ -677,6 +677,9 @@
   Haus/Umgebung/Bauen/Menü: `tools/audio/sfx.py QUELLORDNER` (Zuordnung Dateiname -> ID in MAP) legt
   `assets/audio/sfx/<id>_NN.ogg` an. `SoundBank.get_sound(id)` nimmt zuerst diese Aufnahmen (LOOP_IDS werden
   wiederholt, GAIN = Lautstärke-Ausgleich), sonst den prozeduralen Ersatz (`get_generated`).
+  `SoundBank.ALIAS` nutzt vorhandene Aufnahmen anderer Ordner (Herzschlag, Kreatur-Atem, Schritte). Wunschliste 22.11. für
+  ElevenLabs: neue MAP-Einträge in sfx.py (bed_creak, door_creak, glass_crack, thud, bang, scratch, switch, hammer, wood_crack,
+  trap_snap, rain, rain_roof, thunder, rustle, signal, static, hurt) + Wechselbalg + Kinderstimme (`prepare.py oneshot child`).
 
 ## Befehle (Cloud-Workspace)
 ```bash
