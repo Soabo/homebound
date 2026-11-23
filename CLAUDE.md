@@ -671,6 +671,15 @@
   Nicht im Baumodus/gesperrt. `force_log` nur für Bilder/Tests (Tour-Schlüssel `log`, Bild F1). Vorschau: hands_preview `--log=1`
   (`--logrot`, `--logoff`). Prüfung `RegressTest._t_watch_log`.
 
+## Organische Gegner (Christian 23.11.: Sucher „wie eine Robotertonne“, Zerfleischer ebenso überarbeiten)
+- `FleshKit` (scripts/creature/flesh_kit.gd): `skin` (matt-feuchtes Hautmaterial, Textur am Körper), `smooth` (Catmull-Rom),
+  `limb` (gebogene, sich verjüngende Glieder, ovale Querschnitte), `bulb`, `spindle` (Muskeln/Sehnen), `vein`, `finger` (Glieder +
+  Knöchel + gebogene Kralle), `rib`. Sucher: ausgemergelt, Rippen, Wirbelgrat, Schulterblätter, knotige Knie, fünf lange Finger,
+  Kopf mit senkrechtem Spalt (wulstige Ränder, 15 Augen). Zerfleischer: Muskeln, Bauchmuskeln, Rückenplatten (`Spine%d`), Grey-Schädel
+  mit Brauenwulst/Wangenknochen, Zahnfleisch, Sichelklauen. Knotennamen für die Animation unverändert (Knee, Elbow, Claw%d, Skull).
+  Vorschau: creature_preview `--what=seeker` (`--dist=`), Mauler wie bisher `--pose=`.
+- HUD: Inventar-Zeile unten rechts entfernt (Traglast bleibt). Aufgabenlisten: alle offenen Punkte ○ (kein ◉ mehr).
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

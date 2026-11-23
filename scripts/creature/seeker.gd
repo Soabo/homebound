@@ -100,7 +100,19 @@ static func _blocked(p: Vector3) -> bool:
 # --- Aussehen ------------------------------------------------------------------
 
 func _build_model() -> void:
-	var skin := BuildKit.tex_mat("alien_skin", 0.6, Color(0.3, 0.28, 0.32), 0.4)
+	# Christian 23.11.: organisch statt „Robotertonne“ – ausgemergelter, überlanger Körper, Haut über Knochen,
+	# vorgebeugt, Finger bis unters Knie, Kopf ohne Gesicht: nur ein senkrechter Spalt voller kleiner Augen.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2701
+	var hide := FleshKit.skin(Color(0.44, 0.39, 0.41), 0.36, 0.11)
+	var pale := FleshKit.skin(Color(0.5, 0.45, 0.44), 0.42, 0.11)     # Knochenpunkte unter dünner Haut
+	var dark := FleshKit.skin(Color(0.16, 0.13, 0.15), 0.3, 0.11)
+	var vein_mat := BuildKit.color_mat(Color(0.14, 0.12, 0.17), 0.6)
+	var lip := FleshKit.skin(Color(0.42, 0.22, 0.26), 0.25)
+	var nail := BuildKit.color_mat(Color(0.1, 0.09, 0.08), 0.2, 0.2)
+	var slit := StandardMaterial3D.new()
+	slit.albedo_color = Color(0.02, 0.01, 0.015)
+	slit.roughness = 0.9
 	_eye_mat = StandardMaterial3D.new()
 	_eye_mat.albedo_color = Color(0.6, 0.9, 1.0)
 	_eye_mat.emission_enabled = true
@@ -109,49 +121,102 @@ func _build_model() -> void:
 	var body := Node3D.new()
 	body.name = "Body"
 	add_child(body)
-	# Beine (lang, nach hinten geknickt)
+	# Becken mit vorstehenden Beckenknochen
+	FleshKit.limb(body, [Vector3(0, 1.5, -0.01), Vector3(0, 1.4, -0.02), Vector3(0, 1.3, 0.0)], [Vector2(0.1, 0.075), Vector2(0.145, 0.095), Vector2(0.09, 0.07)], hide, 14)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.bulb(body, Vector3(sx * 0.12, 1.44, 0.04), Vector3(0.035, 0.03, 0.03), pale)
+	# Beine: dürr, knotige Knie, lange Füße mit vier Zehen
 	for sx: float in [-1.0, 1.0]:
 		var hip := Node3D.new()
-		hip.position = Vector3(sx * 0.16, 1.35, 0)
+		hip.position = Vector3(sx * 0.11, 1.36, 0)
 		body.add_child(hip)
-		BuildKit.cylinder(hip, 0.075, 0.75, Vector3(0, -0.36, -0.08), skin, false, Vector3(-14, 0, 0), 0.05, 6)
-		BuildKit.cylinder(hip, 0.05, 0.72, Vector3(0, -1.0, 0.0), skin, false, Vector3(14, 0, 0), 0.035, 6)
-		BuildKit.box(hip, Vector3(0.07, 0.03, 0.22), Vector3(0, -1.34, 0.07), skin, false)
+		FleshKit.limb(hip, [Vector3.ZERO, Vector3(sx * 0.012, -0.3, 0.09), Vector3(0, -0.64, 0.12)], [0.072, Vector2(0.06, 0.066), 0.04], hide, 12)
+		FleshKit.spindle(hip, Vector3(sx * 0.03, -0.05, 0.06), Vector3(sx * 0.008, -0.6, 0.13), 0.034, hide, 0.35)
+		FleshKit.bulb(hip, Vector3(0, -0.655, 0.152), Vector3(0.034, 0.044, 0.02), pale, Vector3(-10, 0, 0))
+		FleshKit.limb(hip, [Vector3(0, -0.64, 0.12), Vector3(0, -0.96, 0.02), Vector3(0, -1.28, -0.06)], [0.042, 0.034, 0.026], hide, 10)
+		FleshKit.spindle(hip, Vector3(0, -0.7, 0.08), Vector3(0, -1.2, -0.09), 0.03, hide, 0.3)
+		FleshKit.bulb(hip, Vector3(0, -1.3, -0.065), Vector3(0.03, 0.026, 0.03), hide)
+		FleshKit.limb(hip, [Vector3(0, -1.3, -0.07), Vector3(0, -1.34, 0.04), Vector3(0, -1.355, 0.12)], [0.03, Vector2(0.04, 0.018), Vector2(0.045, 0.014)], hide, 8, 3, Vector3.UP)
+		for t in 4:
+			var tx := (t - 1.5) * 0.022
+			FleshKit.finger(hip, Vector3(tx, -1.352, 0.12), Vector3(tx * 2.0, -0.05, 1.0), Vector3(1, 0, 0), [0.05, 0.04, 0.03], 9.0, 0.011, hide, nail, 0.03)
+		FleshKit.vein(hip, [Vector3(sx * 0.04, -0.1, 0.06), Vector3(sx * 0.045, -0.3, 0.09), Vector3(sx * 0.03, -0.5, 0.08), Vector3(sx * 0.02, -0.64, 0.07)], 0.006, vein_mat, rng)
 		_legs.append(hip)
-	# Rumpf: dünn, vornübergebeugt
+	# Rumpf: eingefallener Bauch, Brustkorb mit Rippen, Wirbelsäule und Schulterblätter am krummen Rücken
 	var torso := Node3D.new()
-	torso.position = Vector3(0, 1.35, 0)
+	torso.position = Vector3(0, 1.36, 0)
 	torso.rotation_degrees.x = 24.0
 	body.add_child(torso)
-	BuildKit.cylinder(torso, 0.15, 0.95, Vector3(0, 0.48, 0), skin, false, Vector3.ZERO, 0.22, 8)
-	for k in 5:
-		BuildKit.box(torso, Vector3(0.3, 0.025, 0.05), Vector3(0, 0.3 + k * 0.12, 0.09), skin, false)
-	# Hals und Kopf: schmaler, hoher Schlitz voller Augen
+	FleshKit.limb(torso, [Vector3(0, 0, 0), Vector3(0, 0.22, 0.0), Vector3(0, 0.46, -0.02), Vector3(0, 0.72, -0.01), Vector3(0, 0.92, -0.03), Vector3(0, 1.02, -0.02)],
+			[Vector2(0.13, 0.09), Vector2(0.095, 0.065), Vector2(0.14, 0.1), Vector2(0.175, 0.125), Vector2(0.19, 0.11), Vector2(0.09, 0.07)], hide, 14)
+	for k in 7:
+		var y := 0.48 + k * 0.065
+		FleshKit.rib(torso, Vector3(0, y, -0.02), 0.165 - absf(k - 3.0) * 0.012, 0.118 + (0.006 if k < 4 else -0.004 * (k - 3)), 0.06, 0.008, hide)
+	FleshKit.limb(torso, [Vector3(0, 0.5, 0.11), Vector3(0, 0.7, 0.13), Vector3(0, 0.88, 0.115)], [0.014, 0.018, 0.016], pale, 6)   # Brustbein
+	# Wirbelsäule als durchgehender Grat mit leichten Knoten
+	var spine: Array = []
+	for k in 8:
+		spine.append(Vector3(0, 0.02 + k * 0.135, -0.075 - sin(k * 0.45) * 0.035))
+	FleshKit.limb(torso, spine, [0.012, 0.016, 0.018, 0.02, 0.02, 0.018, 0.016, 0.012], hide, 6)
+	for k in 14:
+		var y := 0.04 + k * 0.072
+		FleshKit.bulb(torso, Vector3(0, y, -0.08 - sin(y / 0.135 * 0.45) * 0.035), Vector3(0.018, 0.012, 0.012), hide)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.bulb(torso, Vector3(sx * 0.1, 0.82, -0.1), Vector3(0.075, 0.1, 0.025), hide, Vector3(10, 0, sx * -12.0))
+		FleshKit.limb(torso, [Vector3(sx * 0.03, 0.97, 0.08), Vector3(sx * 0.11, 0.99, 0.075), Vector3(sx * 0.19, 0.97, 0.03)], [0.012, 0.014, 0.012], pale, 6)   # Schlüsselbein
+		FleshKit.vein(torso, [Vector3(sx * 0.06, 0.2, 0.06), Vector3(sx * 0.08, 0.34, 0.075), Vector3(sx * 0.1, 0.48, 0.1), Vector3(sx * 0.12, 0.6, 0.12)], 0.005, vein_mat, rng)
+	# Hals mit Sehnen
+	FleshKit.limb(torso, [Vector3(0, 0.96, -0.02), Vector3(0, 1.06, 0.01), Vector3(0, 1.17, 0.06)], [Vector2(0.06, 0.05), 0.04, 0.046], hide, 12)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.spindle(torso, Vector3(sx * 0.03, 0.96, 0.06), Vector3(sx * 0.012, 1.16, 0.09), 0.011, hide, 0.5, 6)
+	# Kopf: lang, schmal, nach hinten gebogen. Vorn ein senkrechter Spalt mit wulstigen Rändern und vielen Augen.
 	_head = Node3D.new()
-	_head.position = Vector3(0, 1.08, 0.05)
+	_head.position = Vector3(0, 1.14, 0.06)
+	_head.rotation_degrees.x = -12.0   # Kopf fast senkrecht über dem gebeugten Rumpf, der Spalt schaut nach vorn
 	torso.add_child(_head)
-	BuildKit.cylinder(_head, 0.03, 0.32, Vector3(0, 0.14, 0), skin, false, Vector3(-20, 0, 0), 0.04, 6)
-	var skull := BuildKit.sphere(_head, 0.16, Vector3(0, 0.42, 0.05), skin, Vector3(0.65, 1.8, 0.8), 10)
+	var skull := FleshKit.limb(_head, [Vector3(0, 0.0, 0.0), Vector3(0, 0.12, 0.03), Vector3(0, 0.3, 0.03), Vector3(0, 0.48, 0.0), Vector3(0, 0.6, -0.05)],
+			[Vector2(0.05, 0.06), Vector2(0.085, 0.095), Vector2(0.1, 0.11), Vector2(0.08, 0.095), Vector2(0.03, 0.04)], hide, 16)
 	skull.name = "Skull"
-	for i in 9:
-		var y := 0.27 + i * 0.035
-		var x := (0.018 if i % 2 == 0 else -0.018)
-		BuildKit.sphere(_head, 0.014, Vector3(x, y, 0.175), _eye_mat, Vector3.ONE, 5)
+	for k in 5:
+		# Hautfalten am Hinterkopf
+		var y := 0.18 + k * 0.07
+		FleshKit.limb(_head, [Vector3(-0.07, y, -0.06), Vector3(0, y + 0.012, -0.105 + k * 0.006), Vector3(0.07, y, -0.06)], [0.004, 0.009, 0.004], hide, 5, 3)
+	FleshKit.limb(_head, [Vector3(0, 0.1, 0.116), Vector3(0, 0.25, 0.128), Vector3(0, 0.4, 0.12), Vector3(0, 0.5, 0.09)], [Vector2(0.006, 0.01), Vector2(0.016, 0.012), Vector2(0.016, 0.012), Vector2(0.005, 0.008)], slit, 6)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.limb(_head, [Vector3(sx * 0.008, 0.08, 0.108), Vector3(sx * 0.026, 0.2, 0.124), Vector3(sx * 0.028, 0.34, 0.124), Vector3(sx * 0.018, 0.46, 0.106), Vector3(sx * 0.004, 0.52, 0.085)],
+				[0.006, 0.013, 0.014, 0.011, 0.005], lip, 7)
+	for i in 15:
+		var y := 0.12 + i * 0.024 + rng.randf_range(-0.006, 0.006)
+		var x := rng.randf_range(-0.011, 0.011)
+		var r := rng.randf_range(0.0065, 0.012) * (1.0 - absf(i - 7.0) / 14.0)
+		BuildKit.sphere(_head, r, Vector3(x, y, 0.13), _eye_mat, Vector3.ONE, 6)
 	_eye_light = OmniLight3D.new()
 	_eye_light.light_color = Color(0.55, 0.85, 1.0)
 	_eye_light.light_energy = 0.35
 	_eye_light.omni_range = 2.5
-	_eye_light.position = Vector3(0, 0.42, 0.3)
+	_eye_light.position = Vector3(0, 0.3, 0.3)
 	_head.add_child(_eye_light)
-	# Arme: sehr lang, Finger bis unters Knie
+	# Arme: dünn, knochige Ellbogen, lange Hände mit fünf Fingern bis unters Knie
 	for sx: float in [-1.0, 1.0]:
 		var sh := Node3D.new()
-		sh.position = Vector3(sx * 0.2, 0.92, 0.02)
+		sh.position = Vector3(sx * 0.2, 0.95, 0.0)
 		torso.add_child(sh)
-		BuildKit.cylinder(sh, 0.045, 0.8, Vector3(0, -0.4, 0), skin, false, Vector3.ZERO, 0.035, 6)
-		BuildKit.cylinder(sh, 0.035, 0.75, Vector3(0, -1.15, 0.05), skin, false, Vector3(8, 0, 0), 0.025, 6)
-		for f in 4:
-			BuildKit.cylinder(sh, 0.008, 0.28, Vector3((f - 1.5) * 0.02, -1.65, 0.08), skin, false, Vector3(10 + f * 3, 0, (f - 1.5) * 6), 0.004, 4)
+		FleshKit.bulb(sh, Vector3(sx * 0.008, -0.06, 0.0), Vector3(0.04, 0.075, 0.042), hide, Vector3(0, 0, sx * 8.0))
+		FleshKit.limb(sh, [Vector3.ZERO, Vector3(sx * 0.01, -0.4, 0.0), Vector3(0, -0.78, 0.0)], [0.04, 0.032, 0.026], hide, 10)
+		FleshKit.spindle(sh, Vector3(sx * 0.01, -0.06, 0.02), Vector3(0, -0.6, 0.02), 0.024, hide, 0.35, 8)
+		FleshKit.bulb(sh, Vector3(0, -0.8, -0.028), Vector3(0.024, 0.03, 0.02), pale)
+		FleshKit.limb(sh, [Vector3(0, -0.8, 0.0), Vector3(0, -1.15, 0.06), Vector3(0, -1.48, 0.09)], [0.028, 0.022, 0.017], hide, 9)
+		FleshKit.spindle(sh, Vector3(0, -0.84, 0.02), Vector3(0, -1.3, 0.05), 0.019, hide, 0.3, 7)
+		FleshKit.vein(sh, [Vector3(0, -0.85, 0.03), Vector3(sx * 0.01, -1.05, 0.05), Vector3(0, -1.25, 0.06), Vector3(0, -1.45, 0.065)], 0.0045, vein_mat, rng)
+		FleshKit.bulb(sh, Vector3(0, -1.5, 0.05), Vector3(0.02, 0.018, 0.016), hide)
+		FleshKit.limb(sh, [Vector3(0, -1.5, 0.05), Vector3(0, -1.56, 0.058), Vector3(0, -1.6, 0.06)], [Vector2(0.024, 0.012), Vector2(0.03, 0.011), Vector2(0.032, 0.01)], hide, 8, 3)
+		for f in 5:
+			var fx := (f - 2.0) * 0.014
+			var thumb := f == (0 if sx > 0.0 else 4)
+			var base := Vector3(fx, -1.6, 0.06 + (0.012 if thumb else 0.0))
+			var dir := Vector3(fx * 1.5 + (sx * -0.25 if thumb else 0.0), -1.0, 0.18)
+			var lens := [0.06, 0.05, 0.045] if thumb else [0.11, 0.1, 0.085]
+			FleshKit.finger(sh, base, dir, Vector3(1, 0, 0), lens, -13.0, 0.009, hide, nail, 0.03)
 		_arms.append(sh)
 
 

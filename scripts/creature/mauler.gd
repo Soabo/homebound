@@ -84,8 +84,14 @@ static func _ground(p: Vector3) -> Vector3:
 # --- Aussehen -----------------------------------------------------------------
 
 func _build_model() -> void:
-	var skin := BuildKit.tex_mat("alien_skin", 0.5, Color(0.62, 0.6, 0.64), 0.6)
+	# Christian 23.11.: organischer und detaillierter – Muskeln, Sehnen, Rippen unter der Haut, Rückengrat,
+	# Grey-Schädel mit Wangenknochen und Brauenwulst, Maul mit Zahnfleisch und Reißzähnen, sichelförmige Klauen.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3601
+	var skin := FleshKit.skin(Color(0.58, 0.55, 0.57), 0.6, 0.11)
+	var shade := FleshKit.skin(Color(0.45, 0.42, 0.45), 0.6, 0.11)      # Muskelfurchen, Rückengrat
 	var dark := BuildKit.color_mat(Color(0.16, 0.15, 0.17), 0.45)
+	var vein_mat := BuildKit.color_mat(Color(0.27, 0.24, 0.32), 0.6)
 	var claw_mat := BuildKit.color_mat(Color(0.07, 0.065, 0.06), 0.2, 0.35)
 	var eye := StandardMaterial3D.new()
 	eye.albedo_color = Color(0.005, 0.005, 0.008)
@@ -93,90 +99,120 @@ func _build_model() -> void:
 	eye.roughness = 0.04
 	eye.metallic_specular = 1.0
 	var tooth := BuildKit.color_mat(Color(0.88, 0.85, 0.76), 0.3)
-	var gum := BuildKit.color_mat(Color(0.35, 0.1, 0.12), 0.55)
+	var gum := FleshKit.skin(Color(0.45, 0.14, 0.16), 0.25, 0.11)
 	_model = Node3D.new()
 	_model.name = "Body"
 	add_child(_model)
 	# Becken
-	BuildKit.sphere(_model, 0.21, Vector3(0, 1.05, -0.05), skin, Vector3(1.25, 0.85, 1.0), 9)
-	# Beine (Zehengänger): Oberschenkel schräg nach vorn, Unterschenkel nach hinten, langer Mittelfuß nach vorn.
-	# Ein Glied, das nach unten-vorn zeigt, ist um -Winkel um X gedreht, eins nach unten-hinten um +Winkel.
+	FleshKit.limb(_model, [Vector3(0, 1.18, -0.08), Vector3(0, 1.06, -0.05), Vector3(0, 0.96, 0.0)], [Vector2(0.2, 0.15), Vector2(0.25, 0.17), Vector2(0.16, 0.12)], skin, 14)
+	# Beine (Zehengänger): kräftige Oberschenkel, Unterschenkel nach hinten, langer Mittelfuß, drei Krallenzehen
 	for sx: float in [-1.0, 1.0]:
 		var hip := Node3D.new()
 		hip.position = Vector3(sx * 0.19, 1.05, -0.05)
 		_model.add_child(hip)
-		_limb(hip, Vector3.ZERO, Vector3(0, -0.4, 0.23), 0.14, 0.095, skin)
-		BuildKit.sphere(hip, 0.15, Vector3(0, -0.05, 0.03), skin, Vector3(1.0, 1.2, 1.1), 8)
+		FleshKit.limb(hip, [Vector3(0, 0.04, -0.02), Vector3(sx * 0.02, -0.18, 0.12), Vector3(0, -0.4, 0.23)], [0.14, Vector2(0.12, 0.13), 0.08], skin, 14)
+		FleshKit.spindle(hip, Vector3(sx * 0.02, -0.02, 0.08), Vector3(0, -0.36, 0.28), 0.07, skin, 0.4)          # vorderer Oberschenkelmuskel
+		FleshKit.spindle(hip, Vector3(sx * 0.05, -0.04, -0.06), Vector3(sx * 0.01, -0.36, 0.14), 0.06, shade, 0.45)   # hinterer
+		FleshKit.vein(hip, [Vector3(sx * 0.1, -0.02, 0.06), Vector3(sx * 0.11, -0.15, 0.14), Vector3(sx * 0.09, -0.28, 0.2), Vector3(sx * 0.07, -0.37, 0.24)], 0.008, vein_mat, rng)
 		var knee := Node3D.new()
 		knee.name = "Knee"
 		knee.position = Vector3(0, -0.4, 0.23)
 		hip.add_child(knee)
-		BuildKit.sphere(knee, 0.09, Vector3.ZERO, skin, Vector3.ONE, 7)
-		_limb(knee, Vector3.ZERO, Vector3(0, -0.37, -0.31), 0.085, 0.06, skin)
+		FleshKit.bulb(knee, Vector3(0, 0.01, 0.06), Vector3(0.05, 0.06, 0.03), shade)
+		FleshKit.limb(knee, [Vector3.ZERO, Vector3(0, -0.18, -0.15), Vector3(0, -0.37, -0.31)], [0.08, 0.06, 0.045], skin, 12)
+		FleshKit.spindle(knee, Vector3(0, -0.03, -0.06), Vector3(0, -0.3, -0.33), 0.055, skin, 0.3)   # Wade
+		FleshKit.limb(knee, [Vector3(0, -0.06, 0.02), Vector3(0, -0.2, -0.1), Vector3(0, -0.34, -0.25)], [0.012, 0.016, 0.01], shade, 6)   # Schienbeinkante
 		var ankle := Node3D.new()
 		ankle.position = Vector3(0, -0.37, -0.31)
 		knee.add_child(ankle)
-		BuildKit.sphere(ankle, 0.06, Vector3.ZERO, skin, Vector3.ONE, 6)
-		_limb(ankle, Vector3.ZERO, Vector3(0, -0.27, 0.1), 0.055, 0.045, skin)
+		FleshKit.bulb(ankle, Vector3(0, 0, -0.01), Vector3(0.055, 0.05, 0.06), skin)
+		FleshKit.limb(ankle, [Vector3.ZERO, Vector3(0, -0.14, 0.04), Vector3(0, -0.26, 0.1)], [Vector2(0.05, 0.045), Vector2(0.045, 0.04), Vector2(0.06, 0.035)], skin, 10)
 		for t in 3:
-			BuildKit.box(ankle, Vector3(0.035, 0.03, 0.17), Vector3((t - 1) * 0.05, -0.27, 0.19), claw_mat, false, Vector3(8, (t - 1) * 16.0, 0))
+			var tx := (t - 1) * 0.045
+			FleshKit.finger(ankle, Vector3(tx, -0.265, 0.11), Vector3(tx * 2.5, -0.15, 1.0), Vector3(1, 0, 0), [0.06, 0.05], 12.0, 0.022, skin, claw_mat, 0.09)
 		_legs.append(hip)
-	# Rumpf: weit nach vorn geneigt, kräftiger Brustkorb, Rippen und Wirbel
+	# Rumpf: weit nach vorn geneigt, kräftiger Brustkorb, Rippen, Brustmuskeln, Rückengrat aus Knochenplatten
 	_torso = Node3D.new()
 	_torso.position = Vector3(0, 1.05, -0.05)
 	_torso.rotation_degrees.x = 62.0
 	_model.add_child(_torso)
-	BuildKit.cylinder(_torso, 0.31, 0.82, Vector3(0, 0.42, 0), skin, false, Vector3.ZERO, 0.19, 10)
-	BuildKit.sphere(_torso, 0.33, Vector3(0, 0.8, 0.03), skin, Vector3(1.2, 0.8, 1.0), 10)
-	for k in 5:
-		BuildKit.box(_torso, Vector3(0.44 - k * 0.04, 0.03, 0.06), Vector3(0, 0.36 + k * 0.1, 0.2 + k * 0.012), skin, false, Vector3(-8, 0, 0))
-	for k in 8:
-		BuildKit.sphere(_torso, 0.045, Vector3(0, 0.12 + k * 0.11, -0.2 - sin(k * 0.4) * 0.03), dark, Vector3(1.0, 0.7, 1.4), 5)
-	# Hals und Kopf: großer Grey-Schädel, schräge schwarze Mandelaugen, darunter ein Maul voller Reißzähne
+	FleshKit.limb(_torso, [Vector3(0, 0.0, 0.0), Vector3(0, 0.2, 0.01), Vector3(0, 0.42, 0.04), Vector3(0, 0.66, 0.05), Vector3(0, 0.86, 0.04), Vector3(0, 1.0, 0.06)],
+			[Vector2(0.21, 0.16), Vector2(0.19, 0.15), Vector2(0.27, 0.21), Vector2(0.33, 0.25), Vector2(0.34, 0.22), Vector2(0.17, 0.15)], skin, 18)
+	for k in 6:
+		var y := 0.4 + k * 0.075
+		FleshKit.rib(_torso, Vector3(0, y, 0.04), 0.27 - absf(k - 2.5) * 0.02, 0.2 + 0.01 * minf(k, 3.0), 0.07, 0.016, shade)
+	for k in 4:
+		# Bauchmuskeln
+		for sx: float in [-1.0, 1.0]:
+			FleshKit.bulb(_torso, Vector3(sx * 0.055, 0.08 + k * 0.085, 0.16), Vector3(0.05, 0.036, 0.022), skin)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.bulb(_torso, Vector3(sx * 0.13, 0.78, 0.2), Vector3(0.14, 0.1, 0.06), skin, Vector3(0, 0, sx * -20.0))     # Brustmuskel
+		FleshKit.spindle(_torso, Vector3(sx * 0.18, 0.3, -0.02), Vector3(sx * 0.3, 0.82, -0.04), 0.08, skin, 0.6)            # breiter Rückenmuskel
+		FleshKit.bulb(_torso, Vector3(sx * 0.15, 0.78, -0.17), Vector3(0.12, 0.15, 0.05), shade, Vector3(10, 0, sx * -15.0))  # Schulterblatt
+		FleshKit.vein(_torso, [Vector3(sx * 0.12, 0.15, 0.15), Vector3(sx * 0.17, 0.35, 0.19), Vector3(sx * 0.2, 0.52, 0.22), Vector3(sx * 0.15, 0.68, 0.24)], 0.008, vein_mat, rng)
+	for k in 11:
+		var y := 0.04 + k * 0.095
+		var plate := FleshKit.bulb(_torso, Vector3(0, y, -0.2 - sin(k * 0.35) * 0.04), Vector3(0.04, 0.045, 0.035), dark, Vector3(-25, 0, 0))
+		plate.name = "Spine%d" % k
+	# Hals und Kopf: großer Grey-Schädel, schräge schwarze Mandelaugen, Wangenknochen, Brauenwulst, Maul voller Reißzähne
 	var neck := Node3D.new()
 	neck.position = Vector3(0, 1.02, 0.12)
 	_torso.add_child(neck)
-	BuildKit.cylinder(neck, 0.1, 0.22, Vector3(0, 0.06, 0.0), skin, false, Vector3.ZERO, 0.13, 7)
+	FleshKit.limb(neck, [Vector3(0, -0.1, -0.04), Vector3(0, 0.03, 0.0), Vector3(0, 0.15, 0.03)], [Vector2(0.15, 0.12), Vector2(0.1, 0.09), Vector2(0.09, 0.08)], skin, 12)
+	for sx: float in [-1.0, 1.0]:
+		FleshKit.spindle(neck, Vector3(sx * 0.08, -0.1, 0.06), Vector3(sx * 0.03, 0.14, 0.09), 0.025, skin, 0.5, 7)
 	_head = Node3D.new()
 	_head.position = Vector3(0, 0.16, 0.02)
 	_head.rotation_degrees.x = -60.0
 	neck.add_child(_head)
-	BuildKit.sphere(_head, 0.22, Vector3(0, 0.17, -0.03), skin, Vector3(1.0, 1.12, 1.1), 12)
-	BuildKit.sphere(_head, 0.12, Vector3(0, 0.0, 0.08), skin, Vector3(0.95, 0.85, 1.15), 10)
+	FleshKit.bulb(_head, Vector3(0, 0.2, -0.08), Vector3(0.19, 0.21, 0.28), skin, Vector3(-12, 0, 0), 26)
+	FleshKit.limb(_head, [Vector3(0, 0.16, 0.02), Vector3(0, 0.07, 0.1), Vector3(0, -0.01, 0.16)], [Vector2(0.15, 0.12), Vector2(0.1, 0.085), Vector2(0.06, 0.05)], skin, 16)
+	FleshKit.limb(_head, [Vector3(-0.15, 0.22, 0.1), Vector3(0, 0.25, 0.165), Vector3(0.15, 0.22, 0.1)], [0.015, 0.03, 0.015], skin, 8)   # Brauenwulst
 	for sx: float in [-1.0, 1.0]:
-		var sock := BuildKit.sphere(_head, 0.1, Vector3(sx * 0.09, 0.14, 0.13), dark, Vector3(1.0, 0.62, 0.45), 9)
+		FleshKit.bulb(_head, Vector3(sx * 0.12, 0.08, 0.11), Vector3(0.05, 0.035, 0.045), skin, Vector3(0, 0, sx * 20.0))   # Wangenknochen
+		var sock := BuildKit.sphere(_head, 0.1, Vector3(sx * 0.088, 0.15, 0.135), dark, Vector3(1.0, 0.62, 0.45), 14)
 		sock.rotation_degrees.z = sx * -28.0
-		var e := BuildKit.sphere(_head, 0.095, Vector3(sx * 0.092, 0.14, 0.145), eye, Vector3(1.0, 0.55, 0.42), 10)
+		var e := BuildKit.sphere(_head, 0.095, Vector3(sx * 0.09, 0.15, 0.15), eye, Vector3(1.0, 0.55, 0.42), 16)
 		e.rotation_degrees.z = sx * -28.0
+		BuildKit.sphere(_head, 0.008, Vector3(sx * 0.018, 0.02, 0.185), dark, Vector3(1.0, 1.6, 0.6), 6)   # Nasenschlitze
+		FleshKit.vein(_head, [Vector3(sx * 0.08, 0.33, 0.0), Vector3(sx * 0.13, 0.3, -0.06), Vector3(sx * 0.17, 0.24, -0.1), Vector3(sx * 0.19, 0.14, -0.12)], 0.006, vein_mat, rng)
 	_jaw = Node3D.new()
 	_jaw.position = Vector3(0, -0.03, 0.1)
 	_head.add_child(_jaw)
-	BuildKit.box(_jaw, Vector3(0.17, 0.04, 0.15), Vector3(0, -0.055, 0.05), skin, false)
-	BuildKit.box(_jaw, Vector3(0.15, 0.02, 0.13), Vector3(0, -0.032, 0.05), gum, false)
-	BuildKit.box(_head, Vector3(0.15, 0.02, 0.06), Vector3(0, -0.035, 0.17), gum, false)
-	for i in 9:
-		var x := (i - 4) * 0.017
-		var long := i % 4 == 0
-		BuildKit.cylinder(_jaw, 0.007, 0.055 if long else 0.032, Vector3(x, -0.01, 0.115 - absf(x) * 0.7), tooth, false, Vector3(180, 0, 0), 0.0, 4)
-		BuildKit.cylinder(_head, 0.007, 0.06 if long else 0.035, Vector3(x, -0.06, 0.19 - absf(x) * 0.7), tooth, false, Vector3.ZERO, 0.0, 4)
-	# Arme: lang, mit drei sichelförmigen Klauen je Hand
+	FleshKit.limb(_jaw, [Vector3(-0.08, -0.04, -0.04), Vector3(-0.06, -0.06, 0.07), Vector3(0, -0.065, 0.12), Vector3(0.06, -0.06, 0.07), Vector3(0.08, -0.04, -0.04)], [0.02, 0.025, 0.028, 0.025, 0.02], skin, 8)
+	FleshKit.limb(_jaw, [Vector3(-0.06, -0.035, 0.0), Vector3(0, -0.04, 0.1), Vector3(0.06, -0.035, 0.0)], [0.012, 0.018, 0.012], gum, 6)
+	FleshKit.limb(_head, [Vector3(-0.07, -0.035, 0.08), Vector3(0, -0.04, 0.19), Vector3(0.07, -0.035, 0.08)], [0.012, 0.02, 0.012], gum, 6)
+	for i in 11:
+		var x := (i - 5) * 0.014
+		var long := i % 5 == 0
+		var bend := Vector3(8, 0, -x * 200.0)
+		BuildKit.cylinder(_jaw, 0.006, 0.055 if long else 0.03, Vector3(x, -0.02, 0.115 - absf(x) * 0.75), tooth, false, Vector3(180, 0, 0) + bend, 0.0, 5)
+		BuildKit.cylinder(_head, 0.006, 0.06 if long else 0.034, Vector3(x, -0.06, 0.19 - absf(x) * 0.75), tooth, false, bend, 0.0, 5)
+	# Arme: lang und sehnig, drei sichelförmige Klauen je Hand
 	for sx: float in [-1.0, 1.0]:
 		var sh := Node3D.new()
 		sh.position = Vector3(sx * 0.33, 0.82, 0.05)
 		_torso.add_child(sh)
-		BuildKit.sphere(sh, 0.1, Vector3.ZERO, skin, Vector3.ONE, 7)
-		_limb(sh, Vector3.ZERO, Vector3(0, -0.5, 0), 0.08, 0.06, skin)
+		FleshKit.bulb(sh, Vector3(sx * 0.02, -0.04, 0.0), Vector3(0.11, 0.13, 0.1), skin, Vector3(0, 0, sx * 10.0))     # Schultermuskel
+		FleshKit.limb(sh, [Vector3.ZERO, Vector3(sx * 0.01, -0.25, 0.01), Vector3(0, -0.5, 0)], [0.085, Vector2(0.07, 0.075), 0.055], skin, 12)
+		FleshKit.spindle(sh, Vector3(0, -0.08, 0.05), Vector3(0, -0.45, 0.04), 0.05, skin, 0.5)
+		FleshKit.spindle(sh, Vector3(0, -0.06, -0.05), Vector3(0, -0.48, -0.04), 0.05, shade, 0.4)
+		FleshKit.vein(sh, [Vector3(sx * 0.05, -0.1, 0.03), Vector3(sx * 0.06, -0.25, 0.05), Vector3(sx * 0.05, -0.4, 0.04), Vector3(sx * 0.03, -0.5, 0.03)], 0.007, vein_mat, rng)
 		var elbow := Node3D.new()
 		elbow.name = "Elbow"
 		elbow.position = Vector3(0, -0.5, 0)
 		elbow.rotation.x = -0.5
 		sh.add_child(elbow)
-		BuildKit.sphere(elbow, 0.062, Vector3.ZERO, skin, Vector3.ONE, 6)
-		_limb(elbow, Vector3.ZERO, Vector3(0, -0.46, 0), 0.06, 0.045, skin)
-		BuildKit.sphere(elbow, 0.06, Vector3(0, -0.48, 0.01), skin, Vector3(1.1, 0.8, 0.9), 6)
+		FleshKit.bulb(elbow, Vector3(0, 0, -0.03), Vector3(0.05, 0.055, 0.045), shade)
+		FleshKit.limb(elbow, [Vector3.ZERO, Vector3(0, -0.22, 0.015), Vector3(0, -0.45, 0.0)], [0.06, Vector2(0.055, 0.045), 0.04], skin, 11)
+		FleshKit.spindle(elbow, Vector3(0, -0.02, 0.03), Vector3(0, -0.36, 0.03), 0.04, skin, 0.35)
+		FleshKit.limb(elbow, [Vector3(0, -0.44, 0.0), Vector3(0, -0.5, 0.02), Vector3(0, -0.55, 0.04)], [Vector2(0.05, 0.03), Vector2(0.065, 0.032), Vector2(0.06, 0.028)], skin, 10)
 		for f in 3:
-			var c := BuildKit.cylinder(elbow, 0.016, 0.38, Vector3((f - 1) * 0.04, -0.66, 0.08), claw_mat, false, Vector3(-28 + absf(f - 1) * 6.0, 0, (f - 1) * 10.0), 0.002, 5)
-			c.name = "Claw%d" % f
+			var claw := Node3D.new()
+			claw.name = "Claw%d" % f
+			elbow.add_child(claw)
+			var fx := (f - 1) * 0.038
+			FleshKit.finger(claw, Vector3(fx, -0.55, 0.04), Vector3(fx * 1.8, -1.0, 0.35), Vector3(1, 0, 0), [0.06, 0.05], -14.0, 0.02, skin, claw_mat, 0.3)
 		_arms.append(sh)
 
 

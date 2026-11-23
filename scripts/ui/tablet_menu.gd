@@ -340,7 +340,7 @@ func _fill_story(box: VBoxContainer) -> void:
 			side_header = true
 			box.add_child(_label("   Nebenspuren", 16, Color(0.7, 0.72, 0.8)))
 		var prog := Story.step_progress(s)
-		var title := ("   ◉  " if main else "   ○  ") + String(s.get("title", "")) + ("   (%s)" % prog if prog != "" else "")
+		var title := "   ○  " + String(s.get("title", "")) + ("   (%s)" % prog if prog != "" else "")
 		box.add_child(_label(title, 21 if main else 18, Color(1.0, 0.86, 0.7) if main else Color(0.85, 0.87, 0.92)))
 		var t := _label("        " + String(s.get("text", "")), 16 if main else 15, Color(0.75, 0.76, 0.82) if main else Color(0.62, 0.65, 0.72))
 		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

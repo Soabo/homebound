@@ -12,7 +12,6 @@ var _prompt: Label
 var _notes: VBoxContainer   ## Hinweise oben: neuester oben, ältere rutschen nach unten und grauen aus
 var _help: Label
 var _title: Label
-var _inv: Label
 var _weight: Label
 var _fade: ColorRect
 var _hurt: ColorRect
@@ -77,15 +76,7 @@ func _ready() -> void:
 	_clock.offset_top = 24
 	_clock.offset_bottom = 70
 
-	_inv = _label(root, 20, HORIZONTAL_ALIGNMENT_RIGHT)
-	_inv.anchor_left = 1.0
-	_inv.anchor_right = 1.0
-	_inv.anchor_top = 1.0
-	_inv.anchor_bottom = 1.0
-	_inv.offset_left = -600
-	_inv.offset_right = -32
-	_inv.offset_top = -60
-	_inv.offset_bottom = -24
+	# Christian 23.11.: keine Inventar-Zeile mehr unten rechts (Inhalt steht im Rucksack, Tab)
 	# Traglast: getragen / Maximum, bei Überladung rot mit „ÜBERLADEN“
 	_weight = _label(root, 20, HORIZONTAL_ALIGNMENT_RIGHT)
 	_weight.anchor_left = 1.0
@@ -94,8 +85,8 @@ func _ready() -> void:
 	_weight.anchor_bottom = 1.0
 	_weight.offset_left = -600
 	_weight.offset_right = -32
-	_weight.offset_top = -92
-	_weight.offset_bottom = -60
+	_weight.offset_top = -60
+	_weight.offset_bottom = -28
 
 	_prompt = _label(root, 24, HORIZONTAL_ALIGNMENT_CENTER)
 	_prompt.anchor_right = 1.0
@@ -166,9 +157,7 @@ func _ready() -> void:
 	EventBus.fear_changed.connect(_on_fear)
 	TimeManager.phase_changed.connect(_on_phase_changed)
 	TimeManager.day_changed.connect(_on_day_changed)
-	Inventory.changed.connect(_update_inventory)
 	GameState.player_died.connect(_on_player_died)
-	_update_inventory()
 	_intro()
 
 
@@ -273,13 +262,6 @@ func _update_weight() -> void:
 		_weight.text = "Traglast  %.1f / %.0f kg" % [w, Inventory.MAX_WEIGHT]
 		var near := w > Inventory.MAX_WEIGHT * 0.85
 		_weight.add_theme_color_override("font_color", Color(1.0, 0.8, 0.45) if near else Color(0.85, 0.85, 0.8, 0.85))
-
-
-func _update_inventory() -> void:
-	var parts: PackedStringArray = []
-	for id in Inventory.items:
-		parts.append("%s %d" % [Inventory.display_name(id), Inventory.count(id)])
-	_inv.text = "   ·   ".join(parts)
 
 
 func _intro() -> void:
@@ -614,7 +596,7 @@ func watch_log_lines() -> Array:
 		if not bool(st.get("main", false)):
 			continue
 		var prog := Story.step_progress(st)
-		lines.append(["◉  " + String(st.get("title", "")) + ("  (%s)" % prog if prog != "" else ""), "story"])
+		lines.append(["○  " + String(st.get("title", "")) + ("  (%s)" % prog if prog != "" else ""), "story"])
 		n += 1
 	for g: Dictionary in Tasks.open_goals():
 		if n >= 4:

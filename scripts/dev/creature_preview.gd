@@ -1,6 +1,7 @@
 extends Node
 ## Schnelle Vorschau einer Gegner-Figur ohne die ganze Welt:
 ## xvfb-run godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=/pfad/bild.png --pose=warn|charge|stalk --angle=0
+## Sucher: --what=seeker  (Abstand --dist=3.6)
 ## Wechselbalg: --changeling=masks (alle Tarnungen, oben deutlicher Fehler, unten feiner) | --changeling=true (wahre Gestalt)
 
 func _ready() -> void:
@@ -48,6 +49,27 @@ func _run() -> void:
 		get_viewport().get_texture().get_image().save_png(out)
 		get_tree().quit()
 		return
+	var what := "mauler"
+	var dist := 3.6
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--what="): what = a.get_slice("=", 1)
+		if a.begins_with("--dist="): dist = float(a.get_slice("=", 1))
+	if what == "seeker":
+		var sk := Seeker.new()
+		world.add_child(sk)
+		sk.set_process(false)
+		sk.position = Vector3.ZERO
+		sk.rotation_degrees.y = angle
+		var cam2 := Camera3D.new()
+		world.add_child(cam2)
+		cam2.position = Vector3(0, 1.6, dist + 1.0)
+		cam2.look_at(Vector3(0, 1.45, 0))
+		cam2.fov = 50
+		for i in 12:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_png(out)
+		get_tree().quit()
+		return
 	var m := Mauler.new()
 	world.add_child(m)
 	m.set_process(false)
@@ -59,7 +81,7 @@ func _run() -> void:
 		m._animate(0.1)
 	var cam := Camera3D.new()
 	world.add_child(cam)
-	cam.position = Vector3(0, 1.3, 3.6)
+	cam.position = Vector3(0, 1.3, dist)
 	cam.look_at(Vector3(0, 1.05, 0))
 	cam.fov = 50
 	for i in 12:
