@@ -679,6 +679,9 @@
   mit Brauenwulst/Wangenknochen, Zahnfleisch, Sichelklauen. Knotennamen für die Animation unverändert (Knee, Elbow, Claw%d, Skull).
   Vorschau: creature_preview `--what=seeker` (`--dist=`), Mauler wie bisher `--pose=`.
 - HUD: Inventar-Zeile unten rechts entfernt (Traglast bleibt). Aufgabenlisten: alle offenen Punkte ○ (kein ◉ mehr).
+- Schnellleiste (`HotbarHud`): keine Namen in den Kästchen mehr, größere Bildchen (36 px) + Anzahl; Name des gewählten
+  Gegenstands kurz klein über der Leiste. Sucher hält `Seeker.WALL_MARGIN` (1,1 m) Abstand zu Hütte/Schuppen (Kopf ragte durch
+  Dachkante); Zuschlagen prüft weiter nur `_blocked_at` (wer direkt an der Wand steht, ist nicht sicher).
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

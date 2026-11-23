@@ -2,6 +2,8 @@ class_name HotbarHud
 extends Control
 ## Schmale Leiste unten in der Bildmitte: Schnellplätze 1–9, der gewählte ist hervorgehoben.
 ## Blendet sich nach einem Wechsel nach ein paar Sekunden dezent aus.
+## Christian 23.11.: keine Namen mehr in den Kästchen (zu lang) – nur Bildchen und Anzahl; der Name des gewählten
+## Gegenstands steht kurz klein über der Leiste.
 
 const BOX := Vector2(58, 64)
 const GAP := 6.0
@@ -10,6 +12,7 @@ var _boxes: Array[PanelContainer] = []
 var _labels: Array[Label] = []
 var _icons: Array[CenterContainer] = []
 var _fade: float = 4.0
+var _name: Label
 
 
 func _ready() -> void:
@@ -40,17 +43,27 @@ func _ready() -> void:
 		v.add_child(num)
 		var ic := CenterContainer.new()
 		ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		ic.custom_minimum_size = Vector2(0, 26)
+		ic.custom_minimum_size = Vector2(0, 38)
 		v.add_child(ic)
 		_icons.append(ic)
-		var l := Label.new()
-		l.add_theme_font_size_override("font_size", 12)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.clip_text = true
+		var l := Label.new()   # Anzahl (nur wenn mehr als 1)
+		l.add_theme_font_size_override("font_size", 11)
+		l.add_theme_color_override("font_color", Color(0.85, 0.82, 0.75))
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		l.custom_minimum_size = Vector2(BOX.x - 8, 0)
 		v.add_child(l)
 		_boxes.append(p)
 		_labels.append(l)
+	_name = Label.new()
+	_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_name.add_theme_font_size_override("font_size", 14)
+	_name.add_theme_color_override("font_color", Color(0.95, 0.88, 0.7))
+	_name.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	_name.add_theme_constant_override("outline_size", 4)
+	_name.position = Vector2(0, -22)
+	_name.size = Vector2(total, 20)
+	add_child(_name)
 	Inventory.hotbar_changed.connect(_refresh)
 	Inventory.changed.connect(_refresh)
 	_refresh()
@@ -61,11 +74,11 @@ func _refresh() -> void:
 	for i in Inventory.SLOTS:
 		var id: String = Inventory.hotbar[i]
 		var has := id != "" and Inventory.count(id) > 0
-		_labels[i].text = Inventory.display_name(id) if has else ""
+		_labels[i].text = str(Inventory.count(id)) if has and Inventory.count(id) > 1 else ""
 		for c in _icons[i].get_children():
 			c.queue_free()
 		if has:
-			_icons[i].add_child(ItemIcons.make(id, 24))
+			_icons[i].add_child(ItemIcons.make(id, 36))
 		var st := StyleBoxFlat.new()
 		var sel := i == Inventory.selected
 		st.bg_color = Color(0.08, 0.07, 0.06, 0.75 if sel else 0.45)
@@ -76,5 +89,8 @@ func _refresh() -> void:
 
 
 func _process(delta: float) -> void:
+	var sel_id: String = Inventory.hotbar[Inventory.selected] if Inventory.selected >= 0 and Inventory.selected < Inventory.SLOTS else ""
+	_name.text = Inventory.display_name(sel_id).get_slice(" (", 0) if sel_id != "" and Inventory.count(sel_id) > 0 else ""
+	_name.modulate.a = clampf(_fade / 0.8, 0.0, 1.0)
 	_fade -= delta
 	modulate.a = move_toward(modulate.a, 1.0 if _fade > 0.0 else 0.35, delta * 2.0)

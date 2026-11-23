@@ -93,7 +93,22 @@ static func outside(p: Vector3) -> Vector3:
 	return q
 
 
+## Abstand zu Hütte und Schuppen: er ist 2,7 m groß und vorgebeugt – ohne Abstand ragte sein Kopf durch Dachkante und
+## Wand (Christian 23.11.). Geprüft wird deshalb ein Ring um ihn herum.
+const WALL_MARGIN := 1.1
+
+
 static func _blocked(p: Vector3) -> bool:
+	if _blocked_at(p):
+		return true
+	for k in 8:
+		var a := k * TAU / 8.0
+		if _blocked_at(p + Vector3(cos(a), 0.0, sin(a)) * WALL_MARGIN):
+			return true
+	return false
+
+
+static func _blocked_at(p: Vector3) -> bool:
 	return Cabin.is_inside(p) or Shed.is_inside(p) or Cabin.blocks_ground(p)
 
 
@@ -437,7 +452,7 @@ func _investigate_done() -> void:
 		_hold = 5.0
 		_start_search()
 		return
-	if camp == null and d < 2.2 and not _player.is_hidden() and not _blocked(_player.global_position):
+	if camp == null and d < 2.2 and not _player.is_hidden() and not _blocked_at(_player.global_position):
 		_strike(null)
 		return
 	_start_search()
