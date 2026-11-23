@@ -26,6 +26,9 @@ var _eye_mat: StandardMaterial3D
 var _eye_light: OmniLight3D
 var _walk_phase: float = 0.0
 var _click_t: float = 3.0
+var _hum: AudioStreamPlayer3D = null    # eigenes Summen (Schleife), solange er da ist
+var _steps: AudioStreamPlayer3D = null  # eigene Schritte (Schleife), nur beim Gehen
+var _moving: bool = false
 var _player: Player
 
 
@@ -57,6 +60,9 @@ func _ready() -> void:
 	global_position = p
 	_go([_ground(target + (p - target).normalized() * (d * 0.55))])
 	EventBus.noise_made.connect(_on_noise)
+	_hum = SoundBank.attach_loop(self, "seeker_hum", -8.0, 30.0, 2.3)
+	_steps = SoundBank.attach_loop(self, "seeker_steps", -4.0, 35.0, 0.2)
+	SoundBank.play_rec.call_deferred(get_parent(), "seeker_teleport", p + Vector3(0, 1.4, 0), -6.0, 50.0)
 	Tasks.flag("seeker_seen")
 	print("[Seeker] erscheint bei ", global_position)
 
@@ -161,7 +167,8 @@ func _process(delta: float) -> void:
 	_click_t -= delta
 	if _click_t <= 0.0:
 		_click_t = _rng.randf_range(4.0, 9.0)
-		CreatureSounds.play_phrase(self, "click", global_position + Vector3(0, 2.2, 0), -12.0, 1.2, 18.0)
+		if not SoundBank.play_rec(get_parent(), "seeker_chitter", global_position + Vector3(0, 2.2, 0), -12.0, 18.0):
+			CreatureSounds.play_phrase(self, "click", global_position + Vector3(0, 2.2, 0), -12.0, 1.2, 18.0)
 	# Am Morgen oder nach Ablauf der Zeit: abziehen
 	if state != State.LEAVE and (not TimeManager.is_night() or _life > cfg.stay_time):
 		_leave()
@@ -169,6 +176,7 @@ func _process(delta: float) -> void:
 	if _sense_t <= 0.0 and state in [State.WATCH, State.SEARCH, State.ARRIVE]:
 		_sense_t = 0.5
 		_sense()
+	_moving = false
 	match state:
 		State.ARRIVE, State.SEARCH, State.INVESTIGATE, State.LEAVE:
 			_move(delta)
@@ -180,6 +188,8 @@ func _process(delta: float) -> void:
 				_start_search()
 		State.STRIKE:
 			pass
+	SoundBank.loop_level(_hum, 1.0 if state == State.WATCH else 0.7, delta, 1.0)
+	SoundBank.loop_level(_steps, 1.0 if _moving else 0.0, delta)
 	_animate(delta)
 
 
@@ -219,6 +229,7 @@ func _move(delta: float) -> void:
 	global_position = p
 	_face(goal, delta)
 	_walk_phase += delta * _speed() * 3.2
+	_moving = true
 
 
 func _face(p: Vector3, delta: float) -> void:
@@ -247,6 +258,7 @@ func _arrived() -> void:
 		State.LEAVE:
 			# zieht er von selbst ab, verschwindet er ebenfalls im Blitz – manchmal mit Asche
 			Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0))
+			SoundBank.play_rec(get_parent(), "seeker_teleport", global_position + Vector3(0, 1.4, 0), 0.0, 60.0)
 			_drop_ash(cfg.ash_leave_chance)
 			queue_free()
 
@@ -389,6 +401,7 @@ func _strike(camp: TentCamp) -> void:
 	await get_tree().create_timer(0.8).timeout
 	if is_inside_tree():
 		Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0), true)
+		SoundBank.play_rec(get_parent(), "seeker_teleport", global_position + Vector3(0, 1.4, 0), 0.0, 60.0)
 		_drop_ash(1.0)
 		queue_free()
 

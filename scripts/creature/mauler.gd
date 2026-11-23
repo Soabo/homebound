@@ -28,6 +28,7 @@ var _circle_left: float = 0.0
 var _circle_dir: float = 1.0
 var _flee_until: float = 0.0
 var _speed_now: float = 0.0
+var _steps: AudioStreamPlayer3D = null  # eigene Schritte (Schleife, Lautstärke nach Tempo)
 var _walk_phase: float = 0.0
 var _swing: float = 0.0
 var _model: Node3D
@@ -59,6 +60,7 @@ func _ready() -> void:
 	_rng.randomize()
 	_player = get_tree().get_first_node_in_group("player") as Player
 	_build_model()
+	_steps = SoundBank.attach_loop(self, "mauler_steps", -2.0, 45.0, 0.2)
 	Tasks.flag("mauler_seen")
 
 
@@ -197,6 +199,7 @@ func _process(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		queue_free()
 		return
+	SoundBank.loop_level(_steps, _speed_now / maxf(cfg.charge_speed, 0.1) * 1.3, delta)
 	_life += delta
 	_t += delta
 	var to_p := _player.global_position - global_position
@@ -235,7 +238,7 @@ func _process(delta: float) -> void:
 			_face(_player.global_position, delta, 6.0)
 			_speed_now = 0.0
 			if _t < delta * 1.5:
-				CreatureSounds.play(self, "shriek", global_position + Vector3(0, 1.6, 0), 2.0, 0.78, 70.0)
+				_voice("mauler_roar", "shriek", 1.6, 2.0, 0.78, 70.0)
 			if _t >= cfg.charge_warning:
 				_enter(State.CHARGE)
 		State.CHARGE:
@@ -246,18 +249,19 @@ func _process(delta: float) -> void:
 			else:
 				_move_toward(_player.global_position, cfg.charge_speed, delta)
 				if _rng.randf() < delta * 0.8:
-					CreatureSounds.play(self, "breath", global_position + Vector3(0, 1.4, 0), -2.0, 0.7, 30.0)
+					_voice("mauler_snarl", "breath", 1.4, -2.0, 0.7, 30.0)
 		State.STRIKE:
 			_face(_player.global_position, delta, 10.0)
 			_speed_now = 0.0
 			_swing = clampf(_t / 0.35, 0.0, 1.0)
 			if _t >= 0.28 and _t - delta < 0.28:
+				SoundBank.play_rec(get_parent(), "mauler_swipe", global_position + Vector3(0, 1.3, 0), 0.0, 35.0)
 				if dist <= cfg.strike_range + 0.5 and reachable:
 					hits += 1
 					_player.take_damage(cfg.hit_damage, global_position, "mauler")
 					EventBus.screen_shake.emit(0.35)
-					CreatureSounds.play(self, "shriek", global_position + Vector3(0, 1.5, 0), -2.0, 1.15, 40.0)
-				else:
+					_voice("mauler_snarl", "shriek", 1.5, -2.0, 1.15, 40.0)
+				elif not SoundBank.has_recording("mauler_swipe"):
 					SoundBank.play_at(get_parent(), "gusts", global_position + Vector3(0, 1.3, 0), -10.0, 2.2)
 			if _t >= 0.6:
 				_start_retreat()
@@ -274,7 +278,7 @@ func _process(delta: float) -> void:
 			var p := _circle_center + Vector3(cos(_circle_angle), 0, sin(_circle_angle)) * cfg.circle_radius
 			_move_toward(p, cfg.retreat_speed, delta)
 			if _rng.randf() < delta * 0.5:
-				CreatureSounds.play(self, "click", global_position + Vector3(0, 1.5, 0), -6.0, 0.8, 25.0)
+				_voice("mauler_snarl", "click", 1.5, -8.0, 0.8, 25.0)
 			if _circle_left <= 0.0 or _t > 12.0:
 				_enter(State.CHARGE if reachable else State.PROWL)
 		State.PROWL:
@@ -284,7 +288,7 @@ func _process(delta: float) -> void:
 			var c := _player.global_position + Vector3(cos(a), 0, sin(a)) * 10.0
 			_move_toward(c, cfg.stalk_speed, delta)
 			if _rng.randf() < delta * 0.3:
-				CreatureSounds.play(self, "breath", global_position + Vector3(0, 1.4, 0), -6.0, 0.7, 30.0)
+				_voice("mauler_snarl", "breath", 1.4, -8.0, 0.7, 30.0)
 			if reachable:
 				_lost = 0.0
 				_enter(State.STALK)
@@ -346,7 +350,7 @@ func _flee(why: String, from: Vector3 = Vector3.INF) -> void:
 	_flee_until = _rng.randf_range(cfg.flee_time.x, cfg.flee_time.y)  # Sekunden
 	_lit = 0.0
 	_swing = 0.0
-	CreatureSounds.play(self, "recoil", global_position + Vector3(0, 1.5, 0), 0.0, 0.85, 50.0)
+	_voice("mauler_roar", "recoil", 1.5, -3.0, 0.85, 50.0)
 	if why == "led":
 		Tasks.flag("mauler_repelled")
 	_drop_find(why)
@@ -457,7 +461,7 @@ func _perceive(delta: float, dist: float, reachable: bool) -> void:
 			awareness.hear_breath(delta, _player.global_position)
 	var ch := awareness.tick(delta)
 	if ch >= Awareness.Stage.SUSPECT and ch > awareness.prev_stage and state == State.STALK:
-		CreatureSounds.play(self, "click", global_position + Vector3(0, 1.5, 0), -4.0, 0.7, 30.0)
+		_voice("mauler_snarl", "click", 1.5, -6.0, 0.7, 30.0)
 
 
 func _on_noise(pos: Vector3, radius: float) -> void:
@@ -473,6 +477,13 @@ func _clear_line() -> bool:
 	return hit.is_empty()
 
 
+## Eigene Stimme (Sound_Paket_III); fehlt die Aufnahme, klingt er wie bisher nach der Kreatur.
+func _voice(id: String, fallback: String, height: float, db: float, pitch: float, max_d: float) -> void:
+	var pos := global_position + Vector3(0, height, 0)
+	if not SoundBank.play_rec(get_parent(), id, pos, db, max_d):
+		CreatureSounds.play(self, fallback, pos, db, pitch, max_d)
+
+
 ## Warnzeichen beim Heranschleichen: Äste knacken, Hecheln, leises Klicken.
 func _cues(delta: float, dist: float) -> void:
 	_cue_t -= delta
@@ -481,8 +492,8 @@ func _cues(delta: float, dist: float) -> void:
 	_cue_t = _rng.randf_range(cfg.cue_interval.x, cfg.cue_interval.y) * (0.6 if dist < 30.0 else 1.0)
 	match _rng.randi() % 3:
 		0: SoundBank.play_at(get_parent(), "twig", global_position + Vector3(0, 0.3, 0), 0.0, _rng.randf_range(0.7, 0.9))
-		1: CreatureSounds.play(self, "breath", global_position + Vector3(0, 1.4, 0), -4.0, 0.72, 40.0)
-		2: CreatureSounds.play(self, "click", global_position + Vector3(0, 1.5, 0), -6.0, 0.75, 30.0)
+		1: _voice("mauler_snarl", "breath", 1.4, -6.0, 0.72, 40.0)
+		2: _voice("mauler_snarl", "click", 1.5, -10.0, 0.75, 30.0)
 
 
 # --- Bewegung -----------------------------------------------------------------

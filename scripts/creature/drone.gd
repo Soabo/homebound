@@ -26,6 +26,7 @@ var _spot: SpotLight3D
 var _ring: Node3D
 var _blink: StandardMaterial3D
 var _hum: AudioStreamPlayer3D
+var _scan_sound_t: float = 3.0  # nächster Abtastklang (Sound_Paket_III)
 var _glitch_timer: float = 0.0
 var _stagger: float = 0.0
 var _player: Player
@@ -147,14 +148,20 @@ func _build_model() -> void:
 	_spot.light_volumetric_fog_energy = 3.0
 	_spot.shadow_enabled = true
 	add_child(_spot)
-	_hum = AudioStreamPlayer3D.new()
-	_hum.stream = SoundBank.get_generated("generator")
-	_hum.pitch_scale = 2.6
-	_hum.volume_db = -10.0
-	_hum.unit_size = 6.0
-	_hum.max_distance = 45.0
-	add_child(_hum)
-	_hum.play()
+	# eigenes Schweben (Aufnahme), sonst wie bisher ein hochgedrehtes Generatorsummen
+	_hum = SoundBank.attach_loop(self, "drone_hover", -6.0, 45.0, 0.0)
+	if _hum:
+		_hum.unit_size = 6.0
+		SoundBank.loop_level(_hum, 1.0, 10.0)
+	else:
+		_hum = AudioStreamPlayer3D.new()
+		_hum.stream = SoundBank.get_generated("generator")
+		_hum.pitch_scale = 2.6
+		_hum.volume_db = -10.0
+		_hum.unit_size = 6.0
+		_hum.max_distance = 45.0
+		add_child(_hum)
+		_hum.play()
 
 
 func _physics_process(delta: float) -> void:
@@ -179,6 +186,7 @@ func _physics_process(delta: float) -> void:
 		_check_jammer()
 		_check_lights()
 		_scan()
+		_scan_sound(delta)
 	_glitch_cameras(delta)
 
 
@@ -203,6 +211,8 @@ func _fly(delta: float) -> void:
 		_path.pop_front()
 		_hold_left = _hold.pop_front() if not _hold.is_empty() else 0.0
 		_aim = _aims.pop_front() if not _aims.is_empty() else null
+		if _aim != null:
+			_scan_sound_t = 0.0   # leuchtet gleich ins Fenster: Abtasten hörbar
 		if _aim == null and _hold_left > 0.0:
 			_sweep = 0.0
 	else:
@@ -262,6 +272,15 @@ func _leave() -> void:
 	var away := Vector3(_rng.randf_range(-1, 1), 0, _rng.randf_range(-1, 1)).normalized() * 90.0
 	_path.append(global_position + Vector3(0, 12, 0))
 	_path.append(away + Vector3(0, 30, 0))
+
+
+## Ab und zu ein Abtastgeräusch, solange der Lichtkegel sucht.
+func _scan_sound(delta: float) -> void:
+	_scan_sound_t -= delta
+	if _scan_sound_t > 0.0 or not _spot.visible:
+		return
+	_scan_sound_t = _rng.randf_range(6.0, 14.0)
+	SoundBank.play_rec(get_parent(), "drone_scan", global_position, -4.0, 40.0)
 
 
 ## Im Lichtkegel und im Freien? Dann Alarm.

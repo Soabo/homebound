@@ -84,8 +84,20 @@ MAP = [
     ("entfalten*", "changeling_unfold", "one", None),
     ("ziehen*", "changeling_pull", "loop", None),
     ("schrei*", "changeling_shriek", "one", None),
+    # Sound_Paket_III: eigene Stimmen der Gegner
+    ("mauler roar*", "mauler_roar", "one", None),
+    ("mauler snarl*", "mauler_snarl", "one", None),
+    ("mauler steps*", "mauler_steps", "loop", None),
+    ("mauler claw swipe*", "mauler_swipe", "one", None),
+    ("seeker hum*", "seeker_hum", "loop", None),
+    ("seeker chitter*", "seeker_chitter", "one", None),
+    ("seeker steps*", "seeker_steps", "loop", None),
+    ("seeker teleport*", "seeker_teleport", "one", None),
+    ("drone hover*", "drone_hover", "loop", None),
+    ("drone scan*", "drone_scan", "one", None),
+    ("organism growth*", "organism_growth", "one", None),
+    ("organism pulse*", "organism_pulse", "loop", None),
 ]
-
 hp = butter(4, 40, "highpass", fs=SR, output="sos")
 
 

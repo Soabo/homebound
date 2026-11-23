@@ -10,6 +10,7 @@ var _mass: Node3D
 var _mat: StandardMaterial3D
 var _light: OmniLight3D
 var _t: float = 0.0
+var _pulse: AudioStreamPlayer3D = null  # Pochen des Knotens (Sound_Paket_III)
 
 
 func _ready() -> void:
@@ -48,6 +49,7 @@ func _ready() -> void:
 	cs.position = Vector3(0, 0.6, 0)
 	body.add_child(cs)
 	add_child(body)
+	_pulse = SoundBank.attach_loop(self, "organism_pulse", -6.0, 18.0, 0.6)
 	_apply_alive()
 	WorldState.changed.connect(_apply_alive)
 
@@ -57,6 +59,8 @@ func _apply_alive() -> void:
 	_mass.scale = Vector3.ONE if alive else Vector3(1.0, 0.25, 1.0)
 	_light.visible = alive
 	_mat.emission_energy_multiplier = 0.4 if alive else 0.0
+	if _pulse:
+		SoundBank.loop_level(_pulse, 1.0 if alive else 0.0, 10.0)
 
 
 func _process(delta: float) -> void:
@@ -109,6 +113,7 @@ class Patch extends Interactable:
 	static var _next_hurt_msec: int = 0
 	var patch_id: int = 0
 	var hp: int = 3
+	var fresh: bool = false   ## gerade erst gewachsen (nicht beim Laden) → Wachstumsgeräusch
 	var _player: Player
 
 	func _ready() -> void:
@@ -138,6 +143,10 @@ class Patch extends Interactable:
 		acs.position = Vector3(0, 0.15, 0)
 		area.add_child(acs)
 		add_child(area)
+		if fresh:
+			var pl := get_tree().get_first_node_in_group("player") as Node3D
+			if pl and pl.global_position.distance_to(global_position) < 35.0:
+				SoundBank.play_rec(get_parent(), "organism_growth", global_position + Vector3(0, 0.3, 0), -4.0, 35.0)
 
 	func get_prompt(_p: Node) -> String:
 		if Inventory.count("root_salt") > 0:

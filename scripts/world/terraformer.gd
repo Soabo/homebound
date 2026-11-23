@@ -140,6 +140,9 @@ func _build_veins() -> void:
 		BuildKit.box(l, Vector3(rng.randf_range(1.0, 3.0), 0.03, 0.05), p, vein, false, Vector3(0, rng.randf() * 180.0, 0))
 
 
+var _patches_synced := false  # erster Abgleich = Laden, danach heißt neu „gerade gewachsen“
+
+
 ## Wucherungen aus der Liste im WorldState anlegen bzw. entfernen.
 func _sync_patches() -> void:
 	var l := _layer("Patches")
@@ -156,8 +159,10 @@ func _sync_patches() -> void:
 		var patch := OrganismNode.Patch.new()
 		patch.name = n
 		patch.patch_id = int(d["id"])
+		patch.fresh = _patches_synced
 		patch.position = _at(Vector3(float(d["x"]), 0, float(d["z"])))
 		l.add_child(patch)
+	_patches_synced = true
 
 
 func _process(delta: float) -> void:

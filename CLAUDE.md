@@ -683,6 +683,13 @@
   22.11. geliefert und eingebaut: signal, static, hurt, alle 8 Wechselbalg-Klänge (schleifen_wald = Laub), child. sfx.py ignoriert
   jetzt Groß-/Kleinschreibung. 22.11. abends Rest geliefert (Sound_Pack_II): alle 14 eingebaut – damit sind alle Wunsch-Klänge echt.
   Wind-Rascheln braucht eine Schleife: `rustle_loop` (aus den 4 Rascheln-Clips zusammengeblendet, 10,6 s), Einzelclips `rustle` fürs Zelt.
+  23.11. Sound_Paket_III = eigene Stimmen der Gegner: Zerfleischer `mauler_roar` (Warnschrei, Zurückweichen vor Licht),
+  `mauler_snarl` (Knurren statt Kreatur-Atem/Klicken), `mauler_swipe` (Klauenhieb), `mauler_steps` (Schleife, laut nach Tempo);
+  Sucher `seeker_hum` (Summen, Schleife), `seeker_chitter` (statt Klicken), `seeker_steps` (Schleife beim Gehen),
+  `seeker_teleport` (Erscheinen + Blitz beim Verschwinden); Drohne `drone_hover` (ersetzt Generatorsummen), `drone_scan`
+  (alle 6–14 s beim Suchen, sofort beim Fensterleuchten); Organismus `organism_pulse` (Pochen am Knoten), `organism_growth`
+  (neue Wucherung, `Patch.fresh`, nicht beim Laden). Hilfen: `SoundBank.play_rec` (false = keine Aufnahme → alter Ersatzklang),
+  `SoundBank.attach_loop` + `loop_level` (Schleife hängt am Gegner). Manipulator bleibt bei Hausgeräuschen (Absicht).
 
 ## Befehle (Cloud-Workspace)
 ```bash

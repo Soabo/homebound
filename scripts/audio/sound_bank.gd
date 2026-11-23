@@ -8,7 +8,8 @@ const RATE := 22050
 const SFX_DIR := "res://assets/audio/sfx"
 ## Klangflächen, die endlos wiederholt werden
 const LOOP_IDS := ["generator", "radio", "crickets", "birds", "frogs", "brook", "wind", "gusts", "silence",
-		"drip", "monitor_hum", "fire", "static", "rain", "rain_roof", "rustle_loop", "changeling_drag", "changeling_drag_forest", "changeling_pull"]
+		"drip", "monitor_hum", "fire", "static", "rain", "rain_roof", "rustle_loop", "changeling_drag", "changeling_drag_forest", "changeling_pull",
+		"mauler_steps", "seeker_hum", "seeker_steps", "drone_hover", "organism_pulse"]
 ## Lautstärke-Ausgleich der Aufnahmen (dB) – feinjustiert nach Gehör
 const GAIN := {"knock": 0.0, "door_open": -6.0, "door_close": -4.0, "door_lock": -4.0, "rattle": -2.0,
 		"floor_creak": -4.0, "light_buzz": -8.0, "pickup": -4.0, "place": -2.0, "menu_click": -6.0, "backpack": -4.0,
@@ -183,6 +184,56 @@ static func play_stream_at(parent: Node, stream: AudioStream, pos: Vector3, volu
 	if loops:
 		# direkt an den Spieler gebunden: ist er schon weg (Szene neu geladen), passiert einfach nichts
 		p.get_tree().create_timer(1.2).timeout.connect(p.queue_free)
+
+
+## Spielt eine echte Aufnahme, falls vorhanden (für eigene Gegner-Stimmen). false = keine Aufnahme da,
+## dann spielt der Aufrufer seinen bisherigen Ersatzklang.
+static func play_rec(parent: Node, id: String, pos: Vector3, volume_db: float = 0.0, max_distance: float = 60.0) -> bool:
+	if parent == null or not has_recording(id):
+		return false
+	var p := AudioStreamPlayer3D.new()
+	p.stream = get_sound(id)
+	p.volume_db = volume_db + float(GAIN.get(id, 0.0))
+	p.pitch_scale = randf_range(0.95, 1.05)
+	p.unit_size = 4.0
+	p.max_distance = max_distance
+	p.attenuation_filter_cutoff_hz = 6000.0
+	parent.add_child(p)
+	p.global_position = pos
+	p.play()
+	p.finished.connect(p.queue_free)
+	return true
+
+
+## Hängt eine Klangschleife (z. B. Schritte, Summen) an einen Gegner – sie wandert mit ihm.
+## null = keine Aufnahme da. Lautstärke steuert der Gegner selbst (`loop_level`).
+static func attach_loop(owner: Node3D, id: String, volume_db: float = 0.0, max_distance: float = 40.0,
+		height: float = 1.0) -> AudioStreamPlayer3D:
+	if not has_recording(id):
+		return null
+	var p := AudioStreamPlayer3D.new()
+	p.name = "Loop_" + id
+	p.stream = get_sound(id)
+	p.volume_db = volume_db + float(GAIN.get(id, 0.0))
+	p.set_meta("base_db", p.volume_db)
+	p.unit_size = 4.0
+	p.max_distance = max_distance
+	p.attenuation_filter_cutoff_hz = 6000.0
+	p.position = Vector3(0, height, 0)
+	owner.add_child(p)
+	p.play(randf() * 4.0)
+	return p
+
+
+## Lautstärke einer angehängten Schleife weich nachführen (level 0..1; 0 = stumm).
+static func loop_level(p: AudioStreamPlayer3D, level: float, delta: float, speed: float = 4.0) -> void:
+	if p == null:
+		return
+	var cur := float(p.get_meta("level", 0.0))
+	cur = move_toward(cur, clampf(level, 0.0, 1.0), delta * speed)
+	p.set_meta("level", cur)
+	p.volume_db = float(p.get_meta("base_db", 0.0)) + linear_to_db(maxf(cur, 0.0001))
+	p.stream_paused = cur < 0.01
 
 
 ## Spielt einen Klang ohne Position (z. B. Herzschlag, Benutzeroberfläche).
