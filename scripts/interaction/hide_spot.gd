@@ -175,6 +175,36 @@ func set_door(open: bool) -> void:
 		Tasks.flag("hidden")
 
 
+## Etwas rüttelt von außen an der Tür (HideHunt)
+func rattle() -> void:
+	SoundBank.play_at(self, "rattle", global_position + Vector3(0, 1.1, size.z * 0.5), 3.0, 0.9 if style == "locker" else 1.0)
+	EventBus.screen_shake.emit(0.25)
+	if door_open:
+		return
+	var sx := 1.0 if hinge_right else -1.0
+	for i in 7:
+		if door_open or not is_inside_tree():
+			return
+		_door.rotation_degrees.y = sx * randf_range(0.5, 4.0)
+		await get_tree().create_timer(0.07).timeout
+	if not door_open:
+		_door.rotation_degrees.y = 0.0
+
+
+## Die Tür wird aufgerissen (HideHunt): fliegt ganz auf, laut
+func force_open() -> void:
+	door_open = true
+	var sx := 1.0 if hinge_right else -1.0
+	create_tween().tween_property(_door, "rotation_degrees:y", sx * 115.0, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	SoundBank.play_at(self, "bang", global_position + Vector3(0, 1.0, size.z * 0.5), 4.0, 0.8)
+	SoundBank.play_at(self, "wood_crack" if SoundBank.has_recording("wood_crack") else "door_open", global_position + Vector3(0, 1.0, size.z * 0.5), 2.0)
+
+
+## Vor dem Versteck: wo etwas steht, das hineinsieht (Weltkoordinaten, auf dem Boden)
+func front_point(dist: float = 1.0) -> Vector3:
+	return to_global(Vector3(0, 0, size.z * 0.5 + dist))
+
+
 ## Ist der Spieler hier drin UND die Tür zu?
 func hides_player() -> bool:
 	return occupied and not door_open

@@ -27,6 +27,9 @@ signal camera_phantom(camera_index: int, seconds: float)
 ## Angst des Spielers 0..1 (für Bildschirmrand, Herzschlag)
 signal fear_changed(fear: float)
 
+## Schreckmoment (0..1): die Angst springt hoch und klingt dann ab (Fear.add_spike)
+signal fear_spike(amount: float)
+
 ## Kamerawackeln (0..1), z. B. bei Schlägen gegen Tür und Fenster.
 signal screen_shake(strength: float)
 

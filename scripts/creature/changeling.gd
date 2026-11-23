@@ -530,7 +530,7 @@ func _start_grab() -> void:
 	SoundBank.play_at(get_parent(), "changeling_unfold", _center(), 2.0)
 	SoundBank.play_at(get_parent(), "changeling_shriek", _player.global_position + Vector3(0, 1.6, 0), 0.0, 0.85)
 	EventBus.screen_shake.emit(0.6)
-	EventBus.fear_changed.emit(1.0)
+	EventBus.fear_spike.emit(1.0)
 	Tasks.flag("changeling_grabbed")
 	_pull.play()
 

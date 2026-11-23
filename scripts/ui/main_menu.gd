@@ -315,7 +315,7 @@ func _fill_slots(mode: String) -> void:
 			row.add_child(d)
 		_panel_box.add_child(row)
 		_panel_box.add_child(HSeparator.new())
-	_panel_box.add_child(_label("Das Spiel speichert jeden Morgen und beim Beenden von selbst. Stirbst du, beginnt der Tag neu.", 15, Color(0.6, 0.6, 0.56)))
+	_panel_box.add_child(_label("Gespeichert wird nur, wenn du im Bett schläfst. Stirbst du, wachst du dort wieder auf – alles danach ist verloren.", 15, Color(0.6, 0.6, 0.56)))
 
 
 static func _nice_date(iso: String) -> String:

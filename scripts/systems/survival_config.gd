@@ -50,8 +50,27 @@ static func get_default() -> SurvivalConfig:
 @export var campfire_hours_per_wood: float = 1.5
 
 @export_group("Schlaf")
-## Heilung pro geschlafener Stunde (8 Stunden Schlaf = fast ganz gesund)
-@export var sleep_heal_per_hour: float = 12.0
+## Heilung pro geschlafener Stunde (Christian 23.11.: Schlaf heilt nur wenig)
+@export var sleep_heal_per_hour: float = 3.5
+
+@export_group("Gesundheit (Christian 23.11.: härter, Verbandskästen selten)")
+## Alle Treffer × diesen Faktor (Kreatur/Zerfleischer: 2–3 Treffer reichen)
+@export var damage_factor: float = 1.35
+## Von selbst heilt man nur langsam (pro Spielstunde, satt und nicht durstig) und nur bis heal_cap
+@export var passive_heal_per_hour: float = 2.0
+@export var passive_heal_cap: float = 60.0
+## Nach dem Laden / Tod mindestens so viel Gesundheit
+@export var restore_min_health: float = 50.0
+## … und so warm, satt und nicht durstig (sonst stirbt man gleich wieder: Todesschleife)
+@export var restore_min_warmth: float = 60.0
+@export var restore_min_food: float = 25.0
+## Bein verletzt: ab so viel Schaden (nach Faktor) mit dieser Chance; Fallen immer
+@export var leg_hit_min: float = 25.0
+@export var leg_chance: float = 0.45
+## so lange (Spielstunden) humpelt man ohne Verbandskasten
+@export var leg_hours: float = 20.0
+## Humpeln: Gehen × dieser Faktor, rennen geht nicht
+@export var leg_speed_factor: float = 0.78
 
 @export_group("Folgen")
 ## Unter diesem Wert friert man (Hinweis, Zittern, weniger Ausdauer)

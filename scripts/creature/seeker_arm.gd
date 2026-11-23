@@ -70,6 +70,7 @@ static func spawn(scene: Node, player: Player, c: SeekerConfig, rng: RandomNumbe
 		arm.cfg = c
 		scene.add_child(arm)
 		arm.global_position = p
+		EventBus.fear_spike.emit(0.75)
 		return arm
 	return null
 

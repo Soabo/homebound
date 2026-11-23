@@ -59,7 +59,9 @@ var _bob_time: float = 0.0
 var _last_prompt: String = ""
 var _gravity: float = 9.8
 var _shake: float = 0.0
-var _fear: float = 0.0
+## Angst (Christian 23.11.): Herzschlag, Zittern, lauter, weniger Puste – siehe Fear
+var fear := Fear.new()
+var _breath_fear_t: float = 0.0
 var _heart_timer: float = 0.0
 var _exhausted: bool = false
 ## Gefahrenzone (z. B. Wucherung): 1 = stark verlangsamt; wird von außen gesetzt und klingt ab
@@ -78,6 +80,8 @@ var grabbed_by: Node = null
 func _ready() -> void:
 	name = "Player"
 	add_to_group("player")
+	EventBus.fear_spike.connect(fear.add_spike)
+	health = Survival.health   # Gesundheit kommt aus dem Spielstand (zuletzt im Bett gespeichert)
 	_gravity = float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
 	floor_max_angle = deg_to_rad(50.0)
 	floor_snap_length = 0.35
@@ -296,12 +300,12 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("sprint") and not shift_down:
 		Input.action_release("sprint")
 	var slow := not input_locked and Input.is_action_pressed("walk_slow")
-	var wants_sprint := not crouching and not slow and not Inventory.overloaded() and shift_down and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
+	var wants_sprint := not crouching and not slow and not Inventory.overloaded() and not Survival.leg_hurt() and shift_down and Input.is_action_pressed("sprint") and input.y < 0.0 and not input_locked
 	if Survival.stamina <= 0.0:
 		_exhausted = true
 	elif Survival.stamina > 30.0:
 		_exhausted = false
-	var sprinting := wants_sprint and not _exhausted and Survival.use_stamina(20.0 * delta)
+	var sprinting := wants_sprint and not _exhausted and Survival.use_stamina(20.0 * delta * fear.sprint_drain())
 	_update_breathing(sprinting)
 	if not sprinting and not holding_breath:
 		Survival.regen_stamina((14.0 if input.length() < 0.1 else 9.0) * delta)
@@ -309,6 +313,9 @@ func _physics_process(delta: float) -> void:
 	# Alt gedrückt: langsam und leise gehen (und dabei den Atem anhalten, siehe _update_breath_hold)
 	if slow and not crouching:
 		speed = walk_speed * SLOW_FACTOR
+	# Bein verletzt: humpeln (langsamer, siehe Kopfwippen)
+	if Survival.leg_hurt():
+		speed *= Survival.cfg.leg_speed_factor
 	speed *= 1.0 - 0.55 * hazard
 	speed *= _wet_factor(delta)
 	hazard = move_toward(hazard, 0.0, delta * 3.0)
@@ -333,6 +340,10 @@ func _physics_process(delta: float) -> void:
 	if was_airborne and is_on_floor() and fall_speed > 3.0:
 		var extra := clampf((fall_speed - 3.0) * 1.5, 0.0, 6.0)
 		Footsteps.play_landing(get_parent(), global_position, extra)
+		# Harter Sturz (z. B. vom Hochsitz): das Bein
+		if fall_speed > 9.5:
+			take_damage((fall_speed - 9.5) * 6.0 + 8.0, global_position + Vector3(0, -1, 0), "fall")
+			Survival.hurt_leg()
 
 	# Kopfwippen beim Gehen
 	var horizontal := Vector2(velocity.x, velocity.z).length()
@@ -341,12 +352,15 @@ func _physics_process(delta: float) -> void:
 		var before := sin(_bob_time)
 		_bob_time += delta * horizontal * 2.2
 		bob = sin(_bob_time) * 0.035 * clampf(horizontal / walk_speed, 0.0, 1.5)
+		# Humpeln: auf dem kranken Bein sackt man tiefer ein
+		if Survival.leg_hurt() and sin(_bob_time * 0.5) < 0.0:
+			bob = -absf(bob) * 2.6
 		# Ein Schritt bei jedem Nulldurchgang der Kopfbewegung (links, rechts)
 		if signf(before) != signf(sin(_bob_time)):
 			_footstep(horizontal, crouching, slow)
 	head.position.y = lerpf(head.position.y, _height - EYE_OFFSET + bob, clampf(delta * 12.0, 0.0, 1.0))
 	# Leichtes Wiegen beim Gehen (Kopf neigt sich mit jedem Schritt ein wenig zur Seite)
-	var sway := cos(_bob_time * 0.5) * 0.006 * clampf(horizontal / walk_speed, 0.0, 1.5)
+	var sway := cos(_bob_time * 0.5) * (0.02 if Survival.leg_hurt() else 0.006) * clampf(horizontal / walk_speed, 0.0, 1.5)
 	camera.rotation.z = lerpf(camera.rotation.z, sway, clampf(delta * 6.0, 0.0, 1.0))
 	_update_lean(delta)
 
@@ -363,8 +377,9 @@ func _physics_process(delta: float) -> void:
 		if health <= 0.0 and not GameState.dead:
 			death_cause = "cold" if Survival.warmth < Survival.cfg.freeze_below else ("thirst" if Survival.thirst <= 0.0 else "hunger")
 			GameState.kill_player()
-	elif Survival.hunger > 30.0 and Survival.thirst > 30.0:
-		health = minf(health + delta * 1.5, MAX_HEALTH)
+	elif Survival.hunger > 30.0 and Survival.thirst > 30.0 and health < Survival.cfg.passive_heal_cap:
+		# Von selbst heilt man nur langsam und nicht ganz (Christian 23.11.)
+		health = minf(health + Survival.cfg.passive_heal_per_hour * TimeManager.get_hours_per_second() * delta, Survival.cfg.passive_heal_cap)
 
 
 ## Um die Ecke lehnen: Y = links, X = rechts. Vor einer Wand lehnt man nur so weit, wie Platz ist.
@@ -404,25 +419,21 @@ func _process(delta: float) -> void:
 	_shake = move_toward(_shake, 0.0, delta * 1.5)
 	camera.h_offset = randf_range(-1.0, 1.0) * _shake * 0.05
 	camera.v_offset = randf_range(-1.0, 1.0) * _shake * 0.05
-	# Angst: Herzschlag, wenn die Kreatur nah und sichtbar ist
-	var target_fear := 0.0
-	var c: Creature = ThreatDirector.creature if is_instance_valid(ThreatDirector.creature) else null
-	if is_instance_valid(c):
-		var d := c.global_position.distance_to(global_position)
-		if d < 20.0 and c.is_in_player_view():
-			target_fear = clampf(1.0 - d / 20.0, 0.2, 1.0)
-		elif d < 8.0:
-			target_fear = 0.4
-	# Atem angehalten: das Herz schlägt mit jeder Sekunde lauter
-	if holding_breath and breath_held > 2.0:
-		target_fear = maxf(target_fear, clampf((breath_held - 2.0) / 10.0, 0.0, 0.7))
-	_fear = move_toward(_fear, target_fear, delta * (0.8 if target_fear > _fear else 0.15))
-	if _fear > 0.05:
+	# Angst (Fear): Wesen gesehen/gehört, Dunkelheit, Treffer, Schreck – Herzschlag wird schneller und lauter
+	fear.update(self, delta)
+	var fl := fear.level
+	if fl > Fear.cfg().heart_from:
 		_heart_timer -= delta
 		if _heart_timer <= 0.0:
-			_heart_timer = lerpf(1.1, 0.45, _fear)
-			PlayerSounds.play(self, "heartbeat", lerpf(-14.0, 0.0, _fear), lerpf(0.95, 1.12, _fear))
-	EventBus.fear_changed.emit(_fear)
+			_heart_timer = lerpf(1.1, 0.38, fl)
+			PlayerSounds.play(self, "heartbeat", lerpf(-16.0, 0.0, fl), lerpf(0.95, 1.15, fl))
+	# Große Angst: der Atem geht schwer und hörbar (Alt hält ihn an)
+	if fear.betrays_breath() and not holding_breath and not _out_of_breath and not GameState.dead and not EventBus.sleeping:
+		_breath_fear_t -= delta
+		if _breath_fear_t <= 0.0:
+			_breath_fear_t = randf_range(2.6, 4.0)
+			PlayerSounds.play_phrase(self, "breath", lerpf(-24.0, -13.0, fl), randf_range(1.6, 2.4))
+	EventBus.fear_changed.emit(fl)
 
 
 func _footstep(speed: float, crouching: bool = false, slow: bool = false) -> void:
@@ -452,6 +463,7 @@ func _footstep(speed: float, crouching: bool = false, slow: bool = false) -> voi
 func make_noise(radius: float) -> void:
 	if radius <= 0.0:
 		return
+	radius *= fear.noise_factor()   # Angst macht fahrig und laut
 	last_noise_radius = radius
 	last_noise_msec = Time.get_ticks_msec()
 	EventBus.noise_made.emit(global_position, radius)
@@ -468,7 +480,7 @@ func _update_breath_hold(delta: float) -> void:
 		_gasp()
 		want = false
 	if want:
-		Survival.use_stamina(sc.breath_drain * delta)
+		Survival.use_stamina(sc.breath_drain * delta * fear.breath_drain())
 		breath_held += delta
 	elif holding_breath and breath_held > 1.5 and _gasp_block <= 0.0:
 		PlayerSounds.play_phrase(self, "breath", -24.0, 1.2)   # leise ausatmen
@@ -591,16 +603,23 @@ func light_shining() -> bool:
 	return flashlight.visible and hands.light_shining()
 
 
-func take_damage(amount: float, from: Vector3, cause: String = "") -> void:
+## floor_health: nie unter diesen Wert (Sucher/Zelt töten nicht – gilt auch nach SurvivalConfig.damage_factor)
+func take_damage(amount: float, from: Vector3, cause: String = "", floor_health: float = -INF) -> void:
 	if GameState.dead:
 		return
 	if cause != "":
 		death_cause = cause
+	amount *= Survival.cfg.damage_factor   # härtere Treffer (SurvivalConfig)
 	var f := hands.block_factor(from)
 	if f < 1.0:
 		amount *= f
 		SoundBank.play_ui(self, "thud", -4.0, 0.8)
+	if floor_health > -INF:
+		amount = minf(amount, maxf(health - floor_health, 0.0))
 	health -= amount
+	fear.add_spike(clampf(amount / Fear.cfg().hurt_scale, 0.3, 1.0))
+	if cause == "trap" or (amount >= Survival.cfg.leg_hit_min and randf() < Survival.cfg.leg_chance):
+		Survival.hurt_leg()
 	EventBus.player_hurt.emit(amount)
 	SoundBank.play_ui(self, "hurt", -2.0, randf_range(0.9, 1.1))
 	var push := global_position - from

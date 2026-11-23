@@ -254,8 +254,8 @@
   `xvfb-run -a godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=BILD.png --pose=warn|charge|stalk --angle=90`.
 
 ## Phase 9: Speichern und Hauptmenü (Christian, 11/2026)
-- Entscheidungen: Speichern automatisch jeden Morgen + beim Beenden (Pause → „Speichern und zum Hauptmenü/beenden“,
-  Fenster schließen); Tod = zurück an Tagesbeginn; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,
+- Entscheidungen: ~~Speichern jeden Morgen + beim Beenden~~ → seit 23.11. NUR beim Schlafen im Bett (`GameState.bed_save`,
+  siehe „Bedrohung à la Resident Evil“); Tod = zurück zum letzten Bettschlaf; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,
   gesehenen Enden und Titelbild der Hütte bei Nacht (langsam bewegt, Nebel, Fensterlicht).
 - `GameState`: `slot`, `play_seconds`, `save_game(current)`, `load_game(n)`, `new_game(n)`, `delete_slot`, `latest_slot`,
   `slot_info`, `to_menu`, `quit_game`. Datei `user://saves/slot_N.save` (store_var) mit `current` (Stand jetzt) und
@@ -695,6 +695,36 @@
   `seeker_arm`) = zurück; danach bleibt 90 s ein Loch. Im Versteck (`is_hidden`) erwischt sie dich nicht.
 - Schaden immer über `Seeker.hurt_player` (nie unter `min_health` – der Sucher tötet nicht). Todesbildschirm-Texte seeker_beam/seeker_arm.
 - Werte SeekerConfig „Im Haus“ (`house_*`, `beam_*`, `reach_*`). Vorschau Arm: creature_preview `--what=arm`. Prüfung `RegressTest._t_seeker_at_house`.
+
+## Bedrohung à la Resident Evil / Alien Isolation (Christian 23.11.2026)
+- Christians Wahl: Verstecke lernen (komplett), Angst (komplett), Gesundheit härter OHNE Bluten und OHNE Uhr-Akku (Uhr bleibt
+  dauerhaft), nur „Speichern am Bett“, Spannungsbogen enorm und unberechenbar, auch tagsüber nicht sicher.
+- Angst `Fear` (scripts/player/fear.gd, `Player.fear`, Werte data/player/fear.tres `FearConfig`): steigt durch gesehene/gehörte
+  Wesen (Gruppen `threat_groups`), bemerkt werden (Awareness ALERT), Dunkelheit draußen, weit weg nachts, Belagerung, Atem anhalten,
+  Treffer, Schreckmomente `EventBus.fear_spike(amount)` (statt fear_changed direkt). Sinkt am Licht/Feuer und im Versteck.
+  Folgen: Herzschlag, dunkle Ränder (Hud-Shader), Zittern von Händen + LED (`PlayerHands._avoid_walls`), `make_noise` × noise_factor,
+  Atem hörbar ab `breath_betray_from` (Stealth.breath_radius), Rennen/Atemanhalten kosten mehr Puste.
+- Gesundheit (SurvivalConfig „Gesundheit“): `damage_factor` 1,35 auf alle Treffer (take_damage), von selbst nur langsam bis
+  `passive_heal_cap`, Schlaf 3,5/Std., Gesundheit + Bein im Spielstand (`Survival.health`, `leg_until`, nach Laden mind.
+  `restore_min_health`; nach einem Tod `Survival.make_survivable`: mind. Wärme/Essen `restore_min_*` – keine Todesschleife). Bein verletzt (`Survival.hurt_leg`: Falle, harter Sturz, schwere Treffer mit `leg_chance`): humpeln,
+  kein Rennen, Hud „Bein verletzt“; Verbandskasten heilt es. Todesgründe fall, hide_found.
+- Speichern: `GameState.bed_save()` beim Aufwachen im Bett (Bed._on_woke) = Schnappschuss + Platz. Kein Morgen-Speichern, Beenden/
+  Hauptmenü speichern nicht (Pause zeigt „Zuletzt: Tag X“). `bed_day/bed_hour`. Neues Spiel und Enden sichern weiter.
+  Nach dem Laden mitten in der Nacht holt der ThreatDirector Vergangenes nicht nach (`_skip_past`, außer „siege“).
+- `Dread` (scripts/systems/dread.gd, Kind des ThreatDirectors, `ThreatDirector.dread`), Werte ThreatConfig:
+  **Verstecke lernen** – `ThreatDirector.hide_uses` (Knotenname → Nächte), Chance `hunt_chance` (Nachtart, Benutzungen, Minuten über
+  `hide_safe_seconds`, × (1 + Druck)) → `HideHunt` (scripts/creature/hide_hunt.gd): Schritte bis vors Versteck, schnüffeln (Alt!),
+  rütteln (`HideSpot.rattle`), aufreißen (`HideSpot.force_open`, Chance `tear_chance`: Benutzungen + hörbarer Atem) oder abziehen;
+  wer nicht mehr drin ist, wird geschlagen. Lange versteckt = Schläge gegen Fenster/Türen (`hide_damage_*`). In der Belagerung reißt
+  sie oft benutzte Verstecke auch mit angehaltenem Atem auf. **Stille eskaliert** – wer nachts wach ist und sich kaum bewegt:
+  `still_steps` (Schritte → Kratzen → Klopfen → Rütteln → Dach → sie selbst). **Tagsüber** – `day_incidents` pro Tag (+ Druck):
+  drinnen Klopfen, Diele, Dach, Radio, Gesicht am Fenster (ab `day_window_from_day`); draußen Schritte hinter dir, Stille,
+  Schrei, Gestalt (Apparition forest), selten Zerfleischer (Phase 2, > `day_mauler_min_distance`).
+- Druck `ThreatDirector.menace` (im Spielstand): ruhige Nächte +`menace_rise`, Auftritte −`menace_drop_*`; erhöht Auftrittschance,
+  `break_calm_chance` bricht die erwartete Ruhe, `late_arrival_chance` (kommt spät), `second_wave_chance` (kommt wieder).
+- Bildrate: Grafikstufe setzt jetzt auch Kantenglättung (`msaa` in quality_levels), FPS-Anzeige zeigt CPU/GPU-Zeit und Bildschirm-Hz
+  (bei Bildsync = Obergrenze). Christians „nicht über 75“ = sehr wahrscheinlich 75-Hz-Bildschirm mit Bildsynchronisierung.
+- Prüfung `RegressTest._t_dread_2311`.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

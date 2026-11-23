@@ -1,5 +1,5 @@
 {
-  "_info": "Startwerte der Einstellungen (Hauptmenü/Pause). Gespeichert wird beim Spieler in user://settings.cfg. volume 0..1, mouse = Faktor auf die Mausempfindlichkeit, brightness = Faktor auf die Belichtung, quality low|medium|high (Auflösungsfaktor + Schatten), fullscreen nur Windows. stealth_hud = Schleich-Anzeige (Auge, Licht, Geräusch) ein/aus. max_fps = Obergrenze Bilder pro Sekunde (0 = unbegrenzt; mit vsync = Bildwiederholrate des Bildschirms), vsync = Bildsynchronisierung, show_fps = Anzeige oben rechts.",
+  "_info": "Startwerte der Einstellungen (Hauptmenü/Pause). Gespeichert wird beim Spieler in user://settings.cfg. volume 0..1, mouse = Faktor auf die Mausempfindlichkeit, brightness = Faktor auf die Belichtung, quality low|medium|high (Auflösungsfaktor, Schatten, SSAO, Volumennebel, Kantenglättung msaa 0/2/4), fullscreen nur Windows. stealth_hud = Schleich-Anzeige (Auge, Licht, Geräusch) ein/aus. max_fps = Obergrenze Bilder pro Sekunde (0 = unbegrenzt; mit vsync = Bildwiederholrate des Bildschirms), vsync = Bildsynchronisierung, show_fps = Anzeige oben rechts (Bilder/s, Rechenzeit CPU und Grafikkarte, Bildschirm-Hz).",
   "volume": 0.85,
   "mouse": 1.0,
   "brightness": 1.0,
@@ -10,9 +10,9 @@
   "vsync": true,
   "show_fps": false,
   "quality_levels": {
-    "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false},
-    "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false},
-    "high": {"scale": 1.0, "shadow_size": 4096, "ssao": true, "volumetric": true}
+    "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false, "msaa": 0},
+    "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false, "msaa": 0},
+    "high": {"scale": 1.0, "shadow_size": 4096, "ssao": true, "volumetric": true, "msaa": 2}
   },
   "endings": [
     {"id": "gehoert", "name": "Gehört", "kind": "gut"},

@@ -100,6 +100,7 @@ func _on_woke() -> void:
 	_lying = false
 	if p == null or GameState.dead:
 		return
+	GameState.bed_save()   # Speichern am Bett (Christian 23.11.)
 	var startled := ThreatDirector.scared_until > TimeManager.get_total_hours()
 	var k := 0.45 if startled else 1.0   # aufgeschreckt: viel schneller hoch
 	p.input_locked = true

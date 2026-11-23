@@ -37,10 +37,10 @@ func _ready() -> void:
 	resume.pressed.connect(func() -> void: set_paused(false))
 	var settings := _button(box, "Einstellungen")
 	settings.pressed.connect(_toggle_settings)
-	var menu := _button(box, "Speichern und zum Hauptmenü")
+	var menu := _button(box, "Zum Hauptmenü")
 	menu.pressed.connect(func() -> void: GameState.to_menu())
 	if OS.get_name() != "Web":
-		var quit := _button(box, "Speichern und beenden")
+		var quit := _button(box, "Beenden")
 		quit.pressed.connect(func() -> void: GameState.quit_game())
 	_info = Label.new()
 	_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -91,7 +91,7 @@ func set_paused(value: bool) -> void:
 	visible = value
 	if value and _info:
 		_settings.visible = false
-		_info.text = ("Speicherplatz %d – das Spiel speichert jeden Morgen und beim Beenden." % (GameState.slot + 1)) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
+		_info.text = ("Speicherplatz %d – gespeichert wird nur beim Schlafen im Bett.\nZuletzt: Tag %d, %02d:%02d Uhr. Was seitdem geschah, geht beim Beenden verloren." % [GameState.slot + 1, GameState.bed_day, int(GameState.bed_hour), int(fmod(GameState.bed_hour, 1.0) * 60.0)]) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value or _menu_needs_mouse() else Input.MOUSE_MODE_CAPTURED
 
 

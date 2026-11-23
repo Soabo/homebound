@@ -555,7 +555,7 @@ static func hurt_player(p: Player, amount: float, from: Vector3, cause: String) 
 	var c := SeekerConfig.get_default()
 	var dmg := minf(amount, maxf(p.health - c.min_health, 0.0))
 	if dmg > 0.0:
-		p.take_damage(dmg, from, cause)
+		p.take_damage(dmg, from, cause, c.min_health)
 	EventBus.player_hurt.emit(maxf(dmg, 1.0))
 
 

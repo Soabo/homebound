@@ -383,6 +383,7 @@ func _t_more() -> void:
 	await _t_batch6_2311()
 	await _t_watch_log()
 	await _t_seeker_at_house()
+	await _t_dread_2311()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2303,7 +2304,7 @@ func _t_batch4_1411() -> void:
 	Survival._sleep_from = TimeManager.get_total_hours() - 6.0
 	Survival._sleep_rate = 0.0
 	Survival._on_woke()
-	_ok("Schlaf heilt (30 → %.0f nach 6 Stunden)" % p.health, p.health >= 90.0)
+	_ok("Schlaf heilt ein wenig (30 → %.0f nach 6 Stunden)" % p.health, absf(p.health - (30.0 + 6.0 * Survival.cfg.sleep_heal_per_hour)) < 0.5)
 	p.health = keep_hp
 	# Zelt: weit draußen im Wald aufstellbar (früher nur ±100 m um die Hütte), Dachflächen vom First nach außen
 	var bc := _scene().get_node("BuildController") as BuildController
@@ -2884,3 +2885,131 @@ func _t_seeker_at_house() -> void:
 	p.health = keep_h
 	TimeManager.set_time(keep_d, 10.0)
 	await _frames(3)
+
+
+## Bedrohung à la Resident Evil (Christian 23.11.): Angst, Gesundheit, Speichern am Bett, Verstecke lernen,
+## Stille eskaliert, Druck, Tagesvorfälle
+func _t_dread_2311() -> void:
+	var p := _player()
+	var keep_pos := p.global_position
+	var keep_day := TimeManager.day
+	var keep_h := TimeManager.hour
+	# --- Angst
+	p.fear.level = 0.0
+	p.fear.spike = 0.0
+	EventBus.fear_spike.emit(0.8)
+	_ok("Angst: Schreck lässt sie hochspringen (%.2f)" % p.fear.level, p.fear.level >= 0.79)
+	var quiet_noise := 1.0
+	p.fear.level = 0.0
+	quiet_noise = p.fear.noise_factor()
+	p.fear.level = 1.0
+	_ok("Angst: macht lauter, Atem verrät, Rennen kostet mehr", p.fear.noise_factor() > quiet_noise and p.fear.betrays_breath() and p.fear.sprint_drain() > 1.2)
+	p.fear.spike = 0.0
+	p.global_position = Vector3(0.0, Cabin.FLOOR_Y + 0.05, 0.0)
+	TimeManager.set_time(keep_day, 12.0)
+	for i in 90:
+		p.fear.update(p, 0.2)
+	_ok("Angst: klingt ohne Gefahr wieder ab (%.2f)" % p.fear.level, p.fear.level < 0.3)
+	# Draußen nachts im Dunkeln: etwas Grundangst
+	TimeManager.set_time(keep_day, 23.0)
+	p.global_position = Creature._ground(Vector3(-12, 0, 30)) + Vector3(0, 0.05, 0)
+	p.set_flashlight(false)
+	await _frames(2)
+	p.fear.level = 0.0
+	for i in 20:
+		p.fear.update(p, 0.2)
+	_ok("Angst: nachts draußen im Dunkeln steigt sie (%.2f)" % p.fear.level, p.fear.level >= Fear.cfg().dark_outside * 0.9)
+	p.fear.level = 0.0
+	# --- Gesundheit: härtere Treffer, Bein
+	p.health = 100.0
+	Survival.leg_until = -1.0
+	p.take_damage(34.0, p.global_position + Vector3(1, 1, 0), "creature")
+	var hit := 100.0 - p.health
+	_ok("Gesundheit: Treffer zählen mehr (%.0f statt 34)" % hit, hit > 40.0)
+	p.health = 100.0
+	p.take_damage(10.0, p.global_position + Vector3(1, 1, 0), "trap")
+	_ok("Gesundheit: Falle verletzt das Bein", Survival.leg_hurt())
+	Inventory.add("medkit", 1)
+	Inventory.use("medkit")
+	_ok("Gesundheit: Verbandskasten schient das Bein", not Survival.leg_hurt())
+	_ok("Gesundheit: Schlaf heilt nur wenig (%.1f/Std.)" % Survival.cfg.sleep_heal_per_hour, Survival.cfg.sleep_heal_per_hour <= 5.0)
+	p.health = 40.0
+	var st := Survival.get_state()
+	_ok("Gesundheit gehört zum Spielstand", absf(float(st.get("health", 0)) - 40.0) < 0.01)
+	p.health = 100.0
+	# --- Speichern am Bett
+	GameState.take_snapshot()
+	var snap_day := int(GameState._snapshot.get("day", -1))
+	GameState._on_phase_changed(false)
+	_ok("Speichern: der Morgen speichert nicht mehr von selbst", int(GameState._snapshot.get("day", -1)) == snap_day)
+	TimeManager.set_time(keep_day, 8.0)
+	GameState.bed_save()
+	_ok("Speichern: Schlaf im Bett merkt sich den Stand (Tag %d %.1f)" % [GameState.bed_day, GameState.bed_hour], GameState.bed_day == keep_day and absf(GameState.bed_hour - 8.0) < 0.1)
+	# --- Druck
+	var keep_menace := ThreatDirector.menace
+	ThreatDirector.menace = 0.2
+	ThreatDirector.night_kind = "quiet"
+	ThreatDirector._update_menace()
+	var up := ThreatDirector.menace
+	ThreatDirector.night_kind = "hunt"
+	ThreatDirector._update_menace()
+	_ok("Druck: steigt in ruhigen Nächten, fällt nach einem Angriff (%.2f → %.2f)" % [up, ThreatDirector.menace], up > 0.2 and ThreatDirector.menace < up)
+	ThreatDirector.menace = keep_menace
+	# --- Verstecke lernen
+	var dr := ThreatDirector.dread
+	var wd := _scene().get_node("Cabin/Wardrobe") as HideSpot
+	TimeManager.set_time(maxi(keep_day, 6), 23.0)
+	ThreatDirector.night_kind = "visit"
+	wd.set_door(true)
+	await get_tree().create_timer(0.5).timeout
+	p.global_position = wd.to_global(Vector3(0, 0.08, -wd.size.z * 0.5 + 0.38))
+	p.velocity = Vector3.ZERO
+	await get_tree().create_timer(0.3).timeout
+	wd.set_door(false)
+	await get_tree().create_timer(0.6).timeout
+	_ok("Versteck: im Schrank versteckt", p.is_hidden())
+	var keep_uses := ThreatDirector.hide_uses.duplicate()
+	ThreatDirector.hide_uses["Wardrobe"] = 0
+	dr.hidden_secs = 10.0
+	var c0 := dr.hunt_chance(p)
+	ThreatDirector.hide_uses["Wardrobe"] = 5
+	dr.hidden_secs = 300.0
+	var c1 := dr.hunt_chance(p)
+	_ok("Versteck: oft benutzt und lange drin = sie kommt eher nachsehen (%.3f → %.3f)" % [c0, c1], c1 > c0 * 3.0 and c1 > 0.05)
+	# Sie kommt, schnüffelt, rüttelt – mit Atem angehalten und neuem Versteck zieht sie eher ab
+	var h := dr.start_hunt(p)
+	_ok("Versteck: sie sucht das Versteck ab", h != null)
+	if h:
+		h.ccfg = h.ccfg.duplicate()
+		h.ccfg.hide_walk_speed = 6.0
+		h.ccfg.hide_sniff_time = Vector2(0.5, 0.5)
+		h.uses = 50   # kennt das Versteck genau → reißt sicher auf
+		h.breath_heard = 10.0
+		var hp := p.health
+		var waited := 0.0
+		while waited < 15.0 and is_instance_valid(h) and not h.torn:
+			await get_tree().create_timer(0.1).timeout
+			waited += 0.1
+		_ok("Versteck: ein bekanntes Versteck reißt sie auf (Tür offen, Schaden) nach %.1f s" % waited, is_instance_valid(h) and h.torn and wd.door_open and p.health < hp,
+				"Schritt %s" % (str(h.step) if is_instance_valid(h) else "weg"))
+		await get_tree().create_timer(1.6).timeout
+		_ok("Versteck: danach ist sie weg", not is_instance_valid(HideHunt.current))
+	ThreatDirector.hide_uses = keep_uses
+	p.health = 100.0
+	# --- Stille eskaliert
+	p.global_position = Vector3(0.0, Cabin.FLOOR_Y + 0.05, 0.0)
+	await _frames(2)
+	dr.still_stage = -1
+	dr.escalate("knock_door")
+	_ok("Stille: Eskalationsstufen sind Ereignisse des ThreatDirectors", Array(ThreatDirector.config.still_steps).has("creature"))
+	# --- Tagsüber
+	TimeManager.set_time(maxi(keep_day, 6), 12.0)
+	var kinds := {}
+	for i in 60:
+		kinds[dr.pick_day_kind(true, p)] = true
+	_ok("Tag: Vorfälle im Haus (%s)" % [kinds.keys()], kinds.size() >= 3)
+	_ok("Tag: Klopfen bei Tag geht", dr.day_incident("knock", p))
+	# Aufräumen
+	p.global_position = keep_pos
+	TimeManager.set_time(keep_day, keep_h)
+	p.health = 100.0

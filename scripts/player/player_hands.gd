@@ -871,6 +871,14 @@ func _avoid_walls(delta: float) -> void:
 	# zusammen mit Nachschwingen und Wippen (vorher hat das hier beides überschrieben – Hände ohne Verzögerung)
 	position = _bob_pos + Vector3(0.0, -0.1 * _wall_push, 0.3 * _wall_push)
 	rotation = Vector3(_sway.y + deg_to_rad(-28.0 * _wall_push), _sway.x, _sway.x * 0.6)
+	# Angst: Hände zittern, der LED-Kegel wackelt mit (Fear)
+	var f := player.fear.level if player else 0.0
+	if f > 0.15:
+		var k := smoothstep(0.15, 1.0, f)
+		var t := Time.get_ticks_msec() * 0.001
+		var fc := Fear.cfg()
+		position += Vector3(sin(t * 23.0) + sin(t * 37.0) * 0.6, sin(t * 29.0 + 1.3) + sin(t * 41.0) * 0.5, 0.0) * fc.tremble_pos * k * 0.6
+		rotation += Vector3(sin(t * 19.0 + 0.4) + sin(t * 31.0) * 0.5, sin(t * 17.0 + 2.1) + sin(t * 27.0) * 0.5, 0.0) * deg_to_rad(fc.tremble_rot) * k * 0.6
 
 
 ## Nachschwingen: die Hände bleiben beim Umsehen etwas zurück und federn nach.

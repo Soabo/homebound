@@ -226,6 +226,8 @@ func _vanish(with_flash: bool) -> void:
 
 ## Kurzer Teleporterblitz: grelles, kaltes Licht, ein schrumpfender Leuchtkörper, ein elektrisches Knistern.
 static func flash(parent: Node, pos: Vector3, scare: bool = false) -> void:
+	if scare:
+		EventBus.fear_spike.emit(0.7)
 	var root := Node3D.new()
 	parent.add_child(root)
 	root.global_position = pos

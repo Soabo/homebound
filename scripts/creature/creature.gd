@@ -308,6 +308,7 @@ var _stare: float = -1.0
 
 
 func _spotted() -> void:
+	EventBus.fear_spike.emit(0.85)
 	if mode == "attack":
 		_start_chase()
 		return

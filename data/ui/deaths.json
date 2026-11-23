@@ -36,6 +36,14 @@
     "title": "Ein langer Arm hat dich erwischt.",
     "tips": ["Die Arme kommen aus Wand, Boden und Decke – bleib in Bewegung.", "Leuchte die Hand mit der Uhr-LED an oder schlag zu, dann zieht sie sich zurück.", "Im Kleiderschrank erreicht sie dich nicht."]
   },
+  "fall": {
+    "title": "Du bist zu tief gestürzt.",
+    "tips": ["Von Hochsitz und Leitern lieber klettern als springen.", "Ein verletztes Bein schient ein Verbandskasten."]
+  },
+  "hide_found": {
+    "title": "Es hat dich in deinem Versteck gefunden.",
+    "tips": ["Es merkt sich, wo du dich versteckst – wechsle die Verstecke.", "Wer die ganze Nacht im Schrank bleibt, macht es neugierig.", "Wenn es draußen schnüffelt: [Alt] Atem anhalten und still sein."]
+  },
   "trap": {
     "title": "Du bist in eine Falle getreten.",
     "tips": ["Merk dir, wo deine Bärenfallen stehen – sie treffen auch dich.", "Fallen nicht auf Wege und vor Türen stellen, die du selbst nutzt."]

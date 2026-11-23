@@ -172,7 +172,7 @@ func _steps_around() -> void:
 	# Am Eingang stehen bleiben – atmen
 	var door := global_position + global_transform.basis * Vector3(0, 0.9, size_z() * 0.5 + 0.6)
 	CreatureSounds.play_phrase(get_parent(), "breath", door, -6.0, 4.0, 18.0)
-	EventBus.fear_changed.emit(0.6)
+	EventBus.fear_spike.emit(0.6)
 	await get_tree().create_timer(4.5).timeout
 	_busy = false
 
@@ -224,7 +224,7 @@ func _press() -> void:
 	_bulge.rotation_degrees = Vector3(0, 90, side * 40.0)
 	_bulge.visible = true
 	CreatureSounds.play_phrase(get_parent(), "breath_click", global_position + out * 1.4, -4.0, 3.0, 15.0)
-	EventBus.fear_changed.emit(0.8)
+	EventBus.fear_spike.emit(0.8)
 	var tw := create_tween()
 	tw.tween_property(_bulge, "position", into, 1.4).set_trans(Tween.TRANS_SINE)
 	tw.tween_interval(1.5)

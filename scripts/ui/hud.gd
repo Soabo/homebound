@@ -262,6 +262,8 @@ func _update_weight() -> void:
 		_weight.text = "Traglast  %.1f / %.0f kg" % [w, Inventory.MAX_WEIGHT]
 		var near := w > Inventory.MAX_WEIGHT * 0.85
 		_weight.add_theme_color_override("font_color", Color(1.0, 0.8, 0.45) if near else Color(0.85, 0.85, 0.8, 0.85))
+	if Survival.leg_hurt():
+		_weight.text = "Bein verletzt   ·   " + _weight.text
 
 
 func _intro() -> void:
@@ -324,7 +326,7 @@ func _on_fear(fear: float) -> void:
 		_fear_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 		var m := ShaderMaterial.new()
 		var sh := Shader.new()
-		sh.code = "shader_type canvas_item;\nuniform float fear = 0.0;\nvoid fragment(){ vec2 v = UV - 0.5; float d = length(v) * 1.4; float pulse = 0.85 + 0.15 * sin(TIME * 7.0); COLOR = vec4(0.02, 0.0, 0.0, smoothstep(0.45, 1.0, d) * fear * pulse); }"
+		sh.code = "shader_type canvas_item;\nuniform float fear = 0.0;\nvoid fragment(){ vec2 v = UV - 0.5; float d = length(v) * 1.4; float pulse = 0.82 + 0.18 * sin(TIME * (5.0 + 5.0 * fear)); float edge = smoothstep(0.85 - 0.45 * fear, 1.15, d); COLOR = vec4(0.015, 0.0, 0.0, clamp(edge * (0.45 + 0.6 * fear) * fear * pulse * 1.4, 0.0, 0.92)); }"
 		m.shader = sh
 		_fear_rect.material = m
 		_hurt.get_parent().add_child(_fear_rect)
@@ -344,7 +346,7 @@ func _on_player_died() -> void:
 	var info := death_info(player.death_cause if player else "")
 	_death.text = "Du bist gestorben.\n%s" % String(info.get("title", ""))
 	_death_tips.text = "Beim nächsten Mal:\n" + "\n".join(PackedStringArray(Array(info.get("tips", [])).map(func(t: Variant) -> String: return "•  " + String(t)))) \
-			+ "\n\nZurück zum Beginn von Tag %d   –   [E] weiter" % TimeManager.day
+			+ "\n\nZurück zum letzten Schlaf im Bett (Tag %d)   –   [E] weiter" % GameState.bed_day
 	var tw := create_tween()
 	tw.tween_property(_hurt, "color:a", 0.6, 0.3)
 	tw.tween_property(_fade, "color:a", 1.0, 1.8)

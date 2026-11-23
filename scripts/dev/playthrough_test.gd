@@ -442,10 +442,14 @@ func _menus() -> void:
 	_fix_ui("nach Inventar/Truhe/Werkbank")
 	var couch := _scene().get_node_or_null("Cabin/Couch") as Couch
 	var tablet := _scene().get_node_or_null("TabletMenu") as TabletMenu
+	if GameState.dead or not is_instance_valid(p):
+		return
 	if couch and tablet:
 		couch.interact(p)
 		await _wait(1.6)
 		for tab in ["inbox", "archive", "notes", "tasks", "tree"]:
+			if GameState.dead or not is_instance_valid(tablet):
+				return
 			if tablet.is_open():
 				tablet._set_tab(tab)
 				await _frames(2)
@@ -460,7 +464,7 @@ func _menus() -> void:
 		await _frames(2)
 		map.close()
 	var mon := _scene().get_node_or_null("Cabin/MonitorStation") as MonitorStation
-	if mon:
+	if mon and is_instance_valid(p):
 		mon.interact(p)
 		await _wait(1.6)
 		var hud := get_tree().get_first_node_in_group("hud")
@@ -588,6 +592,19 @@ func _clock_to(hour: float) -> void:
 	_fast_clock = false
 
 
+func _hide_in_wardrobe(p: Player) -> void:
+	var wd := _scene().get_node_or_null("Cabin/Wardrobe") as HideSpot
+	if wd == null:
+		return
+	wd.set_door(true)
+	await _wait(0.5)
+	p.global_position = wd.to_global(Vector3(0, 0.08, -wd.size.z * 0.5 + 0.38))
+	p.velocity = Vector3.ZERO
+	await _wait(0.3)
+	wd.set_door(false)
+	await _wait(0.6)
+
+
 ## Schlafen, bis es Morgen ist. try_sleep wird aufgerufen, sooft Schlafen möglich scheint.
 func _sleep_loop(try_sleep: Callable) -> void:
 	var day_start := TimeManager.config.day_start_hour
@@ -607,12 +624,22 @@ func _sleep_loop(try_sleep: Callable) -> void:
 			_awake_why[why] = int(_awake_why.get(why, 0)) + 1
 		# Solange draußen etwas umgeht, läuft die Uhr normal weiter (wie beim echten Spieler, der wach liegt und
 		# wartet) – im Zeitraffer wäre sonst die ganze Nacht vorbei, bevor das Wesen wieder weg ist.
+		# Belagerung: wie ein vorsichtiger Spieler im Kleiderschrank abwarten (sonst holt es einen nach zwei Fehlschlägen)
+		if ThreatDirector.siege_tonight() and not p.is_hidden() and not p.input_locked:
+			await _hide_in_wardrobe(p)
 		if why != "" and why != "Uhrzeit" and why != "Steuerung gesperrt":
 			_fast_clock = false
 			var waited := 0.0
 			while waited < 150.0 and not _restarted and not GameState.dead and ThreatDirector.sleep_blocker() != "":
-				await _wait(0.5)
-				waited += 0.5
+				# Steht etwas vor dem Versteck: Atem anhalten (Alt), wie ein echter Spieler
+				var sn := SiegeNight.current
+				if sn and is_instance_valid(sn._intruder) and _player() and _player().is_hidden():
+					Input.action_press("walk_slow")
+				else:
+					Input.action_release("walk_slow")
+				await _wait(0.2)
+				waited += 0.2
+			Input.action_release("walk_slow")
 			_fast_clock = true
 			continue
 		if why == "":
@@ -665,7 +692,9 @@ func _fingerprint() -> Dictionary:
 	out["zeit"] = "Tag %d %s" % [TimeManager.day, TimeManager.get_clock_text()]
 	_flatten("strom", PowerManager.get_state(), out)
 	_flatten("rucksack", Inventory.get_state(), out)
-	_flatten("ueberleben", Survival.get_state(), out)
+	var sv := Survival.get_state()
+	sv["health"] = roundf(float(sv.get("health", 0.0)))   # Gesundheit ändert sich bildweise (Kälte, Heilung) – ganze Zahlen vergleichen
+	_flatten("ueberleben", sv, out)
 	_flatten("bauten", Builder.get_state(), out)
 	_flatten("forschung", Research.get_state(), out)
 	_flatten("welt", WorldState.get_state(), out)
@@ -761,6 +790,14 @@ func _invariants(day: int) -> void:
 
 func _save_reload_check(day: int) -> void:
 	await _frames(4)
+	# Gerade gestorben (der Neustart läuft schon): nichts zu vergleichen
+	if GameState.dead:
+		for i in 900:
+			await get_tree().process_frame
+			if not GameState.dead:
+				break
+		await _wait_scene()
+		return
 	_invariants(day)
 	# Uhr anhalten, damit sich zwischen Sichern und Vergleichen nichts von selbst ändert
 	TimeManager.running = false
@@ -768,7 +805,7 @@ func _save_reload_check(day: int) -> void:
 	GameState.take_snapshot()
 	var before := _fingerprint()
 	_restarted = false
-	GameState.restart_day()
+	GameState.restart_day(false)
 	await _wait_scene()
 	_restarted = false
 	var after := _fingerprint()

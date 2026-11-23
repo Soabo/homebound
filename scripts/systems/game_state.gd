@@ -8,9 +8,9 @@ extends Node
 ## gespeicherten Zustand in _ready() über GameState.restore(self).
 ##
 ## Phase 9 (Christians Entscheidung): 3 Speicherplätze auf der Platte (user://saves/slot_N.save).
-## Gespeichert wird automatisch jeden Morgen und beim Beenden (Pause → Hauptmenü/Beenden, Fenster schließen).
-## Eine Datei enthält den aktuellen Stand und den Tagesbeginn – stirbt man nach dem Laden, geht es
-## an den Anfang des Tages zurück (wie bisher).
+## Seit 23.11. (Christian: „Speichern am Bett“): Gespeichert wird NUR, wenn man im Bett geschlafen hat
+## (`bed_save`) – nicht morgens von selbst, nicht beim Beenden. Ein Tod führt zurück zum letzten Schlaf im Bett.
+## (Ausnahmen: neues Spiel legt den Platz an, vor einem Ende wird gesichert.)
 
 signal player_died
 signal day_restarted
@@ -60,14 +60,29 @@ var _restoring: bool = false
 
 
 func _on_phase_changed(is_night: bool) -> void:
-	if not is_night and not _restoring:
-		take_snapshot()
-		if in_game():
-			save_game(false)  # Autospeichern am Morgen
+	# Kein Autospeichern am Morgen mehr – nur noch im Bett (bed_save)
+	pass
+
+
+## Im Bett aufgewacht (Bed): jetzt wird gespeichert, und hierher führt ein Tod zurück.
+var bed_day: int = 1
+var bed_hour: float = 7.0
+
+
+func bed_save() -> void:
+	if dead or ending_lock:
+		return
+	take_snapshot()
+	bed_day = TimeManager.day
+	bed_hour = TimeManager.hour
+	if in_game() and save_game(false):
+		EventBus.notify("Gespeichert.", 2.0)
 
 
 func take_snapshot() -> void:
 	_snapshot = take_state()
+	bed_day = int(_snapshot.get("day", 1))
+	bed_hour = float(_snapshot.get("hour", 7.0))
 
 
 ## Der komplette Zustand jetzt (alle Manager + alle persistenten Objekte der Welt).
@@ -109,6 +124,8 @@ func kill_player() -> void:
 		return
 	dead = true
 	_death_go = false
+	var pl := get_tree().get_first_node_in_group("player")
+	print("[GameState] Tod am Tag %d, %s: %s" % [TimeManager.day, TimeManager.get_clock_text(), String(pl.get("death_cause")) if pl else "?"])
 	player_died.emit()
 	PlayerSounds.play(self, "die", 0.0)
 	# Todes-Bildschirm (Ursache + Ratschläge): im Spiel weiter mit E/Leertaste/Klick (spätestens nach DEATH_MAX_WAIT),
@@ -131,9 +148,12 @@ func death_continue() -> void:
 	_death_go = true
 
 
-func restart_day() -> void:
+## revive = false nur für Tests (Sichern/Laden vergleichen): sonst wacht man nach einem Tod überlebensfähig auf.
+func restart_day(revive: bool = true) -> void:
 	# Kopie verwenden: das Zurückstellen der Uhr löst sonst einen neuen Schnappschuss aus
 	_apply(_snapshot.duplicate(true), _snapshot.duplicate(true))
+	if revive:
+		Survival.make_survivable()
 	get_tree().reload_current_scene()
 	day_restarted.emit()
 
@@ -157,6 +177,8 @@ func _apply(snap: Dictionary, morning: Dictionary) -> void:
 	Journal.set_state(snap.get("journal", {}))
 	_pending_world = snap.get("world", {})
 	_snapshot = morning
+	bed_day = int(morning.get("day", 1))
+	bed_hour = float(morning.get("hour", 7.0))
 	_restoring = false
 	ThreatDirector.reset_for_new_scene()
 	dead = false
@@ -283,16 +305,12 @@ func latest_slot() -> int:
 	return best
 
 
-## Zurück ins Hauptmenü (vorher speichern).
+## Zurück ins Hauptmenü (ohne Speichern – gespeichert wird nur im Bett).
 func to_menu() -> void:
-	if in_game():
-		save_game(true)
 	get_tree().paused = false
 	get_tree().change_scene_to_file(MENU_SCENE)
 
 
-## Spiel beenden (vorher speichern).
+## Spiel beenden (ohne Speichern – gespeichert wird nur im Bett).
 func quit_game() -> void:
-	if in_game():
-		save_game(true)
 	get_tree().quit()

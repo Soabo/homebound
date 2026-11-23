@@ -248,7 +248,7 @@ func _face_door() -> void:
 			seen += dt
 			if seen >= 1.4:
 				CreatureSounds.play(_scene(), "head_snap", _face.global_position, -2.0)
-				EventBus.fear_changed.emit(1.0)
+				EventBus.fear_spike.emit(1.0)
 				break
 	if _face:
 		_face.visible = false
@@ -297,7 +297,7 @@ func _hold_start(kind: String) -> void:
 	else:
 		_prompt("Das ganze Zelt wird geschüttelt!   [E] die Stange festhalten")
 		SoundBank.play_at(_scene(), "wood_crack", camp.global_position + Vector3(0, 1.0, 0), -6.0, 1.3)
-	EventBus.fear_changed.emit(0.8)
+	EventBus.fear_spike.emit(0.8)
 
 
 func _process(delta: float) -> void:
@@ -377,7 +377,7 @@ func _breath_still() -> void:
 	var at := camp.global_position + camp.global_transform.basis * Vector3(side * 0.7, 0.6, -0.3)
 	_prompt("Atem, direkt neben meinem Kopf. Nicht bewegen.   [Alt] Atem anhalten!")
 	CreatureSounds.play_phrase(_scene(), "breath", at, -2.0, 9.0, 8.0)
-	EventBus.fear_changed.emit(0.9)
+	EventBus.fear_spike.emit(0.9)
 	var yaw0 := p.rotation.y
 	var pitch0 := p.head.rotation.x
 	var t := 0.0

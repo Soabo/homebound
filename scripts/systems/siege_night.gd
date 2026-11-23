@@ -377,6 +377,7 @@ func _start_intrusion(from: Vector3) -> void:
 	_breath_heard = 0.0
 	_breath_warned = false
 	EventBus.notify("Es ist im Haus! Versteck dich – Schrank, Spind, Keller oder Dachboden!", 5.0)
+	EventBus.fear_spike.emit(1.0)
 	SoundBank.play_ui(self, "heartbeat", 0.0)
 	CreatureSounds.play(get_parent(), "shriek", from, 4.0, 0.85)
 	_intruder = Node3D.new()
@@ -444,6 +445,12 @@ func _update_intrusion(delta: float) -> void:
 			elif not _breath_warned:
 				_breath_warned = true
 				EventBus.notify("Es steht direkt vor dir. [Alt] Atem anhalten!", 3.0)
+				# Verstecke lernen: ein oft benutztes Versteck kennt es schon (ThreatDirector.hide_uses)
+				var uses := int(ThreatDirector.hide_uses.get(String((_player.hidden_in as Node).name), 0))
+				if _rng.randf() < minf(float(uses) * cfg.hide_tear_per_use, cfg.hide_tear_max):
+					(_player.hidden_in as HideSpot).force_open()
+					_found_hidden()
+					return
 			if to.length() <= 1.6 and not _player.holding_breath:
 				_breath_heard += delta
 				if _breath_heard > cfg.siege_breath_grace:

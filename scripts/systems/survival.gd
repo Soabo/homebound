@@ -205,14 +205,49 @@ func drain(h: float, t: float) -> void:
 	changed.emit()
 
 
+## Gesundheit und verletztes Bein gehören zum Spielstand (Christian 23.11.: man soll etwas verlieren können)
+var health: float = 100.0
+var leg_until: float = -1.0
+
+
+## Nach einem Tod wacht man im Bett auf – nie so, dass man sofort wieder stirbt (durchgefroren, verhungert, halbtot).
+func make_survivable() -> void:
+	health = maxf(health, cfg.restore_min_health)
+	warmth = maxf(warmth, cfg.restore_min_warmth)
+	hunger = maxf(hunger, cfg.restore_min_food)
+	thirst = maxf(thirst, cfg.restore_min_food)
+
+
+func leg_hurt() -> bool:
+	return TimeManager.get_total_hours() < leg_until
+
+
+func hurt_leg() -> void:
+	var was := leg_hurt()
+	leg_until = maxf(leg_until, TimeManager.get_total_hours() + cfg.leg_hours)
+	if not was:
+		EventBus.notify("Dein Bein! Du humpelst – rennen geht nicht. Ein Verbandskasten hilft.", 4.5)
+
+
+func heal_leg() -> void:
+	if leg_hurt():
+		EventBus.notify("Das Bein ist verbunden. Es trägt wieder.", 3.0)
+	leg_until = -1.0
+
+
 func get_state() -> Dictionary:
-	return {"hunger": hunger, "thirst": thirst, "warmth": warmth}
+	var pl := get_tree().get_first_node_in_group("player") if is_inside_tree() else null
+	if pl:
+		health = maxf(float(pl.get("health")), 0.0)
+	return {"hunger": hunger, "thirst": thirst, "warmth": warmth, "health": health, "leg_until": leg_until}
 
 
 func set_state(s: Dictionary) -> void:
 	hunger = float(s.get("hunger", 80.0))
 	thirst = float(s.get("thirst", 75.0))
 	warmth = float(s.get("warmth", 90.0))
+	health = float(s.get("health", 100.0))
+	leg_until = float(s.get("leg_until", -1.0))
 	stamina = STAMINA_MAX
 	# Reste des abgebrochenen Tages: nasse Kleidung, laufender Schlaf, Warnungen
 	wet_until = -1.0

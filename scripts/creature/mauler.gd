@@ -269,6 +269,7 @@ func _process(delta: float) -> void:
 				_move_toward(_player.global_position, cfg.stalk_speed, delta)
 				if dist < cfg.charge_distance and _clear_line() and awareness.alert():
 					_enter(State.WARN)
+					EventBus.fear_spike.emit(0.9)
 		State.WARN:
 			# sich aufrichten, Maul auf, kreischen – dann losrennen
 			_face(_player.global_position, delta, 6.0)

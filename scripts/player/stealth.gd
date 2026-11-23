@@ -69,7 +69,9 @@ static func boards() -> Array:
 static func breath_radius(pl: Player) -> float:
 	if pl == null or pl.holding_breath:
 		return 0.0
-	return cfg().breath_radius_panting if pl.panting() else cfg().breath_radius
+	# Große Angst: man atmet so schwer wie nach dem Rennen (Fear)
+	var r := cfg().breath_radius_panting if pl.panting() or pl.fear.betrays_breath() else cfg().breath_radius
+	return r * pl.fear.breath_factor()
 
 
 # --- Sehen ------------------------------------------------------------------
@@ -98,8 +100,8 @@ static func daylight() -> float:
 
 
 ## Brennt eine Lampe oder ein Feuer in der Nähe?
-static func near_light(tree: SceneTree, p: Vector3) -> bool:
-	var r := cfg().near_light_range
+static func near_light(tree: SceneTree, p: Vector3, radius: float = -1.0) -> bool:
+	var r := cfg().near_light_range if radius < 0.0 else radius
 	if PowerManager.has_power():
 		for sw in tree.get_nodes_in_group("light_switch"):
 			if sw.get("is_on") and (sw as Node3D).global_position.distance_to(p) < r:

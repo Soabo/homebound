@@ -47,6 +47,12 @@ var siege_count: int = 0
 var siege_done_day: int = -1
 ## Wechselbalg: in wie vielen Nächten er schon da war (bestimmt die Stufe), Tag, an dem man ihn tagsüber geschlagen hat
 var changeling_count: int = 0
+## Druck 0..1 (Christian 23.11.: unberechenbar): steigt mit jeder ruhigen Nacht, fällt nach einem Auftritt
+var menace: float = 0.0
+## Verstecke lernen: wie oft (Nächte) man sich in welchem Versteck verkrochen hat (Knotenname → Anzahl)
+var hide_uses: Dictionary = {}
+## Verstecke, Stille, Tagesvorfälle (scripts/systems/dread.gd)
+var dread: Dread
 var changeling_offended_day: int = -100
 var _changeling_tonight := false
 var _changeling_day_rolled: int = -1
@@ -63,6 +69,10 @@ func _ready() -> void:
 	_rng.randomize()
 	TimeManager.phase_changed.connect(_on_phase_changed)
 	EventBus.sleep_finished.connect(_on_woke_up)
+	dread = Dread.new()
+	dread.name = "Dread"
+	dread.td = self
+	add_child(dread)
 	EventBus.siege_finished.connect(func(_ok: bool) -> void: siege_done_day = _planned_for_day)
 	_plan_if_needed.call_deferred()
 
@@ -81,7 +91,8 @@ func get_state() -> Dictionary:
 		"arc_day": _arc_day, "last_inside_day": _last_inside_day, "forest_day": _forest_day_done,
 		"scared_until": scared_until, "blocked": blocked_memory.duplicate(), "mauler_until": mauler_until,
 		"last_siege": last_siege_day, "siege_count": siege_count, "siege_done": siege_done_day,
-		"changeling_count": changeling_count, "changeling_offended": changeling_offended_day}
+		"changeling_count": changeling_count, "changeling_offended": changeling_offended_day,
+		"menace": menace, "hide_uses": hide_uses.duplicate()}
 
 
 func set_state(s: Dictionary) -> void:
@@ -99,6 +110,8 @@ func set_state(s: Dictionary) -> void:
 	changeling_count = int(s.get("changeling_count", 0))
 	changeling_offended_day = int(s.get("changeling_offended", -100))
 	blocked_memory = (s.get("blocked", {}) as Dictionary).duplicate()
+	menace = float(s.get("menace", 0.0))
+	hide_uses = (s.get("hide_uses", {}) as Dictionary).duplicate()
 
 
 func reset_for_new_scene() -> void:
@@ -113,7 +126,9 @@ func reset_for_new_scene() -> void:
 	_activity_tonight = false
 	_appeared_tonight = false
 	_kinds_tonight.clear()
+	_skip_past = true
 	_plan_if_needed.call_deferred()
+	(func() -> void: _skip_past = false).call_deferred()
 
 
 func _on_phase_changed(is_night: bool) -> void:
@@ -196,6 +211,7 @@ func plan_night(night_day: int) -> void:
 		# Die ersten Nächte sind bewusst ganz ruhig: man soll glauben, man kann einfach schlafen (Christian 14.11.)
 		if night_day <= config.calm_first_nights:
 			night_kind = "quiet"
+		_update_menace()
 	var calm := night_day <= config.calm_first_nights
 	night_intensity = int({"quiet": 0, "hints": 1, "sighting": 1, "visit": 2, "hunt": 3, "siege": 3}[night_kind])
 	_appeared_tonight = false
@@ -223,7 +239,12 @@ func plan_night(night_day: int) -> void:
 			if _rng.randf() < config.sighting_phantom_chance:
 				_add(start + _rng.randf_range(1.0, night_len - 1.0), "phantom")
 		"visit", "hunt":
-			_add(start + _rng.randf_range(1.0, 3.5), "creature")
+			# Unberechenbar: mal gleich am Abend, mal mitten in der Nacht – und manchmal kommt sie zurück
+			var late := _rng.randf() < config.late_arrival_chance
+			var first := start + (_rng.randf_range(2.0, maxf(night_len - 2.5, 2.5)) if late else _rng.randf_range(0.6, 3.5))
+			_add(first, "creature")
+			if _rng.randf() < config.second_wave_chance + menace * 0.3 and first + 2.0 < start + night_len - 1.0:
+				_add(_rng.randf_range(first + 2.0, start + night_len - 1.0), "creature")
 			# Über das Dach in den Dachboden (zweiter Weg ins Haus, wenn die Leiter unten ist)
 			if night_day >= config.attic_from_night and _rng.randf() < config.attic_chance:
 				_add(start + _rng.randf_range(2.0, night_len - 1.5), "attic")
@@ -253,12 +274,16 @@ func plan_night(night_day: int) -> void:
 
 ## Spannungsbogen: Wann zeigt sie sich, und wie?
 func _choose_night_kind(night_day: int) -> String:
+	# Die erwartete Ruhe bricht manchmal einfach (unberechenbar, Christian 23.11.)
+	if quiet_left > 0 and night_day >= config.visit_from_night and _rng.randf() < config.break_calm_chance + menace * 0.3:
+		quiet_left = 0
 	if quiet_left > 0:
 		quiet_left -= 1
 		nights_since_appearance += 1
 		return "quiet"
 	var gaps := config.appear_chance_by_gap
 	var chance: float = gaps[mini(nights_since_appearance, gaps.size() - 1)] if not gaps.is_empty() else 0.5
+	chance = minf(chance + menace * config.menace_appear_bonus, 1.0)
 	if night_day == 1:
 		chance = config.first_night_appear_chance  # erste Nacht: vielleicht ein flüchtiger Blick am Waldrand
 	if _rng.randf() >= chance:
@@ -329,13 +354,26 @@ func _pick_omen(night_day: int) -> String:
 
 
 ## Ereignis von außen einplanen (z. B. eine ausgebrochene Probe ruft die Drohne).
+## Etwas war heute Nacht da (für Funde, Spuren, Baupläne)
+func note_activity(kind: String) -> void:
+	_activity_tonight = true
+	if not _kinds_tonight.has(kind):
+		_kinds_tonight.append(kind)
+
+
 func force_event(type: String, delay_hours: float) -> void:
 	_add(TimeManager.get_total_hours() + delay_hours, type)
 	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a["at"] < b["at"])
 
 
 func _add(at: float, type: String) -> void:
-	events.append({"at": at, "type": type, "done": false})
+	# Nach dem Laden mitten in der Nacht (Speichern am Bett, Christian 23.11.): Vergangenes nicht nachholen –
+	# außer der Belagerung, die die ganze Nacht dauert
+	var past := _skip_past and type != "siege" and at < TimeManager.get_total_hours() - 0.05
+	events.append({"at": at, "type": type, "done": past})
+
+
+var _skip_past := false
 
 
 ## Etwas ist auf dem Dachboden: Schritte über der Decke, Kratzen an der Luke. Steht die Leiter unten
@@ -1075,3 +1113,14 @@ func changeling_day_spot(at: Vector3, rng: RandomNumberGenerator) -> Dictionary:
 		c["pos"] = p
 		return c
 	return {}
+
+
+## Druck nach der Nachtart: ruhige Nächte laden auf, Auftritte entladen (Christian 23.11.)
+func _update_menace() -> void:
+	match night_kind:
+		"quiet", "hints":
+			menace = minf(menace + _rng.randf_range(config.menace_rise.x, config.menace_rise.y), 1.0)
+		"sighting":
+			menace = maxf(menace - config.menace_drop_sighting, 0.0)
+		_:
+			menace = maxf(menace - config.menace_drop_visit, 0.0)

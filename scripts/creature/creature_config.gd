@@ -95,3 +95,13 @@ static func get_default() -> CreatureConfig:
 @export_group("Tarnung im Gebüsch")
 ## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
 @export var cover_sniff_range: float = 2.5
+
+@export_group("Am Versteck (HideHunt, Christian 23.11.)")
+## Schritte durchs Haus bis vor das Versteck (m/s), dann schnüffeln (s) und rütteln (wie oft)
+@export var hide_walk_speed: float = 1.0
+@export var hide_sniff_time: Vector2 = Vector2(6.0, 11.0)
+@export var hide_rattles: Vector2i = Vector2i(1, 3)
+## Reißt sie die Tür auf: so viel Schaden (× SurvivalConfig.damage_factor)
+@export var hide_tear_damage: float = 30.0
+## Ist man nicht mehr im Versteck, wenn sie davor steht: Schlag
+@export var hide_open_damage: float = 34.0

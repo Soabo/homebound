@@ -199,6 +199,7 @@ func use(id: String) -> bool:
 		var pl := get_tree().get_first_node_in_group("player")
 		if pl:
 			pl.set("health", minf(float(pl.get("health")) + float(effect["heal"]), 100.0))
+		Survival.heal_leg()   # Verbandskasten schient auch das Bein
 	# leere Flasche zurück, evtl. Übelkeit / Schaden (Rohwasser, rohes Fleisch, verfärbtes Wasser)
 	if effect.has("returns"):
 		add(String(effect["returns"]), 1)

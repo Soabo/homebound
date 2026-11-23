@@ -269,3 +269,63 @@ extends Resource
 @export var changeling_awake_check: float = 30.0
 @export var changeling_awake_chance: float = 0.06
 @export var changeling_day_distance: Vector2 = Vector2(45.0, 140.0)
+
+@export_group("Unberechenbar (Christian 23.11.: Spannungsbogen enorm und unberechenbar)")
+## Druck 0..1: steigt in jeder ruhigen Nacht um einen Zufallswert, fällt nach einem Auftritt
+@export var menace_rise: Vector2 = Vector2(0.12, 0.3)
+@export var menace_drop_visit: float = 0.55
+@export var menace_drop_sighting: float = 0.2
+## Druck erhöht die Chance auf einen Auftritt (zusätzlich zu appear_chance_by_gap)
+@export var menace_appear_bonus: float = 0.5
+## Die erwartete Ruhe nach einem Auftritt bricht manchmal einfach (+ Druck × 0,3)
+@export var break_calm_chance: float = 0.18
+## Sie kommt nicht immer früh: Anteil der Nächte mit spätem Auftritt (irgendwann in der Nacht)
+@export var late_arrival_chance: float = 0.4
+## Nach dem Abziehen kommt sie noch einmal (Chance je Besuchs-/Jagdnacht, + Druck × 0,3)
+@export var second_wave_chance: float = 0.25
+
+@export_group("Verstecke lernen (Christian 23.11.)")
+## Ab so vielen Sekunden im selben Versteck zählt es als „benutzt“ (einmal pro Nacht)
+@export var hide_use_seconds: float = 25.0
+## So lange (s) ist ein Versteck in einer Nacht „sicher“, danach wird sie neugierig
+@export var hide_safe_seconds: float = 70.0
+## Chance pro Prüfung (alle 5 s): Grundwert je Nachtart, + je Benutzung, + je Minute über hide_safe_seconds
+@export var hide_hunt_base: Dictionary = {"quiet": 0.0, "hints": 0.004, "sighting": 0.008, "visit": 0.02, "hunt": 0.03}
+@export var hide_hunt_per_use: float = 0.012
+@export var hide_hunt_per_minute: float = 0.02
+## höchstens so oft pro Nacht; nicht in den ersten Nächten (calm_first_nights) und nicht vor dieser Nacht
+@export var hide_hunt_max: int = 2
+@export var hide_hunt_from_night: int = 3
+## Reißt sie die Tür auf? Grundwert + je Benutzung + je Sekunde hörbarer Atem (höchstens hide_tear_max)
+@export var hide_tear_base: float = 0.15
+@export var hide_tear_per_use: float = 0.12
+@export var hide_tear_per_breath: float = 0.12
+@export var hide_tear_max: float = 0.85
+## Wer lange versteckt bleibt, dem nehmen sie das Haus auseinander: ab so vielen Sekunden alle hide_damage_every s
+## ein Schlag gegen Fenster/Tür (Schaden hide_house_damage)
+@export var hide_damage_after: float = 90.0
+@export var hide_damage_every: Vector2 = Vector2(25.0, 50.0)
+@export var hide_house_damage: float = 18.0
+
+@export_group("Stille eskaliert (Christian 23.11.)")
+## Wer nachts wach ist und sich kaum bewegt (versteckt, sitzend, stehend): alle still_every Sekunden eine Stufe mehr
+@export var still_every: Vector2 = Vector2(60.0, 110.0)
+## weniger als so viele Meter in still_every = still
+@export var still_move_meters: float = 3.0
+## Stufen der Eskalation (Ereignis-Typen des ThreatDirectors), danach kommt sie selbst ("creature")
+@export var still_steps: PackedStringArray = ["steps", "scratch", "knock_door", "rattle", "roof", "creature"]
+
+@export_group("Tagsüber nicht sicher (Christian 23.11.)")
+## Ab diesem Tag; Vorfälle pro Tag (Zufall) + Druck × day_menace_extra
+@export var day_from_day: int = 3
+@export var day_incidents: Vector2i = Vector2i(0, 2)
+@export var day_menace_extra: float = 2.0
+## Prüfung alle so viele Sekunden mit dieser Chance
+@export var day_check_seconds: float = 40.0
+@export var day_incident_chance: float = 0.12
+## Gewichte: drinnen / draußen
+@export var day_inside_kinds: Dictionary = {"knock": 3.0, "creak": 3.0, "roof": 2.0, "radio": 1.0, "window": 0.6}
+@export var day_outside_kinds: Dictionary = {"steps": 3.0, "silence": 2.0, "scream": 1.5, "watcher": 2.0, "mauler": 0.8}
+## Gesicht am Fenster bei Tag erst ab diesem Tag; Zerfleischer bei Tag nahe der Hütte ab Phase 2, mindestens so weit von der Hütte (m)
+@export var day_window_from_day: int = 7
+@export var day_mauler_min_distance: float = 35.0

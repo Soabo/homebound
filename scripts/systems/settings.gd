@@ -83,6 +83,8 @@ func apply() -> void:
 	var q := quality_values()
 	get_viewport().scaling_3d_scale = float(q.get("scale", 1.0))
 	RenderingServer.directional_shadow_atlas_set_size(int(q.get("shadow_size", 4096)), true)
+	var msaa := int(q.get("msaa", 2))
+	get_viewport().msaa_3d = Viewport.MSAA_4X if msaa >= 4 else (Viewport.MSAA_2X if msaa >= 2 else Viewport.MSAA_DISABLED)
 	apply_fps()
 	changed.emit()
 
@@ -98,7 +100,7 @@ func apply_fps() -> void:
 		_fps_label = Label.new()
 		_fps_label.anchor_left = 1.0
 		_fps_label.anchor_right = 1.0
-		_fps_label.offset_left = -190
+		_fps_label.offset_left = -420
 		_fps_label.offset_right = -12
 		_fps_label.offset_top = 8
 		_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -111,6 +113,8 @@ func apply_fps() -> void:
 		add_child(_fps_layer)
 	if _fps_layer:
 		_fps_layer.visible = show_fps
+	# Rechenzeit der Grafikkarte messen (nur mit Anzeige – kostet sonst nichts)
+	RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), show_fps)
 
 
 ## Text einer Bildraten-Stufe, z. B. „60“ oder „Unbegrenzt“.
@@ -125,7 +129,17 @@ func _process(delta: float) -> void:
 	if _fps_t <= 0.0:
 		_fps_t = 0.5
 		var fps := Engine.get_frames_per_second()
-		_fps_label.text = "%d FPS   %.1f ms" % [fps, 1000.0 / maxf(fps, 1.0)]
+		# CPU- und Grafikkarten-Zeit pro Bild: zeigt, ob der Bildschirm (Bildsync) bremst oder wirklich die Rechenzeit
+		var rid := get_viewport().get_viewport_rid()
+		var cpu := RenderingServer.viewport_get_measured_render_time_cpu(rid) + RenderingServer.get_frame_setup_time_cpu()
+		var gpu := RenderingServer.viewport_get_measured_render_time_gpu(rid)
+		var hz := DisplayServer.screen_get_refresh_rate() if DisplayServer.get_name() != "headless" else -1.0
+		var line2 := ""
+		if vsync and hz > 0.0:
+			line2 = "\nBildsync an – Bildschirm %d Hz" % int(round(hz))
+		elif max_fps > 0:
+			line2 = "\nObergrenze %d" % max_fps
+		_fps_label.text = "%d FPS   CPU %.1f ms   GPU %.1f ms%s" % [fps, cpu, gpu, line2]
 
 
 func quality_values() -> Dictionary:
