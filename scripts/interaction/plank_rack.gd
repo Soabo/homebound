@@ -56,7 +56,8 @@ func _build() -> void:
 		for layer in PER_ARM_LAYERS:
 			for slot in PER_ARM_ACROSS:
 				var tint := rng.randf_range(0.92, 1.12)
-				var mat := BuildKit.tex_mat("planks_h", 1.5, Color(1.25 * tint, 1.18 * tint, 1.02 * tint))
+				# Maserung längs zum Brett (Welt-Triplanar: oben läuft planks_v entlang z)
+				var mat := BuildKit.tex_mat("planks_v", 1.4, Color(1.3 * tint, 1.2 * tint, 1.02 * tint))
 				var x := wall_x + 0.1 + slot * (PLANK_W + 0.03)
 				var y := floor_y + float(ARM_HEIGHTS[arm]) + PLANK_T * (layer + 0.5)
 				var z := z_from + length * 0.5 + rng.randf_range(-0.05, 0.05)
