@@ -6,7 +6,7 @@ extends Node3D
 ## wer gefunden wird, wird verletzt (Zelt reißt auf), dann verschwindet er im Teleporterblitz.
 ## Er tötet nicht. Werte: data/creatures/seeker.tres. Wann er kommt: ThreatConfig seeker_*.
 
-enum State { ARRIVE, WATCH, SEARCH, INVESTIGATE, STRIKE, LEAVE }
+enum State { ARRIVE, WATCH, SEARCH, INVESTIGATE, STRIKE, LEAVE, HOUSE }
 
 var _last_rustle_pos := Vector3.ZERO
 var cfg: SeekerConfig
@@ -30,6 +30,16 @@ var _hum: AudioStreamPlayer3D = null    # eigenes Summen (Schleife), solange er 
 var _steps: AudioStreamPlayer3D = null  # eigene Schritte (Schleife), nur beim Gehen
 var _moving: bool = false
 var _player: Player
+## Belagerung des Hauses (Christian 23.11.): Lichtstrahl durchs Fenster (Schaden) und lange Arme durch Wand, Boden, Decke
+var _beam: SpotLight3D
+var _house_window: Node3D
+var _house_out := Vector3.ZERO      ## vom Fenster nach draußen
+var _house_until := 0.0
+var _house_t := 0.0
+var _reach_t := 4.0
+var _beam_aim := Vector3.ZERO
+var _beam_lock := 0.0               ## > 0: hat dich erfasst (Sekunden Nachlauf)
+var _beam_dmg := 0.0
 
 
 ## Erscheint in der Nähe eines Ziels (Zelt/Lager oder Hütte).
@@ -109,7 +119,12 @@ static func _blocked(p: Vector3) -> bool:
 
 
 static func _blocked_at(p: Vector3) -> bool:
-	return Cabin.is_inside(p) or Shed.is_inside(p) or Cabin.blocks_ground(p)
+	return Cabin.is_inside(p) or Shed.is_inside(p) or Cabin.blocks_ground(p) or _under_porch(p)
+
+
+## Unter dem Verandadach ist zu wenig Platz für ihn (Dach bei Wand-Oberkante − 0,5 m).
+static func _under_porch(p: Vector3) -> bool:
+	return p.x > -5.9 and p.x < 1.5 and p.z > Cabin.HALF_Z and p.z < 7.25
 
 
 # --- Aussehen ------------------------------------------------------------------
@@ -253,9 +268,10 @@ func _process(delta: float) -> void:
 	if state != State.LEAVE and (not TimeManager.is_night() or _life > cfg.stay_time):
 		_leave()
 	_sense_t -= delta
-	if _sense_t <= 0.0 and state in [State.WATCH, State.SEARCH, State.ARRIVE]:
+	if _sense_t <= 0.0:
 		_sense_t = 0.5
-		_sense()
+		if not _house_check() and state in [State.WATCH, State.SEARCH, State.ARRIVE]:
+			_sense()
 	_moving = false
 	match state:
 		State.ARRIVE, State.SEARCH, State.INVESTIGATE, State.LEAVE:
@@ -268,7 +284,14 @@ func _process(delta: float) -> void:
 				_start_search()
 		State.STRIKE:
 			pass
-	SoundBank.loop_level(_hum, 1.0 if state == State.WATCH else 0.7, delta, 1.0)
+		State.HOUSE:
+			_house_arms(delta)
+			if not _path.is_empty():
+				_beam_on(false)
+				_move(delta)
+			else:
+				_house_tick(delta)
+	SoundBank.loop_level(_hum, 1.0 if state in [State.WATCH, State.HOUSE] else 0.7, delta, 1.0)
 	SoundBank.loop_level(_steps, 1.0 if _moving else 0.0, delta)
 	_animate(delta)
 
@@ -335,6 +358,8 @@ func _arrived() -> void:
 			_start_search()
 		State.INVESTIGATE:
 			_investigate_done()
+		State.HOUSE:
+			pass   # am Fenster angekommen: _house_tick übernimmt
 		State.LEAVE:
 			# zieht er von selbst ab, verschwindet er ebenfalls im Blitz – manchmal mit Asche
 			Apparition.flash(get_parent(), global_position + Vector3(0, 1.4, 0))
@@ -500,6 +525,7 @@ func dawn() -> void:
 
 
 func _leave() -> void:
+	_end_house()
 	state = State.LEAVE
 	_eye_mat.emission_energy_multiplier = 0.8
 	var away := (global_position - target)
@@ -519,3 +545,164 @@ func _animate(delta: float) -> void:
 			var ax := (-s if i == 0 else s) * 10.0 + 6.0
 			_arms[i].rotation_degrees.x = lerpf(_arms[i].rotation_degrees.x, ax, clampf(delta * 4.0, 0.0, 1.0))
 			_arms[i].rotation_degrees.z = (1.0 if i == 0 else -1.0) * (4.0 + sin(_life * 0.7 + i) * 3.0)
+
+
+
+# --- Im Haus: Lichtstrahl und lange Arme (Christian 23.11.) ----------------------------------
+
+## Verletzt den Spieler, aber nie unter SeekerConfig.min_health (der Sucher tötet nicht).
+static func hurt_player(p: Player, amount: float, from: Vector3, cause: String) -> void:
+	var c := SeekerConfig.get_default()
+	var dmg := minf(amount, maxf(p.health - c.min_health, 0.0))
+	if dmg > 0.0:
+		p.take_damage(dmg, from, cause)
+	EventBus.player_hurt.emit(maxf(dmg, 1.0))
+
+
+func _player_in_house() -> bool:
+	return _player != null and is_instance_valid(_player) and Cabin.is_inside(_player.global_position + Vector3(0, 0.5, 0)) \
+			and _player.in_tent == null
+
+
+## Alle 0,5 s: Ist der Spieler im Haus und der Sucher nah genug? Dann belagert er das Haus. true = Haus-Modus läuft.
+func _house_check() -> bool:
+	if state in [State.STRIKE, State.LEAVE]:
+		return false
+	var inside := _player_in_house() and Vector2(global_position.x, global_position.z).length() < cfg.house_range \
+			and SiegeNight.current == null
+	if inside and state != State.HOUSE:
+		state = State.HOUSE
+		_eye_mat.emission_energy_multiplier = 3.0
+		_eye_light.light_energy = 0.8
+		_reach_t = _rng.randf_range(3.0, cfg.reach_interval.x)
+		_pick_window()
+		return true
+	if not inside and state == State.HOUSE:
+		_end_house()
+		# kommt man hinaus, weiß er, wo man ist
+		if _player and not _player_in_house():
+			_investigate(_player.global_position)
+		else:
+			_start_search()
+		return false
+	return state == State.HOUSE
+
+
+func _end_house() -> void:
+	_beam_on(false)
+	_house_window = null
+	for a in get_tree().get_nodes_in_group("seeker_arm"):
+		(a as SeekerArm).retreat()
+
+
+## Fenster wählen: meist das dem Spieler nächste, manchmal ein beliebiges – davor stellt er sich.
+func _pick_window() -> void:
+	var wins: Array = []
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow:
+			wins.append(w)
+	for w in get_tree().get_nodes_in_group("attic_window"):
+		wins.append(w)
+	if wins.is_empty():
+		return
+	var best: Node3D = wins[0]
+	if _rng.randf() < cfg.house_random_window:
+		best = wins[_rng.randi() % wins.size()]
+	else:
+		var bd := INF
+		for w: Node3D in wins:
+			var d := w.global_position.distance_to(_player.global_position)
+			if d < bd:
+				bd = d
+				best = w
+	_house_window = best
+	var wp := best.global_position
+	_house_out = Vector3.ZERO
+	for dir: Vector3 in [best.global_basis.z, -best.global_basis.z, best.global_basis.x, -best.global_basis.x]:
+		var dh := Vector3(dir.x, 0.0, dir.z).normalized()
+		if dh.length() < 0.5:
+			continue
+		var probe := wp + dh * 1.0
+		if not Cabin.is_inside(probe) and not Cabin.blocks_ground(probe):
+			_house_out = dh
+			break
+	if _house_out == Vector3.ZERO:
+		_house_out = Vector3(wp.x, 0.0, wp.z).normalized()
+	var stand := wp + _house_out * 1.8
+	for k in 12:
+		if not _blocked(_ground(stand)):
+			break
+		stand += _house_out * 0.4   # z. B. vor dem Verandadach: weiter draußen stehen
+	_go([_ground(stand)])
+	_house_until = _rng.randf_range(cfg.house_window_time.x, cfg.house_window_time.y)
+	_house_t = 0.0
+	_beam_lock = 0.0
+	_beam_aim = wp - _house_out * 2.0
+
+
+func _beam_on(on: bool) -> void:
+	if on and _beam == null:
+		_beam = SpotLight3D.new()
+		_beam.name = "Beam"
+		_beam.light_color = Color(0.55, 0.88, 1.0)
+		_beam.light_energy = 7.0
+		_beam.spot_range = cfg.beam_range + 4.0
+		_beam.spot_angle = cfg.beam_angle
+		_beam.spot_attenuation = 0.6
+		_beam.shadow_enabled = true
+		_beam.light_volumetric_fog_energy = 2.5
+		add_child(_beam)
+		_beam.position = Vector3(0, 2.45, 0.2)
+	if _beam:
+		_beam.visible = on
+
+
+## Am Fenster: Strahl pendelt durchs Zimmer; erfasst er dich (freie Sicht, Glas zählt nicht), folgt er dir und brennt.
+func _house_tick(delta: float) -> void:
+	if _house_window == null or not is_instance_valid(_house_window):
+		_pick_window()
+		return
+	_house_t += delta
+	_face(_house_window.global_position, delta)
+	_beam_on(true)
+	var origin := _beam.global_position
+	var chest := _player.global_position + Vector3(0, _player.body_height() * 0.6, 0)
+	var inward := -_house_out
+	var side := inward.cross(Vector3.UP).normalized()
+	var wp := _house_window.global_position
+	var sweep := wp + inward * 2.6 + side * sin(_house_t * 0.55) * cfg.beam_sweep + Vector3(0, -0.35 + sin(_house_t * 0.9) * 0.45, 0)
+	var goal := chest if _beam_lock > 0.0 else sweep
+	_beam_aim = _beam_aim.move_toward(goal, delta * (cfg.beam_follow if _beam_lock > 0.0 else 2.5))
+	if origin.distance_to(_beam_aim) > 0.1:
+		_beam.look_at(_beam_aim, Vector3.UP)
+	# trifft der Strahl?
+	var to := chest - origin
+	var hit := to.length() < cfg.beam_range + 2.5 and rad_to_deg((-_beam.global_basis.z).angle_to(to)) < cfg.beam_angle \
+			and not _player.is_hidden() and Stealth.line_clear(get_world_3d(), origin, chest, [_player.get_rid()])
+	if hit:
+		if _beam_lock <= 0.0:
+			SoundBank.play_at(get_parent(), "signal", origin, -4.0, 0.8)
+			EventBus.notify("Das Licht aus seinem Gesicht brennt auf der Haut!", 2.0)
+		_beam_lock = 1.5
+		_beam_dmg += cfg.beam_damage * delta
+		if _beam_dmg >= 2.0:
+			Seeker.hurt_player(_player, _beam_dmg, origin, "seeker_beam")
+			_beam_dmg = 0.0
+	else:
+		_beam_lock = maxf(_beam_lock - delta, 0.0)
+	_head.rotation.y = 0.0
+	if _house_t > _house_until and _beam_lock <= 0.0:
+		_pick_window()
+
+
+## Arme durch Wand, Boden, Decke – in unregelmäßigen Abständen, manchmal zwei kurz hintereinander, oft hinter dir.
+func _house_arms(delta: float) -> void:
+	_reach_t -= delta
+	if _reach_t > 0.0:
+		return
+	_reach_t = _rng.randf_range(cfg.reach_interval.x, cfg.reach_interval.y)
+	if get_tree().get_nodes_in_group("seeker_arm").size() >= cfg.reach_max:
+		return
+	var arm := SeekerArm.spawn(get_parent(), _player, cfg, _rng, _rng.randf() < cfg.reach_behind_chance)
+	if arm and _rng.randf() < cfg.reach_double_chance:
+		_reach_t = _rng.randf_range(1.5, 3.0)

@@ -28,6 +28,14 @@
     "title": "Die Hand durch den Spalt hat dich erwischt.",
     "tips": ["Geh nicht zu nah an Spalten und Ritzen, aus denen Finger kommen.", "Schau die Hand an – dann zieht sie sich zurück."]
   },
+  "seeker_beam": {
+    "title": "Das Licht des Suchers hat dich verbrannt.",
+    "tips": ["Geh aus dem Lichtstrahl, der durchs Fenster kommt – ducken oder hinter eine Wand.", "Verbarrikadierte Fenster halten das Licht ab."]
+  },
+  "seeker_arm": {
+    "title": "Ein langer Arm hat dich erwischt.",
+    "tips": ["Die Arme kommen aus Wand, Boden und Decke – bleib in Bewegung.", "Leuchte die Hand mit der Uhr-LED an oder schlag zu, dann zieht sie sich zurück.", "Im Kleiderschrank erreicht sie dich nicht."]
+  },
   "trap": {
     "title": "Du bist in eine Falle getreten.",
     "tips": ["Merk dir, wo deine Bärenfallen stehen – sie treffen auch dich.", "Fallen nicht auf Wege und vor Türen stellen, die du selbst nutzt."]

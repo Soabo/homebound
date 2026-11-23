@@ -683,6 +683,19 @@
   Gegenstands kurz klein über der Leiste. Sucher hält `Seeker.WALL_MARGIN` (1,1 m) Abstand zu Hütte/Schuppen (Kopf ragte durch
   Dachkante); Zuschlagen prüft weiter nur `_blocked_at` (wer direkt an der Wand steht, ist nicht sicher).
 
+## Sucher am Haus (Christian 23.11.: „bedrohlicher, wenn man im Haus ist“ – Idee 1 mit Schaden + lange Arme, unberechenbar)
+- `Seeker.State.HOUSE` (`_house_check` alle 0,5 s): Spieler in der Hütte (inkl. Dachboden/Keller, nicht in Belagerungsnächten) und
+  Sucher näher als `house_range` → stellt sich vor ein Fenster (meist dem Spieler nächstes, `house_random_window` zufällig;
+  `entry_point`-CabinWindows + `attic_window`), nicht unters Verandadach (`_under_porch`), wechselt nach `house_window_time`.
+  Lichtstrahl `_beam` (SpotLight3D aus dem Augenspalt) pendelt durchs Zimmer, erfasst er dich (`Stealth.line_clear`: Glas zählt nicht,
+  Bretter schon), folgt er (`beam_follow`) und brennt (`beam_damage`/s). Kommt man hinaus → `_investigate`.
+- `SeekerArm` (scripts/creature/seeker_arm.gd): bricht aus Wand/Boden/Decke (Raycasts vom Spieler aus, `reach_weights`, oft hinter
+  dir `reach_behind_chance`, manchmal zwei kurz nacheinander `reach_double_chance`, höchstens `reach_max`), Holzsplitter + Loch,
+  tastet zum Spieler, Berührung = `reach_damage`, Uhr-LED `reach_led_time` oder Axt/Faust (`PlayerHands._melee_hit`, Gruppe
+  `seeker_arm`) = zurück; danach bleibt 90 s ein Loch. Im Versteck (`is_hidden`) erwischt sie dich nicht.
+- Schaden immer über `Seeker.hurt_player` (nie unter `min_health` – der Sucher tötet nicht). Todesbildschirm-Texte seeker_beam/seeker_arm.
+- Werte SeekerConfig „Im Haus“ (`house_*`, `beam_*`, `reach_*`). Vorschau Arm: creature_preview `--what=arm`. Prüfung `RegressTest._t_seeker_at_house`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -54,6 +54,26 @@ func _run() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--what="): what = a.get_slice("=", 1)
 		if a.begins_with("--dist="): dist = float(a.get_slice("=", 1))
+	if what == "arm":
+		var arm := SeekerArm.new()
+		arm.cfg = SeekerConfig.get_default()
+		world.add_child(arm)
+		arm._out = 1.0
+		for i in 4:
+			await get_tree().process_frame
+		arm._root.position = Vector3.ZERO
+		arm._root.rotation_degrees = Vector3(25, 0, 10)
+		arm._j1.rotation_degrees = Vector3(35, 0, -15)
+		arm.set_process(false)
+		var cam3 := Camera3D.new()
+		world.add_child(cam3)
+		cam3.position = Vector3(1.3, 1.1, 1.3)
+		cam3.look_at(arm._j1.global_position)
+		for i in 10:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_png(out)
+		get_tree().quit()
+		return
 	if what == "seeker":
 		var sk := Seeker.new()
 		world.add_child(sk)

@@ -382,6 +382,7 @@ func _t_more() -> void:
 	await _t_batch5_1511()
 	await _t_batch6_2311()
 	await _t_watch_log()
+	await _t_seeker_at_house()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2794,3 +2795,92 @@ func _t_watch_log() -> void:
 	hud._update_watch_log(0.016)
 	_ok("Uhr-Aufgaben: loslassen = Kompass zurück, Liste weg", hands._compass.visible and not hud._watch_log.visible)
 	hands.set_process(true)
+
+
+## Sucher am Haus (23.11.): Lichtstrahl durchs Fenster verletzt, Arme aus Wand/Boden/Decke, LED/Schlag vertreiben, nie tödlich
+func _t_seeker_at_house() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_h := p.health
+	var keep_d := TimeManager.day
+	TimeManager.set_time(keep_d, 23.0)
+	# im Wohnzimmer, etwas hinter dem Südfenster
+	p.global_position = Vector3(0.0, Cabin.FLOOR_Y + 0.05, Cabin.HALF_Z - 2.2)
+	p.velocity = Vector3.ZERO
+	p.health = 100.0
+	await _frames(3)
+	var sk := Seeker.spawn_for(_scene(), Vector3.ZERO)
+	await _frames(2)
+	sk.set_process(false)
+	sk.global_position = Vector3(6, Terrain.height_at(6, 14), 14)
+	var house := sk._house_check()
+	_ok("Sucher: Spieler im Haus → er belagert das Haus", house and sk.state == Seeker.State.HOUSE and sk._house_window != null)
+	var stand: Vector3 = sk._path[-1] if not sk._path.is_empty() else sk.global_position
+	_ok("Sucher: stellt sich draußen vors Fenster (%s)" % stand, not Cabin.is_inside(stand + Vector3(0, 1, 0)) and not Cabin.blocks_ground(stand))
+	# direkt vors Wohnzimmerfenster stellen und den Strahl auf den Spieler richten
+	var win := _scene().get_node("Cabin/WindowLiving") as Node3D
+	sk._house_window = win
+	sk._house_out = Vector3(0, 0, 1)
+	sk.global_position = Vector3(0.0, Terrain.height_at(0.0, Cabin.HALF_Z + 1.8), Cabin.HALF_Z + 1.8)
+	sk._path.clear()
+	sk._beam_lock = 1.0
+	sk._beam_aim = p.global_position + Vector3(0, 1.0, 0)
+	var h0 := p.health
+	for i in 60:
+		sk._house_tick(1.0 / 30.0)
+		await get_tree().process_frame
+	_ok("Sucher: Lichtstrahl durchs Fenster verletzt (%.0f → %.0f)" % [h0, p.health], p.health < h0)
+	p.health = sk.cfg.min_health + 1.0
+	for i in 90:
+		sk._house_tick(1.0 / 30.0)
+	_ok("Sucher: Strahl tötet nie (bleibt bei %.0f)" % p.health, p.health >= sk.cfg.min_health)
+	p.health = 100.0
+	sk._beam_on(false)
+	# Arme: Wand, Boden, Decke im Haus
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var kinds := {}
+	var made := 0
+	for i in 20:
+		var arm := SeekerArm.spawn(_scene(), p, sk.cfg, rng, i % 2 == 0)
+		if arm:
+			made += 1
+			var k := "floor" if arm.normal.y > 0.7 else ("ceiling" if arm.normal.y < -0.7 else "wall")
+			kinds[k] = true
+			arm.queue_free()
+	await _frames(2)
+	_ok("Sucher-Arme: kommen aus Wand, Boden und Decke (%d, %s)" % [made, kinds.keys()], made >= 12 and kinds.size() == 3)
+	# ein Arm greift zu: verletzt und zieht sich zurück
+	var arm2 := SeekerArm.spawn(_scene(), p, sk.cfg, rng, false)
+	var touched := false
+	if arm2:
+		arm2.global_position = p.global_position + Vector3(0.6, 0.0, 0.0)
+		arm2.normal = Vector3.UP
+		var hh := p.health
+		for i in 150:
+			await get_tree().process_frame
+			if p.health < hh:
+				touched = true
+				break
+		_ok("Sucher-Arm: erreicht dich und verletzt (%.0f → %.0f)" % [hh, p.health], touched)
+		_ok("Sucher-Arm: zieht sich danach zurück", arm2._leaving)
+	else:
+		_ok("Sucher-Arm: Stelle gefunden", false)
+	# Schlag vertreibt
+	var arm3 := SeekerArm.spawn(_scene(), p, sk.cfg, rng, false)
+	if arm3:
+		await _frames(3)
+		arm3.on_melee_hit("axe")
+		_ok("Sucher-Arm: Schlag → zurück", arm3._leaving)
+	# raus aus dem Haus: Belagerung endet, Arme verschwinden
+	p.global_position = Vector3(0.0, Terrain.height_at(0.0, 25.0) + 0.1, 25.0)
+	await _frames(2)
+	sk._house_check()
+	_ok("Sucher: Spieler draußen → keine Belagerung mehr", sk.state != Seeker.State.HOUSE)
+	sk.queue_free()
+	for a in get_tree().get_nodes_in_group("seeker_arm"):
+		a.queue_free()
+	p.global_position = keep
+	p.health = keep_h
+	TimeManager.set_time(keep_d, 10.0)
+	await _frames(3)

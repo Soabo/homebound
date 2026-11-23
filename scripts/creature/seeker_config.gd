@@ -58,3 +58,31 @@ static func get_default() -> SeekerConfig:
 @export_group("Tarnung im Gebüsch")
 ## Wer geduckt und ohne Licht in dichtem Gebüsch sitzt, wird erst so nah gewittert (m). 0 = nie.
 @export var cover_sniff_range: float = 2.2
+
+@export_group("Im Haus (Christian 23.11.)")
+## Ist der Spieler in der Hütte und der Sucher näher als das, belagert er das Haus: Lichtstrahl durch die Fenster, lange Arme
+@export var house_range: float = 45.0
+## so lange (s) bleibt er an einem Fenster, dann sucht er sich ein neues (meist das nächste zum Spieler, manchmal ein zufälliges)
+@export var house_window_time: Vector2 = Vector2(10.0, 22.0)
+@export var house_random_window: float = 0.3
+## Lichtstrahl aus dem Augenspalt: Reichweite (m), halber Öffnungswinkel (Grad), Schaden pro Sekunde, Pendelweite (m)
+@export var beam_range: float = 10.0
+@export var beam_angle: float = 13.0
+@export var beam_damage: float = 7.0
+@export var beam_sweep: float = 1.8
+## wie schnell (m/s) der Strahl dir folgt, sobald er dich erfasst hat
+@export var beam_follow: float = 0.9
+## Arme durch Wand, Boden, Decke: Abstand zwischen zwei Armen (s), Schaden bei Berührung, Lebensdauer (s), Reichweite (m)
+@export var reach_interval: Vector2 = Vector2(6.0, 15.0)
+@export var reach_damage: float = 14.0
+@export var reach_time: float = 9.0
+@export var reach_length: float = 1.7
+## Gewicht für Wand / Boden / Decke
+@export var reach_weights: Vector3 = Vector3(0.45, 0.3, 0.25)
+## Chance auf einen zweiten Arm kurz danach, Chance, dass er hinter dir herauskommt
+@export var reach_double_chance: float = 0.25
+@export var reach_behind_chance: float = 0.35
+## so lange (s) muss die Uhr-LED auf die Hand leuchten, bis sie sich zurückzieht
+@export var reach_led_time: float = 0.6
+## höchstens so viele Arme gleichzeitig
+@export var reach_max: int = 2

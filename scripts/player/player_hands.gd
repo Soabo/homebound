@@ -711,6 +711,15 @@ func _melee_hit(kind: String) -> void:
 			ch.on_melee_hit(kind)
 			SoundBank.play_at(get_tree().current_scene, "wood_crack" if kind == "axe" else "thud", ch.global_position + Vector3(0, 0.6, 0), -2.0, 1.2)
 			return
+	# Arm des Suchers, der ins Haus greift: Schlag = er zuckt zurück
+	for n in get_tree().get_nodes_in_group("seeker_arm"):
+		var arm := n as SeekerArm
+		var ta := arm.hand_position() - cam.origin
+		if ta.length() < float(cfg["reach"]) + 0.5 and fwd.dot(ta.normalized()) > 0.6:
+			arm.on_melee_hit(kind)
+			SoundBank.play_at(get_tree().current_scene, "thud", arm.hand_position(), -2.0, 1.1)
+			EventBus.screen_shake.emit(0.15)
+			return
 	var c: Creature = (ThreatDirector.creature as Creature) if is_instance_valid(ThreatDirector.creature) else null
 	if c:
 		# waagerecht prüfen: Abstand und ob sie vor dem Spieler steht (ganz nah genügt "grob vorne")
