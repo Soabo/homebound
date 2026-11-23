@@ -95,6 +95,7 @@ const SHOTS := [
 	{"name": "81_anbau_nord", "hour": 15.0, "pos": Vector3(5.5, 0.0, -15.0), "look": Vector3(0.0, 2.0, -7.0)},
 	{"name": "82_buero", "hour": 14.0, "pos": Vector3(0.5, 0.45, -4.3), "look": Vector3(0.5, 1.0, -8.0), "lights": true},
 	{"name": "83_kinderzimmer", "hour": 14.0, "pos": Vector3(-6.4, 0.45, 0.2), "look": Vector3(-8.8, 0.9, -3.0), "lights": true},
+	{"name": "F1_uhr_aufgaben", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true, "log": true},
 	{"name": "F0_bretterlager", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true},
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
@@ -386,6 +387,9 @@ func _run() -> void:
 			if shot.get("lurk", false):
 				get_tree().call_group("surveillance", "spawn_lurker", int(shot.get("lurk_spot", -1)))
 		get_tree().call_group("retro_filter", "set_mind", float(shot.get("mind", 0.0)))
+		var log_p := get_tree().get_first_node_in_group("player") as Player
+		if log_p and log_p.hands:
+			log_p.hands.force_log = bool(shot.get("log", false))   # Aufgaben auf der Uhr (J)
 		if shot.has("hold"):
 			Inventory.add(String(shot["hold"]), 1)
 			Inventory.set_slot(0, String(shot["hold"]))

@@ -5,7 +5,7 @@ extends Node
 ## mode=rig:  nur die Hand in vier Ansichten      --pose=relaxed|fist|open|grip:0.017
 ## mode=item: ein Gegenstand in vier Ansichten    --item=axe|tin_snips|water|food|… (Gegenstands-ID)
 ## mode=fp:   Blick des Spielers                  --item=ID --action=swing --p=0.0,0.3,0.6 (mehrere Bilder: bild_0.png …)
-##            --left=watch|hammer|none  --night  --yaw=GRAD (Blickrichtung, für den Kompass)  --retro (mit Bildfilter)
+##            --left=watch|hammer|none  --log=0..1 (Uhr zum Gesicht, Aufgaben)  --night  --yaw=GRAD (Blickrichtung, für den Kompass)  --retro (mit Bildfilter)
 
 var _args: Dictionary = {}
 
@@ -137,6 +137,13 @@ func _run_fp() -> void:
 		hands._left_out = 0.0
 		hands._left.visible = true
 	hands._right.visible = true
+	hands.log_raise = float(_arg("log", "0"))   # Aufgaben-Blick auf die Uhr (J)
+	if _args.has("logrot"):
+		var v := _arg("logrot", "0,0,0").split(",")
+		hands.log_rot = Vector3(float(v[0]), float(v[1]), float(v[2]))
+	if _args.has("logoff"):
+		var o := _arg("logoff", "0,0,0").split(",")
+		hands.log_offset = Vector3(float(o[0]), float(o[1]), float(o[2]))
 	var action := _arg("action", "")
 	var out := _arg("out", "/tmp/hands.png")
 	var ps := _arg("p", "0").split(",")

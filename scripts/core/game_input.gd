@@ -23,6 +23,7 @@ const KEY_ACTIONS := {
 	"debug_time_fast": [KEY_T],
 	"zoom": [KEY_Q],
 	"map": [KEY_M],
+	"quest_log": [KEY_J],
 }
 
 

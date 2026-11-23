@@ -5,7 +5,7 @@ extends CanvasLayer
 
 const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Alt  Langsam + Atem anhalten        Leertaste  Springen\n" + \
 		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe        Y / X  Lehnen\n" + \
-		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        Esc  Menü        F1  Hilfe"
+		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        J (halten)  Aufgaben        Esc  Menü        F1  Hilfe"
 
 var _clock: Label
 var _prompt: Label
@@ -192,6 +192,7 @@ func _process(delta: float) -> void:
 	_clock.text = "Tag %d    %s" % [TimeManager.day, TimeManager.get_clock_text()]
 	_update_weight()
 	_update_notes(delta)
+	_update_watch_log(delta)
 	if _help_time > 0.0:
 		_help_time -= delta
 		if _help_time <= 0.0:
@@ -559,3 +560,125 @@ func _update_monitor(_delta: float) -> void:
 		_monitor_label.text = "KEIN SIGNAL – kein Strom"
 	elif not cam_ok:
 		_monitor_label.text = "KAMERA %d – nicht installiert        [A/D] umschalten" % (sv.active_index + 1)
+
+
+
+# --- Aufgaben auf der Uhr (J gedrückt halten, Christian 23.11.) ----------------------------------
+
+var _watch_log: PanelContainer
+var _watch_log_box: VBoxContainer
+var _watch_log_t := 0.0
+const WATCH_LOG_WIDTH := 380.0
+
+
+func _build_watch_log() -> void:
+	_watch_log = PanelContainer.new()
+	_watch_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.02, 0.05, 0.06, 0.62)
+	sb.border_color = Color(0.4, 0.75, 0.85, 0.5)
+	sb.set_border_width_all(1)
+	sb.set_corner_radius_all(6)
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	sb.content_margin_top = 8
+	sb.content_margin_bottom = 8
+	_watch_log.add_theme_stylebox_override("panel", sb)
+	_watch_log.custom_minimum_size = Vector2(WATCH_LOG_WIDTH, 0)
+	_watch_log_box = VBoxContainer.new()
+	_watch_log_box.add_theme_constant_override("separation", 2)
+	_watch_log.add_child(_watch_log_box)
+	_watch_log.visible = false
+	add_child(_watch_log)
+
+
+func _log_line(text: String, size: int, col: Color) -> void:
+	var l := Label.new()
+	l.text = text
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(WATCH_LOG_WIDTH - 24.0, 0)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", col)
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	l.add_theme_constant_override("outline_size", 4)
+	_watch_log_box.add_child(l)
+
+
+## Kurze Checkliste: Hauptstory (Hauptspuren + offene Ziele) und Tagesroutine (HEUTE).
+func watch_log_lines() -> Array:
+	var lines: Array = []   # [Text, Art] Art: head_story | story | goal | head_day | done | open | none
+	lines.append(["HAUPTSTORY", "head_story"])
+	var n := 0
+	for st: Dictionary in Story.active_steps():
+		if not bool(st.get("main", false)):
+			continue
+		var prog := Story.step_progress(st)
+		lines.append(["◉  " + String(st.get("title", "")) + ("  (%s)" % prog if prog != "" else ""), "story"])
+		n += 1
+	for g: Dictionary in Tasks.open_goals():
+		if n >= 4:
+			break
+		lines.append(["○  " + String(g.get("title", "")), "goal"])
+		n += 1
+	if n == 0:
+		lines.append(["Im Moment nichts Offenes.", "none"])
+	lines.append(["HEUTE", "head_day"])
+	var routine := Tasks.daily()
+	if routine.is_empty():
+		lines.append(["Noch keine festen Routinen.", "none"])
+	for d: Dictionary in routine:
+		lines.append([("✓  " if d["done"] else "○  ") + String(d["title"]), "done" if d["done"] else "open"])
+	return lines
+
+
+func _fill_watch_log() -> void:
+	for c in _watch_log_box.get_children():
+		_watch_log_box.remove_child(c)
+		c.queue_free()
+	for ln: Array in watch_log_lines():
+		match String(ln[1]):
+			"head_story":
+				_log_line(String(ln[0]), 13, Color(1.0, 0.58, 0.42))
+			"head_day":
+				_log_line(String(ln[0]), 13, Color(1.0, 0.82, 0.45))
+			"story":
+				_log_line(String(ln[0]), 16, Color(1.0, 0.88, 0.74))
+			"goal":
+				_log_line(String(ln[0]), 15, Color(0.85, 0.88, 0.93))
+			"done":
+				_log_line(String(ln[0]), 15, Color(0.5, 0.78, 0.52))
+			"open":
+				_log_line(String(ln[0]), 15, Color(0.92, 0.94, 0.97))
+			_:
+				_log_line(String(ln[0]), 14, Color(0.6, 0.62, 0.66))
+
+
+func _update_watch_log(delta: float) -> void:
+	var player := get_tree().get_first_node_in_group("player") as Player
+	var k := player.hands.log_raise if player and player.hands else 0.0
+	if _watch_log == null:
+		if k <= 0.0:
+			return
+		_build_watch_log()
+	if k < 0.4:
+		_watch_log.visible = false
+		_watch_log_t = 0.0
+		return
+	if not _watch_log.visible or _watch_log_t <= 0.0:
+		_fill_watch_log()
+		_watch_log_t = 1.0
+	_watch_log_t -= delta
+	_watch_log.visible = true
+	_watch_log.modulate.a = clampf((k - 0.4) / 0.5, 0.0, 1.0)
+	# über der Uhr: Bildschirmpunkt der Uhr, Liste mittig darüber
+	var cam := get_viewport().get_camera_3d()
+	var wp := player.hands.watch_global_position()
+	var vp := get_viewport().get_visible_rect().size
+	var at := Vector2(vp.x * 0.36, vp.y * 0.62)
+	if cam and wp != Vector3.INF and not cam.is_position_behind(wp):
+		at = cam.unproject_position(wp)
+	var sz := _watch_log.get_combined_minimum_size()
+	var pos := at - Vector2(sz.x * 0.5, sz.y + 46.0)
+	_watch_log.size = sz
+	_watch_log.position = Vector2(clampf(pos.x, 12.0, vp.x - sz.x - 12.0), clampf(pos.y, 12.0, vp.y - sz.y - 12.0))

@@ -77,6 +77,16 @@ var _rec_led: StandardMaterial3D
 var _rec_t: float = 0.0
 var _rec_amount: float = 0.0
 var _watch_on: bool = false
+## Aufgaben auf der Uhr (J gedrückt halten, Christian 23.11.): Arm hebt die Uhr vors Gesicht, Display zeigt
+## eine angedeutete Checkliste, darüber blendet der Hud die Aufgaben ein (Hud._update_watch_log).
+var log_raise: float = 0.0
+var log_wanted: bool = false
+var force_log: bool = false   ## nur für Bilder/Tests: Uhr gehoben halten wie mit J
+var _checklist: Node3D
+var _watch_node: Node3D
+var log_offset := Vector3(0.24, 0.13, 0.11)   ## so weit wandert der linke Arm zur Mitte und nach oben
+var log_rot := Vector3(50.0, -55.0, 15.0)        ## Drehung, damit das Display zum Gesicht zeigt
+const LOG_SPEED := 4.0
 
 var _action: String = ""
 var _action_t: float = 0.0
@@ -274,6 +284,8 @@ func _build_left() -> void:
 	var face_y := top + 0.0128
 	BuildKit.cylinder(watch, 0.0183, 0.001, Vector3(0, face_y, 0), _screen, false, Vector3.ZERO, -1.0, 16)
 	_build_compass(watch, face_y + 0.0008)
+	_build_checklist(watch, face_y + 0.0008)
+	_watch_node = watch
 	# LED vorne am Gehäuse
 	_led = BuildKit.emissive_mat(Color(1.0, 0.97, 0.9), 0.0)
 	BuildKit.box(watch, Vector3(0.012, 0.0055, 0.004), Vector3(0, top + 0.006, -0.0235), _led, false)
@@ -331,6 +343,39 @@ func _build_compass(watch: Node3D, y: float) -> void:
 			Vector2(0.0, 0.0138), Vector2(-0.0034, 0.0075), Vector2(-0.0012, 0.0075)]), 0.0003, red).rotation_degrees.x = -90.0
 	HandKit.extrude(_compass, PackedVector2Array([Vector2(-0.0014, 0.0), Vector2(0.0014, 0.0), Vector2(0.0006, -0.0115), Vector2(-0.0006, -0.0115)]), 0.0003, pale).rotation_degrees.x = -90.0
 	BuildKit.cylinder(_compass, 0.0022, 0.001, Vector3(0, 0.0004, 0), BuildKit.color_mat(Color(0.08, 0.08, 0.09), 0.3, 0.6), false, Vector3.ZERO, -1.0, 8)
+
+
+## Angedeutete Checkliste im Display (statt Kompass, solange J gehalten wird): drei Kästchen mit Strichen,
+## das oberste abgehakt.
+func _build_checklist(watch: Node3D, y: float) -> void:
+	_checklist = Node3D.new()
+	_checklist.position = Vector3(0, y + 0.0003, 0)
+	_checklist.visible = false
+	_checklist.rotation_degrees.y = 30.0   # Arm liegt beim Hinsehen quer: Zeilen laufen dann waagrecht
+	watch.add_child(_checklist)
+	var pale := StandardMaterial3D.new()
+	pale.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pale.albedo_color = Color(0.85, 0.92, 0.95)
+	var green := StandardMaterial3D.new()
+	green.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	green.albedo_color = Color(0.45, 1.0, 0.55)
+	for i in 3:
+		var z := -0.0085 + i * 0.0085   # -z = oben auf dem Display (Richtung Finger)
+		# Kästchen als Rahmen aus vier Strichen
+		var bx := -0.0085
+		for e: Array in [[Vector3(0.004, 0.0003, 0.0007), Vector3(bx, 0, z - 0.00165)], [Vector3(0.004, 0.0003, 0.0007), Vector3(bx, 0, z + 0.00165)],
+				[Vector3(0.0007, 0.0003, 0.004), Vector3(bx - 0.00165, 0, z)], [Vector3(0.0007, 0.0003, 0.004), Vector3(bx + 0.00165, 0, z)]]:
+			BuildKit.box(_checklist, e[0], e[1], pale, false)
+		# Zeile
+		BuildKit.box(_checklist, Vector3(0.0115 - i * 0.002, 0.0003, 0.0011), Vector3(0.0015 - i * 0.001, 0, z), pale, false)
+	# Haken im obersten Kästchen
+	BuildKit.box(_checklist, Vector3(0.0018, 0.0004, 0.0007), Vector3(-0.0094, 0.0001, -0.0080), green, false, Vector3(0, -45, 0))
+	BuildKit.box(_checklist, Vector3(0.0034, 0.0004, 0.0007), Vector3(-0.0078, 0.0001, -0.0090), green, false, Vector3(0, 50, 0))
+
+
+## Wo die Uhr gerade ist (für den Hud, der die Aufgaben darüber einblendet).
+func watch_global_position() -> Vector3:
+	return _watch_node.global_position if _watch_node and _watch_node.is_inside_tree() else Vector3.INF
 
 
 ## Selbstleuchtende Farbe für die Anzeige (ohne Schattierung, damit sie auf dem Display lesbar bleibt).
@@ -766,9 +811,13 @@ func _process(delta: float) -> void:
 	elif _right_kind != "":
 		_right_out = move_toward(_right_out, 0.0, delta * SWITCH_SPEED)
 
-	# Linke Hand: sichtbar bei eingeschalteter Uhr-Lampe oder im Baumodus (Hammer)
+	# Linke Hand: sichtbar bei eingeschalteter Uhr-Lampe, im Baumodus (Hammer) oder beim Blick auf die Aufgaben (J)
 	var build := _building()
-	var left_wanted := (_watch_on or build) and not GameState.dead
+	log_wanted = (Input.is_action_pressed("quest_log") or force_log) and not player.input_locked and not build and not GameState.dead \
+			and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or force_log)
+	var log_ready := _left_out < 0.2 or not (_watch_on or log_wanted)   # erst heben, wenn der Arm im Bild ist
+	log_raise = move_toward(log_raise, 1.0 if log_wanted and log_ready else 0.0, delta * LOG_SPEED)
+	var left_wanted := (_watch_on or build or log_wanted or log_raise > 0.0) and not GameState.dead
 	if build != _hammer.visible and _left_out >= 0.99:
 		_set_left_mode(build)
 	if left_wanted and (build == _hammer.visible):
@@ -1150,7 +1199,32 @@ func _pose_left(delta: float = 0.0) -> void:
 			_left.position += elbow - Basis.from_euler(Vector3(deg_to_rad(swing), 0.0, 0.0)) * elbow
 			if _tap_t >= TAP_TIME * _tap_hits:
 				_tap_t = -1.0
+	if log_raise > 0.0 and not _hammer.visible:
+		var k := smoothstep(0.0, 1.0, log_raise)
+		_left.position += log_offset * k
+		_left.rotation_degrees += log_rot * k
+	_update_log_display()
 	_update_compass(delta)
+
+
+## Display beim Blick auf die Aufgaben: Checkliste statt Kompass, Display leuchtet von selbst.
+var _log_shown := false
+
+
+func _update_log_display() -> void:
+	if _checklist == null:
+		return
+	var show := log_raise > 0.35 and not _hammer.visible
+	if show == _log_shown:
+		return
+	_log_shown = show
+	_checklist.visible = show
+	_compass.visible = not show
+	if show:
+		_screen.emission = Color(0.3, 0.55, 0.65)
+		_screen.emission_energy_multiplier = maxf(_screen.emission_energy_multiplier, 0.5)
+	else:
+		_set_glow(true)
 
 
 ## Kompassnadel: die rote Spitze zeigt immer nach Norden (in der Welt: -z, die Hütte schaut nach Süden).

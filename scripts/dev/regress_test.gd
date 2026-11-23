@@ -381,6 +381,7 @@ func _t_more() -> void:
 	await _t_batch4_1411()
 	await _t_batch5_1511()
 	await _t_batch6_2311()
+	await _t_watch_log()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2766,3 +2767,30 @@ func _t_batch6_2311() -> void:
 	_ok("Einstellungen: Max-FPS wird gesetzt", Engine.max_fps == 144 and Settings.FPS_CHOICES.has(0))
 	Settings.max_fps = keep_fps
 	Settings.apply_fps()
+
+
+## Aufgaben auf der Uhr (J halten, 23.11.): Arm hebt die Uhr, Display zeigt die Checkliste, Liste über der Uhr
+func _t_watch_log() -> void:
+	var p := _player()
+	var hands := p.hands
+	_ok("Uhr-Aufgaben: Taste J belegt", InputMap.has_action("quest_log"))
+	var hud := get_tree().get_first_node_in_group("hud") as Hud
+	var lines := hud.watch_log_lines()
+	var kinds := lines.map(func(l: Array) -> String: return String(l[1]))
+	_ok("Uhr-Aufgaben: Hauptstory und HEUTE getrennt (%d Zeilen)" % lines.size(), kinds.has("head_story") and kinds.has("head_day")
+			and kinds.find("head_story") < kinds.find("head_day"))
+	hands.set_process(false)
+	var rest := hands._left.position
+	hands.log_raise = 1.0
+	hands._left_out = 0.0
+	hands._left.visible = true
+	hands._pose_left(0.0)
+	_ok("Uhr-Aufgaben: Arm hebt die Uhr, Display zeigt die Checkliste", hands._left.position.distance_to(rest) > 0.1
+			and hands._checklist.visible and not hands._compass.visible)
+	hud._update_watch_log(0.016)
+	_ok("Uhr-Aufgaben: Liste erscheint über der Uhr", hud._watch_log != null and hud._watch_log.visible and hud._watch_log_box.get_child_count() >= 3)
+	hands.log_raise = 0.0
+	hands._pose_left(0.0)
+	hud._update_watch_log(0.016)
+	_ok("Uhr-Aufgaben: loslassen = Kompass zurück, Liste weg", hands._compass.visible and not hud._watch_log.visible)
+	hands.set_process(true)

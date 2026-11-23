@@ -92,7 +92,7 @@
 
 ## Entscheidungen Feinschliff nach 10 Spieltagen
 - Radio + Analysegerät stehen in der Werkstatt an der Nordwand (`Cabin._build_radio_corner`, Radio-Knoten lokal gedreht).
-- Archiv (früher „Alien-Archiv“) und Notizen nur noch auf dem Tablet (Couch, Reiter Posteingang | Archiv | Notizen), Taste J entfällt.
+- Archiv (früher „Alien-Archiv“) und Notizen nur noch auf dem Tablet (Couch, Reiter Posteingang | Archiv | Notizen); J = seit 23.11. Aufgaben auf der Uhr.
   Analysegerät zeigt keine Ergebnistexte mehr: „Ergebnisse ans Tablet senden“ (`Research.send_results`, `sent`, `tablet_new`).
   Verknüpfen geht erst, wenn die Analysen gesendet sind. Test: `--night-test=tablet`.
 - Bewegte Teile (Werkzeuge in der Hand, Türen, Schranktüren) mit `BuildKit.localize_materials` (Textur am Objekt).
@@ -663,6 +663,13 @@
 - Bildrate: `Settings.max_fps` (Stufen `FPS_CHOICES` 30/60/120/144/165/240/unbegrenzt, Start unbegrenzt), `vsync` (an), `show_fps`
   (Anzeige oben rechts), `Settings.apply_fps()`. Vorher fest 60 + VSync → auf 144-Hz-Bildschirmen ungleichmäßig. GameInput nimmt den Wert
   beim Zurückholen des Fensters. CPU-Zeit im FPS-Test ~7 ms/Bild (kein Engpass). Prüfung `RegressTest._t_batch6_2311`.
+
+## Aufgaben auf der Uhr (Christian 23.11.: kein dauerhaftes Questlog)
+- J halten (`quest_log`): `PlayerHands.log_raise` hebt den linken Arm (`log_offset`, `log_rot`), Display zeigt statt Kompass eine
+  angedeutete Checkliste (`_checklist`, leuchtet selbst), `watch_global_position()`. Hud blendet darüber eine kleine Liste ein
+  (`Hud._update_watch_log`, `watch_log_lines()`): HAUPTSTORY (Hauptspuren ◉ + offene Ziele ○, höchstens 4) und HEUTE (Tagesroutine ✓/○).
+  Nicht im Baumodus/gesperrt. `force_log` nur für Bilder/Tests (Tour-Schlüssel `log`, Bild F1). Vorschau: hands_preview `--log=1`
+  (`--logrot`, `--logoff`). Prüfung `RegressTest._t_watch_log`.
 
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.

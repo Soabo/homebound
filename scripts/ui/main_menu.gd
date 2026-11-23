@@ -12,7 +12,7 @@ const CONTROLS := [
 	["Leertaste", "Springen"], ["Maus", "Umsehen"], ["E", "Benutzen, aufheben, öffnen"], ["R", "Zweite Aktion (z. B. hineinlegen, hinsetzen)"],
 	["Linksklick", "Werkzeug in der Hand benutzen, schlagen"], ["Rechtsklick", "Blocken (Gießkanne: füllen)"], ["1 – 9 / Mausrad", "Schnellplatz wählen"],
 	["F (kurz)", "Uhrlicht an/aus"], ["F (halten)", "Uhrlicht: LED oder weißes Display"], ["Tab / I", "Rucksack und Werkbank"],
-	["B", "Bauen"], ["Q (halten)", "Fernglas"], ["M", "Wanderkarte"], ["Esc", "Pause"], ["F1", "Hilfe ein/aus"],
+	["B", "Bauen"], ["Q (halten)", "Fernglas"], ["M", "Wanderkarte"], ["J (halten)", "Aufgaben auf der Uhr"], ["Esc", "Pause"], ["F1", "Hilfe ein/aus"],
 	["F2", "Retro-Bild ein/aus"], ["F11", "Vollbild"],
 ]
 
