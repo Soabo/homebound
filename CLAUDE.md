@@ -56,6 +56,7 @@
 - Bach: Ufer immer über Wasser (Terrain `BANK_HEIGHT`, `WATER_LEVEL`, `WATER_HALF_WIDTH`), Prüfung `--walk-test --stream`.
 - Truhe `StorageChest` (Cabin/StorageChest, Werkstatt unter der Werkzeugwand, persistent), Menü in GameMenus („chest“).
 - Bildchen für Gegenstände: `ItemIcons` lädt `assets/icons/items/<id>.png|jpg|webp`, sonst Platzhalter (Kategorie-Farbe + Kürzel).
+  23.11.: Christian hat alle 134 geliefert (256 px, PNG mit Transparenz). Neue Gegenstände brauchen ein eigenes Bild, sonst Platzhalter.
 - Alt = langsam und leise gehen und Atem anhalten (`walk_slow`, `Player.SLOW_FACTOR`, siehe „Schleichen“). Sprint nur, solange Shift wirklich gedrückt ist.
 - Kreatur auf der Jagd bleibt `hunt_hours`, nur mit `whole_night_chance` die ganze Nacht (CreatureConfig).
 - Möbel stehen so, dass man an jedes Fenster treten kann (Prüfung im `--walk-test`: „FENSTER … frei“).
@@ -119,7 +120,7 @@
   Systeme melden mit `Tasks.flag("…")`. Anzeige: Tablet-Reiter „Aufgaben“ (Christian: „Ziele + Tagesroutine“).
 - Überwachungskameras baut man selbst ein: Kamera 1–3 (`camera_N`) in der Hütte finden, im Baumodus nur außen an Hütte
   oder Schuppen anbringen (`BuildController._camera_update`), R schwenkt; gespeichert in `Supplies.cameras`, Monitor
-  (`Surveillance`, 3 Plätze) zeigt leere Plätze als „nicht installiert“. Icons für camera_1..3 liefert Christian.
+  (`Surveillance`, 3 Plätze) zeigt leere Plätze als „nicht installiert“.
   Tests nutzen `Surveillance.install_defaults()`. Test: `--night-test=supplies`.
 
 ## Story (beschlossen 10.11.2026, Story-Bibel: https://claude.ai/artifact/6FfYY9UAGpkPV9eYFJbYyL)
