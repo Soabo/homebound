@@ -12,6 +12,8 @@ var burn_until: float = -1.0
 var _glow: StandardMaterial3D
 var _light: OmniLight3D
 var _crackle: FireCrackle
+var pot: CookPot = null          ## was gerade im Ofen gart (CookPot), sonst null
+var _last_h: float = -1.0
 
 
 func _ready() -> void:
@@ -57,19 +59,24 @@ func lit() -> bool:
 
 
 func get_prompt(_p: Node) -> String:
+	var inside := ("   Im Ofen: " + pot.status_text()) if pot else ""
 	if lit():
 		var left := burn_until - TimeManager.get_total_hours()
-		return "Holzofen – brennt noch etwa %d Std.  [E] Kochen" % maxi(1, int(round(left)))
-	return "Holzofen – kalt.  [E] mit 1 Holz anheizen (du hast %d)" % Inventory.count_fuel()
+		return "Holzofen – brennt noch etwa %d Std.  [E] Kochen%s" % [maxi(1, int(round(left))), inside]
+	if pot and not pot.finished():
+		inside += " (wartet aufs Feuer)"
+	return "Holzofen – kalt.  [E] mit 1 Holz anheizen (du hast %d)%s" % [Inventory.count_fuel(), inside]
 
 
 func get_secondary_prompt(_p: Node) -> String:
+	if not lit() and pot:
+		return "[R] Herausnehmen"
 	return "[R] Holz nachlegen" if lit() and Inventory.count_fuel() > 0 else ""
 
 
 func interact(_p: Node) -> void:
 	if lit():
-		get_tree().call_group("game_menus", "open_crafting", "stove")
+		get_tree().call_group("game_menus", "open_crafting", "stove", self)
 		return
 	_add_wood()
 
@@ -77,6 +84,38 @@ func interact(_p: Node) -> void:
 func secondary_interact(_p: Node) -> void:
 	if lit():
 		_add_wood()
+	elif pot:
+		take_pot()
+
+
+## Kochen beginnen: Zutaten wandern aus dem Rucksack in den Ofen. "" = ok, sonst Grund.
+func start_cooking(r: Dictionary) -> String:
+	if pot:
+		return "Im Ofen ist schon etwas: " + pot.status_text()
+	if not Inventory.has_all(r.get("needs", {})):
+		return "Dir fehlen Zutaten."
+	Inventory.remove_all(r.get("needs", {}))
+	pot = CookPot.start(r)
+	SoundBank.play_at(self, "place", global_position + anchor, -6.0)
+	return ""
+
+
+## Inhalt herausnehmen (fertig = Gericht, unfertig = Zutaten zurück).
+func take_pot() -> void:
+	if pot == null:
+		return
+	var msg := pot.take_out()
+	if msg == "":
+		EventBus.notify("Davon kannst du nicht mehr tragen – es bleibt im Ofen.", 2.5)
+		return
+	pot = null
+	SoundBank.play_at(self, "pickup", global_position + anchor, -6.0)
+	EventBus.notify(msg, 2.5)
+
+
+## Bis wann gegart wird (Spielstunden) – solange der Ofen brennt.
+func cook_until() -> float:
+	return burn_until
 
 
 func _add_wood() -> void:
@@ -91,6 +130,10 @@ func _add_wood() -> void:
 
 
 func _process(_delta: float) -> void:
+	var now := TimeManager.get_total_hours()
+	if _last_h >= 0.0:
+		CookPot.tick(pot, _last_h, now, cook_until(), "Ofen")
+	_last_h = now
 	var left := burn_until - TimeManager.get_total_hours()
 	var s := clampf(left / 0.5, 0.0, 1.0)
 	var flick := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 90.0) * sin(Time.get_ticks_msec() / 37.0)
@@ -104,8 +147,10 @@ func persist_key() -> String:
 
 
 func get_state() -> Dictionary:
-	return {"burn_until": burn_until}
+	return {"burn_until": burn_until, "pot": pot.to_dict() if pot else {}}
 
 
 func set_state(st: Dictionary) -> void:
 	burn_until = float(st.get("burn_until", -1.0))
+	pot = CookPot.from_dict(st.get("pot", {}))
+	_last_h = -1.0

@@ -303,6 +303,7 @@ func _research(day: int) -> void:
 	var p := _player()
 	# Umzugskarton und Analysegerät
 	var box := _scene().get_node_or_null("Cabin/MovingBox") as MovingBox
+	MovingBox.bypass_lock = true
 	if box and Inventory.count("w17") <= 0 and not Research.w17_in_device:
 		box.interact(p)
 		box.interact(p)
@@ -411,10 +412,14 @@ func _cook() -> void:
 	await _frames(2)
 	var menus := _scene().get_node_or_null("GameMenus") as GameMenus
 	if menus and menus.is_open():
+		# Kochen = Zutaten in den Topf, Zeit vergeht, dann herausnehmen (CookPot)
 		for r: Dictionary in DataDB.recipes():
-			if r.has("minutes") and Inventory.has_all(r.get("needs", {})):
+			if r.has("minutes") and Inventory.has_all(r.get("needs", {})) and stove.pot == null:
 				menus._on_craft(r)
 		menus.close()
+		TimeManager.advance_hours(1.0)
+		await _frames(2)
+		stove.take_pot()
 	_fix_ui("nach dem Kochen")
 
 

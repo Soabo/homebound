@@ -646,6 +646,24 @@
   mit Uhr an etwas heller). Tour-Schlüssel `hold` (Gegenstand in der Hand), Bilder E2/E3.
 - Prüfung `RegressTest._t_batch5_1511`.
 
+## Christians Liste 23.11. (Tablet, Karton, Rauschen, Hinweise, Ofen, Bretter, Bildrate)
+- Tablet öffnet mit „Aufgaben“ (erster Reiter), Posteingang zeigt „● n neu“ und schlägt beim Anklicken die erste ungelesene auf.
+- Umzugskarton erst offen, wenn die Spur `p1_karton` läuft/erledigt ist oder die Aufgabe „Analysegerät“ (got:metal_fragment) da ist
+  (`MovingBox.can_open`, Tests setzen `MovingBox.bypass_lock`).
+- Dauerrauschen: `static` ist eine Schleife (LOOP_IDS) und lief über `SoundBank.play_ui` endlos (Nervenfühler, Analysegerät,
+  Manipulator). `play_ui` blendet Schleifen jetzt nach 1,2 s aus (`_is_loop`, `_cut_loop`) – wie `play_stream_at`.
+- Hinweise oben: Stapel `Hud._notes` (neuester oben, ältere kleiner/grau, bleiben `NOTE_OLD_MIN` s, höchstens `NOTE_MAX`),
+  `Hud.current_notification()`.
+- Kochen: `CookPot` (scripts/interaction/cook_pot.gd) im Küchenofen und Kamin (`pot`, `start_cooking`, `take_pot`, `cook_until`):
+  Zutaten gehen in den Topf, garen nur mit Feuer (Spielzeit), Fortschritt in % (Hinweis + Kochmenü, live), fertig = Ergebnis,
+  unfertig herausnehmen = Zutaten zurück, gespeichert. Kalter Ofen: [R] herausnehmen. `GameMenus.open_crafting(station, cooker)`.
+- Bretterlager: `PlankRack` (Kragarmregal, Knotenname bleibt `Cabin/PlankPile`, 12 Plätze, jedes Brett sichtbar), [E] nehmen,
+  [R] alle getragenen zurücklegen. Werte data/house/house.json `plank_rack`. Tour-Bild F0.
+- Buch/Becher/Teddy: [E] ansehen = kurzer Gedanke (house.json `inside_things`); sie wandern nachts (InsideChanges).
+- Bildrate: `Settings.max_fps` (Stufen `FPS_CHOICES` 30/60/120/144/165/240/unbegrenzt, Start unbegrenzt), `vsync` (an), `show_fps`
+  (Anzeige oben rechts), `Settings.apply_fps()`. Vorher fest 60 + VSync → auf 144-Hz-Bildschirmen ungleichmäßig. GameInput nimmt den Wert
+  beim Zurückholen des Fensters. CPU-Zeit im FPS-Test ~7 ms/Bild (kein Engpass). Prüfung `RegressTest._t_batch6_2311`.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

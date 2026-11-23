@@ -206,9 +206,13 @@ class Prop extends Interactable:
 
 	func get_prompt(_p: Node) -> String:
 		if int(owner_node.state[id]) == 0:
-			return String(InsideChanges.NAMES[id])
+			return "%s  [E] ansehen" % InsideChanges.NAMES[id]
 		return "%s  [E] zurückstellen" % InsideChanges.NAMES[id]
 
 	func interact(_p: Node) -> void:
 		if int(owner_node.state[id]) != 0:
 			owner_node.put_back(id)
+			return
+		# am richtigen Platz: ein kurzer Gedanke (data/house/house.json "inside_things") – man merkt sich, wo es steht
+		var texts: Dictionary = DataDB.load_json("res://data/house/house.json").get("inside_things", {})
+		EventBus.notify(String(texts.get(id, InsideChanges.NAMES[id])), 3.5)

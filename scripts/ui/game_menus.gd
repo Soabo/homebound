@@ -212,9 +212,13 @@ func open_chest(chest: StorageChest) -> void:
 var _station: String = "workbench"
 
 
-## station: "workbench" (Werkbank) oder "stove" (Kochen am Ofen/Kamin)
-func open_crafting(station: String = "workbench") -> void:
+var _cooker: Node = null   ## Ofen oder Kamin, an dem gekocht wird (start_cooking / pot / take_pot)
+
+
+## station: "workbench" (Werkbank) oder "stove" (Kochen am Ofen/Kamin – cooker = der Ofen bzw. Kamin)
+func open_crafting(station: String = "workbench", cooker: Node = null) -> void:
 	_station = station
+	_cooker = cooker
 	_open("crafting")
 
 
@@ -352,8 +356,29 @@ func _chest_move(side: String, id: String, amount: int) -> void:
 func _fill_crafting() -> void:
 	var cooking := _station == "stove"
 	_title.text = "Kochen" if cooking else "Werkbank"
-	_info.text = ("Zubereiten dauert ein wenig Zeit.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
+	_info.text = ("Zutaten kommen in den Topf und garen, solange das Feuer brennt.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
 		"Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
+	var busy := false
+	if cooking and is_instance_valid(_cooker):
+		var pot := _cooker.get("pot") as CookPot
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 16)
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if pot:
+			busy = true
+			col.add_child(_text("IM TOPF:  " + pot.status_text(), 22, Color(1.0, 0.82, 0.45)))
+			col.add_child(_text("fertig – herausnehmen" if pot.finished() else "gart, solange das Feuer brennt – unfertig herausnehmen gibt die Zutaten zurück", 15, Color(0.6, 0.65, 0.7)))
+			var tb := _button("Herausnehmen")
+			tb.pressed.connect(func() -> void:
+				_cooker.call("take_pot")
+				_refresh())
+			row.add_child(col)
+			row.add_child(tb)
+		else:
+			col.add_child(_text("Der Topf ist leer.", 20, Color(0.6, 0.65, 0.7)))
+			row.add_child(col)
+		_list.add_child(row)
 	var locked := 0
 	var hints_shown := {}   # gleicher Bauplan für mehrere Rezepte (z. B. Steine) nur einmal grau zeigen
 	for r: Dictionary in DataDB.recipes():
@@ -393,8 +418,8 @@ func _fill_crafting() -> void:
 		row.add_child(col)
 		if r.has("minutes"):
 			col.add_child(_text("dauert %d Min." % int(r["minutes"]), 15, Color(0.6, 0.65, 0.7)))
-		var b := _button("Kochen" if cooking else "Herstellen")
-		b.disabled = not ok
+		var b := _button("In den Topf" if cooking else "Herstellen")
+		b.disabled = not ok or busy
 		b.pressed.connect(_on_craft.bind(r))
 		row.add_child(b)
 		_list.add_child(row)
@@ -428,6 +453,16 @@ func _on_build(id: String) -> void:
 
 
 func _on_craft(r: Dictionary) -> void:
+	if r.has("minutes") and is_instance_valid(_cooker) and _cooker.has_method("start_cooking"):
+		# Kochen: Zutaten wandern in den Topf, garen in Echtzeit (nur mit Feuer) – Christian 23.11.
+		var why := String(_cooker.call("start_cooking", r))
+		if why == "":
+			SoundBank.play_ui(self, "fire", -10.0)
+			EventBus.notify("Im Topf: %s. Gart, solange das Feuer brennt." % (_cooker.get("pot") as CookPot).title(), 2.5)
+		else:
+			EventBus.notify(why, 2.5)
+		_refresh()
+		return
 	var msg := Workbench.craft(r, get_tree())
 	if msg == "":
 		if r.has("minutes"):
@@ -460,3 +495,16 @@ func _button(t: String) -> Button:
 	b.custom_minimum_size = Vector2(130, 40)
 	b.add_theme_font_size_override("font_size", 18)
 	return b
+
+
+## Beim Kochen den Fortschritt im Topf laufend nachführen (einmal pro Sekunde).
+var _cook_refresh := 0.0
+
+
+func _process(delta: float) -> void:
+	if _mode != "crafting" or _station != "stove" or not is_instance_valid(_cooker) or _cooker.get("pot") == null:
+		return
+	_cook_refresh -= delta
+	if _cook_refresh <= 0.0:
+		_cook_refresh = 1.0
+		_refresh()

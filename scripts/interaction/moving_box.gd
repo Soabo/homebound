@@ -55,7 +55,22 @@ func _apply() -> void:
 	_w17_vis.visible = not w17_taken
 
 
+## Tests dürfen den Karton auch ohne Aufgabe öffnen.
+static var bypass_lock := false
+
+
+## Christian 23.11.: erst öffnen, wenn das Spiel dazu auffordert (Spur „Der Umzugskarton“ oder Aufgabe „Analysegerät“).
+func can_open() -> bool:
+	if opened or bypass_lock:
+		return true
+	if Story.steps_active.has("p1_karton") or Story.steps_done.has("p1_karton"):
+		return true
+	return Tasks.check("got:metal_fragment")
+
+
 func get_prompt(_p: Node) -> String:
+	if not opened and not can_open():
+		return "Alter Umzugskarton – Kram aus der alten Arbeit"
 	if not opened:
 		return "[E] Alten Umzugskarton öffnen"
 	if not w17_taken:
@@ -64,6 +79,9 @@ func get_prompt(_p: Node) -> String:
 
 
 func interact(_p: Node) -> void:
+	if not opened and not can_open():
+		EventBus.notify("Sachen aus der alten Arbeit. Jetzt nicht – ich will das gerade nicht sehen.", 3.0)
+		return
 	if not opened:
 		opened = true
 		_apply()

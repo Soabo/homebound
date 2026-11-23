@@ -26,6 +26,27 @@ func _ready() -> void:
 		cb.button_pressed = Settings.fullscreen
 		cb.toggled.connect(func(on: bool) -> void: Settings.set_value("fullscreen", on))
 		r2.add_child(cb)
+	var rf := _row("Bilder pro Sekunde (max.)")
+	var fo := OptionButton.new()
+	for v: int in Settings.FPS_CHOICES:
+		fo.add_item(Settings.fps_name(v))
+		if v == Settings.max_fps:
+			fo.select(fo.item_count - 1)
+	fo.custom_minimum_size = Vector2(220, 36)
+	fo.item_selected.connect(func(i: int) -> void: Settings.set_value("max_fps", int(Settings.FPS_CHOICES[i])))
+	rf.add_child(fo)
+	if OS.get_name() != "Web":
+		var rv := _row("Bildsynchronisierung")
+		var vs := CheckBox.new()
+		vs.button_pressed = Settings.vsync
+		vs.tooltip_text = "An: kein Bildreißen, die Bildrate folgt dem Bildschirm (z. B. 144 Hz). Aus: so schnell wie möglich."
+		vs.toggled.connect(func(on: bool) -> void: Settings.set_value("vsync", on))
+		rv.add_child(vs)
+	var rc := _row("Bildrate anzeigen")
+	var fc := CheckBox.new()
+	fc.button_pressed = Settings.show_fps
+	fc.toggled.connect(func(on: bool) -> void: Settings.set_value("show_fps", on))
+	rc.add_child(fc)
 	var r3 := _row("Schleich-Anzeige")
 	var sh := CheckBox.new()
 	sh.button_pressed = Settings.stealth_hud

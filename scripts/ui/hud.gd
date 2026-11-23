@@ -9,14 +9,15 @@ const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken    
 
 var _clock: Label
 var _prompt: Label
-var _note: Label
+var _notes: VBoxContainer   ## Hinweise oben: neuester oben, ältere rutschen nach unten und grauen aus
 var _help: Label
 var _title: Label
 var _inv: Label
 var _weight: Label
 var _fade: ColorRect
 var _hurt: ColorRect
-var _note_time: float = 0.0
+const NOTE_MAX := 4            ## so viele Hinweise stehen höchstens untereinander
+const NOTE_OLD_MIN := 4.0      ## ein nach unten gerutschter Hinweis bleibt noch mindestens so lange lesbar
 var _help_time: float = 20.0
 var _sleeping: bool = false
 
@@ -104,15 +105,15 @@ func _ready() -> void:
 	_prompt.offset_bottom = 120
 
 	# Meldungen: mittig, höchstens ~60 % der Bildbreite, lange Texte brechen um (Radio, Tablet …)
-	_note = _label(root, 26, HORIZONTAL_ALIGNMENT_CENTER)
-	_note.anchor_left = 0.2
-	_note.anchor_right = 0.8
-	_note.anchor_top = 0.18
-	_note.anchor_bottom = 0.18
-	_note.offset_bottom = 60
-	_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_note.grow_vertical = Control.GROW_DIRECTION_END
-	_note.modulate.a = 0.0
+	_notes = VBoxContainer.new()
+	_notes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_notes.anchor_left = 0.2
+	_notes.anchor_right = 0.8
+	_notes.anchor_top = 0.18
+	_notes.anchor_bottom = 0.18
+	_notes.grow_vertical = Control.GROW_DIRECTION_END
+	_notes.add_theme_constant_override("separation", 4)
+	root.add_child(_notes)
 
 	_help = _label(root, 18, HORIZONTAL_ALIGNMENT_LEFT)
 	_help.anchor_top = 1.0
@@ -190,9 +191,7 @@ func _on_prompt(text: String) -> void:
 func _process(delta: float) -> void:
 	_clock.text = "Tag %d    %s" % [TimeManager.day, TimeManager.get_clock_text()]
 	_update_weight()
-	if _note_time > 0.0:
-		_note_time -= delta
-		_note.modulate.a = clampf(_note_time / 0.6, 0.0, 1.0)
+	_update_notes(delta)
 	if _help_time > 0.0:
 		_help_time -= delta
 		if _help_time <= 0.0:
@@ -209,10 +208,53 @@ func _process(delta: float) -> void:
 	_update_bars()
 
 
+## Neuer Hinweis erscheint oben; die älteren rutschen nach unten, werden grau und kleiner
+## und bleiben noch eine Weile lesbar (Christian 23.11.: schnell aufeinanderfolgende Hinweise nachlesen können).
 func show_notification(text: String, duration: float = 3.0) -> void:
-	_note.text = text
-	_note_time = duration
-	_note.modulate.a = 1.0
+	if _notes.get_child_count() > 0:
+		var top := _notes.get_child(0) as Label
+		if top.text == text:
+			top.set_meta("t", maxf(float(top.get_meta("t")), duration))
+			top.modulate.a = 1.0
+			return
+	for c in _notes.get_children():
+		var old := c as Label
+		old.set_meta("t", maxf(float(old.get_meta("t")), NOTE_OLD_MIN))
+		old.add_theme_font_size_override("font_size", 20)
+		old.add_theme_color_override("font_color", Color(0.62, 0.62, 0.6))
+	var l := Label.new()
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_size_override("font_size", 26)
+	l.add_theme_color_override("font_color", Color(0.92, 0.9, 0.85))
+	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	l.add_theme_constant_override("outline_size", 8)
+	l.text = text
+	l.set_meta("t", duration)
+	_notes.add_child(l)
+	_notes.move_child(l, 0)
+	while _notes.get_child_count() > NOTE_MAX:
+		var last := _notes.get_child(_notes.get_child_count() - 1)
+		_notes.remove_child(last)
+		last.queue_free()
+
+
+## Der jüngste Hinweis im Stapel (leer, wenn keiner da ist) – auch für Tests.
+func current_notification() -> String:
+	return (_notes.get_child(0) as Label).text if _notes.get_child_count() > 0 else ""
+
+
+func _update_notes(delta: float) -> void:
+	for c in _notes.get_children():
+		var l := c as Label
+		var t := float(l.get_meta("t")) - delta
+		l.set_meta("t", t)
+		var faded := 0.55 if c.get_index() > 0 else 1.0   # ältere sind blasser
+		l.modulate.a = clampf(t / 0.6, 0.0, 1.0) * faded
+		if t <= 0.0:
+			_notes.remove_child(l)
+			l.queue_free()
 
 
 func _fade_help(show: bool) -> void:

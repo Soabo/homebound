@@ -380,6 +380,7 @@ func _t_more() -> void:
 	await _t_batch3_1411()
 	await _t_batch4_1411()
 	await _t_batch5_1511()
+	await _t_batch6_2311()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2650,3 +2651,118 @@ func _t_fixes_1411() -> void:
 			"liegt %s, frei nach %.1f s" % [str(lying), t])
 	TimeManager.set_time(keep_d, keep_h)
 	p.global_position = keep
+
+
+## Christians Liste 23.11.: Rauschen bleibt nicht hängen, Hinweis-Stapel, Karton erst mit Aufgabe, Topf auf dem Ofen,
+## Bretterlager, Tablet öffnet mit Aufgaben, Bildrate in den Einstellungen.
+func _t_batch6_2311() -> void:
+	var p := _player()
+	# Schleifen-Klänge ohne Positionsangabe (Rauschen) laufen nicht endlos
+	var holder := Node.new()
+	add_child(holder)
+	SoundBank.play_ui(holder, "static", -40.0)
+	await get_tree().create_timer(1.6).timeout
+	_ok("Rauschen über play_ui hört von selbst auf", holder.get_child_count() == 0)
+	holder.queue_free()
+	# Hinweise stapeln sich: neuester oben, ältere bleiben darunter
+	var hud := _scene().get_node_or_null("Hud") as Hud
+	if hud == null:
+		hud = get_tree().get_first_node_in_group("hud") as Hud
+	if hud:
+		hud.show_notification("Erster Hinweis", 0.5)
+		hud.show_notification("Zweiter Hinweis", 3.0)
+		var lines := hud._notes.get_children().map(func(c: Node) -> String: return (c as Label).text)
+		_ok("Hinweise: neuer oben, alter darunter (%s)" % [lines], lines.size() >= 2 and lines[0] == "Zweiter Hinweis" and lines[1] == "Erster Hinweis")
+		await get_tree().create_timer(1.0).timeout
+		_ok("Hinweise: der alte bleibt länger lesbar", hud._notes.get_child_count() >= 2)
+	else:
+		_ok("Hinweise: Hud gefunden", false)
+	# Umzugskarton erst mit Aufgabe
+	var box := _scene().get_node("Cabin/MovingBox") as MovingBox
+	var keep_open := box.opened
+	var keep_bypass := MovingBox.bypass_lock
+	var keep_active := Story.steps_active.duplicate()
+	var keep_done := Story.steps_done.duplicate()
+	var keep_got := Tasks.got.duplicate()
+	box.opened = false
+	MovingBox.bypass_lock = false
+	Story.steps_active.erase("p1_karton")
+	Story.steps_done.erase("p1_karton")
+	Tasks.got.erase("metal_fragment")
+	var keep_frag := Inventory.count("metal_fragment")
+	Inventory.remove("metal_fragment", keep_frag)
+	var locked := not box.can_open()
+	Story.steps_active["p1_karton"] = Tasks.task_day()
+	_ok("Umzugskarton: zu, bis die Spur dazu auffordert", locked and box.can_open())
+	box.opened = keep_open
+	MovingBox.bypass_lock = keep_bypass
+	Story.steps_active = keep_active
+	Story.steps_done = keep_done
+	Tasks.got = keep_got
+	Inventory.add("metal_fragment", keep_frag)
+	# Topf im Ofen: gart nur mit Feuer, unfertig = Zutaten zurück, fertig = Ergebnis
+	var stove := _scene().get_node("Cabin/CookStove") as CookStove
+	var boil: Dictionary = {}
+	for r: Dictionary in DataDB.recipes():
+		if r.get("id", "") == "boil_water2":
+			boil = r
+	var keep_water := Inventory.count("water")
+	var keep_raw := Inventory.count("water_raw")
+	Inventory.remove("water", keep_water)   # Stapelgrenze der Flaschen soll den Test nicht stören
+	Inventory.remove("water_raw", keep_raw)
+	var raw0 := 0
+	var clean0 := 0
+	Inventory.add("water_raw", 2)
+	stove.pot = null
+	stove.burn_until = TimeManager.get_total_hours() + 0.1
+	var why := stove.start_cooking(boil)
+	_ok("Ofen: Flaschen kommen in den Topf (%s)" % why, why == "" and Inventory.count("water_raw") == raw0 and stove.pot != null)
+	TimeManager.advance_hours(1.0)   # Feuer geht nach 0,1 Std. aus
+	for i in 3:
+		await get_tree().process_frame
+	var part := stove.pot.progress() if stove.pot else -1.0
+	_ok("Ofen: ohne Feuer bleibt es unfertig im Topf (%d %%)" % int(part * 100.0), stove.pot != null and part > 0.0 and part < 1.0)
+	stove.take_pot()
+	_ok("Ofen: unfertig herausnehmen gibt beide Flaschen zurück", stove.pot == null and Inventory.count("water_raw") == raw0 + 2)
+	stove.burn_until = TimeManager.get_total_hours() + 3.0
+	stove.start_cooking(boil)
+	TimeManager.advance_hours(1.0)
+	for i in 3:
+		await get_tree().process_frame
+	var done := stove.pot != null and stove.pot.finished()
+	stove.take_pot()
+	_ok("Ofen: mit Feuer fertig, abgekochtes Wasser herausgenommen", done and Inventory.count("water") == clean0 + 2)
+	_ok("Ofen: Topf wird gespeichert", stove.get_state().has("pot"))
+	Inventory.remove("water", Inventory.count("water"))
+	Inventory.remove("water_raw", Inventory.count("water_raw"))
+	Inventory.add("water", keep_water)
+	Inventory.add("water_raw", keep_raw)
+	stove.burn_until = -1.0
+	# Bretterlager: nehmen und auffüllen, Bretter sichtbar
+	var rack := _scene().get_node("Cabin/PlankPile") as PlankRack
+	_ok("Bretterlager ist ein Regal mit einzelnen Brettern", rack != null and rack._planks.size() >= rack.max_amount)
+	if rack:
+		var a0 := rack.amount
+		var pl0 := Inventory.count("planks")
+		rack.interact(p)
+		var after_take := rack.amount
+		rack.secondary_interact(p)
+		var shown := rack._planks.filter(func(n: Node3D) -> bool: return n.visible).size()
+		_ok("Bretterlager: nehmen und wieder auffüllen (%d → %d → %d, sichtbar %d)" % [a0, after_take, rack.amount, shown],
+				after_take < a0 and rack.amount >= a0 and shown == rack.amount and Inventory.count("planks") <= pl0)
+	# Tablet öffnet mit den Aufgaben
+	var tablet := _scene().get_node_or_null("TabletMenu") as TabletMenu
+	var couch := _scene().get_node_or_null("Cabin/Couch") as Couch
+	if tablet and couch:
+		tablet.open(couch)
+		await _frames(1)
+		_ok("Tablet: beim Öffnen Reiter Aufgaben, Aufgaben steht vorne", tablet._tab == "tasks" and (tablet._tabs.keys()[0] == "tasks"))
+		tablet._root.visible = false
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# Bildrate: Obergrenze greift
+	var keep_fps := Settings.max_fps
+	Settings.max_fps = 144
+	Settings.apply_fps()
+	_ok("Einstellungen: Max-FPS wird gesetzt", Engine.max_fps == 144 and Settings.FPS_CHOICES.has(0))
+	Settings.max_fps = keep_fps
+	Settings.apply_fps()

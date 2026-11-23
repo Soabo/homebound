@@ -81,7 +81,7 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 8)
 	v.add_child(tabs)
-	for t: Array in [["inbox", "Posteingang"], ["tasks", "Aufgaben"], ["archive", "Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"], ["journal", "Tagebuch"]]:
+	for t: Array in [["tasks", "Aufgaben"], ["inbox", "Posteingang"], ["archive", "Archiv"], ["tree", "Forschungsbaum"], ["notes", "Notizen"], ["journal", "Tagebuch"]]:
 		var tb := Button.new()
 		tb.text = t[1]
 		tb.toggle_mode = true
@@ -163,13 +163,8 @@ func open(couch: Couch) -> void:
 	_root.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_current = ""
-	_tab = "inbox"
+	_tab = "tasks"   # Christian 23.11.: beim Öffnen immer zuerst die Aufgaben
 	_refresh()
-	var av := couch.available()
-	for m: Dictionary in av:
-		if not couch.read_ids.has(m["id"]):
-			_show(m)
-			break
 
 
 func close() -> void:
@@ -188,6 +183,12 @@ func is_open() -> bool:
 func _set_tab(t: String) -> void:
 	_tab = t
 	SoundBank.play_ui(self, "menu_click", -10.0)
+	if t == "inbox" and _current == "" and _couch:
+		# im Posteingang gleich die erste ungelesene Nachricht aufschlagen
+		for m: Dictionary in _couch.available():
+			if _couch.is_unread(m):
+				_show(m)
+				return
 	_refresh()
 
 
@@ -196,6 +197,12 @@ func _refresh() -> void:
 		(_tabs[id] as Button).button_pressed = id == _tab
 	var nb := _tabs["archive"] as Button
 	nb.text = "Archiv" + ("  ● %d neu" % Research.tablet_new if Research.tablet_new > 0 and _tab != "archive" else "")
+	var unread_count := 0
+	if _couch:
+		for m: Dictionary in _couch.available():
+			if _couch.is_unread(m):
+				unread_count += 1
+	(_tabs["inbox"] as Button).text = "Posteingang" + ("  ● %d neu" % unread_count if unread_count > 0 and _tab != "inbox" else "")
 	var tk := _tabs["tasks"] as Button
 	tk.text = "Aufgaben" + ("  ● %d neu" % Tasks.unseen if Tasks.unseen > 0 and _tab != "tasks" else "")
 	_split.visible = _tab == "inbox"

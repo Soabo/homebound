@@ -14,6 +14,8 @@ var _light: OmniLight3D
 var _ember_mat: StandardMaterial3D
 var _noise := FastNoiseLite.new()
 var _t := 0.0
+var pot: CookPot = null          ## Topf über dem Feuer (CookPot)
+var _last_h: float = -1.0
 
 
 func _ready() -> void:
@@ -70,12 +72,44 @@ func get_prompt(_player: Node) -> String:
 
 
 func get_secondary_prompt(_player: Node) -> String:
-	return "[R] Über dem Feuer kochen" if _strength > 0.2 else ""
+	var inside := ("   Topf: " + pot.status_text()) if pot else ""
+	if _strength > 0.2:
+		return "[R] Über dem Feuer kochen" + inside
+	return ("[R] Topf herausnehmen" + inside) if pot else ""
 
 
 func secondary_interact(_player: Node) -> void:
 	if _strength > 0.2:
-		get_tree().call_group("game_menus", "open_crafting", "stove")
+		get_tree().call_group("game_menus", "open_crafting", "stove", self)
+	elif pot:
+		take_pot()
+
+
+## Topf über dem Feuer (wie beim Küchenofen, CookPot): gart nur, solange es richtig brennt.
+func start_cooking(r: Dictionary) -> String:
+	if pot:
+		return "Über dem Feuer hängt schon ein Topf: " + pot.status_text()
+	if not Inventory.has_all(r.get("needs", {})):
+		return "Dir fehlen Zutaten."
+	Inventory.remove_all(r.get("needs", {}))
+	pot = CookPot.start(r)
+	return ""
+
+
+func take_pot() -> void:
+	if pot == null:
+		return
+	var msg := pot.take_out()
+	if msg == "":
+		EventBus.notify("Davon kannst du nicht mehr tragen – es bleibt im Topf.", 2.5)
+		return
+	pot = null
+	EventBus.notify(msg, 2.5)
+
+
+## Gegart wird, solange das Feuer noch kräftig brennt (wie die 0,2-Grenze beim Kochen).
+func cook_until() -> float:
+	return burn_until - 0.2 * maxf(float(_cfg.get("fade_hours", 6.0)), 0.01)
 
 
 func interact(_player: Node) -> void:
@@ -109,6 +143,10 @@ func strength() -> float:
 
 
 func _process(delta: float) -> void:
+	var now := TimeManager.get_total_hours()
+	if _last_h >= 0.0:
+		CookPot.tick(pot, _last_h, now, cook_until(), "Kamin")
+	_last_h = now
 	_t += delta
 	_strength = strength()
 	var s := _strength
@@ -130,8 +168,10 @@ func persist_key() -> String:
 
 
 func get_state() -> Dictionary:
-	return {"burn_until": burn_until}
+	return {"burn_until": burn_until, "pot": pot.to_dict() if pot else {}}
 
 
 func set_state(st: Dictionary) -> void:
 	burn_until = float(st.get("burn_until", burn_until))
+	pot = CookPot.from_dict(st.get("pot", {}))
+	_last_h = -1.0

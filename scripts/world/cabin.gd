@@ -1308,19 +1308,14 @@ func _build_workshop() -> void:
 	# Werkzeugwand an der Vorderwand links vom Werkstattfenster (nicht über einer Tür!)
 	_tool_wall(HALF_Z - CLAD - 0.015, y)
 	# Bretterstapel an der Westwand, Sägebock an der Ostwand – die Fenster bleiben frei
-	var lumber := BuildKit.tex_mat("planks_h", 1.5, Color(1.25, 1.2, 1.05))
-	var pile := ItemPickup.new()
-	pile.name = "PlankPile"
-	pile.item_id = "planks"
-	pile.amount = 10
-	pile.per_take = 2
-	pile.label = "Bretter"
-	pile.collider_size = Vector3(0.4, 0.4, 1.6)
-	pile.collider_offset = Vector3(2.29, y + 0.2, 3.0)
-	add_child(pile)
-	for i in 5:
-		pile.visuals.append(BuildKit.box_mm(pile, Vector3(2.13, y + i * 0.06, 2.2), Vector3(2.45, y + 0.05 + i * 0.06, 3.8), lumber, false))
-	BuildKit.box_mm(self, Vector3(2.13, y, 2.2), Vector3(2.45, y + 0.05, 3.8), lumber, true)
+	# Bretterlager: Kragarmregal, jedes Brett sichtbar, mit R auffüllbar (PlankRack, Christian 23.11.)
+	var rack := PlankRack.new()
+	rack.name = "PlankPile"   # alter Name bleibt – der Spielstand kennt ihn
+	rack.wall_x = 2.13
+	rack.z_from = 2.2
+	rack.z_to = 3.8
+	rack.floor_y = y
+	add_child(rack)
 	for z: float in [2.75, 3.4]:
 		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.2, y + 0.36, z), m_wood, false, Vector3(0, 0, -18))
 		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.5, y + 0.36, z), m_wood, false, Vector3(0, 0, 18))

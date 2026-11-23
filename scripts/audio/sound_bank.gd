@@ -248,6 +248,23 @@ static func play_ui(parent: Node, id: String, volume_db: float = 0.0, pitch: flo
 	parent.add_child(p)
 	p.play()
 	p.finished.connect(p.queue_free)
+	# Christian 23.11.: Schleifen (z. B. Rauschen) nie endlos laufen lassen – nur kurz anspielen und ausblenden
+	if _is_loop(p.stream):
+		_cut_loop(p, 1.2)
+
+
+## Ist der Klang eine Schleife (würde ohne Stopp endlos laufen)?
+static func _is_loop(stream: AudioStream) -> bool:
+	return (stream is AudioStreamWAV and (stream as AudioStreamWAV).loop_mode != AudioStreamWAV.LOOP_DISABLED) \
+			or (stream is AudioStreamOggVorbis and (stream as AudioStreamOggVorbis).loop)
+
+
+## Eine kurz angespielte Schleife nach `seconds` ausblenden und entfernen.
+static func _cut_loop(p: Node, seconds: float) -> void:
+	var tw := p.create_tween()
+	tw.tween_interval(maxf(seconds - 0.3, 0.0))
+	tw.tween_property(p, "volume_db", -60.0, 0.3)
+	tw.tween_callback(p.queue_free)
 
 
 # --- Klang-Rezepte ------------------------------------------------------

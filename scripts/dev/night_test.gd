@@ -339,6 +339,7 @@ func _research_test() -> void:
 	print("RESEARCH Gewebeprobe: ", Inventory.count("alien_tissue"))
 	# Improvisiertes Gerät an der Werkbank (braucht W-17 aus dem Umzugskarton)
 	var box := scene.get_node("Cabin/MovingBox") as MovingBox
+	MovingBox.bypass_lock = true
 	box.interact(player)
 	box.interact(player)
 	print("RESEARCH W-17 aus dem Karton: %d, Notizen %s" % [Inventory.count("w17"), Research.notes.has("karton_mappe")])
@@ -1474,6 +1475,7 @@ func _w17_test() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
 	var slot := scene.get_node("Cabin/Radio/W17Slot") as W17Slot
 	var box := scene.get_node("Cabin/MovingBox") as MovingBox
+	MovingBox.bypass_lock = true
 	print("W17 Karton: %s" % box.get_prompt(player))
 	box.interact(player)
 	box.interact(player)
