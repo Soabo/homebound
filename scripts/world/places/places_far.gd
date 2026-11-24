@@ -1,7 +1,7 @@
 class_name PlacesFar
 extends RefCounted
 ## Orte für Mehrtagesmärsche: Außenstelle Messpunkt 4, Lusenschutzhaus (Ilse), Tunnelportal, Versunkenes Dorf,
-## Wetterstation am Rachel, Gewächshäuser, Der Wal, Rasthaus an der B12.
+## Wetterstation am Rachel, Gewächshäuser, Der Wal, Rasthaus an der B12, Alter Grenzübergang Bučina (Etappe 4).
 
 
 
@@ -15,6 +15,7 @@ static func build(id: String, root: Node3D) -> bool:
 		"gewaechshaus": _gewaechshaus(root)
 		"wal": _wal(root)
 		"raststation": _raststation(root)
+		"grenze": _grenze(root)
 		_: return false
 	return true
 
@@ -238,6 +239,24 @@ static func _dorf(root: Node3D) -> void:
 			PlaceKit.loot(ruin, "Planks", "planks", 6, Vector3(1.2, 0.06, -1.0), "logs", 2)
 		elif i == 4:
 			PlaceKit.loot(ruin, "Food", "food", 2, Vector3(0.0, 0.06, 0.8), "cans")
+	# Bayerwald (Etappe 4): Altenreuth war ein Glashüttendorf – Ruine des Glasofens mit Scherbenhalde
+	var ruins: Array[Vector3] = []
+	for r in root.get_children():
+		if r.name.begins_with("Ruin_"):
+			ruins.append((r as Node3D).position)
+	var best := Vector3.ZERO
+	var best_d := -1.0
+	for k in 16:
+		var a := TAU * k / 16.0
+		var c := Vector3(cos(a) * 30.0, 0, sin(a) * 30.0 - 6.0)
+		var d := INF
+		for rp: Vector3 in ruins:
+			d = minf(d, Vector2(rp.x - c.x, rp.z - c.z).length())
+		d = minf(d, Vector2(c.x, c.z + 6.0).length() - 12.0)   # Abstand zur Kirche
+		if d > best_d:
+			best_d = d
+			best = c
+	_glass_furnace(root, PlaceKit.on_ground(root, best.x, best.z), rng)
 	# Kirche mit begehbarem Turm (Christian 14.11.: schöner, und man muss hineinkommen)
 	var ch := Node3D.new()
 	ch.name = "Church"
@@ -302,6 +321,28 @@ static func _wetterstation(root: Node3D) -> void:
 
 
 ## Gewächshäuser: drei lange Glashäuser, zerbrochen. Drinnen wachsen nur noch fremde Pflanzen.
+	# Bayerwald (Etappe 4): stillgelegte Radarstation – zwei große weiße Kuppeln auf Betontürmen, Zaun mit Schild
+	for k in 2:
+		var rp := PlaceKit.on_ground(root, -12.0 if k == 0 else 12.0, -11.0 if k == 0 else 12.0)
+		var radar := Node3D.new()
+		radar.name = "Radome_%d" % k
+		radar.position = rp
+		root.add_child(radar)
+		BuildKit.cylinder(radar, 2.3, 6.0, Vector3(0, 3.0, 0), PlaceKit.mat("concrete"), true, Vector3.ZERO, -1.0, 14)
+		BuildKit.box(radar, Vector3(1.0, 2.0, 0.08), Vector3(0, 1.0, 2.28), PlaceKit.mat("steel_dark"), false)
+		BuildKit.sphere(radar, 3.7, Vector3(0, 8.9, 0), PlaceKit.mat("white"), Vector3(1.0, 0.92, 1.0), 20)
+		# Nähte der Kuppelhaut (dunkle Ringe)
+		for ry: float in [-1.6, 0.0, 1.6]:
+			var rr := sqrt(maxf(3.72 * 3.72 - ry * ry / (0.92 * 0.92), 0.1))
+			BuildKit.cylinder(radar, rr + 0.02, 0.05, Vector3(0, 8.9 + ry, 0), PlaceKit.mat("steel_dark"), false, Vector3.ZERO, -1.0, 20)
+		if k == 0:
+			var sign_p := Vector3(0, 0, 3.6)
+			BuildKit.box(radar, Vector3(0.08, 1.6, 0.08), sign_p + Vector3(0, 0.8, 0), PlaceKit.mat("metal"), true)
+			BuildKit.box(radar, Vector3(1.4, 0.7, 0.04), sign_p + Vector3(0, 1.45, 0.05), PlaceKit.mat("white"), false)
+			_label(radar, "MILITÄRISCHER\nSICHERHEITSBEREICH\nRadarstation – stillgelegt", sign_p + Vector3(0, 1.45, 0.08), 22, Color(0.7, 0.08, 0.05))
+			var look := PlaceKit.inspect(radar, "RadarDoor", "[E] Stahltür am Radarturm", "Verschweißt. Jemand hat mit Kreide daneben geschrieben: »Sie hören noch.« Darunter, frischer: »Wer?«", Vector3(0, 0, 2.6), Vector3(1.4, 2.0, 0.6))
+
+
 static func _gewaechshaus(root: Node3D) -> void:
 	var frame := PlaceKit.mat("metal")
 	var glass := PlaceKit.mat("glass")
@@ -480,3 +521,129 @@ static func _raststation(root: Node3D) -> void:
 	BuildKit.box(truck, Vector3(0.25, 0.3, 2.4), Vector3(9.8, 0.55, 0.0), PlaceKit.mat("steel_dark"), false, Vector3(0, 8, 0))
 	BuildKit.box(truck, Vector3(0.03, 0.12, 0.2), Vector3(9.95, 0.62, 0.7), BuildKit.color_mat(Color(0.15, 0.3, 0.75), 0.4), false)
 	PlaceKit.note(truck, "lkw_raststation", Vector3(10.3, 0.0, 0.4), true)
+
+
+## Alter Grenzübergang Bučina (Etappe 4): Zollhaus, offene Schranke, Grenzpfähle (Bayern/Tschechien), Grenzstein,
+## Reste des Eisernen Vorhangs (schiefe Betonpfosten mit Stacheldraht) und ein umgekippter Wachturm auf der anderen Seite.
+## Die Grenze verläuft im Norden (-z) am Kartenrand.
+static func _grenze(root: Node3D) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1989
+	# Zollhaus
+	var h := PlaceKit.hut(root, "Zollhaus", PlaceKit.on_ground(root, -9.0, 3.0), Vector2(6.0, 4.0), 2.6, 0.0, "wood", "gable", "shingles", 1.0, true)
+	BuildKit.box(h, Vector3(1.6, 0.05, 0.8), Vector3(-1.4, 0.78, -1.3), PlaceKit.mat("wood"), true)
+	PlaceKit.note(h, "grenze_dienstbuch", Vector3(-1.7, 0.81, -1.3))
+	PlaceKit.loot(h, "Battery", "battery", 2, Vector3(-0.8, 0.81, -1.35), "box", 1)
+	PlaceKit.loot(h, "Food", "food", 2, Vector3(2.0, 0.06, 1.3), "cans")
+	_label(h, "ZOLL · CLO", Vector3(0, 2.15, 2.1), 30, Color(0.95, 0.92, 0.85))
+	# Schranke (offen, rostig), rot-weiß
+	var bp := PlaceKit.on_ground(root, -3.2, -3.0)
+	BuildKit.box(root, Vector3(0.35, 1.1, 0.35), bp + Vector3(0, 0.55, 0), PlaceKit.mat("concrete"), true)
+	var arm := Node3D.new()
+	arm.name = "Barrier"
+	arm.position = bp + Vector3(0, 1.05, 0)
+	arm.rotation_degrees = Vector3(0, 0, 68)   # hochgeklappt
+	root.add_child(arm)
+	for k in 8:
+		BuildKit.box(arm, Vector3(0.75, 0.12, 0.12), Vector3(0.4 + k * 0.75, 0, 0), PlaceKit.mat("red" if k % 2 == 0 else "white"), false)
+	var gate := PlaceKit.inspect(root, "BarrierLook", "[E] Schranke ansehen", "Rostig, hochgeklappt. Seit über dreißig Jahren hat hier keiner mehr kontrolliert. Im Schnee davor: frische Spuren – sie führen nur in eine Richtung, über die Grenze.", bp, Vector3(1.0, 1.4, 1.0))
+	# Grenzpfähle und Grenzstein
+	var de := PlaceKit.on_ground(root, -2.0, -9.0)
+	var cz := PlaceKit.on_ground(root, 2.2, -10.0)
+	for k in 6:   # Bayern: weiß-blau, Deutschland: schwarz-rot-gold (oben)
+		var c := ["white", "blue", "white", "black", "red", "gold"][k] as String
+		BuildKit.cylinder(root, 0.09, 0.3, de + Vector3(0, 0.15 + k * 0.3, 0), _flag_mat(c), true, Vector3.ZERO, -1.0, 8)
+	for k in 6:   # Tschechien: rot-weiß-blau im Wechsel
+		var c := ["red", "white", "blue"][k % 3] as String
+		BuildKit.cylinder(root, 0.09, 0.3, cz + Vector3(0, 0.15 + k * 0.3, 0), _flag_mat(c), true, Vector3.ZERO, -1.0, 8)
+	var stone_p := PlaceKit.on_ground(root, 0.0, -9.6)
+	BuildKit.box(root, Vector3(0.45, 0.7, 0.3), stone_p + Vector3(0, 0.3, 0), PlaceKit.mat("stone"), true)
+	_label(root, "D", stone_p + Vector3(0, 0.45, 0.16), 34, Color(0.1, 0.1, 0.1))
+	_label(root, "Č", stone_p + Vector3(0, 0.45, -0.16), 34, Color(0.1, 0.1, 0.1), 180.0)
+	# Grenzschild
+	var sp := PlaceKit.on_ground(root, 4.5, -6.0)
+	BuildKit.box(root, Vector3(0.08, 2.0, 0.08), sp + Vector3(-0.7, 1.0, 0), PlaceKit.mat("metal"), true)
+	BuildKit.box(root, Vector3(0.08, 2.0, 0.08), sp + Vector3(0.7, 1.0, 0), PlaceKit.mat("metal"), true)
+	BuildKit.box(root, Vector3(1.8, 0.8, 0.04), sp + Vector3(0, 1.75, 0.05), PlaceKit.mat("white"), false)
+	_label(root, "STAATSGRENZE\nSTÁTNÍ HRANICE", sp + Vector3(0, 1.75, 0.08), 28, Color(0.1, 0.12, 0.35))
+	# Eiserner Vorhang: schiefe Betonpfosten mit Stacheldraht, manche umgefallen
+	var wire := PlaceKit.mat("rust")
+	var prev := Vector3.INF
+	for k in 14:
+		var lx := -26.0 + k * 4.0
+		var lp := PlaceKit.on_ground(root, lx, -19.0 + rng.randf_range(-0.4, 0.4))
+		var fallen := rng.randf() < 0.2
+		var post := Node3D.new()
+		post.position = lp
+		post.rotation_degrees = Vector3(rng.randf_range(-6, 6), 0, 80.0 if fallen else rng.randf_range(-5, 5))
+		root.add_child(post)
+		BuildKit.box(post, Vector3(0.16, 2.2, 0.16), Vector3(0, 1.1, 0), PlaceKit.mat("concrete"), not fallen)
+		BuildKit.box(post, Vector3(0.12, 0.6, 0.12), Vector3(0, 2.35, -0.2), PlaceKit.mat("concrete"), false, Vector3(-45, 0, 0))
+		if not fallen and prev != Vector3.INF and rng.randf() < 0.75:
+			for wy: float in [0.4, 0.9, 1.4, 1.9]:
+				var a := prev + Vector3(0, wy, 0)
+				var b := lp + Vector3(0, wy + rng.randf_range(-0.25, 0.1), 0)
+				BuildKit.beam_between(root, a, b, 0.012, wire)
+		prev = Vector3.INF if fallen else lp
+	# umgekippter Wachturm drüben
+	var tw := Node3D.new()
+	tw.name = "Watchtower"
+	tw.position = PlaceKit.on_ground(root, 14.0, -27.0)
+	tw.rotation_degrees = Vector3(0, 25, -14)
+	root.add_child(tw)
+	for lx: float in [-1.2, 1.2]:
+		for lz: float in [-1.2, 1.2]:
+			BuildKit.box(tw, Vector3(0.18, 6.0, 0.18), Vector3(lx, 3.0, lz), PlaceKit.mat("wood_old"), true)
+	BuildKit.box(tw, Vector3(3.2, 0.15, 3.2), Vector3(0, 6.0, 0), PlaceKit.mat("wood_old"), false)
+	BuildKit.box(tw, Vector3(3.2, 1.0, 0.1), Vector3(0, 6.6, 1.55), PlaceKit.mat("wood_old"), false)
+	BuildKit.box(tw, Vector3(3.6, 0.12, 3.6), Vector3(0, 7.8, 0), PlaceKit.mat("tin"), false, Vector3(0, 0, 8))
+
+
+static func _flag_mat(c: String) -> Material:
+	match c:
+		"blue": return BuildKit.color_mat(Color(0.15, 0.3, 0.7), 0.6)
+		"black": return BuildKit.color_mat(Color(0.06, 0.06, 0.06), 0.6)
+		"gold": return BuildKit.color_mat(Color(0.9, 0.72, 0.1), 0.5)
+		"red": return PlaceKit.mat("red")
+	return PlaceKit.mat("white")
+
+
+## Glasofen der alten Glashütte Altenreuth: runder Ziegelsockel, halb eingestürzte Kuppel mit Arbeitsöffnungen,
+## Kaminstumpf, Scherben in Grün, Blau und Bernstein, Schlacke. Schild + Notiz.
+static func _glass_furnace(root: Node3D, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var f := Node3D.new()
+	f.name = "Glashuette"
+	f.position = at
+	root.add_child(f)
+	var brick := BuildKit.color_mat(Color(0.5, 0.26, 0.18), 0.95)
+	var soot := BuildKit.color_mat(Color(0.12, 0.1, 0.09), 1.0)
+	BuildKit.cylinder(f, 2.6, 1.1, Vector3(0, 0.45, 0), brick, true, Vector3.ZERO, -1.0, 16)
+	var dome := BuildKit.sphere(f, 2.3, Vector3(0, 1.0, 0), brick, Vector3(1.0, 0.75, 1.0), 14)
+	dome.rotation_degrees = Vector3(18, 0, 0)   # eingesackt
+	for k in 4:   # Arbeitslöcher (Glasmacher standen rundherum)
+		var a := TAU * k / 4.0 + 0.4
+		BuildKit.box(f, Vector3(0.55, 0.45, 0.3), Vector3(cos(a) * 2.25, 1.2, sin(a) * 2.25), soot, false, Vector3(0, -rad_to_deg(a), 0))
+	BuildKit.cylinder(f, 0.55, 2.4, Vector3(-1.6, 2.2, -1.2), brick, true, Vector3(0, 0, 6), 0.45, 10)   # Kaminstumpf
+	DrownedVillage.rubble(f, Vector3(1.8, 0, 1.6), 9, 1.2, brick, rng)
+	# Scherbenhalde: viele kleine Glasstücke, leicht glänzend
+	var colors := [Color(0.25, 0.55, 0.3, 0.75), Color(0.2, 0.35, 0.65, 0.75), Color(0.7, 0.45, 0.12, 0.75), Color(0.75, 0.8, 0.78, 0.6)]
+	for i in 70:
+		var col: Color = colors[rng.randi() % colors.size()]
+		var m := StandardMaterial3D.new()
+		m.albedo_color = col
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.roughness = 0.08
+		m.metallic_specular = 0.9
+		var r := rng.randf_range(2.8, 5.5)
+		var a := rng.randf() * TAU
+		var gx := cos(a) * r
+		var gz := sin(a) * r
+		BuildKit.box(f, Vector3(rng.randf_range(0.04, 0.12), 0.01, rng.randf_range(0.03, 0.09)),
+				Vector3(gx, PlaceKit.ground(root, at.x + gx, at.z + gz) - at.y + 0.02, gz),
+				m, false, Vector3(rng.randf_range(-20, 20), rng.randf() * 180.0, rng.randf_range(-20, 20)))
+	# Schild
+	var sp := Vector3(0, 0, 3.6)
+	BuildKit.box(f, Vector3(0.1, 1.4, 0.1), sp + Vector3(0, 0.7, 0), PlaceKit.mat("wood_old"), true)
+	BuildKit.box(f, Vector3(1.3, 0.55, 0.05), sp + Vector3(0, 1.3, 0.06), PlaceKit.mat("wood_old"), false)
+	_label(f, "Glashütte Altenreuth\n1721 – 1898", sp + Vector3(0, 1.3, 0.1), 24, Color(0.92, 0.88, 0.78))
+	PlaceKit.note(f, "dorf_glashuette", Vector3(0.45, 0.08, 3.4))

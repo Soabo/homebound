@@ -1998,6 +1998,26 @@
     "totenbretter": {
       "name": "Drei Totenbretter",
       "text": "Drei schmale Bretter am Abzweig vom Gunthersteig, mit kleinem Dach gegen den Regen. Ich habe sie aufstellen lassen, als ich hergekommen bin – so macht man das hier im Wald. Der Schreiner in Mauth hat nicht gefragt, warum drei auf einmal.\nUnten auf jedem Brett, kleiner: »Herr, gib ihnen die ewige Ruhe.«\nIch bleibe nie lange davor stehen."
+    },
+    "grenze_dienstbuch": {
+      "name": "Dienstbuch Grenzübergang Bučina",
+      "text": "Letzter regulärer Eintrag, 21.12.2007: »Schengen. Station wird aufgegeben. Schranke offen gelassen.«\nDarunter, mit anderem Stift, viele Jahre später: »Nachts wieder Licht auf der anderen Seite. Keine Fahrzeuge. Keine Menschen. Es kommt nicht über die Straße – es kommt aus dem Boden.«\nGanz unten, kaum lesbar: »Messpunkt 5 liegt drüben. Sie haben auch dort gegraben.«"
+    },
+    "stollen_tafel": {
+      "name": "Tafel am Stollen I",
+      "text": "»Feldspat-Stollen I, angeschlagen 1923, stillgelegt 1951. Betreten verboten – Einsturzgefahr.«\nJemand hat mit roter Farbe darüber gesprüht: »NICHT WEITER ALS BIS ZUM HUNT«."
+    },
+    "stollen_wurzeln": {
+      "name": "Zettel im Stollen",
+      "text": "Ein Zettel unter einem Stein, Firmenpapier von ReZort Industries:\n»Probebohrung 7 – Stollen I: Wurzelgeflecht durchdringt den Versturz von Osten. Wachstum seit letzter Messung: 40 cm. Richtung: Talsohle. Empfehlung: Stollen versiegeln. Nicht beproben.«\nDie Wurzeln am Schutt sind warm, wenn man sie berührt."
+    },
+    "klause_tafel": {
+      "name": "Infotafel Reschbachklause",
+      "text": "»Triftklausen stauten früher das Wasser der Waldbäche. Im Frühjahr öffnete man das Klaustor, und die Flutwelle trug das Brennholz bis zur Ilz und weiter nach Passau. Die Reschbachklause wurde 1849 erbaut.«\nUnten in der Ecke klebt ein Aufkleber vom Nationalpark: »Bitte Wege nicht verlassen.« Jemand hat »bitte« durchgestrichen."
+    },
+    "dorf_glashuette": {
+      "name": "Schild an der Glashütte",
+      "text": "»Glashütte Altenreuth, 1721–1898. Hier wurde grünes Waldglas geblasen. Nach dem Ende der Hütte blieben die Glasmacherfamilien als Holzhauer. 1962 versank das Dorf im Stausee.«\nIm Ruß der Ofenöffnung hat jemand mit dem Finger geschrieben: »Sie haben hier schon einmal gesucht.«"
     }
   },
   "lab": {

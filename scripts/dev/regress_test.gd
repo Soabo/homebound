@@ -391,6 +391,7 @@ func _t_more() -> void:
 	await _t_season_2411()
 	await _t_greens_2411()
 	await _t_landscape_2411()
+	await _t_places_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3426,3 +3427,44 @@ func _rock_count(wf: WildForest, at: Vector3) -> int:
 		return -1
 	var mm := root.get_node_or_null("Rocks") as MultiMeshInstance3D
 	return mm.multimesh.instance_count if mm else 0
+
+
+## Etappe 4 (Christian 24.11.): Grenzübergang Bučina, Radarkuppeln am Rachel, Reschbachklause, Stollen im Granitbruch,
+## Glashütte im versunkenen Dorf.
+func _t_places_2411() -> void:
+	var places := _scene().get_node("Places")
+	var g := places.get_node_or_null("grenze")
+	_ok("Grenzübergang: Zollhaus, Schranke, Wachturm, Dienstbuch",
+			g != null and g.get_node_or_null("Zollhaus") != null and g.get_node_or_null("Barrier") != null and g.get_node_or_null("Watchtower") != null \
+			and g.find_children("*", "ResearchNote", true, false).size() >= 1)
+	var gp: Vector2 = WorldMap.places()["grenze"]["pos"]
+	_ok("Grenzübergang: Grenzsteig führt hin (%.1f m)" % WorldMap.trail_info(gp.x - 12.0, gp.y + 5.0).x, WorldMap.trail_info(gp.x - 12.0, gp.y + 5.0).x < 4.0)
+	var w := places.get_node_or_null("wetterstation")
+	_ok("Radarkuppeln an der Wetterstation", w != null and w.get_node_or_null("Radome_0") != null and w.get_node_or_null("Radome_1") != null)
+	var k := places.get_node_or_null("klause")
+	_ok("Reschbachklause: Damm mit Klaustor und Infotafel", k != null and k.get_node_or_null("KlausTor") != null and k.find_children("*", "ResearchNote", true, false).size() >= 1)
+	var kp: Vector2 = WorldMap.places()["klause"]["pos"]
+	var up := Vector2(kp.x, kp.y - 18.0)
+	_ok("Reschbachklause: Klausweiher dahinter", Terrain.water_level_at(up.x, up.y) > Terrain.height_at(up.x, up.y) + 0.3)
+	_ok("Reschbachklause: Weg zum Damm", WorldMap.trail_info(kp.x - 8.0, kp.y).x < 3.0)
+	# Stollen: Boden begehbar, Gelände darunter, Decke darüber
+	var s := places.get_node_or_null("steinbruch/Stollen") as Node3D
+	_ok("Stollen im Granitbruch vorhanden", s != null)
+	if s:
+		var inside := s.global_position + Vector3(8.0, 1.0, 0.0)
+		var ground_h := Terrain.height_at(inside.x, inside.z)
+		var space := (s as Node3D).get_world_3d().direct_space_state
+		var q := PhysicsRayQueryParameters3D.create(inside, inside + Vector3(0, -3, 0))
+		var hit := space.intersect_ray(q)
+		var q2 := PhysicsRayQueryParameters3D.create(inside, inside + Vector3(0, 4, 0))
+		var hit2 := space.intersect_ray(q2)
+		var ent := s.global_position + Vector3(-2.5, 0.0, 0.0)
+		_ok("Stollen: Boden trägt, Gelände liegt darunter (Boden %.2f, Gelände %.2f)" % [s.global_position.y, ground_h],
+				not hit.is_empty() and ground_h < s.global_position.y + 0.05)
+		_ok("Stollen: Decke über dem Kopf", not hit2.is_empty() and float((hit2["position"] as Vector3).y) < inside.y + 2.0)
+		_ok("Stollen: Eingang ebenerdig vom Bruch aus (%.2f m Stufe)" % absf(Terrain.height_at(ent.x, ent.z) - s.global_position.y),
+				absf(Terrain.height_at(ent.x, ent.z) - s.global_position.y) < 0.6)
+		_ok("Stollen: Notizen (Tafel + Zettel)", s.find_children("*", "ResearchNote", true, false).size() >= 2)
+	var d := places.get_node_or_null("dorf/Glashuette")
+	_ok("Glashütte im versunkenen Dorf", d != null and d.find_children("*", "ResearchNote", true, false).size() >= 1)
+	_ok("Dorf heißt jetzt Altenreuth", String(WorldMap.places()["dorf"]["name"]).begins_with("Altenreuth"))

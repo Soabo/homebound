@@ -1,7 +1,8 @@
 class_name PlacesDay
 extends RefCounted
 ## Orte für einen Tagesmarsch: Messstelle 4-Nord, Funkmast, Rachelsee, Granitbruch, Kontrollpunkt Mauth,
-## Ferienlager, Schäferkarren, Finsterauer Filz, Totholzhang, Lichtung der Spiegel.
+## Ferienlager, Schäferkarren, Finsterauer Filz, Totholzhang, Lichtung der Spiegel, Reschbachklause (Etappe 4).
+## Im Granitbruch dazu ein alter Stollen (Etappe 4, map.json „cuts“ mit floor_drop).
 
 
 
@@ -17,6 +18,7 @@ static func build(id: String, root: Node3D) -> bool:
 		"moor": _moor(root)
 		"windwurf": _windwurf(root)
 		"spiegel": _spiegel(root)
+		"klause": _klause(root)
 		_: return false
 	return true
 
@@ -222,6 +224,9 @@ static func _steinbruch(root: Node3D) -> void:
 
 
 ## Kontrollpunkt an der Straße: Schranke, Armeezelte, Sandsäcke, umgekippter LKW. Niemand mehr da.
+	_stollen(root)
+
+
 static func _kontrollpunkt(root: Node3D) -> void:
 	var olive := PlaceKit.mat("olive")
 	# Schranke über die Straße
@@ -478,3 +483,129 @@ static func _spiegel(root: Node3D) -> void:
 	PlaceKit.loot(root, "Water", "water", 1, c + Vector3(1.0, 0.0, -0.6), "bottles")
 	for k in 3:
 		BuildKit.box(root, Vector3(0.22, 0.3, 0.14), c + Vector3(-1.2 + k * 0.3, 0.15, 1.3), BuildKit.color_mat(Color(0.2, 0.35, 0.6), 0.4), false, Vector3(0, 0, 80))
+
+
+## Alter Feldspat-Stollen in der Ostwand des Granitbruchs: Holzportal, Türstöcke, Schienen, ein Hunt (Förderwagen),
+## am Ende verschüttet – und durch den Schutt wachsen fremde Wurzeln (Story: Wurzelwerk). Der Berg darüber ist per „cut“
+## ausgeschnitten (map.json, floor_drop), das Gestein darüber deckt der Felsklotz ab.
+static func _stollen(root: Node3D) -> void:
+	# Portal am Fuß der Ostwand; der Geländeeinschnitt (map.json cuts) muss zu X0/LEN passen
+	const X0 := 37.0
+	const LEN := 24.0
+	var floor_y := PlaceKit.ground(root, X0 - 3.0, 0.0)
+	var s := Node3D.new()
+	s.name = "Stollen"
+	s.position = Vector3(X0, floor_y, 0)
+	root.add_child(s)
+	var rock := PlaceKit.mat("rock")
+	var timber := PlaceKit.mat("wood_old")
+	BuildKit.box(s, Vector3(LEN, 0.5, 3.4), Vector3(LEN * 0.5, -0.25, 0), PlaceKit.mat("stone_dark"), true)
+	for sz: float in [-1.0, 1.0]:
+		BuildKit.box(s, Vector3(LEN, 2.6, 0.5), Vector3(LEN * 0.5, 1.3, sz * 1.45), rock, true)
+	BuildKit.box(s, Vector3(LEN, 0.5, 3.4), Vector3(LEN * 0.5, 2.75, 0), rock, true)
+	# Gestein über dem Stollen bis zur Geländeoberfläche, abschnittsweise (folgt dem Hang)
+	const SEGS := 24
+	for k in SEGS:
+		var x0 := X0 + k * LEN / SEGS
+		var xm := x0 + LEN / SEGS * 0.5
+		var top := (PlaceKit.ground(root, xm, -3.5) + PlaceKit.ground(root, xm, 3.5)) * 0.5 + 0.1
+		if top > floor_y + 3.0:
+			BuildKit.box(root, Vector3(LEN / SEGS + 0.05, top - floor_y - 2.9, 6.5), Vector3(xm, floor_y + 2.9 + (top - floor_y - 2.9) * 0.5, 0), rock, false)
+	# Portal mit Schild
+	for sz: float in [-1.0, 1.0]:
+		BuildKit.box(s, Vector3(0.3, 2.6, 0.3), Vector3(0.1, 1.3, sz * 1.25), timber, true)
+	BuildKit.box(s, Vector3(0.4, 0.35, 3.0), Vector3(0.1, 2.55, 0), timber, false)
+	label(s, "STOLLEN I · 1923\nGlück auf", Vector3(-0.15, 2.55, 0), 24, Color(0.92, 0.88, 0.78), -90.0)
+	# Türstöcke (Holzrahmen) alle 2,2 m, einer ist eingeknickt
+	for k in int(LEN / 2.2):
+		var x := 1.6 + k * 2.2
+		var tilt := 9.0 if k == 6 else 0.0
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(s, Vector3(0.18, 2.4, 0.18), Vector3(x, 1.2, sz * 1.1), timber, false, Vector3(tilt, 0, 0))
+		BuildKit.box(s, Vector3(0.2, 0.18, 2.4), Vector3(x, 2.42, 0), timber, false, Vector3(0, 0, tilt * 0.5))
+	# Schienen und Schwellen, Hunt
+	for k in int((LEN - 4.0) / 0.7):
+		BuildKit.box(s, Vector3(0.18, 0.08, 1.3), Vector3(0.6 + k * 0.7, 0.04, 0), timber, false)
+	for sz: float in [-0.35, 0.35]:
+		BuildKit.box(s, Vector3(LEN - 4.0, 0.06, 0.05), Vector3((LEN - 4.0) * 0.5 + 0.3, 0.11, sz), PlaceKit.mat("rust"), false)
+	var cart := Node3D.new()
+	cart.name = "Hunt"
+	cart.position = Vector3(9.0, 0.14, 0)
+	s.add_child(cart)
+	BuildKit.box(cart, Vector3(1.3, 0.7, 0.9), Vector3(0, 0.55, 0), PlaceKit.mat("rust"), true)
+	for wx: float in [-0.4, 0.4]:
+		for wz: float in [-0.38, 0.38]:
+			BuildKit.cylinder(cart, 0.14, 0.06, Vector3(wx, 0.14, wz), PlaceKit.mat("steel_dark"), false, Vector3(90, 0, 0), -1.0, 10)
+	PlaceKit.loot(cart, "Scrap", "scrap", 4, Vector3(0, 0.92, 0), "parts", 2)
+	PlaceKit.note(s, "stollen_tafel", Vector3(1.0, 0.05, -0.9))
+	# Grubenlampe, fast leer
+	var lamp := OmniLight3D.new()
+	lamp.light_color = Color(1.0, 0.75, 0.45)
+	lamp.light_energy = 0.35
+	lamp.omni_range = 5.0
+	lamp.position = Vector3(5.0, 2.2, 0.9)
+	s.add_child(lamp)
+	BuildKit.box(s, Vector3(0.12, 0.18, 0.12), Vector3(5.0, 2.2, 0.95), BuildKit.emissive_mat(Color(1.0, 0.75, 0.4), 0.8), false)
+	# Verschüttetes Ende, fremde Wurzeln drängen durch
+	var end_x := LEN - 3.0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1923
+	for i in 16:
+		BuildKit.sphere(s, rng.randf_range(0.35, 0.8), Vector3(end_x + rng.randf_range(-0.6, 1.4), rng.randf_range(0.2, 2.2), rng.randf_range(-1.1, 1.1)), rock, Vector3(1.2, 0.8, 1.0), 7)
+	for i in 7:
+		var a := Vector3(end_x + 1.5, rng.randf_range(0.4, 2.4), rng.randf_range(-1.0, 1.0))
+		var b := Vector3(end_x - rng.randf_range(1.0, 3.0), rng.randf_range(0.0, 1.8), rng.randf_range(-1.2, 1.2))
+		BuildKit.beam_between(s, a, b, rng.randf_range(0.06, 0.13), PlaceKit.mat("alien"))
+	BuildKit.box(s, Vector3(0.6, 0.4, 0.6), Vector3(end_x - 2.2, 0.2, 0.7), PlaceKit.mat("wood_h"), true)
+	PlaceKit.note(s, "stollen_wurzeln", Vector3(end_x - 2.2, 0.42, 0.7))
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(0.6, 0.45, 1.0)
+	glow.light_energy = 0.5
+	glow.omni_range = 4.0
+	glow.position = Vector3(end_x, 1.2, 0)
+	s.add_child(glow)
+
+
+## Reschbachklause (Etappe 4): alte Triftklause am Bach – Staudamm aus Granitquadern und Holz mit Klaustor,
+## dahinter der Klausweiher (map.json lakes). Oben ein Steg zum Hinübergehen, Infotafel.
+static func _klause(root: Node3D) -> void:
+	var bed := PlaceKit.ground(root, 0, 0)
+	var bank := maxf(PlaceKit.ground(root, -6.0, 0), PlaceKit.ground(root, 6.0, 0))
+	var top := maxf(bank + 0.4, bed + 2.2)
+	var stone := PlaceKit.mat("stone")
+	var wood := PlaceKit.mat("wood_old")
+	# Widerlager aus Granit links und rechts
+	for sx: float in [-1.0, 1.0]:
+		var gy := PlaceKit.ground(root, sx * 5.0, 0)
+		var lo := minf(gy, bed) - 1.0
+		BuildKit.box(root, Vector3(3.0, top - lo, 3.2), Vector3(sx * 4.5, lo + (top - lo) * 0.5, 0), stone, true)
+	# Holzwand zwischen den Widerlagern (Bohlen), Mitte = Klaustor (etwas hochgezogen, Wasser läuft darunter durch)
+	for k in int((top - bed) / 0.3) + 1:
+		var y := bed - 0.4 + k * 0.3
+		if y > top - 0.15:
+			break
+		BuildKit.box(root, Vector3(1.9, 0.26, 0.22), Vector3(-2.05, y, 0), wood, true)
+		BuildKit.box(root, Vector3(1.9, 0.26, 0.22), Vector3(2.05, y, 0), wood, true)
+		if y > bed + 0.55:
+			BuildKit.box(root, Vector3(2.2, 0.26, 0.2), Vector3(0, y, -0.15), wood, false)
+	for sx: float in [-1.15, 1.15]:
+		BuildKit.box(root, Vector3(0.3, top - bed + 1.6, 0.3), Vector3(sx, bed + (top - bed + 1.6) * 0.5 - 0.3, 0), wood, true)
+	BuildKit.box(root, Vector3(2.6, 0.3, 0.35), Vector3(0, top + 1.1, 0), wood, false)
+	# Zugstange des Tors mit Kurbel
+	BuildKit.box(root, Vector3(0.08, 1.4, 0.08), Vector3(0, top + 0.4, -0.15), PlaceKit.mat("rust"), false)
+	BuildKit.cylinder(root, 0.25, 0.06, Vector3(0.4, top + 1.25, 0), PlaceKit.mat("rust"), false, Vector3(0, 0, 90), -1.0, 10)
+	# Steg oben (begehbar) mit Geländer
+	BuildKit.box(root, Vector3(12.0, 0.15, 1.3), Vector3(0, top, 0.85), wood, true)
+	for k in 7:
+		var x := -6.0 + k * 2.0
+		BuildKit.box(root, Vector3(0.1, 1.0, 0.1), Vector3(x, top + 0.5, 1.45), wood, false)
+	BuildKit.box(root, Vector3(12.0, 0.08, 0.08), Vector3(0, top + 0.95, 1.45), wood, true)
+	var gate := PlaceKit.inspect(root, "KlausTor", "[E] Klaustor ansehen", "Das Tor sitzt fest, verkeilt mit altem Treibholz. Wasser drückt dagegen. Im Holz eingeschnitzt: »G. W. 1998« – und darunter, frisch, dieselben Buchstaben.", Vector3(0, top - 0.5, 0), Vector3(2.4, 1.6, 0.8))
+	# Infotafel am Westufer
+	var tp := PlaceKit.on_ground(root, -7.5, 2.5)
+	BuildKit.box(root, Vector3(0.1, 1.5, 0.1), tp + Vector3(-0.6, 0.75, 0), wood, true)
+	BuildKit.box(root, Vector3(0.1, 1.5, 0.1), tp + Vector3(0.6, 0.75, 0), wood, true)
+	BuildKit.box(root, Vector3(1.4, 0.8, 0.05), tp + Vector3(0, 1.35, 0.06), PlaceKit.mat("wood_h"), false)
+	label(root, "RESCHBACHKLAUSE\nTriftklause · erbaut 1849", tp + Vector3(0, 1.45, 0.1), 22, Color(0.1, 0.08, 0.05))
+	PlaceKit.note(root, "klause_tafel", tp + Vector3(0.3, 1.15, 0.1))
+	PlaceKit.loot(root, "Planks", "planks", 3, PlaceKit.on_ground(root, -7.0, -1.5), "logs", 1)

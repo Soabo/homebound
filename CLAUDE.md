@@ -810,6 +810,22 @@
     (`TreeKit` „hute“, feste Plätze je Schachten), Holzschild am Weg (`WorldTrails._schachten_signs`).
   - Shader-Normalen jetzt mit `MODEL_NORMAL_MATRIX` (gestreckte Stämme bekamen sonst Schnee-Streifen).
   - Tour-Bilder I0–I3 (Schlüssel `look_rel` = Blickziel über dem Gelände). Prüfung `RegressTest._t_landscape_2411`.
+- Etappe 4 Orte (Christian 24.11.):
+  - Neuer Ort `grenze` „Alter Grenzübergang Bučina“ (250, -1058, multi) am Nordrand: Zollhaus (Dienstbuch `grenze_dienstbuch`,
+    Batterien, Essen), hochgeklappte Schranke, Grenzpfähle Bayern/Tschechien, Grenzstein D|Č, Schild, Reste des Eisernen Vorhangs,
+    umgekippter Wachturm (`PlacesFar._grenze`). Weg `grenzweg` „Grenzsteig“ ab der Außenstelle, Wegweiser dort.
+  - Neuer Ort `klause` „Reschbachklause“ (Bach, stream_z -276, day): Triftklause aus Granit + Bohlen mit Klaustor, begehbarer Steg,
+    Infotafel (`klause_tafel`), dahinter See `klausweiher` (lakes, stream_z -300). Stichweg `klauseweg` vom Nordweg, Wegweiser.
+  - Stollen im Granitbruch (`PlacesDay._stollen`, Ostwand): map.json `cuts` mit `floor_drop` (Boden tiefer als die Ortsfläche),
+    Holzportal „Stollen I · 1923“, Türstöcke, Schienen, Hunt mit Schrott, verschütteter Rest mit fremden Wurzeln (`stollen_tafel`,
+    `stollen_wurzeln`), schwaches Licht.
+  - Wetterstation am Rachel: zwei Radarkuppeln auf Betontürmen (`Radome_0/1`), Schild „Militärischer Sicherheitsbereich“, verschweißte Tür.
+  - Versunkenes Dorf heißt „Altenreuth (versunkenes Glashüttendorf)“ (Wegweiser „Altenreuth“): Glasofen-Ruine mit Scherbenhalde,
+    Schild 1721–1898 (`PlacesFar._glass_furnace`, Notiz `dorf_glashuette`).
+  - Kontrollpunkt Mauth (Grenzpolizei an der Straße) bleibt wie er ist.
+  - Seen am Bach (`stream_z`): Quellsee = Spiegel am Bachanfang, alle anderen (Klausweiher) = Bachwasser am unteren Seeende
+    (`WorldMap.lake_level`). Stollen: Portal am Wandfuß (X0 37), Gestein darüber in 1-m-Abschnitten, Einschnitt map.json cuts passend.
+  - Tour-Bilder J0–J4. Prüfung `RegressTest._t_places_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

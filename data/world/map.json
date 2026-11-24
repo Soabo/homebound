@@ -17,6 +17,7 @@
   "lakes": [
     {"id": "schwarzer_see", "name": "Rachelsee", "pos": [470, -430], "r": 60, "depth": 6.0},
     {"id": "fuchsweiher", "name": "Fuchsweiher", "pos": [-445, 335], "r": 36, "depth": 3.0},
+    {"id": "klausweiher", "name": "Klausweiher", "stream_z": -300, "r": 20, "depth": 2.5},
     {"id": "quellsee", "name": "Reschbachquelle", "stream_z": -1050, "r": 42, "depth": 4.0}
   ],
   "basins": [
@@ -59,19 +60,24 @@
     {"id": "aussenstelle", "name": "Außenstelle Messpunkt 4", "sign": "Außenstelle MP 4", "pos": [-180, -930], "ring": "multi", "clear": 62, "flat": 48},
     {"id": "ilse", "name": "Lusenschutzhaus", "pos": [-930, -830], "ring": "multi", "clear": 22, "flat": 13},
     {"id": "tunnel", "name": "Tunnelportal", "pos": [842, -290], "ring": "multi", "clear": 36, "flat": 28, "drop": 20},
-    {"id": "dorf", "name": "Versunkenes Dorf", "stream_z": 870, "offset": [24, 0], "ring": "multi", "clear": 140, "flat": 0},
+    {"id": "dorf", "name": "Altenreuth (versunkenes Glashüttendorf)", "sign": "Altenreuth", "stream_z": 870, "offset": [24, 0], "ring": "multi", "clear": 140, "flat": 0},
     {"id": "wetterstation", "name": "Wetterstation am Rachel", "sign": "Wetterstation", "pos": [880, -930], "ring": "multi", "clear": 30, "flat": 17},
     {"id": "gewaechshaus", "name": "Gewächshäuser", "pos": [-860, 620], "ring": "multi", "clear": 56, "flat": 44},
     {"id": "wal", "name": "Der Wal", "pos": [690, 770], "ring": "multi", "clear": 48, "flat": 22},
+    {"id": "grenze", "name": "Alter Grenzübergang Bučina", "sign": "Grenzübergang", "pos": [250, -1058], "ring": "multi", "clear": 28, "flat": 12},
+    {"id": "klause", "name": "Reschbachklause", "sign": "Reschbachklause", "stream_z": -276, "ring": "day", "clear": 16, "flat": 0},
     {"id": "raststation", "name": "Rasthaus Waldblick", "road_z": 1040, "offset": [26, 0], "ring": "multi", "clear": 62, "flat": 46}
   ],
   "w17_sites": ["absturz", "struktur", "hoehle", "brunnen", "messstelle", "aussenstelle", "tunnel", "wal", "gewaechshaus", "windwurf", "moor", "imkerei"],
   "cuts": [
+    {"place": "steinbruch", "pos": [614, 245], "half": [13, 1.9], "yaw": 0, "floor_drop": 10.4},
     {"place": "tunnel", "pos": [886, -290], "half": [24, 3.2], "yaw": 0}
   ],
   "trails": [
     {"id": "nord", "kind": "track", "w": 3.4, "pts": [[4.5, -17], [5, -40], [10, -72], [22, -120], [40, -210], [52, -330], [60, -462], [20, -560], [-40, -680], [-110, -800], [-170, -905]], "name": "Nordweg", "mark": "#e0b81c", "board": "Hochsitz – Messstelle – Außenstelle"},
     {"id": "ilse", "kind": "path", "w": 1.6, "pts": [[-200, -935], [-330, -900], [-480, -880], [-620, -860], [-760, -840], [-900, -830]]},
+    {"id": "grenzweg", "name": "Grenzsteig", "kind": "path", "w": 1.6, "pts": [[-170, -905], [-90, -950], [-10, -985], [70, -1005], [160, -1030], [235, -1052]]},
+    {"id": "klauseweg", "kind": "path", "w": 1.6, "pts": [[46, -274], [60, -275], [72, -276]]},
     {"id": "nordost", "kind": "path", "w": 1.6, "pts": [[22, -120], [100, -170], [180, -230], [250, -276]]},
     {"id": "see", "kind": "path", "w": 1.6, "pts": [[268, -290], [330, -360], [420, -470], [470, -512]]},
     {"id": "grat", "kind": "path", "w": 1.4, "pts": [[480, -520], [560, -620], [660, -720], [760, -820], [870, -915]]},
@@ -152,6 +158,8 @@
   ],
   "signs": [
     {"pos": [7.5, -22], "to": ["hochsitz", "messstelle", "kapelle", "aussenstelle"]},
+    {"pos": [43, -268], "to": ["klause", "messstelle"]},
+    {"pos": [-160, -912], "to": ["grenze", "aussenstelle", "ilse"]},
     {"pos": [25, -124], "to": ["messstelle", "windwurf", "hochsitz"]},
     {"pos": [-150, -192], "to": ["kapelle", "funkmast", "spiegel"]},
     {"pos": [-333, -378], "to": ["funkmast", "spiegel", "kapelle"]},

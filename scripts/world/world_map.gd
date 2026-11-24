@@ -80,7 +80,8 @@ static func ensure() -> void:
 			pools.append(Vector3(float(q[0]), float(q[1]), float(q[2])))
 		_bogs.append({"id": b["id"], "pos": _v2(b["pos"]), "r": float(b["r"]), "pools": pools, "base": NAN})
 	for c: Dictionary in _data.get("cuts", []):
-		_cuts.append({"pos": _v2(c["pos"]), "half": _v2(c["half"]), "yaw": deg_to_rad(float(c.get("yaw", 0.0))), "place": c.get("place", "")})
+		_cuts.append({"pos": _v2(c["pos"]), "half": _v2(c["half"]), "yaw": deg_to_rad(float(c.get("yaw", 0.0))), "place": c.get("place", ""),
+			"drop": float(c.get("floor_drop", 0.0))})   # floor_drop: Boden tiefer als die Ortsfläche (Stollen im Granitbruch)
 	# Formen ins Raster einsortieren (Einflussradius)
 	for id: String in _places:
 		var p: Dictionary = _places[id]
@@ -277,7 +278,7 @@ static func shape_height(x: float, z: float, base: float) -> float:
 		var rel := (q - (c["pos"] as Vector2)).rotated(-float(c["yaw"]))
 		var hf: Vector2 = c["half"]
 		if absf(rel.x) < hf.x + 1.0 and absf(rel.y) < hf.y + 1.0:
-			var floor_h := _place_base(_places[c["place"]]) - 0.05
+			var floor_h := _place_base(_places[c["place"]]) - 0.05 - float(c["drop"])
 			var w := (1.0 - smoothstep(hf.x, hf.x + 1.0, absf(rel.x))) * (1.0 - smoothstep(hf.y, hf.y + 1.0, absf(rel.y)))
 			h = lerpf(h, minf(h, floor_h), w)
 	for l: Dictionary in cell["lakes"]:
@@ -325,8 +326,12 @@ static func _basin_base(b: Dictionary) -> float:
 
 static func lake_level(l: Dictionary) -> float:
 	if is_nan(float(l["level"])) and l.get("stream", false):
-		# See am Bach: Spiegel = Wasser am Bachanfang
-		l["level"] = _base_at(Terrain.stream_x_at(Terrain.STREAM_START), Terrain.STREAM_START) - 1.1 + Terrain.WATER_LEVEL + 0.05
+		# See am Bach: Spiegel = Wasser am Bachanfang (Quellsee) bzw. am unteren Ende (Stausee mitten im Bach)
+		var c0: Vector2 = l["pos"]
+		var sz := Terrain.STREAM_START
+		if absf(c0.y - Terrain.STREAM_START) > float(l["r"]) * 2.0:
+			sz = c0.y + float(l["r"]) * 1.05
+		l["level"] = _base_at(Terrain.stream_x_at(sz), sz) - 1.1 + Terrain.WATER_LEVEL + 0.05
 	if is_nan(float(l["level"])):
 		var c: Vector2 = l["pos"]
 		# Wasserspiegel: tiefster Punkt am Rand, damit der See nirgends überläuft
