@@ -102,6 +102,7 @@ const SHOTS := [
 	{"name": "82_buero", "hour": 14.0, "pos": Vector3(0.5, 0.45, -4.3), "look": Vector3(0.5, 1.0, -8.0), "lights": true},
 	{"name": "83_kinderzimmer", "hour": 14.0, "pos": Vector3(-6.4, 0.45, 0.2), "look": Vector3(-8.8, 0.9, -3.0), "lights": true},
 	{"name": "F1_uhr_aufgaben", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true, "log": true},
+	{"name": "H0_totenbretter", "hour": 15.0, "node": "StoryProps/Totenbretter", "node_off": Vector3(0.5, 0, 2.4), "clean": true},
 	{"name": "F0_bretterlager", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true},
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
@@ -195,6 +196,13 @@ func _run() -> void:
 				pos = best.global_transform * Vector3(1.6, 0, 3.4)
 				pos.y = Terrain.height_at(pos.x, pos.z)
 				look = best.global_position + Vector3(0, 0.5, 0)
+		elif shot.has("node"):
+			# beliebiger Knoten von vorn (+z lokal), z. B. die Totenbretter
+			var nd := get_tree().current_scene.get_node_or_null(String(shot["node"])) as Node3D
+			if nd:
+				pos = nd.global_transform * (shot.get("node_off", Vector3(0.4, 0, 2.6)) as Vector3)
+				pos.y = Terrain.height_at(pos.x, pos.z)
+				look = nd.global_position + Vector3(0, 0.9, 0)
 		elif shot.has("wendt"):
 			var wb := get_tree().current_scene.find_child("WendtBox_%d" % int(shot["wendt"]), true, false) as Node3D
 			if wb:

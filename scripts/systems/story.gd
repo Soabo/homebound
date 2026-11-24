@@ -123,8 +123,11 @@ func _check_steps(announce: bool) -> void:
 				and not TimeManager.is_night():
 			hinted.append(id)
 			dirty = true
-			var who := "Ilse über Funk: " if Tasks.flags.has("mast_repaired") else ""
-			_say(who + String(s.get("hint", "")), 0.0)
+			# Nach der Mastreparatur hilft Ilse über Funk – auf Bairisch („hint_ilse“), sonst der eigene Gedanke
+			if Tasks.flags.has("mast_repaired") and s.has("hint_ilse"):
+				_say("Ilse über Funk: »" + String(s["hint_ilse"]) + "«", 0.0)
+			else:
+				_say(String(s.get("hint", "")), 0.0)
 	if dirty:
 		steps_changed.emit()
 

@@ -1,5 +1,5 @@
 {
-  "_info": "Story (Story-Bibel: 5 Phasen) und der rote Faden („Spur“). Eine Phase beginnt, sobald EINE Bedingung aus begins_any oder ALLE aus begins_all erfüllt sind. Bedingungen wie in tasks.json (flag:X, got:X, link:X, day>=N …) plus note:X (Notiz gelesen), step:X (Spur erledigt), phase>=N, ws:structure_off, ws:source_dead. beats = einmalige Hinweise (when, hour, flag, note, text). steps = Spuren: start (alle Bedingungen, ab dann aktiv), done (alle Bedingungen) oder done_count {of: [...], need: N}, main = Hauptspur (sonst Nebenspur), target = Orts-ID aus map.json oder \"hut\" (Kreis auf der Karte), targets = mehrere Orte [{place, done}], title/text = Tablet, thought = Gedanke beim Start, finish = Gedanke beim Erledigen, hint_days + hint = zweiter, deutlicherer Hinweis, wenn man so viele Tage nicht weiterkommt.",
+  "_info": "Story (Story-Bibel: 5 Phasen) und der rote Faden („Spur“). Eine Phase beginnt, sobald EINE Bedingung aus begins_any oder ALLE aus begins_all erfüllt sind. Bedingungen wie in tasks.json (flag:X, got:X, link:X, day>=N …) plus note:X (Notiz gelesen), step:X (Spur erledigt), phase>=N, ws:structure_off, ws:source_dead. beats = einmalige Hinweise (when, hour, flag, note, text). steps = Spuren: start (alle Bedingungen, ab dann aktiv), done (alle Bedingungen) oder done_count {of: [...], need: N}, main = Hauptspur (sonst Nebenspur), target = Orts-ID aus map.json oder \"hut\" (Kreis auf der Karte), targets = mehrere Orte [{place, done}], title/text = Tablet, thought = Gedanke beim Start, finish = Gedanke beim Erledigen, hint_days + hint = zweiter, deutlicherer Hinweis, wenn man so viele Tage nicht weiterkommt. hint_ilse = derselbe Hinweis von Ilse über Funk auf Bairisch (nach mast_repaired; fehlt er, bleibt es ein eigener Gedanke).",
   "phases": [
     {
       "id": 1,
@@ -84,7 +84,8 @@
       "thought": "Heute Nacht ist etwas über dem Wald heruntergekommen. Nordwestlich vom Haus hat es gebrannt.",
       "finish": "Das ist kein Flugzeug. Nichts hier ist von uns.",
       "hint_days": 2,
-      "hint": "Die Absturzstelle liegt nordwestlich, keine hundert Meter. Den Lagerweg ein Stück, dann den Kleinen Rundweg nach Norden."
+      "hint": "Die Absturzstelle liegt nordwestlich, keine hundert Meter. Den Lagerweg ein Stück, dann den Kleinen Rundweg nach Norden.",
+      "hint_ilse": "Wo des Ding obagfoin is, des is nordwestlich vo dir, koane hundert Meter. An Lagerweg a Stückl, nachad an Kloana Rundweg nach Norden."
     },
     {
       "id": "p1_karton",
@@ -120,7 +121,8 @@
       "thought": "»Ansitz W.« auf meiner Einsatzkarte. Wendt. Der Förster müsste wissen, was hier los ist.",
       "finish": "Ein Dreieck aus Bleistift: Krater, Säulen, Höhle. Und in der Mitte, unterstrichen, meine Hütte.",
       "hint_days": 3,
-      "hint": "Der Hochsitz steht am Nordweg, gleich hinter dem Gartentor nach Norden. Die Karte hängt oben an der Rückwand."
+      "hint": "Der Hochsitz steht am Nordweg, gleich hinter dem Gartentor nach Norden. Die Karte hängt oben an der Rückwand.",
+      "hint_ilse": "Am Wendt sei Hochsitz steht am Nordweg, glei hinterm Gartntor. D'Kartn hängt obn an da Rückwand."
     },
     {
       "id": "p2_saeulen",
@@ -138,14 +140,15 @@
       "thought": "Die Säulen auf Wendts Karte. Westlich, dort, wo nachts das Summen herkommt.",
       "finish": "Das ist keine Ruine. Das atmet.",
       "hint_days": 3,
-      "hint": "Die Säulen stehen westlich der Hütte, nahe am Lagerweg, wo er nach Südwesten abbiegt."
+      "hint": "Die Säulen stehen westlich der Hütte, nahe am Lagerweg, wo er nach Südwesten abbiegt.",
+      "hint_ilse": "De Säulen stengan westlich vo da Hüttn, nah am Lagerweg, wo er nach Südwestn obbiagt."
     },
     {
       "id": "p2_hoehle",
       "phase": 2,
       "main": true,
       "title": "Wendts Dreieck: die alte Höhle",
-      "text": "»Die alte Höhle« am Bach, nordöstlich. Der Bachpfad führt vom Hochsitz über einen Steg hin.",
+      "text": "»Die alte Höhle« am Reschbach, nordöstlich. Der Reschbachsteig führt vom Hochsitz über einen Steg hin.",
       "start": [
         "phase>=2"
       ],
@@ -153,10 +156,11 @@
         "note:hoehle_funkgeraet"
       ],
       "target": "hoehle",
-      "thought": "Die Höhle am Bach. Wendts letzter Punkt auf der Karte.",
+      "thought": "Die Höhle am Reschbach. Wendts letzter Punkt auf der Karte.",
       "finish": "Wendts Rucksack. Und ein Funkgerät, das nicht der Forstverwaltung gehört. Kanal 4. »Beobachter 4 an Nord.«",
       "hint_days": 3,
-      "hint": "Vom Hochsitz geht der Bachpfad nach Osten über den Steg direkt zur Höhle. Der Rucksack liegt hinten in der Kammer."
+      "hint": "Vom Hochsitz geht der Reschbachsteig nach Osten über den Steg direkt zur Höhle. Der Rucksack liegt hinten in der Kammer.",
+      "hint_ilse": "Vom Hochsitz geht da Reschbachsteig nach Ostn übern Steg, grad zur Höhln. Da Rucksack liegt hint in da Kammer."
     },
     {
       "id": "p2_messstelle",
@@ -174,7 +178,8 @@
       "thought": "Nord. Die Messstelle. Vom alten Brunnen laufen die Kabel genau dorthin – ich muss ihnen nur folgen.",
       "finish": "Meine Personalnummer. Und W-17 war ein Ersatzteil für genau diese Anlage.",
       "hint_days": 3,
-      "hint": "Die Kabeltrasse beginnt hinter dem Gartenzaun am alten Brunnen und läuft neben dem Nordweg nach Norden. Etwa ein halber Kilometer."
+      "hint": "Die Kabeltrasse beginnt hinter dem Gartenzaun am alten Brunnen und läuft neben dem Nordweg nach Norden. Etwa ein halber Kilometer.",
+      "hint_ilse": "De Kabltrass fangt hinterm Gartnzaun am oidn Brunnen o und geht nebam Nordweg nach Norden. A hoiber Kilometer, ungefähr."
     },
     {
       "id": "p2_suchgeraet",
@@ -207,6 +212,7 @@
       "finish": "In jedem Kasten steht es. »H. allein.« »H. fragt nichts.« H. – das bin ich. Georg hat mich beobachtet.",
       "hint_days": 5,
       "hint": "Die Meldekästen hängen an Pfosten mit rotem Kreuz, direkt an den Wegen bei den Orten. Rote Kreuze an den Pfosten davor zeigen, dass man richtig ist.",
+      "hint_ilse": "Am Georg seine Meldekastn hänga an Pfosten mit am rotn Kreiz, direkt an de Weg bei de Ort. Wo a rots Kreiz is, bist richtig.",
       "done_count": {
         "of": [
           "note:wendt_kp1",
@@ -289,7 +295,7 @@
       "phase": 3,
       "main": true,
       "title": "Kanal 7",
-      "text": "An Wendts Funkgerät klebt ein Streifen Klebeband: »Kanal 7 – I. – Mast Kahler Kopf«. Jemand da oben hat Funk. Aber der Mast hat keinen Strom. Funkteile und eine Batterie mitnehmen.",
+      "text": "An Wendts Funkgerät klebt ein Streifen Klebeband: »Kanal 7 – I. – Mast Siebensteinkopf«. Jemand da oben hat Funk. Aber der Mast hat keinen Strom. Funkteile und eine Batterie mitnehmen.",
       "start": [
         "phase>=3"
       ],
@@ -297,17 +303,18 @@
         "flag:mast_repaired"
       ],
       "target": "funkmast",
-      "thought": "»Kanal 7 – I.« Da oben ist noch jemand. Wenn der Mast am Kahlen Kopf wieder sendet …",
-      "finish": "Ilse. Sie lebt oben in den Bergen. Zur Außenstelle, sagt sie, sind es zwei Tage. Ohne Zelt nicht.",
+      "thought": "»Kanal 7 – I.« Da oben ist noch jemand. Wenn der Mast am Siebensteinkopf wieder sendet …",
+      "finish": "Ilse. Sie sitzt oben im Lusenschutzhaus. Zur Außenstelle, sagt sie, sind es zwei Tage. Ohne Zelt nicht.",
       "hint_days": 4,
-      "hint": "Der Funkmast steht auf dem Kahlen Kopf im Westen, am Ende des Kapellenwegs. Funkteile gibt es in der Messstelle und im Technikhäuschen am Mast."
+      "hint": "Der Funkmast steht auf dem Siebensteinkopf im Westen, am Ende des Gunthersteigs. Funkteile gibt es in der Messstelle und im Technikhäuschen am Mast.",
+      "hint_ilse": "Da Mast steht auf'm Siebensteinkopf im Westn, am End vom Gunthersteig. Funkteile findst in da Messstell und im Häusl am Mast."
     },
     {
       "id": "p3_zelt",
       "phase": 3,
       "main": true,
       "title": "Ausrüstung für zwei Tage",
-      "text": "Ilse: »Bis zur Außenstelle sind es zwei Tage, mit einer Nacht im Wald. Im Ferienlager Waldfuchs liegt noch ein Zelt. Nimm Essen und Wasser für zwei Tage mit und Holz fürs Feuer. Und näh dir einen Schlafsack – am Schäferkarren gibt es Wolle und Felle.«",
+      "text": "Ilse: »Bis zur Außenstell san's zwoa Tag, mit oana Nacht im Woid. Im Ferienlager Waldfuchs liegt no a Zelt. Nimm da Essn und Wasser für zwoa Tag mit, und Hoiz fürs Feia. Und näh da an Schlafsack – beim Schäferkarrn gibt's Woll und Fell.«",
       "start": [
         "step:p3_funkmast"
       ],
@@ -317,14 +324,15 @@
       "target": "ferienlager",
       "thought": "Ein Zelt. Ilse sagt, im Ferienlager liegt noch eins.",
       "hint_days": 4,
-      "hint": "Das Ferienlager liegt im Südwesten am Ende des Lagerwegs. Das Zelt liegt in der Kantine."
+      "hint": "Das Ferienlager liegt im Südwesten am Ende des Lagerwegs. Das Zelt liegt in der Kantine.",
+      "hint_ilse": "S'Ferienlager liegt im Südwestn, am End vom Lagerweg. As Zelt liegt in da Kantine."
     },
     {
       "id": "p3_aussenstelle",
       "phase": 3,
       "main": true,
       "title": "Außenstelle Messpunkt 4",
-      "text": "Von der Messstelle laufen die Kabel weiter nach Nordwesten, zur Außenstelle. Zwei Tagesmärsche. Ilse: »Bleib nachts nicht ohne Feuer. Und mach kein Licht nach oben.«",
+      "text": "Von der Messstelle laufen die Kabel weiter nach Nordwesten, zur Außenstelle. Zwei Tagesmärsche. Ilse: »Bleib bei da Nacht ned ohne Feia. Und moch koa Liacht nach obn.«",
       "start": [
         "step:p3_zelt"
       ],
@@ -335,7 +343,8 @@
       "thought": "Die Kabel laufen von der Messstelle weiter. Zur Außenstelle. Zwei Tage hin.",
       "finish": "Mein Name. »Schacht B, nachts, ohne Begleitung.« Ich habe daran mitgebaut.",
       "hint_days": 5,
-      "hint": "Der Nordweg führt an der Messstelle vorbei bis zur Außenstelle. Die Kabelpfosten zählen mit."
+      "hint": "Der Nordweg führt an der Messstelle vorbei bis zur Außenstelle. Die Kabelpfosten zählen mit.",
+      "hint_ilse": "Da Nordweg geht an da Messstell vorbei bis zur Außenstell. Zähl de Kablpfosten mit, nachad verlaufst di ned."
     },
     {
       "id": "p3_schacht",
@@ -352,7 +361,8 @@
       "target": "aussenstelle",
       "finish": "Eine Seilwinde. Und die erste Hälfte einer Notabschaltung.",
       "hint_days": 3,
-      "hint": "Die Schlüsselkarte liegt in der Messstelle 4-Nord auf dem Tisch im Container."
+      "hint": "Die Schlüsselkarte liegt in der Messstelle 4-Nord auf dem Tisch im Container.",
+      "hint_ilse": "De Schlüsslkartn liegt in da Messstell 4-Nord, auf'm Tisch im Container."
     },
     {
       "id": "p3_risiken",
@@ -369,14 +379,15 @@
       "target": "aussenstelle",
       "finish": "»Familie C.: Maßnahme abgeschlossen. Kopien der Ehefrau nicht aufgefunden.« Kopien. Stefanie hat Kopien gemacht. Wovon?",
       "hint_days": 3,
-      "hint": "Im Bürotrakt der Außenstelle, Westseite, liegt ein Blatt am Boden: »Offene Risiken«."
+      "hint": "Im Bürotrakt der Außenstelle, Westseite, liegt ein Blatt am Boden: »Offene Risiken«.",
+      "hint_ilse": "Im Bürotrakt vo da Außenstell, Westseitn, liegt a Blattl am Bodn: »Offene Risiken«."
     },
     {
       "id": "n3_kessler",
       "phase": 3,
       "main": false,
       "title": "Markus Kessler",
-      "text": "Auf dem Einsatzplan: M. Kessler, Projektleitung. Ilse: »Am Schwarzen See steht seit Wochen ein Auto im Wasser.«",
+      "text": "Auf dem Einsatzplan: M. Kessler, Projektleitung. Ilse: »Am Rachelsee steht seit Wocha a Auto im Wasser.«",
       "start": [
         "note:ast_einsatzplan"
       ],
@@ -391,7 +402,7 @@
       "phase": 3,
       "main": false,
       "title": "Sprengstoff",
-      "text": "In den Akten: Sprengungen im Steinbruch für ReZort, »Erweiterung Stollen Ost«. Wenn ich je in einen Schacht muss, brauche ich so etwas.",
+      "text": "In den Akten: Sprengungen im Granitbruch für ReZort, »Erweiterung Stollen Ost«. Wenn ich je in einen Schacht muss, brauche ich so etwas.",
       "start": [
         "note:ast_wurzelwerk"
       ],
@@ -406,7 +417,7 @@
       "phase": 3,
       "main": false,
       "title": "Der Kontrollpunkt",
-      "text": "Ilse: »Im Süden hatte die Bundeswehr einen Kontrollpunkt. Die sind weg. Ihre Vorräte vielleicht nicht.«",
+      "text": "Ilse: »Drunt bei Mauth hod d'Grenzpolizei an Kontrollpunkt ghabt. De san weg. Eanane Vorrät vielleicht ned.«",
       "start": [
         "step:p3_funkmast"
       ],
@@ -463,14 +474,15 @@
       "thought": "Tunnel Ost. Dorthin laufen auch die Kabel von der Messstelle.",
       "finish": "»Maßnahme 11. Durchführung bestätigt.« Die Regennacht. Ehefrau und Kinder C. Es war kein Unfall.",
       "hint_days": 5,
-      "hint": "Das Tunnelportal liegt weit im Osten: hinter der Windwurf-Schneise den Fahrweg nach Osten. Die Akten liegen im Baucontainer vor dem Portal."
+      "hint": "Das Tunnelportal liegt weit im Osten: hinter dem Totholzhang den Fahrweg nach Osten. Die Akten liegen im Baucontainer vor dem Portal.",
+      "hint_ilse": "S'Tunnelportal liegt weit im Ostn: hinterm Totholzhang an Fahrweg nach Ostn. De Aktn liegn im Baucontainer vorm Portal."
     },
     {
       "id": "n4_lkw",
       "phase": 4,
       "main": false,
       "title": "DEG-RZ 117",
-      "text": "Das Kennzeichen aus der Akte. Ilse: »An der Raststätte im Süden stehen noch Lastwagen. Seit Wochen bewegt sich da nichts.«",
+      "text": "Das Kennzeichen aus der Akte. Ilse: »Drunt am Rasthaus an da B12 stengan no Lastwagn. Seit Wocha rührt se do nix.«",
       "start": [
         "note:tunnel_massnahme11"
       ],
@@ -526,7 +538,8 @@
       "thought": "Wenn man es abschalten kann, dann nur mit beiden Teilen der Notabschaltung.",
       "finish": "Säulen abschalten. Die Leitung in der Höhle trennen. Dann W-17 in die Fassung.",
       "hint_days": 5,
-      "hint": "Teil 1 liegt in Schacht B (Außenstelle), Teil 2 hinten im Tunnel Ost auf einer Kiste."
+      "hint": "Teil 1 liegt in Schacht B (Außenstelle), Teil 2 hinten im Tunnel Ost auf einer Kiste.",
+      "hint_ilse": "Teil oans liegt im Schacht B in da Außenstell, Teil zwoa hint im Tunnel Ost auf ana Kistn."
     },
     {
       "id": "p5_saeulen",
@@ -562,8 +575,8 @@
       "id": "n5_ilse",
       "phase": 5,
       "main": false,
-      "title": "Ilses Berghütte",
-      "text": "Wenn jemand die Wahrheit weitergeben kann, dann Ilse. Ihre Berghütte liegt hoch im Nordwesten, hinter der Außenstelle.",
+      "title": "Ilse am Lusen",
+      "text": "Wenn jemand die Wahrheit weitergeben kann, dann Ilse. Sie sitzt im Lusenschutzhaus, hoch im Nordwesten, hinter der Außenstelle.",
       "start": [
         "phase>=5"
       ],
@@ -592,7 +605,7 @@
       "phase": 5,
       "main": false,
       "title": "Was im Hang schläft",
-      "text": "Ilse: »Im Südosten liegt etwas im Hang. Größer als ein Haus. Es atmet.« Vielleicht gibt es dort Energie, die ich brauchen kann.",
+      "text": "Ilse: »Im Südostn liegt wos im Hang. Größer wia a Haus. Des schnauft.« Vielleicht gibt es dort Energie, die ich brauchen kann.",
       "start": [
         "phase>=5"
       ],
@@ -606,7 +619,7 @@
       "phase": 5,
       "main": false,
       "title": "Die Toten im Moor",
-      "text": "Am Hochmoor hat jemand ins Schild geritzt: »Die Toten hier sind nicht alt.«",
+      "text": "Am Finsterauer Filz hat jemand ins Schild geritzt: »Die Toten hier sind nicht alt.«",
       "start": [
         "phase>=5"
       ],

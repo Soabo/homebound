@@ -6,12 +6,14 @@ extends Node3D
 ##  2. Wendts Meldekästen (map.json "wendt_boxes"): Kasten am Pfosten mit rotem Kreuz und Nummer, am Weg beim Ort,
 ##     davor zwei rot markierte Pfähle. Darin seine Meldung (Notiz).
 ##  3. Stefanies Spuren liegen direkt in den Orten (PlacesDay/PlacesFar/PlacesNear, Notizen stef_*).
+## Dazu die Totenbretter der Familie am Abzweig des Gunthersteigs (map.json "totenbretter").
 
 const PIPE_EVERY := 14.0
 const POST_EVERY := 35.0
 
 static var cable_posts: Array[Vector3] = []
 static var wendt_boxes: Dictionary = {}   ## Nummer -> Position (für Tests)
+static var memorial_pos := Vector3.INF   ## Totenbretter (für Tests)
 
 var _paint_red: StandardMaterial3D
 var _orange: StandardMaterial3D
@@ -29,7 +31,10 @@ func _ready() -> void:
 		_cable(c)
 	for b: Dictionary in WorldMap.data().get("wendt_boxes", []):
 		_wendt_box(b)
-	print("[StoryProps] Kabelpfosten %d, Meldekästen %d" % [cable_posts.size(), wendt_boxes.size()])
+	var tb: Dictionary = WorldMap.data().get("totenbretter", {})
+	if not tb.is_empty():
+		_totenbretter(tb)
+	print("[StoryProps] Kabelpfosten %d, Meldekästen %d, Totenbretter bei %s" % [cable_posts.size(), wendt_boxes.size(), memorial_pos])
 
 
 # --- Kabeltrassen ------------------------------------------------------------------
@@ -245,3 +250,91 @@ func _wendt_box(b: Dictionary) -> void:
 func _red_cross(parent: Node3D, pos: Vector3, size: float) -> void:
 	for r: float in [45.0, -45.0]:
 		BuildKit.box(parent, Vector3(size, size * 0.18, 0.012), pos, _paint_red, false, Vector3(0, 0, r))
+
+
+# --- Totenbretter ------------------------------------------------------------------
+
+## Stelle am Wegrand nahe „near“: 1–2,5 m neben dem Weg, nicht auf der Zufahrt, nicht im Wasser, weg von Stämmen.
+static func memorial_spot(near: Vector2) -> Vector2:
+	var best := near
+	var best_score := INF
+	for r: float in [0.0, 1.0, 2.0, 3.0, 4.0, 5.5, 7.0, 9.0]:
+		var n := 1 if r == 0.0 else 24
+		for k in n:
+			var q := near + Vector2.from_angle(TAU * k / n) * r
+			var e := WorldMap.trail_info(q.x, q.y).x
+			if e < 1.0 or e > 2.5 or not _ok(q) or Terrain.yard_distance(q.x, q.y) < 2.0:
+				continue
+			var tree_d := INF
+			for tr: Vector4 in Forest.trees:
+				tree_d = minf(tree_d, Vector2(tr.x, tr.z).distance_to(q) - tr.w)
+			if tree_d < 1.6:
+				continue
+			# flach genug für drei Bretter nebeneinander
+			var slope := absf(Terrain.height_at(q.x + 1.0, q.y) - Terrain.height_at(q.x - 1.0, q.y))
+			var score := r + slope * 4.0
+			if score < best_score:
+				best_score = score
+				best = q
+	return best
+
+
+func _totenbretter(tb: Dictionary) -> void:
+	var near := Vector2(float(tb["near"][0]), float(tb["near"][1]))
+	var at := memorial_spot(near)
+	# Blick zum nächsten Wegpunkt (Bretter schauen zum Weg)
+	var to_trail := Vector2.ZERO
+	var best_d := INF
+	for s: Array in WorldMap.segments():
+		var a: Vector2 = s[0]
+		var e: Vector2 = s[1]
+		var q := Geometry2D.get_closest_point_to_segment(at, a, e)
+		if q.distance_to(at) < best_d:
+			best_d = q.distance_to(at)
+			to_trail = q - at
+	var g := Terrain.height_at(at.x, at.y)
+	var root := Node3D.new()
+	root.name = "Totenbretter"
+	root.position = Vector3(at.x, g, at.y)
+	root.rotation.y = atan2(-to_trail.x, -to_trail.y) + PI   # +z (Vorderseite) zum Weg
+	add_child(root)
+	memorial_pos = root.position
+	var wood := PlaceKit.mat("wood_old")
+	var boards: Array = tb.get("boards", [])
+	var n := boards.size()
+	for i in n:
+		var bd: Dictionary = boards[i]
+		var x := (i - (n - 1) * 0.5) * 0.42
+		var c: Array = bd.get("color", [0.85, 0.82, 0.74])
+		var paint := BuildKit.color_mat(Color(float(c[0]), float(c[1]), float(c[2])), 0.85)
+		var board := Node3D.new()
+		board.name = "Brett_%d" % i
+		board.position = Vector3(x, 0, 0)
+		board.rotation_degrees = Vector3(-4.0 - i * 1.5, (i - 1) * 3.0, (i - 1) * -1.2)   # leicht schief, wie von Hand gesetzt
+		root.add_child(board)
+		var h := 1.75 if i == 0 else 1.55
+		# Brett (bemalt), Rand, Spitze, kleines Dachl
+		BuildKit.box(board, Vector3(0.3, h, 0.035), Vector3(0, h * 0.5 - 0.25, 0), paint, true)
+		BuildKit.box(board, Vector3(0.34, 0.04, 0.05), Vector3(0, h - 0.23, 0.0), wood, false)
+		var roof_y := h - 0.18
+		BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(-0.085, roof_y, 0.03), wood, false, Vector3(0, 0, 35))
+		BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(0.085, roof_y, 0.03), wood, false, Vector3(0, 0, -35))
+		# schwarzes Kreuz oben
+		var black := BuildKit.color_mat(Color(0.08, 0.07, 0.06), 0.9)
+		BuildKit.box(board, Vector3(0.025, 0.16, 0.01), Vector3(0, h - 0.4, 0.022), black, false)
+		BuildKit.box(board, Vector3(0.1, 0.025, 0.01), Vector3(0, h - 0.36, 0.022), black, false)
+		var lab := Label3D.new()
+		lab.text = String(bd.get("text", ""))
+		lab.font_size = 17
+		lab.pixel_size = 0.0021
+		lab.modulate = Color(0.12, 0.1, 0.08)
+		lab.outline_size = 0
+		lab.double_sided = false
+		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lab.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		lab.position = Vector3(0, h - 0.52, 0.02)
+		board.add_child(lab)
+	# Grablicht davor (rotes Glas, kein echtes Licht – nur Farbe)
+	var glass := BuildKit.color_mat(Color(0.55, 0.06, 0.05), 0.3)
+	BuildKit.cylinder(root, 0.045, 0.12, Vector3(0.12, 0.06, 0.28), glass, false)
+	PlaceKit.note(root, String(tb.get("note", "totenbretter")), Vector3(0, 0.9, 0.25), true)

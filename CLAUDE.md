@@ -748,7 +748,21 @@
 - Tunnelportal: map.json Ort `drop` (Fläche tiefer in den Hang, `WorldMap._place_base`) – Tunnel 20 m tiefer, Aufstieg von Westen
   vorher bis 140 % Steigung, jetzt höchstens ~40 %.
 
-## Technik
+## Bayerischer Wald (Christian 24.11.2026: echte Namen, Spätherbst mit erstem Schnee, Bairisch nur Ilse + Wendt, Totenbretter ja)
+- Schauplatz: Nationalpark Bayerischer Wald um Finsterau/Mauth an der tschechischen Grenze. Sechs Etappen geplant:
+  1 Namen/Bairisch/Totenbretter (erledigt), 2 Spätherbst + Schnee, 3 Landschaft (Fichten, Granit, Totholz, Filz, Schachten),
+  4 Orte umbauen (Grenzstation, Radarkuppeln, Triftklause, Stollen, Glashüttendorf), 5 Hütte als Waldlerhaus (Kachelofen,
+  Herrgottswinkel, Drudenfuß, Gred), 6 Klänge (Kirchenglocken, Kauz, Hirsch, Rauhnacht) + Wunschliste.
+- Etappe 1: Namen in map.json (ids unverändert): Siebensteinkopf (Funkmast), Lusen (Ilse, Lusenschutzhaus), Rachel (Wetterstation),
+  Schwarzberg, Haidel, Grenzkamm, Rachelsee, Reschbachquelle, Finsterauer Filz, Höhle am Reschbach, Totholzhang (früher Windwurf),
+  Granitbruch, Kontrollpunkt Mauth (Grenzpolizei), Rasthaus Waldblick an der B12, Waldkapelle St. Gunther, Gunthersteig (früher
+  Kapellenweg), Reschbachsteig (früher Bachpfad). Orte können `sign` = Kurzname für Wegweiser haben; zu lange Wegweiser-Texte werden kleiner.
+- Bairisch: Ilses Sätze (story.json, Logbuch, Ende „Gehört“, Zettel an ihrer Tür) und Wendts Notizen/Meldungen. Spur-Hinweise haben
+  `hint_ilse` (Bairisch) – nach `mast_repaired` sagt Ilse sie über Funk, sonst bleibt `hint` ein eigener Gedanke. Christian selbst spricht Hochdeutsch.
+- Totenbretter: map.json `totenbretter` (Texte, Farben, Wunschpunkt am Abzweig des Gunthersteigs), gebaut in `StoryProps._totenbretter`
+  (Stelle am Wegrand `memorial_spot`, weg von Stämmen), Notiz `totenbretter`. Tour-Bild H0 (Schlüssel `node`/`node_off`). Prüfung `RegressTest._t_bayerwald_2411`.
+- Hinweis: Die Himmelsrichtungen im Spiel sind verdichtet (Rachel liegt im Spiel im Nordosten).
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,

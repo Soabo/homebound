@@ -227,7 +227,7 @@
     {
       "id": "map",
       "title": "Eine Karte",
-      "text": "Ganz oben am Steingrat im Nordosten gibt es eine Wetterstation. Von dort sieht man das ganze Tal – vielleicht liegt dort eine Karte.",
+      "text": "Ganz oben am Rachel im Nordosten gibt es eine Wetterstation. Von dort sieht man das ganze Tal – vielleicht liegt dort eine Karte.",
       "unlock": [
         "got:tent"
       ],

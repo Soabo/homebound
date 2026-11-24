@@ -312,7 +312,7 @@
     },
     {
       "id": "blast_charge",
-      "name": "Sprengladung (Bauplan Steinbruch)",
+      "name": "Sprengladung (Bauplan Granitbruch)",
       "blueprint": "bp_charge",
       "needs": {
         "explosive": 1,

@@ -386,6 +386,7 @@ func _t_more() -> void:
 	await _t_dread_2311()
 	await _t_render_2411()
 	await _t_hide_2411()
+	await _t_bayerwald_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -1326,6 +1327,10 @@ func _t_omens() -> void:
 	p.global_position = keep
 	p.rotation = keep_rot
 	p.head.rotation.x = 0.0
+	# Vorkommnis „Schranktür geht auf“ zurücksetzen (spätere Prüfungen erwarten geschlossene Verstecke)
+	for h in get_tree().get_nodes_in_group("hide_spot"):
+		if h is HideSpot and not (h as HideSpot).occupied:
+			(h as HideSpot).set_door((h as HideSpot).style == "curtain")
 
 
 ## Anbauten (13.11.): Büro, Kinderzimmer, Dachboden mit Zugleiter, Keller unter dem Teppich.
@@ -3000,6 +3005,7 @@ func _t_dread_2311() -> void:
 		_ok("Versteck: danach ist sie weg", not is_instance_valid(HideHunt.current))
 	ThreatDirector.hide_uses = keep_uses
 	p.health = 100.0
+	wd.set_door(false)   # aufgerissene Schranktür wieder zu (spätere Prüfungen)
 	# --- Stille eskaliert
 	p.global_position = Vector3(0.0, Cabin.FLOOR_Y + 0.05, 0.0)
 	await _frames(2)
@@ -3118,3 +3124,56 @@ func _capsule_free(feet: Vector3, p: Player) -> bool:
 	q.exclude = [p.get_rid()]
 	q.collide_with_areas = false
 	return p.get_world_3d().direct_space_state.intersect_shape(q, 4).is_empty()
+
+
+## Bayerischer Wald, Etappe 1 (Christian 24.11.): echte Namen, Ilse und Wendt auf Bairisch, Totenbretter der Familie.
+func _t_bayerwald_2411() -> void:
+	var names: Array = []
+	for id: String in WorldMap.places():
+		names.append(String(WorldMap.places()[id]["name"]))
+	_ok("Bayerwald: Orte heißen echt (Lusenschutzhaus, Rachelsee, Siebensteinkopf, Finsterauer Filz)",
+			names.has("Lusenschutzhaus") and names.has("Rachelsee") and names.has("Funkmast am Siebensteinkopf") \
+			and names.has("Finsterauer Filz") and not names.has("Berghütte") and not names.has("Schwarzer See"), str(names))
+	# keine alten Namen mehr in den Texten
+	var old := ["Kahlen Kopf", "Kahler Kopf", "Schwarzen See", "Schwarzer See", "Berghütte", "Windwurf-Schneise", "Raststätte", "Autobahn"]
+	var hits: Array = []
+	for f: String in ["res://data/story/story.json", "res://data/research/research.json", "res://data/story/endings.json",
+			"res://data/tasks/tasks.json", "res://data/world/map.json"]:
+		var txt := FileAccess.get_file_as_string(f)
+		for o: String in old:
+			if txt.contains(o):
+				hits.append("%s: %s" % [f.get_file(), o])
+	_ok("Bayerwald: alte Ortsnamen aus den Texten verschwunden", hits.is_empty(), str(hits))
+	# Ilse spricht Bairisch – auch in den Hinweisen über Funk
+	var steps: Array = JSON.parse_string(FileAccess.get_file_as_string("res://data/story/story.json"))["steps"]
+	var ilse := 0
+	for s: Dictionary in steps:
+		if s.has("hint_ilse"):
+			ilse += 1
+	_ok("Bayerwald: Ilses Funkhinweise auf Bairisch (%d)" % ilse, ilse >= 10)
+	var rd: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/research/research.json"))
+	var logbook := String(rd["notes"]["ilse_logbuch"]["text"])
+	_ok("Bayerwald: Ilses Logbuch auf Bairisch", logbook.contains("koana") and logbook.contains("Siebensteinkopf"))
+	# Totenbretter: am Weg, nicht im Garten, drei Bretter, Notiz zum Ansehen
+	var tb := _scene().get_node_or_null("StoryProps/Totenbretter") as Node3D
+	if tb == null:
+		_ok("Totenbretter vorhanden", false)
+		return
+	var p2 := Vector2(tb.global_position.x, tb.global_position.z)
+	var edge := WorldMap.trail_info(p2.x, p2.y).x
+	var boards := 0
+	for c in tb.get_children():
+		if c.name.begins_with("Brett_"):
+			boards += 1
+	_ok("Totenbretter: drei Bretter am Wegrand des Gunthersteigs (%.1f m neben dem Weg)" % edge,
+			boards == 3 and edge >= 0.9 and edge <= 2.6 and Terrain.yard_distance(p2.x, p2.y) >= 1.9 \
+			and p2.distance_to(Vector2(5, -40)) < 12.0, "%s" % p2)
+	var note_ok := false
+	for c in tb.get_children():
+		if c is ResearchNote and (c as ResearchNote).note_id == "totenbretter":
+			note_ok = true
+	_ok("Totenbretter: Notiz zum Ansehen", note_ok)
+	var tree_d := INF
+	for tr: Vector4 in Forest.trees:
+		tree_d = minf(tree_d, Vector2(tr.x, tr.z).distance_to(p2) - tr.w)
+	_ok("Totenbretter: kein Baumstamm im Weg (%.1f m)" % tree_d, tree_d >= 1.5)

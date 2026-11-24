@@ -93,12 +93,16 @@ func _sign(at: Vector2, targets: Array) -> void:
 		# Brett zeigt in -x der Arm-Ebene … mit Spitze
 		BuildKit.box(arm, Vector3(1.15, 0.2, 0.035), Vector3(-0.62, 0, 0), _wood, false)
 		BuildKit.box(arm, Vector3(0.16, 0.16, 0.035), Vector3(-1.2, 0, 0), _wood, false, Vector3(0, 0, 45))
-		var name_text: String = WorldMap.places()[id]["name"] if WorldMap.places().has(id) else id
+		# Wegweiser nehmen den Kurznamen („sign“), wenn der Ortsname zu lang fürs Brett ist
+		var name_text: String = id
+		if WorldMap.places().has(id):
+			var pl: Dictionary = WorldMap.places()[id]
+			name_text = String(pl.get("sign", pl["name"]))
 		var km := ("%.1f km" % (dist / 1000.0)).replace(".", ",") if dist >= 950.0 else "%d m" % (int(round(dist / 50.0)) * 50)
 		for side: float in [1.0, -1.0]:
 			var lab := Label3D.new()
 			lab.text = "%s  %s" % [name_text, km]
-			lab.font_size = 40
+			lab.font_size = 40 if lab.text.length() <= 24 else int(40.0 * 24.0 / lab.text.length())
 			lab.pixel_size = 0.0023
 			lab.modulate = Color(0.0, 0.0, 0.0)   # schwarze Schrift auf hellem Brett
 			lab.outline_size = 0

@@ -415,7 +415,8 @@ static func _bird_thud(scene: Node, player: Player, rng: RandomNumberGenerator) 
 
 static func _wardrobe_open(scene: Node, player: Player) -> void:
 	for h in scene.get_tree().get_nodes_in_group("hide_spot"):
-		if h is HideSpot and not (h as HideSpot).occupied and (h as Node3D).global_position.distance_to(player.global_position) > 3.0 \
+		if h is HideSpot and not (h as HideSpot).occupied and (h as HideSpot).has_door() and not (h as HideSpot).door_open \
+				and (h as HideSpot).style != "curtain" and (h as Node3D).global_position.distance_to(player.global_position) > 3.0 \
 				and Cabin.is_inside((h as Node3D).global_position):
 			(h as HideSpot).set_door(true)
 			SoundBank.play_at(scene, "door_open", (h as Node3D).global_position + Vector3(0, 1.0, 0), -4.0, 0.7)

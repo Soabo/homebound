@@ -1,7 +1,7 @@
 class_name PlacesDay
 extends RefCounted
-## Orte für einen Tagesmarsch: Messstelle 4-Nord, Funkmast, Schwarzer See, Steinbruch, Kontrollpunkt,
-## Ferienlager, Schäferkarren, Hochmoor, Windwurf-Schneise, Lichtung der Spiegel.
+## Orte für einen Tagesmarsch: Messstelle 4-Nord, Funkmast, Rachelsee, Granitbruch, Kontrollpunkt Mauth,
+## Ferienlager, Schäferkarren, Finsterauer Filz, Totholzhang, Lichtung der Spiegel.
 
 
 
@@ -67,7 +67,7 @@ static func _messstelle(root: Node3D) -> void:
 	PlaceKit.inspect(root, "Shaft", "[E] Schachtdeckel ansehen", "Verschweißt. Die Kabel verschwinden durch eine Dichtung in die Tiefe. Wenn man das Ohr an den Deckel legt: ein tiefes, gleichmäßiges Brummen.", m, Vector3(1.3, 0.3, 1.3))
 
 
-## Funkmast auf dem Kahlen Kopf: Gittermast, Technikhäuschen ohne Strom. Reparieren = Funkkontakt.
+## Funkmast auf dem Siebensteinkopf: Gittermast, Technikhäuschen ohne Strom. Reparieren = Funkkontakt.
 static func _funkmast(root: Node3D) -> void:
 	var steel := PlaceKit.mat("metal")
 	var g := PlaceKit.ground(root, 0, 0)
@@ -122,7 +122,7 @@ static func _funkmast(root: Node3D) -> void:
 	fix.acted.connect(apply)
 
 
-## Schwarzer See: Bootshaus mit Steg, ein Auto halb im Wasser, darin ein Firmenausweis.
+## Rachelsee: Bootshaus mit Steg, ein Auto halb im Wasser, darin ein Firmenausweis.
 static func _see(root: Node3D) -> void:
 	var house := PlaceKit.hut(root, "Boathouse", Vector3(0, PlaceKit.ground(root, 0, 4.0) + 0.1, 4.0), Vector2(4.0, 5.0), 2.4, 0.0, "wood_old", "gable", "shingles", 1.4, true)
 	PlaceKit.loot(house, "Plugs", "spark_plug", 2, Vector3(-1.2, 0.06, 1.6), "box")
@@ -154,7 +154,7 @@ static func _see(root: Node3D) -> void:
 	BuildKit.box(boat, Vector3(0.9, 0.05, 2.9), Vector3(0, 0.25, 0), PlaceKit.mat("wood_old"), false)
 	var water := WaterSource.new()
 	water.name = "LakeWater"
-	water.label = "Schwarzer See"
+	water.label = "Rachelsee"
 	water.anchor = Vector3(1.5, level - 0.4, 23.5)
 	water.solid = false
 	water.contaminable = true
@@ -176,7 +176,7 @@ static func _see(root: Node3D) -> void:
 	PlaceKit.note(car, "see_ausweis", Vector3(0.95, 0.95, 0.3), true)
 
 
-## Steinbruch: tiefe Grube, Bagger, Bürocontainer am Rand, verschlossenes Sprengstofflager in der Wand.
+## Granitbruch: tiefe Grube, Bagger, Bürocontainer am Rand, verschlossenes Sprengstofflager in der Wand.
 static func _steinbruch(root: Node3D) -> void:
 	# Bagger auf der Sohle
 	var dig := Node3D.new()
@@ -344,7 +344,7 @@ static func _schaefer(root: Node3D) -> void:
 		BuildKit.cylinder(root, 0.06, 1.1, PlaceKit.on_ground(root, cos(a) * 13.0 + 3.0, sin(a) * 6.0 - 22.0, 0.55), PlaceKit.mat("bark"), false, Vector3.ZERO, -1.0, 6)
 
 
-## Hochmoor: Holzstege über den Schlamm, Tümpel, Torfstich. Am Rand eines Tümpels liegt jemand.
+## Finsterauer Filz (Hochmoor): Holzstege über den Schlamm, Tümpel, Torfstich. Am Rand eines Tümpels liegt jemand.
 static func _moor(root: Node3D) -> void:
 	var o := root.global_position
 	var plank := PlaceKit.mat("wood_old")
@@ -382,8 +382,8 @@ static func _moor(root: Node3D) -> void:
 	# Schild am Stegbeginn (Süden)
 	var sp := PlaceKit.on_ground(root, 26.0, 88.0)
 	BuildKit.box(root, Vector3(0.1, 1.6, 0.1), sp + Vector3(0, 0.8, 0), PlaceKit.mat("bark"), true)
-	BuildKit.box(root, Vector3(1.0, 0.6, 0.04), sp + Vector3(0, 1.45, 0.05), BuildKit.color_mat(Color(0.2, 0.4, 0.2)), false)
-	label(root, "NATURSCHUTZGEBIET\nStege nicht verlassen!", sp + Vector3(0, 1.45, 0.08), 30, Color(0.95, 0.95, 0.85))
+	BuildKit.box(root, Vector3(1.15, 0.66, 0.04), sp + Vector3(0, 1.45, 0.05), BuildKit.color_mat(Color(0.2, 0.4, 0.2)), false)
+	label(root, "NATIONALPARK\nBAYERISCHER WALD\nFinsterauer Filz\nStege nicht verlassen!", sp + Vector3(0, 1.45, 0.08), 21, Color(0.95, 0.95, 0.85))
 	PlaceKit.note(root, "moor_schild", sp + Vector3(0, 1.0, 0.1), true)
 	# Moorleiche am Tümpel
 	var pool: Vector3 = bog["pools"][0]
@@ -406,7 +406,7 @@ static func _moor(root: Node3D) -> void:
 	BuildKit.box(root, Vector3(2.0, 0.02, 1.2), tp + Vector3(1.6, -0.1, 0), PlaceKit.mat("mud"), false)
 
 
-## Windwurf-Schneise: Hunderte Bäume liegen strahlenförmig um einen kleinen Krater – weg von einem Punkt.
+## Totholzhang (Windwurf): Hunderte Bäume liegen strahlenförmig um einen kleinen Krater – weg von einem Punkt.
 static func _windwurf(root: Node3D) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 777

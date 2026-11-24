@@ -173,7 +173,7 @@ static func _imkerei(root: Node3D) -> void:
 	PlaceKit.blueprint(h, "bp_motion", "Bewegungsmelder-Leuchte", Vector3(1.95, 0.81, -1.4))
 	BuildKit.box(h, Vector3(0.25, 0.32, 0.01), Vector3(0.4, 1.3, 2.08), PlaceKit.mat("paper"), false)
 	var sign := Label3D.new()
-	sign.text = "IMKEREI BRANDL\nHonig vom Waldrand"
+	sign.text = "IMKEREI BRANDL\nWaldhonig aus Finsterau"
 	sign.font_size = 48
 	sign.pixel_size = 0.004
 	sign.modulate = Color(0.2, 0.12, 0.05)

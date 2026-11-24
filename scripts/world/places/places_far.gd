@@ -1,7 +1,7 @@
 class_name PlacesFar
 extends RefCounted
-## Orte für Mehrtagesmärsche: Außenstelle Messpunkt 4, Ilses Berghütte, Tunnelportal, Versunkenes Dorf,
-## Wetterstation am Grat, Gewächshäuser, Der Wal, Raststätte an der Autobahn.
+## Orte für Mehrtagesmärsche: Außenstelle Messpunkt 4, Lusenschutzhaus (Ilse), Tunnelportal, Versunkenes Dorf,
+## Wetterstation am Rachel, Gewächshäuser, Der Wal, Rasthaus an der B12.
 
 
 
@@ -117,13 +117,14 @@ static func _aussenstelle(root: Node3D) -> void:
 	PlaceKit.note(sh, "ast_abschaltfolge1", Vector3(1.6, 0.06, -2.4))
 
 
-## Ilses Berghütte: Blockhütte mit Funkantenne. Die Tür bleibt zu.
+## Ilses Hütte (Lusenschutzhaus): Blockhütte mit Funkantenne. Die Tür bleibt zu.
 static func _ilse(root: Node3D) -> void:
 	root.rotation_degrees.y = 150.0
 	var h := PlaceKit.hut(root, "Hut", Vector3(0, PlaceKit.ground(root, 0, 0), 0), Vector2(5.0, 4.0), 2.4, 0.0, "logs", "gable", "shingles", 1.0, true)
 	BuildKit.box(h, Vector3(1.0, 2.05, 0.06), Vector3(0, 1.025, 2.0), PlaceKit.mat("wood_old"), true)
-	var knock := PlaceKit.inspect(h, "Door", "[E] Anklopfen", "Niemand öffnet. Hinter der Tür rauscht leise ein Funkgerät. Ein Zettel am Rahmen: »Nur über Funk. Kanal 7.«", Vector3(0, 0, 2.3), Vector3(1.2, 2.0, 0.5))
+	var knock := PlaceKit.inspect(h, "Door", "[E] Anklopfen", "Niemand öffnet. Hinter der Tür rauscht leise ein Funkgerät. Ein Zettel am Rahmen: »Aufgmacht werd ned. Bloß übern Funk – Kanal 7. I.«", Vector3(0, 0, 2.3), Vector3(1.2, 2.0, 0.5))
 	knock.done_flag = "ilse_knocked"
+	_label(h, "LUSENSCHUTZHAUS", Vector3(0, 2.22, 2.07), 30, Color(0.92, 0.88, 0.78))
 	# Veranda mit Tisch und Logbuch
 	BuildKit.box(h, Vector3(5.4, 0.08, 1.8), Vector3(0, 0.04, 3.0), PlaceKit.mat("wood_h"), true)
 	BuildKit.box(h, Vector3(1.0, 0.05, 0.6), Vector3(1.6, 0.75, 3.0), PlaceKit.mat("wood"), true)
@@ -258,7 +259,7 @@ static func _dorf(root: Node3D) -> void:
 	_label(root, "STAUSEE ALTENREUTH  1964", Vector3(40.0, dam_y + 9.0, dam_z - 3.6), 120, Color(0.25, 0.25, 0.25), 180.0)
 
 
-## Wetterstation am Grat: höchster Gipfel. Fernrohr, Windmesser, Kuppel – und eine Karte mit allen Orten.
+## Wetterstation am Rachel: höchster Gipfel. Fernrohr, Windmesser, Kuppel – und eine Karte mit allen Orten.
 static func _wetterstation(root: Node3D) -> void:
 	var h := PlaceKit.hut(root, "Station", PlaceKit.on_ground(root, -3.0, 0), Vector2(5.0, 4.0), 2.6, 90.0, "stone", "flat", "concrete", 1.0, true)
 	BuildKit.box(h, Vector3(1.8, 0.05, 0.8), Vector3(0, 0.78, -1.4), PlaceKit.mat("wood"), true)
@@ -417,7 +418,7 @@ static func _wal(root: Node3D) -> void:
 	PlaceKit.loot(inner, "Hull", "hull_sample", 1, Vector3(-2.0, 0, -1.8), "alien")
 
 
-## Raststätte Waldblick an der Autobahn: Tankstelle, Laden, verlassene Autos.
+## Rasthaus Waldblick an der B12: Tankstelle, Laden, verlassene Autos.
 static func _raststation(root: Node3D) -> void:
 	var g := PlaceKit.ground(root, 0, 0)
 	# Tankdach
@@ -431,7 +432,7 @@ static func _raststation(root: Node3D) -> void:
 		var pp := canopy + Vector3(-2.5 + k * 5.0, 0, 0)
 		BuildKit.box(root, Vector3(0.8, 1.7, 0.5), pp + Vector3(0, 0.85, 0), PlaceKit.mat("red"), true)
 		BuildKit.box(root, Vector3(0.5, 0.3, 0.02), pp + Vector3(0, 1.3, 0.26), PlaceKit.mat("dark"), false)
-	_label(root, "Raststätte WALDBLICK", Vector3(-6.0, g + 5.4, 19.05), 70, Color(0.95, 0.95, 0.95))
+	_label(root, "Rasthaus WALDBLICK", Vector3(-6.0, g + 5.4, 19.05), 70, Color(0.95, 0.95, 0.95))
 	# Laden
 	var shop := PlaceKit.hut(root, "Shop", PlaceKit.on_ground(root, 12.0, -4.0), Vector2(12.0, 8.0), 3.2, 180.0, "concrete", "flat", "concrete", 1.6, true)
 	for k in 3:
@@ -461,7 +462,7 @@ static func _raststation(root: Node3D) -> void:
 		if k == 2:
 			car.rotation_degrees.z = 4.0
 			BuildKit.box(car, Vector3(1.0, 0.02, 1.4), Vector3(0, 0.02, 0), PlaceKit.mat("mud"), false)
-	# Leitplanken an der Autobahn
+	# Leitplanken an der B12
 	var hz := 1086.0 - root.global_position.z
 	for k in 16:
 		var x := -60.0 + k * 8.0
