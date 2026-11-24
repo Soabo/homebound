@@ -808,22 +808,16 @@ func _gear_test() -> void:
 			print("VERSTECK FEHLT: ", path)
 			continue
 		player.set_flashlight(true)
-		h.interact(player)  # E: Tür auf
-		await get_tree().create_timer(0.5).timeout
-		# selbst hineingehen (hier: hineinstellen), von innen zuziehen
-		player.global_position = h.to_global(Vector3(0, 0.08, -h.size.z * 0.5 + 0.38))
-		player.velocity = Vector3.ZERO
+		player.global_position = h.front_point(0.8)
+		await get_tree().create_timer(0.2).timeout
+		h.interact(player)  # E: hinein (Tür auf, hinein, Tür zu)
 		await get_tree().create_timer(0.3).timeout
 		var hidden_open := player.is_hidden()
-		h.interact(player)  # E von innen: Tür zu
-		await get_tree().create_timer(0.8).timeout
-		var still := h._player_inside(player)
-		print("VERSTECK %s: drin=%s (bleibt drin %s), Tür zu=%s, versteckt=%s (bei offener Tür %s), Licht bleibt=%s" % [path, h.occupied, still, not h.door_open, player.is_hidden(), hidden_open, player.flashlight.visible])
-		h.interact(player)
-		await get_tree().create_timer(0.5).timeout
-		player.global_position = h.to_global(Vector3(0, 0.08, h.size.z * 0.5 + 0.9))
-		await get_tree().create_timer(0.3).timeout
-		print("VERSTECK %s verlassen: versteckt=%s" % [path, player.is_hidden()])
+		await get_tree().create_timer(1.6).timeout
+		print("VERSTECK %s: drin=%s, Tür zu=%s, versteckt=%s (während der Bewegung %s), Licht bleibt=%s" % [path, h.occupied, not h.door_open, player.is_hidden(), hidden_open, player.flashlight.visible])
+		h.interact(player)  # E: heraus
+		await get_tree().create_timer(1.8).timeout
+		print("VERSTECK %s verlassen: versteckt=%s, Tür zu=%s" % [path, player.is_hidden(), not h.door_open])
 	# Überladung
 	var added := {}
 	for id: String in ["fuel_can", "stone", "wood", "battery", "water", "food", "planks", "scrap"]:

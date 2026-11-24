@@ -29,7 +29,7 @@ const ROOF_RISE := 2.2
 ## Dachbodenfenster in den Giebeln (über der Decke gemessen)
 const ATTIC_WIN_SILL := 0.35
 const ATTIC_WIN_H := 0.8
-const ATTIC_WIN_W := 0.7
+const ATTIC_WIN_W := 1.4   ## Christian 24.11.: doppelt so breit
 
 const WINDOW_NAMES := {
 	"WindowLiving": "Wohnzimmerfenster",
@@ -716,6 +716,21 @@ func _build_living_room() -> void:
 	couch.name = "Couch"
 	add_child(couch)
 	_rocking_chair(Vector3(-4.3, y, 3.45), 140.0)
+	# Versteck direkt hinter dem Schaukelstuhl (Christian 24.11.): geduckt in der Ecke, Blick über die Lehne
+	var behind := HideSpot.new()
+	behind.name = "HideBehindChair"
+	behind.style = "open"
+	behind.label = "Hinter dem Schaukelstuhl"
+	behind.position = Vector3(-4.78, y, 4.0)
+	behind.rotation_degrees.y = 140.0
+	behind.eye = 0.82
+	behind.crouch_drop = 0.2
+	behind.move = Vector2(0.22, 0.06)
+	behind.exit_dir = Vector3(1, 0, 0.35)
+	behind.exit_dist = 0.45
+	behind.area_size = Vector3(0.9, 1.0, 0.6)
+	behind.area_center = Vector3(0, 0.5, 0)
+	add_child(behind)
 	# Couchtisch mit Becher und Buch
 	# schmal genug, dass man zwischen Tisch und Couch und zwischen Tisch und Kamin/Holzkorb durchgehen kann
 	BuildKit.box_mm(self, Vector3(-4.15, y + 0.38, 1.3), Vector3(-3.75, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
@@ -926,6 +941,8 @@ func _build_bedroom() -> void:
 	wardrobe.label = "Kleiderschrank"
 	wardrobe.size = Vector3(1.0, 2.05, 0.86)   # tief genug, dass man selbst hineingehen kann
 	wardrobe.hinge_right = true
+	wardrobe.anchor = Vector3(0, 0.07, -0.1)
+	wardrobe.eye = HideSpot.EYE
 	wardrobe.position = Vector3(-1.6, y, -3.92)
 	add_child(wardrobe)
 	# Ungeöffnetes Geburtstagsgeschenk (GDD 3.1)
@@ -1053,12 +1070,22 @@ func _build_bathroom() -> void:
 		BuildKit.cylinder(shower, 0.045, 0.02, Vector3(px + sx * 0.12, y + 1.05, z0 + 0.1), iron, false, Vector3(90, 0, 0), -1.0, 6)
 		BuildKit.box(shower, Vector3(0.08, 0.012, 0.012), Vector3(px + sx * 0.12, y + 1.05, z0 + 0.115), iron, false)
 	BuildKit.box(shower, Vector3(0.28, 0.03, 0.03), Vector3(px, y + 1.05, z0 + 0.09), chrome, false)
-	# Leinenvorhang an einer Eisenstange (zur Seite geschoben)
+	# Leinenvorhang an zwei Eisenstangen – Versteck (Christian 24.11.): [E] hinein, Vorhang wird zugezogen
 	BuildKit.cylinder(shower, 0.01, sw, Vector3(x0 + sw * 0.5, y + 2.0, z0 + sw), iron, false, Vector3(0, 0, 90), -1.0, 6)
 	BuildKit.cylinder(shower, 0.01, sw, Vector3(x0 + sw, y + 2.0, z0 + sw * 0.5), iron, false, Vector3(90, 0, 0), -1.0, 6)
-	var linen := BuildKit.tex_mat("fabric", 0.3, Color(1.35, 1.25, 1.05))
-	for k in 4:
-		BuildKit.box(shower, Vector3(0.1, 1.45, 0.012), Vector3(x0 + 0.06 + k * 0.07, y + 1.27, z0 + sw + (k % 2) * 0.025), linen, false, Vector3(0, (k % 2) * 25.0 - 12.0, 0))
+	var curtain := HideSpot.new()
+	curtain.name = "HideShower"
+	curtain.style = "curtain"
+	curtain.label = "Dusche"
+	curtain.size = Vector3(sw, 2.0, sw)
+	curtain.position = Vector3(x0 + sw * 0.5, y, z0 + sw * 0.5)
+	curtain.anchor = Vector3(-0.05, 0.08, -0.08)
+	curtain.eye = 1.58
+	curtain.move = Vector2(0.15, 0.12)
+	curtain.exit_dist = 0.55
+	curtain.area_size = Vector3(sw, 1.9, sw)
+	curtain.area_center = Vector3(0, 1.0, 0)
+	add_child(curtain)
 	# Seife auf einer Steinablage, Holzschemel, Zinkeimer
 	BuildKit.box(shower, Vector3(0.12, 0.03, 0.1), Vector3(x0 + 0.13, y + 1.2, z0 + 0.6), stone, false)
 	BuildKit.box(shower, Vector3(0.07, 0.025, 0.045), Vector3(x0 + 0.13, y + 1.23, z0 + 0.6), BuildKit.color_mat(Color(0.75, 0.68, 0.45), 0.6), false)

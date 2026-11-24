@@ -151,7 +151,7 @@ func _on_sleep_finished() -> void:
 		hands.screen_mode = false
 
 
-## Im Versteck: umsehen ja, gehen nein. hidden_in = das Versteck, in dem man steht (oder null).
+## hidden_in = das Versteck, in dem man ist (HideSpot, auch während der Bewegung hinein/heraus) oder null.
 var look_only: bool = false
 var hidden_in: Node = null
 var _f_down: bool = false
@@ -161,7 +161,7 @@ const LIGHT_MODE_HOLD := 0.5  ## Sekunden F halten, um den Licht-Modus zu wechse
 var held_time: float = 0.0  ## Sekunden, die der Spieler festgehalten wird (Bärenfalle)
 
 
-## Versteckt (im Schrank/Spind bei geschlossener Tür)?
+## Versteckt (ganz im Versteck, nichts aufgerissen)?
 func is_hidden() -> bool:
 	return hidden_in != null and is_instance_valid(hidden_in) and hidden_in.call("hides_player")
 
@@ -278,6 +278,10 @@ func _update_light_hold(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_concealment()
+	if hidden_in is HideSpot and is_instance_valid(hidden_in):
+		_hide_physics(delta)
+		_physics_tail(delta)
+		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 
@@ -370,6 +374,44 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 
 	_update_interaction()
+	_physics_tail(delta)
+
+
+## Im Versteck (HideSpot, Christian 24.11.): kein Laufen, keine Schwerkraft. WASD bewegt einen ein wenig im kleinen
+## Raum des Verstecks, Strg duckt, Y/X lehnt, E führt hinaus (über current_interactable = das Versteck).
+var hide_offset := Vector2.ZERO
+
+
+func _hide_physics(delta: float) -> void:
+	var spot := hidden_in as HideSpot
+	velocity = Vector3.ZERO
+	if not holding_breath:
+		Survival.regen_stamina(14.0 * delta)   # im Versteck kommt man wieder zu Atem
+	if not spot.settled:
+		return   # die Bewegung hinein/heraus läuft gerade (Tween)
+	# Hat einen etwas anderes woandershin versetzt (Teleport, Entführung, Test)? Dann ist man nicht mehr im Versteck.
+	if global_position.distance_to(spot.anchor_global(hide_offset)) > 1.5:
+		spot.exit(self, true)
+		return
+	var input := Vector2.ZERO
+	if not input_locked:
+		input = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	# Eingabe in Blickrichtung → in die Lage des Verstecks umrechnen
+	var world := global_transform.basis * Vector3(input.x, 0, input.y)
+	var local := spot.global_basis.inverse() * world
+	hide_offset += Vector2(local.x, local.z) * 0.5 * delta
+	hide_offset = Vector2(clampf(hide_offset.x, -spot.move.x, spot.move.x), clampf(hide_offset.y, -spot.move.y, spot.move.y))
+	global_position = spot.anchor_global(hide_offset)
+	var crouch := not input_locked and Input.is_action_pressed("crouch")
+	var eye_h := spot.eye - (spot.crouch_drop if crouch else 0.0)
+	head.position.y = lerpf(head.position.y, eye_h, clampf(delta * 8.0, 0.0, 1.0))
+	_update_lean(delta)
+	current_interactable = spot
+	current_target_body = null
+	_update_prompt(false)
+
+
+func _physics_tail(delta: float) -> void:
 	_update_mind(delta)
 	var starve := Survival.starvation_damage()
 	if starve > 0.0:

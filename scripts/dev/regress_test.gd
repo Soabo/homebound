@@ -385,6 +385,7 @@ func _t_more() -> void:
 	await _t_seeker_at_house()
 	await _t_dread_2311()
 	await _t_render_2411()
+	await _t_hide_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2966,13 +2967,8 @@ func _t_dread_2311() -> void:
 	var wd := _scene().get_node("Cabin/Wardrobe") as HideSpot
 	TimeManager.set_time(maxi(keep_day, 6), 23.0)
 	ThreatDirector.night_kind = "visit"
-	wd.set_door(true)
-	await get_tree().create_timer(0.5).timeout
-	p.global_position = wd.to_global(Vector3(0, 0.08, -wd.size.z * 0.5 + 0.38))
-	p.velocity = Vector3.ZERO
+	wd.enter(p, true)
 	await get_tree().create_timer(0.3).timeout
-	wd.set_door(false)
-	await get_tree().create_timer(0.6).timeout
 	_ok("Versteck: im Schrank versteckt", p.is_hidden())
 	var keep_uses := ThreatDirector.hide_uses.duplicate()
 	ThreatDirector.hide_uses["Wardrobe"] = 0
@@ -2990,6 +2986,8 @@ func _t_dread_2311() -> void:
 		h.ccfg.hide_walk_speed = 6.0
 		h.ccfg.hide_sniff_time = Vector2(0.5, 0.5)
 		h.uses = 50   # kennt das Versteck genau → reißt sicher auf
+		h.tcfg = h.tcfg.duplicate()
+		h.tcfg.hide_tear_max = 1.0
 		h.breath_heard = 10.0
 		var hp := p.health
 		var waited := 0.0
@@ -3037,3 +3035,86 @@ func _t_render_2411() -> void:
 		_ok("Grafik: Retro-Filter vorhanden", false)
 	Settings.quality = keep_q
 	Settings.apply()
+
+
+## Verstecke (Christian 24.11.): sieben Stück, alle gleich – E hinein (mit Bewegung), E heraus, zu von Haus aus,
+## drinnen versteckt, ein wenig bewegen, Uhrlicht; Ein- und Ausstieg frei. Dazu Dachfenster doppelt so breit.
+func _t_hide_2411() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var want := ["Cabin/Wardrobe", "Shed/Locker", "Cabin/HideBehindChair", "Cabin/HideShower", "Cabin/HideUnderDesk",
+			"Cabin/HideKidsCorner", "Cabin/HideAtticChest"]
+	for path: String in want:
+		var h := _scene().get_node_or_null(path) as HideSpot
+		if h == null:
+			_ok("Versteck %s vorhanden" % path, false)
+			continue
+		_ok("Versteck %s: von Haus aus zu (Duschvorhang offen)" % h.label, h.door_open == (h.style == "curtain"))
+		# draußen: Ausstiegspunkt frei (Spieler passt hin)
+		var out := h.front_point(h.exit_dist)
+		var free := _capsule_free(out + Vector3(0, 0.05, 0), p)
+		_ok("Versteck %s: Platz zum Herauskommen bei %s" % [h.label, str(out.snappedf(0.01))], free)
+		p.global_position = out + Vector3(0, 0.05, 0)
+		p.velocity = Vector3.ZERO
+		await get_tree().create_timer(0.15).timeout
+		h.interact(p)
+		await get_tree().create_timer(0.3).timeout
+		var mid := p.is_hidden()
+		var waited := 0.0
+		while waited < 3.0 and not h.settled:
+			await get_tree().create_timer(0.1).timeout
+			waited += 0.1
+		_ok("Versteck %s: [E] hinein → versteckt (Bewegung %.1f s, vorher nicht versteckt)" % [h.label, waited + 0.3], h.settled and p.is_hidden() and not mid and not h.door_open)
+		_ok("Versteck %s: Augenhöhe stimmt (%.2f)" % [h.label, p.head.position.y], absf(p.head.position.y - h.eye) < 0.12)
+		# ein wenig bewegen: nie aus dem kleinen Raum hinaus
+		p.hide_offset = Vector2(5.0, 5.0)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		var off := h.to_local(p.global_position) - h.anchor
+		_ok("Versteck %s: drinnen nur ein wenig bewegen" % h.label, absf(off.x) <= h.move.x + 0.01 and absf(off.z) <= h.move.y + 0.01)
+		p.hide_offset = Vector2.ZERO
+		p.set_flashlight(true)
+		_ok("Versteck %s: Uhrlicht geht, bleibt versteckt" % h.label, p.flashlight.visible and p.is_hidden())
+		p.set_flashlight(false)
+		# [E] heraus (über das, was der Spieler als Ziel hat – das Versteck selbst)
+		await get_tree().physics_frame
+		_ok("Versteck %s: Hinweis [E] Versteck verlassen" % h.label, p.current_interactable == h and h.get_prompt(p).contains("verlassen"))
+		p.use_target(false)
+		waited = 0.0
+		while waited < 3.0 and h.occupied:
+			await get_tree().create_timer(0.1).timeout
+			waited += 0.1
+		await get_tree().create_timer(0.5).timeout
+		_ok("Versteck %s: [E] heraus → draußen, nicht versteckt, wieder zu" % h.label, not h.occupied and not p.is_hidden() and p.hidden_in == null and h.door_open == (h.style == "curtain") and p.global_position.distance_to(out) < 0.6,
+				"drin %s versteckt %s Tür offen %s Abstand %.2f" % [h.occupied, p.is_hidden(), h.door_open, p.global_position.distance_to(out)])
+	# Aufreißen wirft einen hinaus
+	var wd := _scene().get_node("Cabin/Wardrobe") as HideSpot
+	wd.enter(p, true)
+	await get_tree().physics_frame
+	wd.force_open()
+	await get_tree().create_timer(0.8).timeout
+	_ok("Versteck: aufgerissen = draußen und nicht mehr versteckt", not p.is_hidden() and p.hidden_in == null)
+	wd.set_door(false)
+	# Teleport aus dem Versteck heraus beendet das Verstecken
+	wd.enter(p, true)
+	await get_tree().physics_frame
+	p.global_position = keep
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_ok("Versteck: woandershin versetzt = nicht mehr drin", p.hidden_in == null and p.global_position.distance_to(keep) < 0.5)
+	var aw := _scene().get_node_or_null("Cabin/WindowAtticWest") as CabinWindow
+	_ok("Dachfenster doppelt so breit (%.2f m)" % (aw.width if aw else 0.0), aw != null and absf(aw.width - 1.4) < 0.01)
+	p.global_position = keep
+
+
+## Passt der Spieler (Kapsel) an diese Stelle, ohne in Möbeln oder Wänden zu stecken?
+func _capsule_free(feet: Vector3, p: Player) -> bool:
+	var sh := CapsuleShape3D.new()
+	sh.radius = 0.3
+	sh.height = 1.6
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sh
+	q.transform = Transform3D(Basis(), feet + Vector3(0, 0.85, 0))
+	q.exclude = [p.get_rid()]
+	q.collide_with_areas = false
+	return p.get_world_3d().direct_space_state.intersect_shape(q, 4).is_empty()

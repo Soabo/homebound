@@ -45,8 +45,11 @@ func _ready() -> void:
 	BuildKit.sphere(self, 0.012, anchor + Vector3(-0.18, 0.17, 0.02), _led, Vector3.ONE, 8)
 	_led_light = OmniLight3D.new()
 	_led_light.light_color = Color(0.35, 1.0, 0.4)
-	_led_light.omni_range = 0.9
+	_led_light.omni_range = 0.7
 	_led_light.light_energy = 0.0
+	# Schatten an: sonst scheint das Grün durch die Wand bis zum Ofen nebenan (Christian 24.11.)
+	_led_light.shadow_enabled = true
+	_led_light.visible = false
 	_led_light.position = anchor + Vector3(-0.22, 0.17, 0.02)
 	add_child(_led_light)
 	_dial = BuildKit.emissive_mat(Color(1.0, 0.7, 0.3), 0.0)
@@ -145,12 +148,14 @@ func _process(delta: float) -> void:
 		var glow := maxf(flash, after)
 		_led.emission_energy_multiplier = 0.3 + glow * 7.0
 		_led_light.light_energy = glow * 0.35
+		_led_light.visible = glow > 0.01
 		if not _player3d.playing:
 			_dial.emission_energy_multiplier = 0.25 + (sin(_t * 2.2) * 0.5 + 0.5) * 0.6
 		_was_new = true
 	else:
 		_led.emission_energy_multiplier = 0.0
 		_led_light.light_energy = 0.0
+		_led_light.visible = false
 		if _was_new and not _player3d.playing:
 			_dial.emission_energy_multiplier = 0.0
 		_was_new = false

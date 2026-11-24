@@ -734,6 +734,20 @@
   (`GpuBench`) nur auf echter Grafik aussagekräftig – mit Software-Vulkan (lavapipe) sind die Zahlen wertlos.
 - Prüfung `RegressTest._t_dread_2311`.
 
+## Verstecke 2.0 (Christian 24.11.2026: alle gleich, mehr im Haus)
+- `HideSpot` (scripts/interaction/hide_spot.gd): [E] hinein = kurze Bewegung (Tür/Vorhang/Deckel/Klappe auf → Kopf an die
+  Stelle `anchor` + Augenhöhe `eye`, Blick `face` → zu), [E] heraus = rückwärts zu `front_point(exit_dist)` (`exit_dir` für seitlich).
+  Türen von Haus aus zu (Duschvorhang hängt offen). Tür-Kollision nur, wenn zu (`_door_solid`). `hides_player` = drin + `settled` + zu.
+  Drinnen (`Player._hide_physics`, `Player.hide_offset`): keine Schwerkraft, WASD im kleinen Raum `move`, Strg = `crouch_drop`, Y/X
+  lehnen, Uhrlicht, E über `current_interactable` = Versteck. Woandershin versetzt (> 1,5 m) = automatisch raus. `force_open` wirft hinaus.
+- Sieben Verstecke: Cabin/Wardrobe (wardrobe), Shed/Locker (locker), Cabin/HideBehindChair (open, hinter dem Schaukelstuhl),
+  Cabin/HideShower (curtain, Vorhang L-förmig), Cabin/HideUnderDesk (open, Stefanies Schreibtisch), Cabin/HideKidsCorner (fort,
+  Deckenhöhle NO-Ecke Kinderzimmer, Farbeimer dafür nach Westen), Cabin/HideAtticChest (chest, Sehschlitz Richtung Luke).
+  Tour-Schlüssel `hide` (+ `hide_yaw`, `hide_pitch`), Bilder G0–G4. Prüfung `RegressTest._t_hide_2411` (Ausstieg frei, Augenhöhe, Spielraum).
+- Dachfenster `Cabin.ATTIC_WIN_W` 1,4 m (doppelt). Radio-LED-Licht mit Schatten (schien durch die Wand), nur sichtbar, wenn es leuchtet.
+- Tunnelportal: map.json Ort `drop` (Fläche tiefer in den Hang, `WorldMap._place_base`) – Tunnel 20 m tiefer, Aufstieg von Westen
+  vorher bis 140 % Steigung, jetzt höchstens ~40 %.
+
 ## Technik
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -53,7 +53,8 @@ static func ensure() -> void:
 	for p: Dictionary in _data.get("places", []):
 		var pos := _resolve_pos(p)
 		_places[p["id"]] = {"id": p["id"], "name": p.get("name", p["id"]), "pos": pos, "ring": p.get("ring", "near"),
-			"clear": float(p.get("clear", 0)), "flat": float(p.get("flat", 0)), "base": NAN}
+			"clear": float(p.get("clear", 0)), "flat": float(p.get("flat", 0)), "base": NAN,
+			"drop": float(p.get("drop", 0))}
 	for l: Dictionary in _data.get("lakes", []):
 		_lakes.append({"id": l["id"], "name": l.get("name", ""), "pos": _resolve_pos(l), "r": float(l["r"]), "depth": float(l["depth"]), "level": NAN,
 			"stream": l.has("stream_z")})
@@ -289,7 +290,8 @@ static func _base_at(x: float, z: float) -> float:
 static func _place_base(p: Dictionary) -> float:
 	if is_nan(float(p["base"])):
 		var c: Vector2 = p["pos"]
-		p["base"] = _base_at(c.x, c.y)
+		# drop: Fläche tiefer in den Hang setzen (Tunnelportal: sonst eine Steilwand auf dem Weg hinauf)
+		p["base"] = _base_at(c.x, c.y) - float(p.get("drop", 0.0))
 	return p["base"]
 
 

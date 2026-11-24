@@ -435,12 +435,12 @@ func _update_intrusion(delta: float) -> void:
 	if safe:
 		# Es sucht … steht vor deinem Versteck und lauscht (Alt: Atem anhalten) … und zieht ab
 		if _player.is_hidden() and is_instance_valid(_intruder):
-			var spot := (_player.hidden_in as Node3D).global_position
+			var spot := (_player.hidden_in as HideSpot).front_point(0.0)
 			spot.y = Cabin.FLOOR_Y
 			var to := spot - _intruder.global_position
 			to.y = 0.0
-			if to.length() > 1.3:
-				_intruder.global_position += to.normalized() * minf(1.0 * delta, to.length() - 1.3)
+			if to.length() > 0.8:
+				_intruder.global_position += to.normalized() * minf(1.0 * delta, to.length() - 0.8)
 				_intruder.look_at(_intruder.global_position + to.normalized(), Vector3.UP)
 			elif not _breath_warned:
 				_breath_warned = true

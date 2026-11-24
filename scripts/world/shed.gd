@@ -76,6 +76,8 @@ func _ready() -> void:
 	locker.label = "Spind"
 	locker.size = Vector3(0.82, 1.95, 0.8)   # breit und tief genug zum Hineingehen
 	locker.hinge_right = true
+	locker.anchor = Vector3(0, 0.07, -0.08)
+	locker.eye = HideSpot.EYE - 0.03
 	locker.position = Vector3(0.36, 0.03, -1.05)
 	add_child(locker)
 	# Innen: Regal, Kanister, Werkzeug

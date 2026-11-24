@@ -1,5 +1,5 @@
 {
-  "_info": "Die große Welt (ca. 2,2 x 2,2 km, Hütte in der Mitte). Koordinaten in Metern [x, z]; Norden = -z, Süden = +z. mountains: Berg (Mitte, Radius, Höhe). lakes: See (Mitte, Radius, Tiefe; stream_z = See liegt am Bach bei dieser z-Position). basins: Mulden (Steinbruch, Stausee). bogs: Moor (flach, nass). clearings: Lichtungen ohne Bäume. places: Orte (ring: near | day | multi; clear = baumfreier Radius, flat = eingeebneter Radius). trails: Wege (kind: path | track | asphalt; w = Breite). signs: Wegweiser (to = Orts-IDs). Wege optional: name, mark (Farbe der Markierung an Pfosten), board (Zeile auf der Wandertafel an der Hütte). cables: Kabeltrassen von ReZort (orange Schutzrohre, nummerierte Pfosten, Story-Faden). wendt_boxes: Meldekästen des Försters (Notiz, Ort, Nummer; stehen am Weg beim Ort, rot markiert). trail_kit: Abstände der Wegausstattung in Metern (Pfosten, Bänke, Holzpolter), Steigung für Stufen, Sichtweite, Ort der Wandertafel.",
+  "_info": "Die große Welt (ca. 2,2 x 2,2 km, Hütte in der Mitte). Koordinaten in Metern [x, z]; Norden = -z, Süden = +z. mountains: Berg (Mitte, Radius, Höhe). lakes: See (Mitte, Radius, Tiefe; stream_z = See liegt am Bach bei dieser z-Position). basins: Mulden (Steinbruch, Stausee). bogs: Moor (flach, nass). clearings: Lichtungen ohne Bäume. places: Orte (ring: near | day | multi; clear = baumfreier Radius, flat = eingeebneter Radius, drop = Fläche so viele Meter tiefer in den Hang). trails: Wege (kind: path | track | asphalt; w = Breite). signs: Wegweiser (to = Orts-IDs). Wege optional: name, mark (Farbe der Markierung an Pfosten), board (Zeile auf der Wandertafel an der Hütte). cables: Kabeltrassen von ReZort (orange Schutzrohre, nummerierte Pfosten, Story-Faden). wendt_boxes: Meldekästen des Försters (Notiz, Ort, Nummer; stehen am Weg beim Ort, rot markiert). trail_kit: Abstände der Wegausstattung in Metern (Pfosten, Bänke, Holzpolter), Steigung für Stufen, Sichtweite, Ort der Wandertafel.",
   "half_size": 1150,
   "limit": 1100,
   "mountains": [
@@ -58,7 +58,7 @@
     {"id": "spiegel", "name": "Lichtung der Spiegel", "pos": [-330, -565], "ring": "day", "clear": 26, "flat": 6},
     {"id": "aussenstelle", "name": "Außenstelle Messpunkt 4", "pos": [-180, -930], "ring": "multi", "clear": 62, "flat": 48},
     {"id": "ilse", "name": "Berghütte", "pos": [-930, -830], "ring": "multi", "clear": 22, "flat": 13},
-    {"id": "tunnel", "name": "Tunnelportal", "pos": [842, -290], "ring": "multi", "clear": 36, "flat": 28},
+    {"id": "tunnel", "name": "Tunnelportal", "pos": [842, -290], "ring": "multi", "clear": 36, "flat": 28, "drop": 20},
     {"id": "dorf", "name": "Versunkenes Dorf", "stream_z": 870, "offset": [24, 0], "ring": "multi", "clear": 140, "flat": 0},
     {"id": "wetterstation", "name": "Wetterstation am Grat", "pos": [880, -930], "ring": "multi", "clear": 30, "flat": 17},
     {"id": "gewaechshaus", "name": "Gewächshäuser", "pos": [-860, 620], "ring": "multi", "clear": 56, "flat": 44},

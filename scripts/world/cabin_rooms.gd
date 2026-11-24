@@ -165,6 +165,20 @@ func _office_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 		for lz: float in [iz0 + 0.05, iz0 + 0.65]:
 			BuildKit.box(c, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), dark, false)
 	BuildKit.box_mm(c, Vector3(2.45, y + 0.1, iz0 + 0.05), Vector3(2.95, y + 0.7, iz0 + 0.65), dark, true)
+	# Versteck unter Stefanies Schreibtisch (Christian 24.11.): zusammengekauert im Fußraum
+	var under := HideSpot.new()
+	under.name = "HideUnderDesk"
+	under.style = "open"
+	under.label = "Unter dem Schreibtisch"
+	under.position = Vector3(2.0, y, iz0 + 0.33)
+	under.eye = 0.6
+	under.crouch_drop = 0.12
+	under.move = Vector2(0.18, 0.05)
+	under.exit_dir = Vector3(-0.35, 0, 1)
+	under.exit_dist = 0.6
+	under.area_size = Vector3(0.8, 0.7, 0.65)
+	under.area_center = Vector3(0, 0.35, 0)
+	c.add_child(under)
 	c._chair(Vector3(2.6, y, iz0 + 1.05), 180.0)
 	var desk_lamp := BuildKit.color_mat(Color(0.15, 0.3, 0.22), 0.4, 0.4)
 	BuildKit.cylinder(c, 0.07, 0.02, Vector3(1.8, y + 0.77, iz0 + 0.2), desk_lamp, false, Vector3.ZERO, -1.0, 10)
@@ -287,9 +301,27 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 	# Halb gestrichene Wand: grüner Streifen an der Nordwand, Farbeimer, Rolle
 	var green := BuildKit.color_mat(Color(0.45, 0.65, 0.45), 0.9)
 	BuildKit.box_mm(c, Vector3(ix0 + 0.95, y + 0.1, iz0 - 0.03), Vector3(-7.95, y + 2.0, iz0 - 0.02), green, false)
-	BuildKit.cylinder(c, 0.14, 0.22, Vector3(-6.7, y + 0.11, iz0 + 0.3), BuildKit.color_mat(Color(0.75, 0.75, 0.72), 0.4, 0.6), true, Vector3.ZERO, -1.0, 12)
-	BuildKit.cylinder(c, 0.13, 0.01, Vector3(-6.7, y + 0.225, iz0 + 0.3), green, false, Vector3.ZERO, -1.0, 12)
-	BuildKit.cylinder(c, 0.035, 0.22, Vector3(-6.95, y + 0.04, iz0 + 0.65), BuildKit.tex_mat("fabric", 0.3, Color(0.7, 1.1, 0.7)), false, Vector3(0, 0, 90), -1.0, 8)
+	BuildKit.cylinder(c, 0.14, 0.22, Vector3(-7.7, y + 0.11, iz0 + 0.3), BuildKit.color_mat(Color(0.75, 0.75, 0.72), 0.4, 0.6), true, Vector3.ZERO, -1.0, 12)
+	BuildKit.cylinder(c, 0.13, 0.01, Vector3(-7.7, y + 0.225, iz0 + 0.3), green, false, Vector3.ZERO, -1.0, 12)
+	BuildKit.cylinder(c, 0.035, 0.22, Vector3(-7.45, y + 0.04, iz0 + 0.62), BuildKit.tex_mat("fabric", 0.3, Color(0.7, 1.1, 0.7)), false, Vector3(0, 0, 90), -1.0, 8)
+	# Versteck (Christian 24.11.): Deckenhöhle hinten in der Ecke, gegenüber von Lenas Bett – eine Wolldecke von den
+	# Umzugskisten bis zur Wand. Vorn eine Klappe, die man beim Hineinkriechen anhebt.
+	var fort := HideSpot.new()
+	fort.name = "HideKidsCorner"
+	fort.style = "fort"
+	fort.label = "Deckenhöhle"
+	fort.size = Vector3(0.9, 0.86, 0.82)
+	fort.position = Vector3(x1 - Cabin.CLAD - 0.03 - 0.41, y, iz0 + 0.46)
+	fort.rotation_degrees.y = -90.0
+	fort.anchor = Vector3(0, 0, -0.08)
+	fort.eye = 0.6
+	fort.crouch_drop = 0.12
+	fort.move = Vector2(0.18, 0.08)
+	fort.exit_dist = 0.55
+	fort.exit_dir = Vector3(0.45, 0, 1)
+	fort.area_size = Vector3(0.9, 0.86, 0.82)
+	fort.area_center = Vector3(0, 0.43, 0)
+	c.add_child(fort)
 	# Kisten mit den Namen der Kinder (nie ausgepackt)
 	var card := BuildKit.tex_mat("fabric", 0.3, Color(1.45, 1.2, 0.85))
 	for b: Array in [[Vector3(-6.75, y, -3.1), "LENA", 4.0], [Vector3(-6.75, y, -2.4), "BEN", -6.0], [Vector3(-6.7, y + 0.4, -2.75), "SPIELZEUG", 2.0]]:
@@ -343,6 +375,22 @@ func _attic() -> void:
 	BuildKit.box_mm(c, Vector3(-5.5, y, 0.75), Vector3(-4.7, y + 0.55, 1.6), BuildKit.tex_mat("planks_h", 0.5, Color(0.6, 0.4, 0.28)), true, "AtticTrunk")
 	BuildKit.box_mm(c, Vector3(-5.52, y + 0.5, 0.73), Vector3(-4.68, y + 0.58, 1.62), c.m_iron, false)
 	# Die Truhe ist Stefanies „Kiste mit den Weihnachtssachen“ (Story Phase 4: Mappe im doppelten Boden)
+	# Versteck (Christian 24.11.): große alte Truhe mit Sehschlitz, Blick auf die Luke
+	var chest := HideSpot.new()
+	chest.name = "HideAtticChest"
+	chest.style = "chest"
+	chest.label = "Alte Truhe"
+	chest.size = Vector3(1.25, 0.78, 0.8)
+	chest.position = Vector3(0.9, y, 0.6)
+	chest.rotation_degrees.y = 90.0
+	chest.anchor = Vector3(0, 0.05, -0.05)
+	chest.eye = 0.55
+	chest.crouch_drop = 0.1
+	chest.move = Vector2(0.3, 0.08)
+	chest.exit_dist = 0.6
+	chest.area_size = Vector3(1.25, 0.8, 0.8)
+	chest.area_center = Vector3(0, 0.4, 0)
+	c.add_child(chest)
 	var trunk := XmasTrunk.new()
 	trunk.name = "XmasTrunk"
 	trunk.position = Vector3(-5.1, y, 1.175)

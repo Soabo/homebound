@@ -596,13 +596,8 @@ func _hide_in_wardrobe(p: Player) -> void:
 	var wd := _scene().get_node_or_null("Cabin/Wardrobe") as HideSpot
 	if wd == null:
 		return
-	wd.set_door(true)
-	await _wait(0.5)
-	p.global_position = wd.to_global(Vector3(0, 0.08, -wd.size.z * 0.5 + 0.38))
-	p.velocity = Vector3.ZERO
+	wd.enter(p, true)
 	await _wait(0.3)
-	wd.set_door(false)
-	await _wait(0.6)
 
 
 ## Schlafen, bis es Morgen ist. try_sleep wird aufgerufen, sooft Schlafen möglich scheint.

@@ -88,6 +88,12 @@ const SHOTS := [
 	{"name": "E1_huette_dach", "hour": 14.0, "pos": Vector3(-2.0, 0.0, 16.0), "look": Vector3(0.0, 4.0, 0.0), "clean": true},
 	{"name": "73_zerfleischer_tag", "hour": 15.5, "pos": Vector3(4.0, 0.0, 16.5), "look": Vector3(4.0, 1.3, 11.5), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_pose": "warn", "clean": true},
 	{"name": "74_zerfleischer_seite", "hour": 15.5, "pos": Vector3(9.0, 0.0, 12.5), "look": Vector3(4.0, 1.1, 12.0), "mauler_at": Vector3(4.0, 0.0, 12.0), "mauler_face": Vector3(4.0, 0.0, 17.0), "mauler_pose": "charge", "clean": true},
+	{"name": "G0_versteck_truhe", "hour": 13.0, "pos": Vector3(0.9, 3.5, 2.5), "look": Vector3(4, 3.5, 0), "hide": "Cabin/HideAtticChest", "lights": true},
+	{"name": "G1_versteck_dusche", "hour": 13.0, "pos": Vector3(2.5, 0.5, -2.5), "look": Vector3(2.5, 1.5, -1), "hide": "Cabin/HideShower", "lights": true, "hide_yaw": 25.0},
+	{"name": "G2_versteck_kinderecke", "hour": 13.0, "pos": Vector3(-7.6, 0.5, -2.2), "look": Vector3(-6.4, 0.6, -3.9), "lights": true},
+	{"name": "G3_versteck_schaukelstuhl", "hour": 13.0, "pos": Vector3(-4.8, 0.5, 4.0), "look": Vector3(0, 1, 0), "hide": "Cabin/HideBehindChair", "lights": true},
+	{"name": "G4_versteck_schreibtisch", "hour": 13.0, "pos": Vector3(2.0, 0.5, -7.4), "look": Vector3(2, 1, -5), "hide": "Cabin/HideUnderDesk", "lights": true},
+	{"name": "G5_dachfenster", "hour": 13.0, "pos": Vector3(-14.0, 0.0, 3.0), "look": Vector3(-6.0, 4.6, 0.0)},
 	{"name": "00_titelbild", "hour": 2.5, "pos": Vector3(-12.5, 0.0, 19.0), "look": Vector3(0.5, 2.6, 0.0), "lights": true, "clean": true, "no_retro": true},
 	{"name": "71_labor_im_bad", "hour": 21.0, "pos": Vector3(2.75, 0.45, -1.5), "look": Vector3(5.8, 1.2, -3.0), "lights": true, "lab": true},
 	{"name": "72_forschungsbaum", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 2.0), "look": Vector3(-3.0, 1.0, 0.0), "lab": true, "tablet": "tree"},
@@ -223,6 +229,13 @@ func _run() -> void:
 		player.rotation.y = atan2(-d.x, -d.z)
 		player.head.rotation.x = asin(clampf(d.y, -1.0, 1.0))
 		player.set_flashlight(shot.get("flashlight", false))
+		if player.hidden_in is HideSpot:
+			(player.hidden_in as HideSpot).exit(player, true)
+		if shot.has("hide"):
+			var hs := get_tree().current_scene.get_node(String(shot["hide"])) as HideSpot
+			hs.enter(player, true)
+			player.rotation.y += deg_to_rad(float(shot.get("hide_yaw", 0.0)))
+			player.head.rotation.x = deg_to_rad(float(shot.get("hide_pitch", 0.0)))
 		if shot.has("equip"):
 			Inventory.add(shot["equip"], 1)
 			Inventory.select(Inventory.slot_of(shot["equip"]))
