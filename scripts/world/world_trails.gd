@@ -31,7 +31,7 @@ func _ready() -> void:
 	name = "WorldTrails"
 	# helles, gestrichenes Brett, damit die schwarze Schrift gut lesbar ist
 	_wood = BuildKit.tex_mat("planks_h", 0.7, Color(1.5, 1.42, 1.2))
-	_dark = BuildKit.tex_mat("bark", 0.6)
+	_dark = SnowCover.register(BuildKit.tex_mat("bark", 0.6)) as StandardMaterial3D
 	var kit: Dictionary = WorldMap.data().get("trail_kit", {})
 	_marker_every = {0: float(kit.get("marker_every_path", 55.0)), 1: float(kit.get("marker_every_track", 85.0))}
 	_bench_every = float(kit.get("bench_every", 270.0))
@@ -452,7 +452,7 @@ func _polter(q: Vector2, dir: Vector2) -> void:
 	root.position = Vector3(q.x, g - 0.05, q.y)
 	root.rotation.y = atan2(dir.x, dir.y)
 	add_child(root)
-	var bark := BuildKit.tex_mat("bark", 1.2)
+	var bark := SnowCover.register(BuildKit.tex_mat("bark", 1.2)) as StandardMaterial3D
 	var ends := BuildKit.log_end_mat()
 	var length := _rng.randf_range(3.2, 4.5)
 	var rows := _rng.randi_range(2, 4)
@@ -467,6 +467,23 @@ func _polter(q: Vector2, dir: Vector2) -> void:
 				var cap := BuildKit.cylinder(trunk, r * 0.95, 0.01, Vector3(0, zs * (length * 0.5 + 0.004), 0), ends, false, Vector3.ZERO, -1.0, 8)
 				cap.rotation_degrees = Vector3.ZERO
 	BuildKit.collider_box(root, Vector3((6) * 0.36, rows * 0.3 + 0.1, length), Vector3(0, (rows * 0.3 + 0.1) * 0.5, 0))
+	# Holz vom Polter hacken (Axt), wächst langsam nach (SupplyConfig polter_*)
+	var wood := ResourceNode.new()
+	wood.name = "PolterWood"
+	wood.wild_key = "polter_%d_%d" % [int(q.x), int(q.y)]
+	wood.item_id = "wood"
+	wood.per_action = 2
+	wood.max_amount = Supplies.config.polter_wood
+	wood.amount = wood.max_amount
+	wood.regrow_per_day = Supplies.config.polter_regrow
+	wood.tool = "axe"
+	wood.action_label = "Holz vom Polter hacken"
+	wood.action_time = 1.8
+	wood.sound = "chop"
+	wood.anchor = Vector3(0, -0.05, 0)
+	wood.collider_size = Vector3(6 * 0.36 + 0.3, rows * 0.3 + 0.4, length + 0.3)
+	wood.solid = false
+	root.add_child(wood)
 	_view_limit(root)
 
 

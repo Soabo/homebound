@@ -72,6 +72,12 @@ func warmth_rate(p: Node3D) -> float:
 	loss += maxf(pos.y, 0.0) / 100.0 * cfg.altitude_loss_per_100m * (1.0 if night else 0.4)
 	if TimeManager.get_total_hours() < wet_until:
 		loss *= cfg.wet_factor
+	# Spätherbst: Schneetreiben, kalter Regen, Schnee am Boden, Reif
+	match WorldState.weather:
+		"snow": loss *= cfg.snowing_factor
+		"rain", "storm": loss *= cfg.rain_cold_factor
+	loss *= lerpf(1.0, cfg.snow_cover_factor, WorldState.snow)
+	loss *= lerpf(1.0, cfg.frost_factor, WorldState.frost)
 	if Inventory.count("heat_stone") > 0:
 		loss *= float(Research.gadget("heat_stone", "loss_factor", 0.55))
 	var tent := p.get("in_tent") as Node

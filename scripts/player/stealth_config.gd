@@ -25,7 +25,7 @@ static func get_default() -> StealthConfig:
 ## Faktor je Untergrund (Laub und Äste, Kies und Wasser laut; Teppich, Erde, Wiese leise)
 @export var surface_factor: Dictionary = {
 	"wood": 1.0, "carpet": 0.4, "porch": 1.2, "grass": 0.7, "forest": 1.3,
-	"gravel": 1.5, "soil": 0.6, "stone": 0.9, "water": 1.8,
+	"gravel": 1.5, "soil": 0.6, "stone": 0.9, "water": 1.8, "snow": 1.1,
 }
 ## Im Haus dämpfen die Wände, was draußen ankommt
 @export var indoor_factor: float = 0.5
@@ -68,6 +68,8 @@ static func get_default() -> StealthConfig:
 @export var vis_dark: float = 0.22
 ## Dazu im Mondlicht (bei vollem, freiem Mond)
 @export var vis_moon: float = 0.35
+## Auf Schnee hebt man sich nachts als dunkle Gestalt ab (Zuschlag bei voller Schneedecke, draußen, nicht im Dunkel ohne Mond)
+@export var vis_snow: float = 0.12
 @export var vis_day: float = 1.0
 ## Eigenes Licht / in der Nähe einer brennenden Lampe oder eines Feuers
 @export var vis_own_light: float = 1.0

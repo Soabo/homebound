@@ -17,6 +17,12 @@ extends Resource
 @export var start_day: int = 1
 @export_range(0.0, 24.0, 0.25) var start_hour: float = 16.5
 
+@export_group("Kalender")
+## Tag 1 ist dieses Datum (Christian 24.11.: Spätherbst im Bayerischen Wald). Der Unfall war am 14. Oktober.
+@export var start_year: int = 2026
+@export var start_month: int = 11
+@export var start_date: int = 16
+
 @export_group("Schlafen")
 ## Ab wann man ins Bett darf (GDD 4.4: ab dem Nachmittag).
 @export_range(0.0, 24.0, 0.25) var sleep_allowed_from_hour: float = 16.0

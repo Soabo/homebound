@@ -60,6 +60,20 @@ extends Resource
 ## Lose Steine im Wald pro Tag (seltener als am Bach, dort liegen Haufen)
 @export var forest_stones_per_day: Vector2i = Vector2i(1, 3)
 
+@export_group("Holz und Steine im großen Wald")
+## Liegende Stämme im großen Wald (Axt): Holz pro Stamm, wächst so viel pro Tag nach
+@export var wild_log_wood: int = 4
+@export var wild_log_regrow: int = 1
+## Holzpolter an Fahrwegen (Axt): Holz pro Polter, Nachwuchs pro Tag
+@export var polter_wood: int = 10
+@export var polter_regrow: int = 1
+## Steinhaufen im großen Wald: Steine pro Haufen, Nachwuchs pro Tag
+@export var wild_stones: int = 4
+@export var wild_stones_regrow: int = 2
+## Chance pro Waldstück (64 m) auf einen Steinhaufen – am Wasser (Bach, See) höher
+@export var wild_stone_chance: float = 0.3
+@export var wild_stone_chance_water: float = 0.9
+
 @export_group("Metallquellen im Wald")
 ## Höchstens so viele Fundstellen gleichzeitig, neue pro Tag (min/max)
 @export var scrap_spots_max: int = 7

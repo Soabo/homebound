@@ -22,6 +22,9 @@ extends Interactable
 @export var empty_text: String = ""
 
 var _busy: bool = false
+## Stellen im großen Wald kommen und gehen mit ihrem Waldstück: ihr Stand liegt dann in Supplies.wild
+## (Schlüssel wild_key) statt im Spielstand der Welt.
+var wild_key: String = ""
 ## false = man kann hindurchlaufen (Steinhaufen am Bach), anvisieren geht trotzdem
 var solid: bool = true
 
@@ -36,11 +39,18 @@ func _ready() -> void:
 	cs.position = anchor + Vector3(0, collider_size.y * 0.5, 0)
 	body.add_child(cs)
 	add_child(body)
-	GameState.restore(self)
 	TimeManager.day_changed.connect(_on_day_changed)
+	if wild_key != "":
+		remove_from_group("persistent")
+		amount = Supplies.wild_amount(wild_key, max_amount, regrow_per_day)
+		return
+	GameState.restore(self)
 
 
 func _on_day_changed(day: int) -> void:
+	if wild_key != "":
+		amount = Supplies.wild_amount(wild_key, max_amount, regrow_per_day)
+		return
 	amount = mini(amount + regrow_per_day, max_amount)
 	if refill_days > 0 and day % refill_days == 0:
 		amount = max_amount
@@ -110,6 +120,8 @@ func interact(player: Node) -> void:
 	var take := mini(per_action, amount)
 	var got := Inventory.add(item_id, take)
 	amount -= got
+	if wild_key != "":
+		Supplies.wild_store(wild_key, amount, max_amount)
 	if got > 0:
 		EventBus.notify("%s +%d  (jetzt %d)" % [Inventory.display_name(item_id), got, Inventory.count(item_id)], 2.0)
 	else:

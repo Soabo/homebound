@@ -15,6 +15,8 @@ var _next_bolt: float = 10.0
 var _heat_t: float = 0.0
 var _wet_t: float = 0.0
 var _rain_amount: float = 0.0
+var _snow: CPUParticles3D
+var _snow_amount: float = 0.0
 var _player: Player
 
 
@@ -25,6 +27,8 @@ func _ready() -> void:
 	add_child(_rain)
 	_drops = _make_drops()
 	add_child(_drops)
+	_snow = _make_snow()
+	add_child(_snow)
 	_rain_snd = _loop("rain", -60.0)
 	_roof_snd = _loop("rain_roof", -60.0)
 
@@ -58,6 +62,39 @@ func _make_rain() -> CPUParticles3D:
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_color = Color(0.75, 0.8, 0.9, 0.28)
+	q.material = m
+	p.mesh = q
+	return p
+
+
+## Schneefall: Flocken taumeln langsam um die Kamera, der Wind treibt sie schräg.
+func _make_snow() -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.name = "Snow"
+	p.amount = 1400
+	p.lifetime = 7.0
+	p.preprocess = 7.0
+	p.emitting = false
+	p.local_coords = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = Vector3(16, 0.5, 16)
+	p.direction = Vector3(0, -1, 0)
+	p.spread = 20.0
+	p.initial_velocity_min = 0.9
+	p.initial_velocity_max = 1.6
+	p.gravity = Vector3(0, -0.25, 0)
+	# Taumeln: kleine seitliche Beschleunigung, die sich ändert
+	p.tangential_accel_min = -0.4
+	p.tangential_accel_max = 0.4
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.4
+	var q := QuadMesh.new()
+	q.size = Vector2(0.035, 0.035)
+	var m := StandardMaterial3D.new()
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.92, 0.94, 0.98, 0.85)
 	q.material = m
 	p.mesh = q
 	return p
@@ -108,6 +145,14 @@ func _process(delta: float) -> void:
 	((_rain.mesh as QuadMesh).material as StandardMaterial3D).albedo_color.a = 0.3 * clampf(_rain_amount * 1.4, 0.15, 1.0)
 	if wind:
 		_rain.direction = Vector3(wind.dir.x * wind.strength * 0.35, -1, wind.dir.y * wind.strength * 0.35)
+	# Schnee um die Kamera (drinnen nicht); nachts etwas dunkler, damit die Flocken nicht leuchten
+	_snow_amount = move_toward(_snow_amount, 1.0 if w == "snow" else 0.0, delta / 25.0)
+	_snow.global_position = cam + Vector3(0, 8, 0) - (Vector3(wind.dir.x, 0, wind.dir.y) * wind.strength * 6.0 if wind else Vector3.ZERO)
+	_snow.emitting = _snow_amount > 0.05 and not indoor
+	var light := 0.35 + 0.65 * clampf(1.0 - absf(TimeManager.hour - 12.5) / 6.5, 0.0, 1.0)
+	((_snow.mesh as QuadMesh).material as StandardMaterial3D).albedo_color = Color(0.92 * light, 0.94 * light, 0.98 * light, 0.85 * clampf(_snow_amount * 1.3, 0.1, 1.0))
+	if wind:
+		_snow.direction = Vector3(wind.dir.x * wind.strength * 0.9, -1, wind.dir.y * wind.strength * 0.9)
 	# Tropfen aus den Bäumen, solange es nass ist und nicht mehr regnet
 	_drops.global_position = cam + Vector3(0, 4, 0)
 	_drops.emitting = WorldState.wetness > 0.3 and _rain_amount < 0.1 and not indoor and Vector2(cam.x, cam.z).length() > 25.0

@@ -95,6 +95,8 @@ static func tex_mat(kind: String, repeat_m: float = 1.0, tint: Color = Color.WHI
 	var s := 1.0 / repeat_m
 	m.uv1_scale = Vector3(s, s, s)
 	_materials[key] = m
+	if kind == "shingles":
+		SnowCover.register(m)   # Schnee auf allen Schindeldächern
 	return m
 
 

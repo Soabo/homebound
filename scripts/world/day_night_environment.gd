@@ -171,7 +171,7 @@ func _w(kind: String) -> float:
 func _apply(h: float, delta: float) -> void:
 	# Wetter weich überblenden (ca. 1 Minute)
 	var target_kind := WorldState.weather
-	for k: String in ["clear", "cloudy", "rain", "fog", "storm"]:
+	for k: String in ["clear", "cloudy", "rain", "fog", "storm", "snow"]:
 		var goal := 1.0 if k == target_kind else 0.0
 		_weather_mix[k] = move_toward(_w(k), goal, delta / 60.0) if delta > 0.0 else goal
 	var clouds := 0.0
@@ -179,13 +179,14 @@ func _apply(h: float, delta: float) -> void:
 		clouds += _w(k) * float(WorldState.config.get("clouds_" + k))
 	var rainy := _w("rain") + _w("storm")
 	var foggy := _w("fog")
+	var snowy := _w("snow")
 
 	var alt := sun_altitude_deg(h)
 	var az := (13.0 - h) * 12.0
 	sun.rotation_degrees = Vector3(-maxf(alt, 0.5), az, 0.0)
 
 	var day := smoothstep(-9.0, 12.0, alt)
-	var sun_strength := smoothstep(-1.0, 9.0, alt) * (1.0 - clouds * 0.75) * (1.0 - rainy * 0.55) * (1.0 - foggy * 0.4)
+	var sun_strength := smoothstep(-1.0, 9.0, alt) * (1.0 - clouds * 0.75) * (1.0 - rainy * 0.55) * (1.0 - foggy * 0.4) * (1.0 - snowy * 0.4)
 	var low_sun := clampf(1.0 - absf(alt - 3.0) / 14.0, 0.0, 1.0) * smoothstep(-6.0, 0.0, alt)
 	var morning := 1.0 if h < 12.0 else 0.0
 
@@ -250,6 +251,8 @@ func _apply(h: float, delta: float) -> void:
 	var target_indoor := 1.0 if indoor else 0.0
 	_indoor = move_toward(_indoor, target_indoor, delta * 1.5)
 	env.ambient_light_energy = lerpf(lerpf(0.02, 0.07, moon_up * moon_clear), 0.6 - clouds * 0.15, day) * lerpf(1.0, 0.85, _indoor) + _flash * 0.4
+	# Schnee wirft nachts das wenige Licht zurück: draußen etwas heller
+	env.ambient_light_energy += WorldState.snow * lerpf(0.04 + 0.1 * moon_up * moon_clear, 0.08, day) * (1.0 - _indoor)
 	if _player_underground():
 		env.ambient_light_energy = 0.015
 		sun.light_energy = 0.0
@@ -265,9 +268,9 @@ func _apply(h: float, delta: float) -> void:
 	# Bodennebel in den Morgen- und Abendstunden (liegt unten in Senken und über dem Bach)
 	var fog_mult := (1.0 + (0.9 if WorldState.stage() >= 2 else 0.0) * (1.0 - day)) * (1.0 + Story.saat_progress() * 1.4)
 	var ground_fog := maxf(1.0 - absf(h - 6.5) / 2.2, 0.0) + maxf(1.0 - absf(h - 19.5) / 1.8, 0.0) * 0.7
-	env.fog_density = (lerpf(0.016, 0.004, day) + foggy * 0.05 + rainy * 0.008) * fog_mult
+	env.fog_density = (lerpf(0.016, 0.004, day) + foggy * 0.05 + rainy * 0.008 + snowy * 0.018) * fog_mult
 	env.fog_height_density = ground_fog * 0.35 + foggy * 0.2
-	env.volumetric_fog_density = (lerpf(0.035, 0.012, day) + ground_fog * 0.02 + foggy * 0.06 + rainy * 0.01) * fog_mult
+	env.volumetric_fog_density = (lerpf(0.035, 0.012, day) + ground_fog * 0.02 + foggy * 0.06 + rainy * 0.01 + snowy * 0.02) * fog_mult
 	env.volumetric_fog_albedo = Color(0.5, 0.55, 0.62).lerp(Color(0.85, 0.87, 0.9), day)
 
 	# Farbabstimmung je Tageszeit: mittags klar, abends golden, morgens kühl, nachts kalt blau,

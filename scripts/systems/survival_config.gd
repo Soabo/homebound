@@ -22,13 +22,18 @@ static func get_default() -> SurvivalConfig:
 
 @export_group("Auskühlen draußen")
 ## Verlust pro Stunde draußen am Tag / in der Nacht
-@export var outdoor_loss_day: float = 1.5
-@export var outdoor_loss_night: float = 9.0
+@export var outdoor_loss_day: float = 2.5
+@export var outdoor_loss_night: float = 10.5
 ## Zusätzlicher Verlust pro Stunde je 100 m Höhe
 @export var altitude_loss_per_100m: float = 3.0
 ## Nass (nach dem Waten): so viel schneller kühlt man aus, so lange (Stunden)
 @export var wet_factor: float = 2.0
 @export var wet_hours: float = 1.5
+## Spätherbst (Christian 24.11.): im Schneetreiben, im kalten Regen, bei Schnee am Boden und in Reifnächten kühlt man schneller aus
+@export var snowing_factor: float = 1.35
+@export var rain_cold_factor: float = 1.2
+@export var snow_cover_factor: float = 1.12
+@export var frost_factor: float = 1.15
 
 @export_group("Hütte, Zelt, Schlafsack")
 ## In der Hütte: Gewinn, wenn Kamin oder Ofen brennen; ohne Feuer wärmt man sich nur langsam auf

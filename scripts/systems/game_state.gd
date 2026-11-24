@@ -272,6 +272,9 @@ func test_start(day: int) -> void:
 		TimeManager.set_time(d + 1, 8.0)
 		WorldState._on_day_changed(d + 1)
 	ThreatDirector.last_siege_day = day   # heute Nacht keine Belagerung
+	# Spätherbst: der erste Schnee ist längst gefallen
+	WorldState.first_snow_done = true
+	WorldState.snow = 0.6
 	ThreatDirector._arc_day = -1
 	ThreatDirector._planned_for_day = -1
 	TimeManager.set_time(day, TEST_START_HOUR)

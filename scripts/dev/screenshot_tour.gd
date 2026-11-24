@@ -103,6 +103,12 @@ const SHOTS := [
 	{"name": "83_kinderzimmer", "hour": 14.0, "pos": Vector3(-6.4, 0.45, 0.2), "look": Vector3(-8.8, 0.9, -3.0), "lights": true},
 	{"name": "F1_uhr_aufgaben", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true, "log": true},
 	{"name": "H0_totenbretter", "hour": 15.0, "node": "StoryProps/Totenbretter", "node_off": Vector3(0.5, 0, 2.4), "clean": true},
+	{"name": "H1_schnee_huette", "day": 5, "hour": 11.0, "weather": "snow", "snow": 0.9, "pos": Vector3(-6.5, 0.0, 27.0), "look": Vector3(0.0, 2.0, 2.0)},
+	{"name": "H2_schnee_wald", "day": 5, "hour": 14.0, "weather": "cloudy", "snow": 0.7, "pos": Vector3(4.6, 0.0, -14.0), "look": Vector3(5.5, 1.0, -40.0)},
+	{"name": "H3_raureif", "day": 4, "hour": 8.0, "weather": "clear", "frost": 0.9, "pos": Vector3(-12.0, 0.0, 14.0), "look": Vector3(-2.0, 0.6, 9.0)},
+	{"name": "H4_spuren_morgen", "day": 6, "hour": 8.2, "weather": "clear", "snow": 0.85, "pos": Vector3(-9.0, 0.0, -6.5), "look": Vector3(-16.0, 0.0, -9.0),
+		"tracks": [Vector3(-26.0, 0.0, -20.0), Vector3(-7.2, 0.0, 1.5)]},
+	{"name": "H5_duenner_schnee", "day": 4, "hour": 15.0, "weather": "cloudy", "snow": 0.35, "pos": Vector3(-3.5, 0.0, 26.5), "look": Vector3(-30.0, 0.5, 30.0)},
 	{"name": "F0_bretterlager", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true},
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
@@ -167,11 +173,26 @@ func _run() -> void:
 		Story.shaft_open_day = int(shot.get("day", 1)) - int(shot.get("saat_days", 0)) if shot.get("shaft_open", false) else -1
 		WorldState.set_weather(String(shot.get("weather", "clear")), 10.0)
 		WorldState.wetness = float(shot.get("wet", 0.0))
+		# Spätherbst: Schneedecke/Reif direkt setzen, der erste Schnee soll die Bilder nicht überraschen
+		WorldState.first_snow_done = true
+		WorldState.snow = float(shot.get("snow", 0.0))
+		WorldState.frost = float(shot.get("frost", 0.0))
+		if shot.has("tracks") and SnowTracks.current:
+			var tr: Array = shot["tracks"]
+			var a0: Vector3 = tr[0]
+			var b0: Vector3 = tr[1]
+			var steps := int(a0.distance_to(b0) / 0.9)
+			var yaw := atan2(-(b0.x - a0.x), -(b0.z - a0.z))
+			for k in steps:
+				var q := a0.lerp(b0, float(k) / steps) + Vector3(cos(yaw), 0, -sin(yaw)) * (0.2 if k % 2 == 0 else -0.2)
+				SnowTracks.current.add_print(SnowTracks.current.claws(), q, yaw, 1.0)
+			print("[Tour] Spuren: ", SnowTracks.current.visible_count(SnowTracks.current.claws()), " bei ", a0)
 		var wfx := get_tree().current_scene.find_child("WeatherFx", true, false)
 		if wfx:
 			# Regen sofort in voller Stärke (sonst blendet er 20 s ein)
 			var rain_now := 1.0 if String(shot.get("weather", "clear")) in ["rain", "storm"] else 0.0
 			wfx.set("_rain_amount", rain_now)
+			wfx.set("_snow_amount", 1.0 if String(shot.get("weather", "clear")) == "snow" else 0.0)
 		var dn := DayNightEnvironment.current
 		if dn:
 			dn.call("_apply", TimeManager.hour, 0.0)   # Wetter sofort, ohne Überblenden

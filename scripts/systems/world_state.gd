@@ -31,13 +31,19 @@ var next_patch_id: int = 0
 var drone_part_dropped: bool = false
 var last_stage: int = 0
 var spread_day: int = 0
-## Wetter: clear | cloudy | rain | fog | storm (Werte in WorldConfig weather_*), bis wann (Gesamtstunden)
+## Wetter: clear | cloudy | rain | fog | storm | snow (Werte in WorldConfig weather_*), bis wann (Gesamtstunden)
 var weather: String = "clear"
 var weather_until: float = 20.0
 ## Wie nass Boden und Pflanzen sind (0..1)
 var wetness: float = 0.0
 var _weather_rng := RandomNumberGenerator.new()
 var _wet_last: float = 0.0
+## Spätherbst: Schneedecke und Raureif (0..1), Shader-Globale snow/frost setzt der Wind-Knoten
+var snow: float = 0.0
+var frost: float = 0.0
+var first_snow_done: bool = false
+## Wie viel Schnee seit Spielbeginn gefallen ist (für Spuren, die zugeschneit werden)
+var snowfall_total: float = 0.0
 signal weather_changed(kind: String)
 
 
@@ -62,12 +68,60 @@ func _process(_delta: float) -> void:
 		wetness = minf(1.0, wetness + config.wet_per_hour * hours)
 	else:
 		wetness = maxf(0.0, wetness - config.dry_per_hour * hours * (0.4 if weather == "fog" else 1.0))
+	_update_snow(now, hours)
+
+
+## Schneedecke und Raureif fortschreiben (auch über Schlaf und Zeitsprünge hinweg).
+func _update_snow(now: float, hours: float) -> void:
+	var h := fmod(now, 24.0)
+	var day_time := h >= 9.0 and h < 16.0
+	# Der erste Schnee kommt sicher am Abend von first_snow_day
+	var first_at := float(config.first_snow_day - 1) * 24.0 + config.first_snow_hour
+	if not first_snow_done and now >= first_at:
+		first_snow_done = true
+		# verschlafen? Dann liegt schon Schnee, wenn man aufwacht – und es schneit noch ein wenig
+		var late := now - first_at
+		if late > 1.0:
+			snow = clampf(minf(late, config.first_snow_hours) * config.snow_per_hour, snow, 0.85)
+		set_weather("snow", maxf(config.first_snow_hours - late, 2.0))
+		EventBus.notify("Es schneit. Der erste Schnee." if late <= 1.0 else "Draußen ist alles weiß. Der erste Schnee.", 4.5)
+		Tasks.flag("first_snow")
+	match weather:
+		"snow":
+			snow = minf(1.0, snow + config.snow_per_hour * hours)
+			snowfall_total += config.snow_per_hour * hours
+			frost = maxf(0.0, frost - config.frost_melt_per_hour * hours)
+		"rain", "storm":
+			snow = maxf(0.0, snow - config.melt_rain_per_hour * hours)
+			frost = 0.0
+		_:
+			if day_time:
+				snow = maxf(0.0, snow - config.melt_day_per_hour * hours * (1.0 if weather == "clear" else 0.4))
+	if weather != "snow" and weather != "rain" and weather != "storm":
+		var cold_night := h >= 21.0 or h < 7.0
+		if cold_night:
+			var clear := 1.0 if weather == "clear" else config.frost_cloud_factor
+			frost = minf(1.0, frost + config.frost_per_hour * hours * clear)
+		elif h >= config.frost_melt_from_hour:
+			frost = maxf(0.0, frost - config.frost_melt_per_hour * hours * (1.0 if weather == "clear" else 0.6))
+
+
+## Wie stark es gerade schneit (0..1, für Kälte und Sicht)
+func snowing() -> float:
+	return 1.0 if weather == "snow" else 0.0
 
 
 func _next_weather(now: float) -> void:
 	var h := fmod(now, 24.0)
 	var w := {"clear": config.weather_clear, "cloudy": config.weather_cloudy, "rain": config.weather_rain,
 		"fog": config.weather_fog * (config.fog_morning_factor if h >= 4.0 and h < 9.0 else 1.0), "storm": config.weather_storm}
+	# Spätherbst: ab dem ersten Schnee kann es schneien, Regen und Gewitter werden seltener
+	var season := 0.0
+	if first_snow_done:
+		season = clampf(float(TimeManager.day - config.first_snow_day + 1) / maxf(float(config.snow_ramp_days), 1.0), 0.2, 1.0)
+	w["snow"] = config.weather_snow * season * (0.4 if weather == "snow" else 1.0)
+	w["rain"] = float(w["rain"]) * lerpf(1.0, config.snow_rain_cut, season)
+	w["storm"] = float(w["storm"]) * lerpf(1.0, 0.3, season)
 	# nicht zweimal hintereinander dasselbe Unwetter
 	# nach Regen/Gewitter eher eine Pause (Christian 14.11.: Regen hörte gefühlt nie auf)
 	if weather in ["storm", "rain"]:
@@ -260,7 +314,8 @@ func shut_down_structure() -> void:
 func get_state() -> Dictionary:
 	return {"structure_off": structure_off, "pylons_off": pylons_off.duplicate(), "source_alive": source_alive,
 		"patches": patches.duplicate(true), "next_patch_id": next_patch_id, "drone_part": drone_part_dropped,
-		"last_stage": last_stage, "spread_day": spread_day, "weather": weather, "weather_until": weather_until, "wetness": wetness}
+		"last_stage": last_stage, "spread_day": spread_day, "weather": weather, "weather_until": weather_until, "wetness": wetness,
+		"snow": snow, "frost": frost, "first_snow": first_snow_done}
 
 
 func set_state(s: Dictionary) -> void:
@@ -275,5 +330,8 @@ func set_state(s: Dictionary) -> void:
 	weather = String(s.get("weather", "clear"))
 	weather_until = float(s.get("weather_until", TimeManager.get_total_hours() + 4.0))
 	wetness = float(s.get("wetness", 0.0))
+	snow = float(s.get("snow", 0.0))
+	frost = float(s.get("frost", 0.0))
+	first_snow_done = bool(s.get("first_snow", false))
 	_wet_last = TimeManager.get_total_hours()
 	changed.emit()

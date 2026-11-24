@@ -91,7 +91,7 @@ func set_paused(value: bool) -> void:
 	visible = value
 	if value and _info:
 		_settings.visible = false
-		_info.text = ("Speicherplatz %d – gespeichert wird nur beim Schlafen im Bett.\nZuletzt: Tag %d, %02d:%02d Uhr. Was seitdem geschah, geht beim Beenden verloren." % [GameState.slot + 1, GameState.bed_day, int(GameState.bed_hour), int(fmod(GameState.bed_hour, 1.0) * 60.0)]) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
+		_info.text = ("Speicherplatz %d – gespeichert wird nur beim Schlafen im Bett.\nZuletzt: Tag %d (%s), %02d:%02d Uhr. Was seitdem geschah, geht beim Beenden verloren." % [GameState.slot + 1, GameState.bed_day, TimeManager.date_text(GameState.bed_day), int(GameState.bed_hour), int(fmod(GameState.bed_hour, 1.0) * 60.0)]) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value or _menu_needs_mouse() else Input.MOUSE_MODE_CAPTURED
 
 

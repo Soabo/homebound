@@ -47,10 +47,11 @@ func _ready() -> void:
 		"bush0": Forest.bush_mesh(300), "bush1": Forest.bush_mesh(307), "bush2": Forest.bush_mesh(314),
 		"mushroom": Forest.mushroom_mesh()}
 	var needles := Forest.plant_mat("needles")
-	_mats = {"bark": _textured("bark", 1.5), "birch": _textured("birch_bark", 1.2), "smooth": _textured("smooth_bark", 1.6), "needles": needles, "leaves": Forest.plant_mat("crowns"),
-		"grass": Forest.plant_mat("grass"), "fern": Forest.plant_mat("fern"), "stone": _textured("stone", 1.2),
-		"log": BuildKit.tex_mat("bark", 1.0), "moss": BuildKit.tex_mat("moss", 0.6), "moss_tri": _textured("moss", 0.7),
-		"mushroom": _vertex_mat()}
+	_mats = {"bark": SnowCover.register(_textured("bark", 1.5)), "birch": _textured("birch_bark", 1.2), "smooth": _textured("smooth_bark", 1.6), "needles": needles, "leaves": Forest.plant_mat("crowns"),
+		"grass": Forest.plant_mat("grass"), "fern": Forest.plant_mat("fern"), "stone": SnowCover.register(_textured("stone", 1.2)),
+		"log": SnowCover.register(BuildKit.tex_mat("bark", 1.0)), "moss": SnowCover.register(BuildKit.tex_mat("moss", 0.6)),
+		"moss_tri": SnowCover.register(_textured("moss", 0.7)),
+		"mushroom": _vertex_mat(), "pile": BuildKit.tex_mat("stone", 0.5)}
 
 
 func _vertex_mat() -> StandardMaterial3D:
@@ -481,6 +482,24 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 		cs.position = Vector3(x, g + r * 0.7, z)
 		cs.rotation_degrees = Vector3(0, yaw, 90)
 		gp.body.add_child(cs)
+		# Holz hacken (Axt) – Stand in Supplies.wild, weil das Stück entladen wird
+		var wood := ResourceNode.new()
+		wood.name = "WildLog_%d" % k
+		wood.wild_key = "log_%d_%d_%d" % [key.x, key.y, k]
+		wood.item_id = "wood"
+		wood.per_action = 2
+		wood.max_amount = Supplies.config.wild_log_wood
+		wood.amount = wood.max_amount
+		wood.regrow_per_day = Supplies.config.wild_log_regrow
+		wood.tool = "axe"
+		wood.action_label = "Holz hacken"
+		wood.action_time = 1.8
+		wood.sound = "chop"
+		wood.anchor = Vector3(x, g - 0.1, z)
+		wood.collider_size = Vector3(1.4, r * 2.0 + 0.4, 1.4)
+		wood.solid = false
+		root.add_child(wood)
+	_stone_pile(key, root, rng)
 	_mm(root, "Grass", _meshes["cross"], gp.grass, gp.grass_cols, _mats["grass"], false)
 	_mm(root, "Ferns", _meshes["cross"], gp.ferns, gp.fern_cols, _mats["fern"], false)
 	# Drei Buschformen im Wechsel
@@ -530,6 +549,56 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 	_mm(root, "Twigs", _meshes["trunk_lod"], twigs, twig_cols, _mats["bark"], false)
 	_mm(root, "Mushrooms", _meshes["mushroom"], shrooms, shroom_cols, _mats["mushroom"], false)
 	root.add_child(gp.body)
+
+
+## Steinhaufen zum Aufsammeln – am Bach oder See fast immer einer, sonst seltener (SupplyConfig wild_stone_*).
+func _stone_pile(key: Vector2i, root: Node3D, rng: RandomNumberGenerator) -> void:
+	var x0 := key.x * CHUNK
+	var z0 := key.y * CHUNK
+	var best := Vector2.INF
+	var wet_best := false
+	for k in 16:
+		var x := x0 + rng.randf_range(4.0, CHUNK - 4.0)
+		var z := z0 + rng.randf_range(4.0, CHUNK - 4.0)
+		var g := Terrain.height_at(x, z)
+		if maxf(absf(x), absf(z)) <= INNER or Terrain.water_level_at(x, z) > g - 0.15 or WorldMap.trail_info(x, z).x < 0.8:
+			continue
+		# Wasser in 2–4 m Nähe? (Ufer von Bach und See)
+		var wet := false
+		for a in 6:
+			var q := Vector2(x, z) + Vector2.from_angle(TAU * a / 6.0) * 3.0
+			if Terrain.water_level_at(q.x, q.y) > Terrain.height_at(q.x, q.y) + 0.05:
+				wet = true
+				break
+		if best == Vector2.INF or (wet and not wet_best):
+			best = Vector2(x, z)
+			wet_best = wet
+	if best == Vector2.INF:
+		return
+	var chance := Supplies.config.wild_stone_chance_water if wet_best else Supplies.config.wild_stone_chance
+	if rng.randf() >= chance:
+		return
+	var g := Terrain.height_at(best.x, best.y)
+	var pile := ResourceNode.new()
+	pile.name = "WildStones"
+	pile.wild_key = "stone_%d_%d" % [key.x, key.y]
+	pile.item_id = "stone"
+	pile.per_action = 2
+	pile.max_amount = Supplies.config.wild_stones
+	pile.amount = pile.max_amount
+	pile.regrow_per_day = Supplies.config.wild_stones_regrow
+	pile.action_label = "Steine sammeln"
+	pile.action_time = 1.2
+	pile.sound = "collect_stone"
+	pile.anchor = Vector3(best.x, g, best.y)
+	pile.collider_size = Vector3(1.0, 0.5, 1.0)
+	pile.solid = false
+	root.add_child(pile)
+	for i in 6:
+		var px := best.x + rng.randf_range(-0.35, 0.35)
+		var pz := best.y + rng.randf_range(-0.35, 0.35)
+		BuildKit.sphere(root, rng.randf_range(0.1, 0.2), Vector3(px, Terrain.height_at(px, pz) + 0.06, pz), _mats["pile"],
+				Vector3(1.2, 0.6, 1.0), 6)
 
 
 func _mm(root: Node3D, n: String, mesh: Mesh, transforms: Array[Transform3D], colors: Array[Color], mat: Material, shadows: bool) -> void:

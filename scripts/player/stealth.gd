@@ -129,6 +129,7 @@ static func visibility(pl: Player) -> float:
 		var shade := 1.0 - canopy(p) * c.canopy_shade
 		var sky := maxf(c.vis_dark + c.vis_moon * moonlight() * shade, c.vis_day * daylight() * shade)
 		v = maxf(sky, c.vis_dark)
+		v += c.vis_snow * WorldState.snow * (1.0 - daylight()) * (0.4 + 0.6 * moonlight()) * shade
 		if lamp:
 			v = maxf(v, c.vis_near_light)
 		if AirFx.breath_cloud_until > Time.get_ticks_msec():

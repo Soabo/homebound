@@ -178,7 +178,7 @@ func _on_prompt(text: String) -> void:
 
 
 func _process(delta: float) -> void:
-	_clock.text = "Tag %d    %s" % [TimeManager.day, TimeManager.get_clock_text()]
+	_clock.text = "Tag %d · %s    %s" % [TimeManager.day, TimeManager.date_text(), TimeManager.get_clock_text()]
 	_update_weight()
 	_update_notes(delta)
 	_update_watch_log(delta)
@@ -295,7 +295,7 @@ func _on_sleep_requested(wake_hour: float) -> void:
 			ThreatDirector.scared_until = TimeManager.get_total_hours() + ThreatDirector.config.scared_awake_hours
 			show_notification("Du schreckst hoch.  %s" % TimeManager.get_clock_text(), 4.0)
 		else:
-			show_notification("Tag %d  –  %s" % [TimeManager.day, TimeManager.get_clock_text()], 4.0))
+			show_notification("Tag %d, %s  –  %s" % [TimeManager.day, TimeManager.date_text(), TimeManager.get_clock_text()], 4.0))
 	tw.tween_property(_fade, "color:a", 0.0, 1.8 if disturb < 0.0 else 0.6)
 	tw.tween_callback(func() -> void:
 		_sleeping = false
@@ -311,7 +311,7 @@ func _on_phase_changed(is_night: bool) -> void:
 func _on_day_changed(day: int) -> void:
 	if _sleeping:
 		return
-	show_notification("Tag %d" % day, 3.0)
+	show_notification("Tag %d  –  %s" % [day, TimeManager.date_text(day)], 3.0)
 
 
 # --- Schaden und Tod ----------------------------------------------------

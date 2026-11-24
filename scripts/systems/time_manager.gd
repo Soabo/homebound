@@ -80,6 +80,24 @@ func get_clock_text() -> String:
 	return "%02d:%02d" % [get_hour_int(), get_minute()]
 
 
+## Datum des Spieltags (Kalender in TimeConfig: Tag 1 = start_date.start_month.start_year).
+func date_of(d: int) -> Dictionary:
+	var cfg := config
+	var base := Time.get_unix_time_from_datetime_dict({"year": cfg.start_year, "month": cfg.start_month, "day": cfg.start_date,
+			"hour": 12, "minute": 0, "second": 0})
+	return Time.get_datetime_dict_from_unix_time(base + (d - 1) * 86400)
+
+
+const WEEKDAYS := ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"]
+const MONTHS := ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sep.", "Okt.", "Nov.", "Dez."]
+
+
+## z. B. „Mo 16. Nov.“
+func date_text(d: int = -1) -> String:
+	var dt := date_of(day if d < 0 else d)
+	return "%s %d. %s" % [WEEKDAYS[int(dt["weekday"])], int(dt["day"]), MONTHS[int(dt["month"]) - 1]]
+
+
 func get_total_hours() -> float:
 	return float(day - 1) * 24.0 + hour
 

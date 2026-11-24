@@ -98,3 +98,29 @@ extends Resource
 ## Wie schnell Boden und Pflanzen nass werden bzw. trocknen (pro Spielstunde)
 @export var wet_per_hour: float = 1.5
 @export var dry_per_hour: float = 0.35
+
+@export_group("Spätherbst und Schnee")
+## Schneefall (Gewicht wie oben) – erst ab first_snow_day, steigt über snow_ramp_days auf den vollen Wert.
+## Der erste Schnee kommt sicher am Abend von first_snow_day (first_snow_hour, first_snow_hours lang).
+@export var weather_snow: float = 0.3
+@export var first_snow_day: int = 3
+@export var first_snow_hour: float = 18.0
+@export var first_snow_hours: float = 7.0
+@export var snow_ramp_days: int = 6
+## Sobald es schneien kann, wird Regen seltener (Faktor bei vollem Schnee-Anteil)
+@export var snow_rain_cut: float = 0.5
+@export var wind_snow: float = 0.3
+@export var clouds_snow: float = 0.9
+## Schneedecke 0..1: wächst beim Schneien, schmilzt im Regen schnell, bei Tag langsam (bei Nacht nicht)
+@export var snow_per_hour: float = 0.22
+@export var melt_rain_per_hour: float = 0.3
+@export var melt_day_per_hour: float = 0.025
+## Raureif 0..1: bildet sich in kalten Nächten ohne Niederschlag (stärker bei klarem Himmel), taut morgens weg
+@export var frost_per_hour: float = 0.18
+@export var frost_cloud_factor: float = 0.4
+@export var frost_melt_from_hour: float = 8.5
+@export var frost_melt_per_hour: float = 0.4
+## Spuren im Schnee (Spieler und Wesen): ab dieser Schneedecke, so viele Stunden sichtbar, so viel Neuschnee deckt sie zu
+@export var track_min_snow: float = 0.25
+@export var track_hours: float = 30.0
+@export var track_cover_snow: float = 0.2

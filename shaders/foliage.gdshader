@@ -11,6 +11,12 @@ global uniform vec2 wind_dir;
 global uniform float wind_time;
 global uniform vec4 rustle;
 global uniform float wetness;
+// Spätherbst: Schnee bleibt oben auf Nadeln/Kronen liegen (snow_hold), niedrige Pflanzen versinken darin (snow_bury),
+// Raureif überzieht alles mit einem weißen Hauch.
+global uniform float snow;
+global uniform float frost;
+uniform float snow_hold = 0.8;
+uniform float snow_bury = 0.0;
 
 uniform sampler2D albedo_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform vec4 tint : source_color = vec4(1.0);
@@ -51,6 +57,7 @@ void vertex() {
 	off += vec3(sin(wind_time * 9.0 + wp.x * 3.1), 0.0, cos(wind_time * 8.0 + wp.z * 2.7)) * flutter * (s + r) * h;
 	off.y -= length(bend) * sway * h * 0.15;
 	VERTEX += inverse(mat3(MODEL_MATRIX)) * off;
+	VERTEX.y *= 1.0 - snow * snow_bury;
 	wpos = wp;
 	wnrm = normalize(mat3(MODEL_MATRIX) * NORMAL);
 }
@@ -65,7 +72,13 @@ void fragment() {
 	} else {
 		tex = texture(albedo_tex, UV * tex_scale);
 	}
-	ALBEDO = tex.rgb * COLOR.rgb * tint.rgb * mix(1.0, 0.78, wetness);
+	vec3 col = tex.rgb * COLOR.rgb * tint.rgb * mix(1.0, 0.78 + 0.22 * snow, wetness);
+	float n = fract(sin(dot(floor(wpos * 4.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+	float up = wnrm.y * (FRONT_FACING ? 1.0 : -1.0);
+	float cap = snow * snow_hold * smoothstep(0.1, 0.65, up + (n - 0.5) * 0.5);
+	col = mix(col, vec3(0.88, 0.9, 0.95), clamp(cap, 0.0, 0.92));
+	col = mix(col, vec3(0.72, 0.76, 0.82), frost * 0.3 * (0.4 + 0.6 * n));
+	ALBEDO = col;
 	if (use_alpha) {
 		ALPHA = tex.a;
 		ALPHA_SCISSOR_THRESHOLD = alpha_cut;

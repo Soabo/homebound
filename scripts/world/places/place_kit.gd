@@ -18,13 +18,13 @@ static func mat(kind: String) -> Material:
 		"bark": m = BuildKit.tex_mat("bark", 0.8)
 		"stone": m = BuildKit.tex_mat("stone", 0.7)
 		"stone_dark": m = BuildKit.tex_mat("stone_dark", 0.7)
-		"rock": m = BuildKit.tex_mat("rock", 2.0)
+		"rock": m = SnowCover.register(BuildKit.tex_mat("rock", 2.0)) as StandardMaterial3D
 		"concrete": m = BuildKit.tex_mat("metal", 2.5, Color(0.78, 0.77, 0.73), 0.95)
 		"metal": m = BuildKit.tex_mat("metal", 0.6, Color(1.2, 1.2, 1.2), 0.5)
 		"rust": m = BuildKit.tex_mat("metal", 0.5, Color(1.1, 0.65, 0.4), 0.7)
 		"steel_dark": m = BuildKit.tex_mat("metal", 0.5, Color(0.55, 0.57, 0.6), 0.4)
 		"shingles": m = BuildKit.tex_mat("shingles", 1.2)
-		"tin": m = BuildKit.tex_mat("metal", 0.3, Color(0.85, 0.88, 0.9), 0.5)
+		"tin": m = SnowCover.register(BuildKit.tex_mat("metal", 0.3, Color(0.85, 0.88, 0.9), 0.5)) as StandardMaterial3D
 		"fabric": m = BuildKit.tex_mat("fabric", 0.5)
 		"canvas": m = BuildKit.tex_mat("fabric", 0.6, Color(0.6, 0.68, 0.45))
 		"glass": m = BuildKit.glass_mat()

@@ -41,6 +41,7 @@ func _ready() -> void:
 	add_child(Wind.new())
 	add_child(WeatherFx.new())
 	add_child(AirFx.new())
+	add_child(SnowTracks.new())
 	# Endspurt: Kammer des Wurzelknotens unter dem Brunnen, Christians Pickup auf dem Hof
 	add_child(RootChamber.new())
 	var truck := EscapeTruck.new()

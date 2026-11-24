@@ -80,3 +80,11 @@ wetness={
 "type": "float",
 "value": 0.0
 }
+snow={
+"type": "float",
+"value": 0.0
+}
+frost={
+"type": "float",
+"value": 0.0
+}

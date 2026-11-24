@@ -6,7 +6,7 @@ extends RefCounted
 ## Der Untergrund ergibt sich aus der Position (Hütte, Teppich, Veranda, Zufahrt, Bach, Feld, Wiese, Wald).
 
 const BASE_DIR := "res://assets/audio/steps"
-const SURFACES := ["wood", "carpet", "porch", "grass", "forest", "gravel", "soil", "stone", "water"]
+const SURFACES := ["wood", "carpet", "porch", "grass", "forest", "gravel", "soil", "stone", "water", "snow"]
 const GAITS := ["sneak", "walk", "run"]
 const MAX_VARIANTS := 24
 
@@ -14,9 +14,12 @@ const MAX_VARIANTS := 24
 ## damit hier allein das Spiel entscheidet, wie laut ein Untergrund klingt.
 const GAIT_DB := {"sneak": -21.0, "walk": -14.0, "run": -9.0, "land": -8.0, "jump": -12.0}
 const SURFACE_DB := {"wood": 0.0, "carpet": -6.0, "porch": 1.5, "grass": -3.0, "forest": -1.5,
-		"gravel": 0.5, "soil": -2.0, "stone": 0.0, "water": 1.0}
+		"gravel": 0.5, "soil": -2.0, "stone": 0.0, "water": 1.0, "snow": -2.5}
 ## Fehlt für einen Untergrund eine Art (z. B. Landung auf der Veranda), wird diese ähnliche genommen.
-const FALLBACK := {"porch": "wood", "forest": "soil", "carpet": "wood"}
+## Schnee: bis eigene Aufnahmen da sind (Wunschliste Etappe 6) knirschender Kies, etwas leiser
+const FALLBACK := {"porch": "wood", "forest": "soil", "carpet": "wood", "snow": "gravel"}
+## Ab dieser Schneedecke knirscht es draußen (Wiese, Waldboden, Kies, Feld)
+const SNOW_FROM := 0.35
 
 ## Teppiche in der Hütte (x, z, Breite, Tiefe)
 const RUGS := [
@@ -52,6 +55,8 @@ static func surface_at(p: Vector3) -> String:
 		return "water"
 	if sd < BANK_DIST:
 		return "stone"
+	if WorldState.snow >= SNOW_FROM:
+		return "snow"
 	if CornField.is_inside(p.x, p.z):
 		return "soil"
 	if Terrain.road_distance(p.x, p.z) < ROAD_DIST:

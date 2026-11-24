@@ -6,8 +6,12 @@
 script = ExtResource("1_sc")
 hunger_per_hour = 1.3
 thirst_per_hour = 2.0
-outdoor_loss_day = 1.5
-outdoor_loss_night = 9.0
+outdoor_loss_day = 2.5
+outdoor_loss_night = 10.5
+snowing_factor = 1.35
+rain_cold_factor = 1.2
+snow_cover_factor = 1.12
+frost_factor = 1.15
 altitude_loss_per_100m = 3.0
 wet_factor = 2.0
 wet_hours = 1.5

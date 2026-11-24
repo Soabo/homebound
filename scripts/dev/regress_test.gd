@@ -387,6 +387,8 @@ func _t_more() -> void:
 	await _t_render_2411()
 	await _t_hide_2411()
 	await _t_bayerwald_2411()
+	await _t_wild_wood_2411()
+	await _t_season_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3177,3 +3179,157 @@ func _t_bayerwald_2411() -> void:
 	for tr: Vector4 in Forest.trees:
 		tree_d = minf(tree_d, Vector2(tr.x, tr.z).distance_to(p2) - tr.w)
 	_ok("Totenbretter: kein Baumstamm im Weg (%.1f m)" % tree_d, tree_d >= 1.5)
+
+
+## Holz und Steine im großen Wald (Christian 24.11.): liegende Stämme und Polter mit der Axt, Steinhaufen (am Wasser häufiger).
+## Ihr Stand liegt in Supplies.wild, weil die Waldstücke entladen werden.
+func _t_wild_wood_2411() -> void:
+	var wf := _scene().get_node_or_null("WildForest") as WildForest
+	var logs := 0
+	var stones := 0
+	var wet_stones := 0
+	for c: Vector3 in [Vector3(300, 0, -300), Vector3(-400, 0, 200), Vector3(150, 0, 500), Vector3(-200, 0, -600), Vector3(0, 0, -450)]:
+		wf.update_around(c, 0.0)
+		await _frames(2)
+		for n in wf.find_children("WildLog_*", "ResourceNode", true, false):
+			logs += 1
+		for n in wf.find_children("WildStones", "ResourceNode", true, false):
+			stones += 1
+			var a := (n as ResourceNode).anchor
+			for k in 6:
+				var q := Vector2(a.x, a.z) + Vector2.from_angle(TAU * k / 6.0) * 3.0
+				if Terrain.water_level_at(q.x, q.y) > Terrain.height_at(q.x, q.y) + 0.05:
+					wet_stones += 1
+					break
+	_ok("Großer Wald: liegende Stämme zum Holzhacken (%d)" % logs, logs >= 5)
+	_ok("Großer Wald: Steinhaufen (%d, davon %d am Wasser)" % [stones, wet_stones], stones >= 3)
+	var polter := (_scene().get_node("WorldTrails") as Node).find_children("PolterWood", "ResourceNode", true, false)
+	_ok("Holzpolter an Fahrwegen geben Holz (%d)" % polter.size(), polter.size() >= 5 and (polter[0] as ResourceNode).tool == "axe")
+	# Stand bleibt über das Entladen hinweg und wächst nach
+	var key := "log_test_1"
+	var full := Supplies.config.wild_log_wood
+	Supplies.wild_store(key, 0, full)
+	var rn := ResourceNode.new()
+	rn.wild_key = key
+	rn.max_amount = full
+	rn.amount = full
+	rn.regrow_per_day = Supplies.config.wild_log_regrow
+	_scene().add_child(rn)
+	_ok("Großer Wald: abgehackter Stamm bleibt leer, auch wenn das Stück neu geladen wird", rn.amount == 0)
+	Supplies.wild[key] = [0, TimeManager.day - 2]
+	_ok("Großer Wald: Stamm wächst über die Tage nach", Supplies.wild_amount(key, full, Supplies.config.wild_log_regrow) == mini(full, 2 * Supplies.config.wild_log_regrow))
+	_ok("Großer Wald: Stand steht im Spielstand", (Supplies.get_state()["wild"] as Dictionary).has(key))
+	_ok("Großer Wald: Stellen gehören nicht zur Welt-Liste (keine Altlasten im Spielstand)", not rn.is_in_group("persistent"))
+	Supplies.wild.erase(key)
+	rn.queue_free()
+	wf.update_around(_player().global_position, 0.0)
+
+
+## Etappe 2 (Christian 24.11.): Spätherbst mit erstem Schnee – Kalender, erster Schnee, Schneedecke, Raureif, Kälte,
+## Sichtbarkeit auf Schnee, Knirschen, Spuren im Schnee.
+func _t_season_2411() -> void:
+	var p := _player()
+	var keep_pos := p.global_position
+	var keep_day := TimeManager.day
+	var keep_hour := TimeManager.hour
+	var keep_state := WorldState.get_state()
+	_ok("Kalender: Tag 1 = %s, Tag 17 = %s" % [TimeManager.date_text(1), TimeManager.date_text(17)],
+			TimeManager.date_text(1) == "Mo 16. Nov." and TimeManager.date_text(17) == "Mi 2. Dez.")
+	# vor dem ersten Schnee schneit es nie
+	WorldState.first_snow_done = false
+	WorldState.snow = 0.0
+	TimeManager.set_time(2, 12.0)
+	var snows := 0
+	for i in 200:
+		WorldState._next_weather(TimeManager.get_total_hours())
+		if WorldState.weather == "snow":
+			snows += 1
+	_ok("Wetter: vor dem ersten Schnee kein Schneefall", snows == 0)
+	# erster Schnee am Abend von Tag 3
+	WorldState.set_weather("cloudy", 50.0)
+	TimeManager.set_time(WorldState.config.first_snow_day, WorldState.config.first_snow_hour + 0.1)
+	WorldState._wet_last = TimeManager.get_total_hours()
+	WorldState._process(0.0)
+	_ok("Erster Schnee kommt sicher am Abend von Tag %d" % WorldState.config.first_snow_day, WorldState.first_snow_done and WorldState.weather == "snow")
+	# danach kann es schneien
+	snows = 0
+	TimeManager.set_time(WorldState.config.first_snow_day + 6, 12.0)
+	for i in 300:
+		WorldState._next_weather(TimeManager.get_total_hours())
+		if WorldState.weather == "snow":
+			snows += 1
+	_ok("Wetter: im Spätherbst schneit es öfter (%d von 300)" % snows, snows >= 30)
+	# Schneedecke wächst, Regen taut
+	WorldState.set_weather("snow", 50.0)
+	WorldState.snow = 0.0
+	var now := TimeManager.get_total_hours()
+	WorldState._update_snow(now, 3.0)
+	var after_snow := WorldState.snow
+	WorldState.set_weather("rain", 50.0)
+	WorldState._update_snow(now, 1.0)
+	_ok("Schneedecke: wächst beim Schneien (%.2f), taut im Regen (%.2f)" % [after_snow, WorldState.snow],
+			after_snow > 0.5 and WorldState.snow < after_snow - 0.2)
+	# Raureif in klarer Nacht, taut am Vormittag
+	WorldState.set_weather("clear", 50.0)
+	WorldState.frost = 0.0
+	TimeManager.set_time(TimeManager.day, 3.0)
+	WorldState._update_snow(TimeManager.get_total_hours(), 3.0)
+	var rime := WorldState.frost
+	TimeManager.set_time(TimeManager.day, 10.0)
+	WorldState._update_snow(TimeManager.get_total_hours(), 2.0)
+	_ok("Raureif: bildet sich in klarer Nacht (%.2f), taut am Vormittag (%.2f)" % [rime, WorldState.frost], rime > 0.4 and WorldState.frost < rime - 0.4)
+	# Schnee auf Dächern/Felsen: zweiter Durchgang hängt nur bei Schnee an
+	WorldState.snow = 0.8
+	SnowCover.update(0.8, 0.0)
+	_ok("Schnee auf Dächern und Felsen: %d Materialien, Durchgang an" % SnowCover.count(), SnowCover.count() >= 5 and SnowCover.active)
+	SnowCover.update(0.0, 0.0)
+	_ok("Ohne Schnee kostet der Durchgang nichts (abgehängt)", not SnowCover.active)
+	# Kälte: Schneetreiben kühlt schneller aus
+	TimeManager.set_time(TimeManager.day, 14.0)
+	p.global_position = Vector3(-3.0, Terrain.height_at(-3.0, 26.0) + 0.1, 26.0)
+	await _frames(2)
+	WorldState.snow = 0.0
+	WorldState.set_weather("clear", 50.0)
+	var loss_clear := Survival.warmth_rate(p)
+	WorldState.snow = 0.9
+	WorldState.set_weather("snow", 50.0)
+	var loss_snow := Survival.warmth_rate(p)
+	_ok("Kälte: im Schneetreiben kühlt man schneller aus (%.1f → %.1f pro Std.)" % [loss_clear, loss_snow], loss_snow < loss_clear - 1.0)
+	# Knirschen und Sichtbarkeit
+	_ok("Schritte: draußen auf Schnee knirscht es", Footsteps.surface_at(p.global_position) == "snow")
+	TimeManager.set_time(TimeManager.day, 1.0)
+	WorldState.set_weather("clear", 50.0)
+	WorldState.snow = 0.0
+	var vis0 := Stealth.visibility(p)
+	WorldState.snow = 1.0
+	var vis1 := Stealth.visibility(p)
+	_ok("Nachts auf Schnee sieht man dich eher (%.2f → %.2f)" % [vis0, vis1], vis1 > vis0 + 0.02)
+	# Spuren: eigene Schritte hinterlassen Abdrücke, Neuschnee deckt sie zu
+	var st := SnowTracks.current
+	_ok("Spuren im Schnee: Knoten vorhanden", st != null)
+	if st:
+		var before := st.visible_count(st.boots())
+		for k in 6:
+			p.stepped.emit("walk", p.global_position + Vector3(0, 0, -0.8 * k))
+		await _frames(1)
+		var after := st.visible_count(st.boots())
+		_ok("Spuren: eigene Schritte im Schnee (%d → %d)" % [before, after], after >= before + 5)
+		WorldState.snowfall_total += WorldState.config.track_cover_snow * 1.2
+		st._fade_t = 0.0
+		st._process(0.0)
+		_ok("Spuren: Neuschnee deckt sie zu", st.visible_count(st.boots()) == 0)
+		# Wesen hinterlassen Krallenabdrücke
+		var c0 := st.visible_count(st.claws())
+		var dummy := Node3D.new()
+		dummy.add_to_group("mauler")
+		_scene().add_child(dummy)
+		for k in 8:
+			dummy.global_position = Vector3(-10.0, Terrain.height_at(-10.0, 30.0 + k * 1.3), 30.0 + k * 1.3)
+			st._process(0.0)
+		_ok("Spuren: Wesen hinterlassen Krallenabdrücke", st.visible_count(st.claws()) > c0 + 3)
+		dummy.queue_free()
+	# aufräumen
+	WorldState.set_state(keep_state)
+	TimeManager.set_time(keep_day, keep_hour)
+	p.global_position = keep_pos
+	await _frames(2)

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_oeyqn")
-surface_factor = {"wood": 1.0, "carpet": 0.4, "porch": 1.2, "grass": 0.7, "forest": 1.3, "gravel": 1.5, "soil": 0.6, "stone": 0.9, "water": 1.8}
+surface_factor = {"wood": 1.0, "carpet": 0.4, "porch": 1.2, "grass": 0.7, "forest": 1.3, "gravel": 1.5, "soil": 0.6, "stone": 0.9, "water": 1.8, "snow": 1.1}
 step_sneak = 1.5
 step_slow = 2.0
 step_walk = 7.0
@@ -30,6 +30,7 @@ breath_radius = 2.5
 breath_radius_panting = 6.0
 vis_dark = 0.22
 vis_moon = 0.35
+vis_snow = 0.12
 vis_day = 1.0
 vis_own_light = 1.0
 vis_near_light = 0.9

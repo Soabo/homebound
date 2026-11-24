@@ -148,8 +148,8 @@ func _build_rocks() -> void:
 			cs.position = Vector3(x, g, z)
 			body.add_child(cs)
 		placed += 1
-	_add_multimesh("Rocks", rock_mesh, rocks, cols, _textured("stone", 1.2), true)
-	_add_multimesh("RockMoss", rock_mesh, moss, moss_cols, _textured("moss", 0.7), false)
+	_add_multimesh("Rocks", rock_mesh, rocks, cols, SnowCover.register(_textured("stone", 1.2)), true)
+	_add_multimesh("RockMoss", rock_mesh, moss, moss_cols, SnowCover.register(_textured("moss", 0.7)), false)
 
 
 func _build_ground_plants() -> void:
@@ -235,7 +235,7 @@ func _build_ground_plants() -> void:
 		if radius >= cfg.cover_min_radius and height >= 0.95:
 			Cover.add("valley", x, z, radius, height)
 
-	# Kleine weiße und gelbe Blüten am Waldrand und am Bach
+	# Kleine Blütenstände am Waldrand und am Bach (im Spätherbst verblüht)
 	tries = 0
 	while flowers.size() < 2200 and tries < 40000:
 		tries += 1
@@ -253,7 +253,8 @@ func _build_ground_plants() -> void:
 			var z := cz + _rng.randf_range(-0.4, 0.4)
 			var g := Terrain.height_at(x, z)
 			flowers.append(Transform3D(Basis().scaled(Vector3(0.035, 0.025, 0.035)), Vector3(x, g + _rng.randf_range(0.12, 0.25), z)))
-			flower_cols.append(Color(0.95, 0.95, 0.88) if _rng.randf() < 0.75 else Color(0.95, 0.8, 0.25))
+			# Spätherbst: verblühte, braune Samenstände (der Zufall bleibt gleich)
+			flower_cols.append(Color(0.5, 0.4, 0.3) if _rng.randf() < 0.75 else Color(0.62, 0.5, 0.32))
 
 	var grass_mat := plant_mat("grass")
 	var fern_mat := plant_mat("fern")
@@ -275,7 +276,7 @@ func _build_ground_plants() -> void:
 
 ## Baumstümpfe, umgestürzte Stämme, Pilze, junge Tannen und Schilf am Bach.
 func _build_forest_details() -> void:
-	var bark := BuildKit.tex_mat("bark", 1.0)
+	var bark := SnowCover.register(BuildKit.tex_mat("bark", 1.0)) as StandardMaterial3D
 	var ends := BuildKit.log_end_mat()
 	var body := StaticBody3D.new()
 	body.name = "DetailColliders"
@@ -388,7 +389,7 @@ func _build_forest_details() -> void:
 
 ## Steinhaufen zum Sammeln und Trinkstellen entlang des Bachs.
 func _build_stream_spots() -> void:
-	var stone_mat := BuildKit.tex_mat("stone", 0.5)
+	var stone_mat := SnowCover.register(BuildKit.tex_mat("stone", 0.5)) as StandardMaterial3D
 	var k := 0
 	var z := -58.0
 	while z <= 58.0:
@@ -610,7 +611,33 @@ static func mushroom_mesh() -> ArrayMesh:
 
 
 ## Materialien der Pflanzen im Wind (für Tal und großen Wald gleich).
+## Spätherbst (Christian 24.11.): Gras strohig, Farn braun, Laubkronen rostbraun; im Schnee versinken niedrige Pflanzen
+## (snow_bury), auf Nadeln und Kronen bleibt er liegen (snow_hold).
 static func plant_mat(kind: String) -> ShaderMaterial:
+	var m := _plant_mat(kind)
+	match kind:
+		"grass":
+			m.set_shader_parameter("tint", Color(1.12, 0.98, 0.72))
+			m.set_shader_parameter("snow_bury", 0.75)
+			m.set_shader_parameter("snow_hold", 0.3)
+		"reeds":
+			m.set_shader_parameter("tint", Color(1.2, 1.0, 0.7))
+			m.set_shader_parameter("snow_bury", 0.35)
+			m.set_shader_parameter("snow_hold", 0.3)
+		"fern":
+			m.set_shader_parameter("tint", Color(1.35, 0.85, 0.5))
+			m.set_shader_parameter("snow_bury", 0.55)
+			m.set_shader_parameter("snow_hold", 0.5)
+		"crowns":
+			m.set_shader_parameter("tint", Color(1.4, 0.88, 0.5))
+			m.set_shader_parameter("snow_hold", 0.55)
+		"bush_leaves":
+			m.set_shader_parameter("tint", Color(1.25, 0.9, 0.6))
+			m.set_shader_parameter("snow_hold", 0.7)
+	return m
+
+
+static func _plant_mat(kind: String) -> ShaderMaterial:
 	match kind:
 		"grass": return BuildKit.foliage_mat("grass_blades", 0.2, 1.0, 0.0, true, false, 1.0, 0.05)
 		"reeds": return BuildKit.foliage_mat("grass_blades", 0.3, 1.0, 0.0, true, false, 1.0, 0.06)

@@ -102,6 +102,9 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set("wind_dir", dir)
 	RenderingServer.global_shader_parameter_set("wind_time", time)
 	RenderingServer.global_shader_parameter_set("wetness", WorldState.wetness)
+	RenderingServer.global_shader_parameter_set("snow", WorldState.snow)
+	RenderingServer.global_shader_parameter_set("frost", WorldState.frost)
+	SnowCover.update(WorldState.snow, WorldState.frost)
 	if _player == null:
 		return
 	_update_gust_sound(delta)

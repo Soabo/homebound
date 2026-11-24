@@ -147,6 +147,8 @@ func _build_roof(boards: Material, t: float) -> void:
 	tin.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var rusty := BuildKit.tex_mat("metal", 0.5, Color(1.45, 0.85, 0.55), 0.7).duplicate() as StandardMaterial3D
 	rusty.cull_mode = BaseMaterial3D.CULL_DISABLED
+	SnowCover.register(tin)
+	SnowCover.register(rusty)
 	var width := (HALF.y * 2.0 + 0.6) / 3.0
 	for k in 3:
 		var sheet := MeshInstance3D.new()

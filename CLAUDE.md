@@ -762,6 +762,30 @@
 - Totenbretter: map.json `totenbretter` (Texte, Farben, Wunschpunkt am Abzweig des Gunthersteigs), gebaut in `StoryProps._totenbretter`
   (Stelle am Wegrand `memorial_spot`, weg von Stämmen), Notiz `totenbretter`. Tour-Bild H0 (Schlüssel `node`/`node_off`). Prüfung `RegressTest._t_bayerwald_2411`.
 - Hinweis: Die Himmelsrichtungen im Spiel sind verdichtet (Rachel liegt im Spiel im Nordosten).
+- Holz und Steine im großen Wald (Christian 24.11.): liegende Stämme in `WildForest` (`WildLog_N`, Axt) und Steinhaufen
+  (`WildStones`, `_stone_pile`, am Bach/See fast immer), Holzpolter an Fahrwegen (`PolterWood`, Axt). Ihr Stand liegt in
+  `Supplies.wild` (Schlüssel `ResourceNode.wild_key`, `wild_amount`/`wild_store`, Nachwuchs pro Tag), nicht in der Welt-Liste,
+  weil die Waldstücke entladen werden. Werte SupplyConfig „Holz und Steine im großen Wald“. Prüfung `RegressTest._t_wild_wood_2411`.
+- Etappe 2 Spätherbst mit erstem Schnee:
+  - Kalender: TimeConfig `start_year/month/date` (Tag 1 = Mo 16. Nov. 2026), `TimeManager.date_text()` in HUD-Uhr, Tagesanzeige, Pause.
+  - Wetter „snow“ in `WorldState` (WorldConfig „Spätherbst und Schnee“): erster Schnee sicher am Abend von `first_snow_day` (3)
+    (verschlafen = man wacht im Weißen auf, Tagebuch `first_snow`), danach Schneefall-Gewicht steigt über `snow_ramp_days`, Regen
+    und Gewitter seltener. `WorldState.snow` (Decke 0..1, wächst/taut), `frost` (Raureif nachts ohne Niederschlag, taut ab
+    `frost_melt_from_hour`), `snowfall_total`, alles im Spielstand. Test-Start Tag 15: Schnee liegt schon.
+  - Shader-Globale `snow`/`frost` (project.godot, gesetzt vom Wind-Knoten): `ground.gdshader` (Decke dünn fleckig, Wege zertreten,
+    Reif mit Glitzern), `foliage.gdshader` (`snow_hold` = Schnee bleibt oben liegen, `snow_bury` = niedrige Pflanzen versinken).
+    Dächer, Felsen, liegende Stämme, Polter, Blechdächer: `SnowCover.register(material)` → zweiter Durchgang
+    `shaders/snow_overlay.gdshader`, nur angehängt, solange Schnee/Reif liegt. Neue Außen-Materialien bei Bedarf dort anmelden
+    (keine Materialien, die auch drinnen benutzt werden – sonst schneit es auf den Kaminsims).
+  - Spätherbst-Farben: Gras strohig, Farn braun, Laubkronen rostbraun (`Forest.plant_mat`), Blüten verblüht.
+  - `WeatherFx` Schneeflocken, `DayNightEnvironment` (Wetter „snow“: Nebel dichter, Sonne schwächer; Schnee hellt draußen nachts auf).
+  - Kälte (SurvivalConfig): draußen 2,5/Std. am Tag, 10,5 nachts; × `snowing_factor`, `rain_cold_factor`, `snow_cover_factor`, `frost_factor`.
+  - Schleichen: auf Schnee knirscht es (`Footsteps` Untergrund „snow“ ab `SNOW_FROM`, bis eigene Aufnahmen da sind = Kies),
+    nachts hebt man sich ab (`StealthConfig.vis_snow`).
+  - Spuren im Schnee: `SnowTracks` (Stiefel über `Player.stepped`, Krallen von creature/mauler/seeker/changeling), verblassen nach
+    `track_hours`, Neuschnee `track_cover_snow` deckt sie zu, Tauwetter löscht sie (WorldConfig `track_*`).
+  - Tour-Bilder H1–H5 (Schlüssel `snow`, `frost`, `tracks`). Prüfung `RegressTest._t_season_2411`.
+  - Tag/Nacht-Uhrzeiten bleiben wie bisher (7–19 Uhr), obwohl es Ende November früher dunkel wird – ggf. mit Christian klären.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

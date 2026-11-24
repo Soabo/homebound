@@ -29,6 +29,8 @@ var _next_spot_id: int = 1
 var cameras: Array = []
 ## Schlingen, die heute Morgen etwas gefangen haben (Builder-uid)
 var snare_catches: Array = []
+## Holz/Steine im großen Wald, die mit ihrem Waldstück kommen und gehen: Schlüssel -> [Menge, Tag]
+var wild: Dictionary = {}
 var _last_hour_abs: float = -1.0
 var _rng := RandomNumberGenerator.new()
 
@@ -53,6 +55,7 @@ func _reset() -> void:
 	cell_adapter = false
 	scrap_spots.clear()
 	cameras.clear()
+	wild.clear()
 	snare_catches.clear()
 	for i in config.scrap_spots_start:
 		_spawn_scrap_spot()
@@ -370,12 +373,29 @@ func uninstall_camera(index: int) -> void:
 	changed.emit()
 
 
+# --- Holz und Steine im großen Wald ---------------------------------------------
+
+## Wie viel liegt an dieser Stelle jetzt? (unberührt = voll, sonst Stand + Nachwuchs seit dem Abbau)
+func wild_amount(key: String, full: int, regrow: int) -> int:
+	if not wild.has(key):
+		return full
+	var e: Array = wild[key]
+	return mini(full, int(e[0]) + regrow * maxi(0, TimeManager.day - int(e[1])))
+
+
+func wild_store(key: String, amount: int, full: int) -> void:
+	if amount >= full:
+		wild.erase(key)
+	else:
+		wild[key] = [amount, TimeManager.day]
+
+
 # --- Spielstand ---------------------------------------------------------------
 
 func get_state() -> Dictionary:
 	return {"beds": beds.duplicate(true), "can": can_water, "sick": sick_until, "gen": generator_condition,
 		"gasifier": gasifier, "adapter": cell_adapter, "spots": scrap_spots.duplicate(true), "next_spot": _next_spot_id,
-		"cameras": cameras.duplicate(true)}
+		"cameras": cameras.duplicate(true), "wild": wild.duplicate(true)}
 
 
 func set_state(s: Dictionary) -> void:
@@ -394,5 +414,6 @@ func set_state(s: Dictionary) -> void:
 	scrap_spots = (s.get("spots", []) as Array).duplicate(true)
 	_next_spot_id = int(s.get("next_spot", 1))
 	cameras = (s.get("cameras", []) as Array).duplicate(true)
+	wild = (s.get("wild", {}) as Dictionary).duplicate(true)
 	_last_hour_abs = -1.0
 	changed.emit()
