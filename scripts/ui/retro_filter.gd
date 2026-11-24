@@ -35,14 +35,9 @@ func _update_pixel_size() -> void:
 ## Der Filter zeigt ohnehin nur ~360 Zeilen. Die 3D-Welt muss deshalb nicht in voller
 ## Bildschirmauflösung berechnet werden: etwa doppelt so viele Zeilen reichen.
 ## Das spart auf großen Bildschirmen einen Großteil der Grafikarbeit.
+## Rechnet jetzt Settings.apply_render_scale (zusammen mit der Grafikstufe).
 func _apply_render_scale() -> void:
-	var vp := get_viewport()
-	var h := float(vp.get_visible_rect().size.y)
-	var scale := 1.0
-	if enabled and h > 0.0:
-		scale = clampf(VIRTUAL_HEIGHT * 1.5 / h, 0.5, 1.0)
-	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-	vp.scaling_3d_scale = scale
+	Settings.apply_render_scale()
 
 
 ## Stärke der Verzerrung durch den Blick der Kreatur (0..1).

@@ -81,12 +81,32 @@ func apply() -> void:
 		if is_full != fullscreen:
 			DisplayServer.window_set_mode(want)
 	var q := quality_values()
-	get_viewport().scaling_3d_scale = float(q.get("scale", 1.0))
 	RenderingServer.directional_shadow_atlas_set_size(int(q.get("shadow_size", 4096)), true)
-	var msaa := int(q.get("msaa", 2))
-	get_viewport().msaa_3d = Viewport.MSAA_4X if msaa >= 4 else (Viewport.MSAA_2X if msaa >= 2 else Viewport.MSAA_DISABLED)
+	apply_render_scale()
 	apply_fps()
 	changed.emit()
+
+
+## Wie fein die 3D-Welt berechnet wird – EINE Stelle für Grafikstufe und Retro-Filter (vorher überschrieb die
+## Grafikstufe die Einsparung des Filters: auf Christians 5120×1440-Bildschirm wurde alles in voller Größe + MSAA gerechnet).
+## Mit Retro-Filter: nur so viele Zeilen, wie der Filter zeigt × retro_oversample (Stufe), ohne MSAA (die Retro-Pixel
+## glätten ohnehin). Ohne Filter: Faktor "scale" der Stufe + MSAA der Stufe.
+func apply_render_scale() -> void:
+	var vp := get_viewport()
+	var q := quality_values()
+	var retro := get_tree().get_first_node_in_group("retro_filter") if is_inside_tree() else null
+	var retro_on := retro != null and bool(retro.get("enabled"))
+	var scale := float(q.get("scale", 1.0))
+	var msaa := int(q.get("msaa", 2))
+	var h := float(vp.get_visible_rect().size.y)
+	if retro_on and h > 0.0:
+		var lines := RetroFilter.VIRTUAL_HEIGHT * float(q.get("retro_oversample", 1.5))
+		scale = clampf(lines / h, 0.25, 1.0)
+		msaa = 0
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
+	vp.scaling_3d_scale = scale
+	vp.msaa_3d = Viewport.MSAA_4X if msaa >= 4 else (Viewport.MSAA_2X if msaa >= 2 else Viewport.MSAA_DISABLED)
+	vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED if retro_on else Viewport.SCREEN_SPACE_AA_FXAA
 
 
 ## Bildrate: Obergrenze + Bildsynchronisierung (VSync) setzen, Anzeige ein/aus.
@@ -139,7 +159,11 @@ func _process(delta: float) -> void:
 			line2 = "\nBildsync an – Bildschirm %d Hz" % int(round(hz))
 		elif max_fps > 0:
 			line2 = "\nObergrenze %d" % max_fps
-		_fps_label.text = "%d FPS   CPU %.1f ms   GPU %.1f ms%s" % [fps, cpu, gpu, line2]
+		# Welche Grafikkarte rechnet, in welcher Größe (3D-Auflösung nach Grafikstufe/Retro-Filter)
+		var vp := get_viewport()
+		var size := vp.get_visible_rect().size * vp.scaling_3d_scale
+		var line3 := "\n%s – 3D %d×%d" % [RenderingServer.get_video_adapter_name(), int(size.x), int(size.y)]
+		_fps_label.text = "%d FPS   CPU %.1f ms   GPU %.1f ms%s%s" % [fps, cpu, gpu, line2, line3]
 
 
 func quality_values() -> Dictionary:

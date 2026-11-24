@@ -384,6 +384,7 @@ func _t_more() -> void:
 	await _t_watch_log()
 	await _t_seeker_at_house()
 	await _t_dread_2311()
+	await _t_render_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3013,3 +3014,21 @@ func _t_dread_2311() -> void:
 	p.global_position = keep_pos
 	TimeManager.set_time(keep_day, keep_h)
 	p.health = 100.0
+
+
+## Grafikstufe überschreibt die Einsparung des Retro-Filters nicht mehr (Christian 24.11.: 5120×1440, nur 75 FPS)
+func _t_render_2411() -> void:
+	var vp := get_viewport()
+	var keep_q := Settings.quality
+	Settings.quality = "high"
+	Settings.apply()
+	var rf := get_tree().get_first_node_in_group("retro_filter")
+	var h := vp.get_visible_rect().size.y
+	if rf and bool(rf.get("enabled")) and h > 0.0:
+		var want := clampf(RetroFilter.VIRTUAL_HEIGHT * float(Settings.quality_values().get("retro_oversample", 1.5)) / h, 0.25, 1.0)
+		_ok("Grafik: mit Retro-Filter rechnet die 3D-Welt nur so fein, wie der Filter zeigt (%.2f), ohne MSAA" % vp.scaling_3d_scale,
+				absf(vp.scaling_3d_scale - want) < 0.01 and vp.msaa_3d == Viewport.MSAA_DISABLED)
+	else:
+		_ok("Grafik: Retro-Filter vorhanden", false)
+	Settings.quality = keep_q
+	Settings.apply()

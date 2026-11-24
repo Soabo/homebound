@@ -722,8 +722,11 @@
   Schrei, Gestalt (Apparition forest), selten Zerfleischer (Phase 2, > `day_mauler_min_distance`).
 - Druck `ThreatDirector.menace` (im Spielstand): ruhige Nächte +`menace_rise`, Auftritte −`menace_drop_*`; erhöht Auftrittschance,
   `break_calm_chance` bricht die erwartete Ruhe, `late_arrival_chance` (kommt spät), `second_wave_chance` (kommt wieder).
-- Bildrate: Grafikstufe setzt jetzt auch Kantenglättung (`msaa` in quality_levels), FPS-Anzeige zeigt CPU/GPU-Zeit und Bildschirm-Hz
-  (bei Bildsync = Obergrenze). Christians „nicht über 75“ = sehr wahrscheinlich 75-Hz-Bildschirm mit Bildsynchronisierung.
+- Bildrate (24.11.): Christian hat RTX 5070 + Samsung C49RG9X (5120×1440, 120 Hz) – nicht der Bildschirm war schuld:
+  `Settings.apply` setzte die volle Auflösung der Grafikstufe und überschrieb die Einsparung des Retro-Filters → 7,4 Mio. Pixel + MSAA.
+  Jetzt EINE Stelle `Settings.apply_render_scale()` (RetroFilter ruft sie): mit Filter Zeilen = `RetroFilter.VIRTUAL_HEIGHT` ×
+  `retro_oversample` (quality_levels: 1.0/1.25/1.5), ohne MSAA/FXAA; ohne Filter `scale` + `msaa` der Stufe.
+  FPS-Anzeige: FPS, CPU/GPU-ms, Bildschirm-Hz, Grafikkarte (`get_video_adapter_name`) und 3D-Auflösung. Prüfung `_t_render_2411`.
 - Prüfung `RegressTest._t_dread_2311`.
 
 ## Technik
