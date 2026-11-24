@@ -9,6 +9,8 @@ extends Resource
 	"radish": {"name": "Radieschen", "days": 2, "yield": [3, 5], "item": "radish"},
 	"carrot": {"name": "Karotten", "days": 4, "yield": [3, 5], "item": "carrot"},
 	"potato": {"name": "Kartoffeln", "days": 5, "yield": [4, 7], "item": "potato"},
+	"lambs_lettuce": {"name": "Feldsalat", "days": 3, "yield": [3, 5], "item": "lambs_lettuce"},
+	"spinach": {"name": "Winterspinat", "days": 4, "yield": [3, 6], "item": "spinach"},
 }
 ## Samen, die man beim Ernten zusätzlich zurückbekommt (min/max)
 @export var seeds_back: Vector2i = Vector2i(0, 2)

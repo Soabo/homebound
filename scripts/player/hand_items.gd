@@ -36,6 +36,8 @@ static func build(parent: Node, model: String) -> Node3D:
 		"honey": _honey(n)
 		"ration": _ration(n)
 		"radish": _radish(n)
+		"lambs_lettuce": _greens(n, false)
+		"spinach": _greens(n, true)
 		"carrot": _carrot(n)
 		"potato": _potato(n)
 		"meat_raw": _meat(n, false)
@@ -460,6 +462,28 @@ static func _leaves(parent: Node3D, at: Vector3, count: int, length: float, col:
 		BuildKit.box(l, Vector3(0.003, len * 0.5, 0.003), Vector3(0, len * 0.25, 0), stem, false)
 		HandKit.loft(l, PackedVector3Array([Vector3(0, len * 0.4, 0), Vector3(0, len * 0.7, 0), Vector3(0, len, 0)]),
 				PackedVector2Array([Vector2(0.004, 0.0012), Vector2(0.015, 0.0015), Vector2(0.003, 0.001)]), mat, 5, Vector3(0, 0, 1))
+
+
+## Blattgemüse aus dem Folientunnel: Feldsalat = kleine runde Rosette, Winterspinat = Bund großer Blätter.
+static func _greens(n: Node3D, spinach: bool) -> void:
+	var col := Color(0.2, 0.42, 0.14) if spinach else Color(0.32, 0.56, 0.18)
+	var mat := BuildKit.color_mat(col, 0.7)
+	var stem := BuildKit.color_mat(col.lightened(0.3), 0.7)
+	var count := 7 if spinach else 9
+	var length := 0.11 if spinach else 0.06
+	var width := 0.026 if spinach else 0.016
+	for i in count:
+		var l := Node3D.new()
+		l.rotation_degrees = Vector3(-(14.0 if spinach else 48.0) - (i % 3) * 8.0, i * 360.0 / count, 0)
+		n.add_child(l)
+		BuildKit.box(l, Vector3(0.003, length * 0.4, 0.003), Vector3(0, length * 0.2, 0), stem, false)
+		HandKit.loft(l, PackedVector3Array([Vector3(0, length * 0.3, 0), Vector3(0, length * 0.65, 0), Vector3(0, length, 0)]),
+				PackedVector2Array([Vector2(width * 0.5, 0.0015), Vector2(width, 0.002), Vector2(width * 0.35, 0.0012)]), mat, 6, Vector3(0, 0, 1))
+	n.set_meta("grip", 0.012)
+	n.set_meta("tight", 0.9)
+	n.set_meta("up", 0.01)
+	n.set_meta("tilt", Vector3(-10, 0, 0))
+	n.set_meta("base", Vector3(0, 0.0, 0))
 
 
 static func _radish(n: Node3D) -> void:

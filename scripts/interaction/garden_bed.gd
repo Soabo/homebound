@@ -13,7 +13,9 @@ extends Interactable
 const TUNNEL_HEIGHT := 0.62
 const TUNNEL_HOOPS := 4
 
-const SEEDS := ["seeds_radish", "seeds_carrot", "seed_potato", "alien_seeds"]
+## Spätherbst (Christian 24.11.): im Folientunnel wachsen Radieschen, Feldsalat und Winterspinat. Karotten und Kartoffeln
+## gibt es als Wintervorrat im Keller; alte Karotten-/Kartoffelsamen aus früheren Spielständen lassen sich noch säen.
+const SEEDS := ["seeds_radish", "seeds_lettuce", "seeds_spinach", "alien_seeds", "seeds_carrot", "seed_potato"]
 
 @export var index: int = 0
 @export var size: Vector3 = Vector3(2.4, 0.42, 1.4)
@@ -263,6 +265,20 @@ func refresh() -> void:
 			_plants.add_child(plant)
 			plant.position = at
 			plant.rotation.y = rng.randf() * TAU
+			var crop_id := String(b["crop"])
+			if crop_id in ["lambs_lettuce", "spinach"] and st != "withered":
+				# Blattgemüse: flache Rosette (Feldsalat) bzw. aufrechte breite Blätter (Spinat)
+				var leafy := crop_id == "spinach"
+				var n_leaf := 6 if leafy else 8
+				for k in n_leaf:
+					var lw := (0.07 if leafy else 0.045) * (0.5 + t)
+					var ll := (0.16 if leafy else 0.08) * (0.4 + t)
+					var leaf := BuildKit.box(plant, Vector3(lw, 0.01, ll), Vector3(0, 0.02, ll * 0.5), mat, false)
+					var pivot := Node3D.new()
+					plant.add_child(pivot)
+					leaf.reparent(pivot, false)
+					pivot.rotation_degrees = Vector3(-(35.0 if leafy else 12.0) - rng.randf_range(0, 15), k * 360.0 / n_leaf, 0)
+				continue
 			for k in 3:
 				var leaf := BuildKit.box(plant, Vector3(0.025, h, 0.08 * (0.5 + t)), Vector3(0, h * 0.5, 0), mat, false,
 						Vector3(rng.randf_range(-25, 25) + (40 if st == "withered" else 0), k * 60.0, 0))

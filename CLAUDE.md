@@ -792,6 +792,12 @@
     Keine Mücken/Glühwürmchen (`AirFx.SEASON_INSECTS`), Atemwolken draußen immer.
   - Folientunnel über allen vier Hochbeeten (`GardenBed._build_tunnel`: Metallbögen, Folie mit Schnee, Südseite hochgeschlagen,
     Enden gerafft an Pflöcken) – darum wächst auch im Winter etwas. Bild H6.
+  - Wintergemüse (Christian 24.11., Bilder von Christian, Samen-Bilder = alte Karotten-/Kartoffelsamen): Feldsalat
+    (`lambs_lettuce`, Samen `seeds_lettuce`) und Winterspinat (`spinach`, `seeds_spinach`) statt Karotten/Kartoffeln im Beet
+    (crops in supplies.tres, Handmodell `HandItems._greens`, Blattrosetten im Beet). Samenpäckchen im Schuppenregal
+    (`SupplyProps/SeedsLettuce|SeedsSpinach`). Karotten und Kartoffeln = Kellervorrat (`Cabin/CellarPotatoes` 8,
+    `Cabin/CellarCarrots` 6, `CabinRooms._cellar_stock`). Alte Karotten-/Kartoffelsamen aus Spielständen lassen sich noch säen.
+    Prüfung `RegressTest._t_greens_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

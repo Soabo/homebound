@@ -389,6 +389,7 @@ func _t_more() -> void:
 	await _t_bayerwald_2411()
 	await _t_wild_wood_2411()
 	await _t_season_2411()
+	await _t_greens_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3333,3 +3334,35 @@ func _t_season_2411() -> void:
 	TimeManager.set_time(keep_day, keep_hour)
 	p.global_position = keep_pos
 	await _frames(2)
+
+
+## Wintergemüse (Christian 24.11.): Feldsalat + Winterspinat im Folientunnel, Karotten/Kartoffeln als Kellervorrat.
+func _t_greens_2411() -> void:
+	var scene := _scene()
+	for id: String in ["lambs_lettuce", "spinach", "seeds_lettuce", "seeds_spinach"]:
+		_ok("Wintergemüse: %s mit eigenem Bild" % id, not DataDB.item(id).is_empty() and ResourceLoader.exists("res://assets/icons/items/%s.png" % id))
+	var img := (load("res://assets/icons/items/spinach.png") as Texture2D).get_image()
+	_ok("Wintergemüse: Bild mit durchsichtigem Hintergrund", img.get_pixel(2, 2).a < 0.1 and img.get_pixel(128, 128).a > 0.9)
+	_ok("Wintergemüse: Samen liegen im Schuppen", scene.get_node_or_null("SupplyProps/SeedsLettuce") is ItemPickup \
+			and scene.get_node_or_null("SupplyProps/SeedsSpinach") is ItemPickup and scene.get_node_or_null("SupplyProps/SeedPotatoes") == null)
+	var pot := scene.get_node_or_null("Cabin/CellarPotatoes") as ItemPickup
+	var car := scene.get_node_or_null("Cabin/CellarCarrots") as ItemPickup
+	_ok("Kellervorrat: Kartoffeln und Karotten", pot != null and car != null and pot.item_id == "potato" and car.item_id == "carrot")
+	# säen, wachsen lassen, ernten
+	var keep: Array = Supplies.beds.duplicate(true)
+	Supplies.beds[2] = Supplies._empty_bed()
+	Inventory.add("seeds_spinach", 1)
+	_ok("Winterspinat säen", Supplies.plant(2, "seeds_spinach") and String(Supplies.beds[2]["crop"]) == "spinach")
+	Supplies.beds[2]["growth"] = float(Supplies.config.crops["spinach"]["days"])
+	(scene.get_node("Garden/GardenBed3") as GardenBed).refresh()
+	var before := Inventory.count("spinach")
+	Supplies.harvest(2)
+	_ok("Winterspinat ernten (%d)" % (Inventory.count("spinach") - before), Inventory.count("spinach") - before >= 3)
+	_ok("Folientunnel über dem Beet", scene.get_node_or_null("Garden/GardenBed3/Tunnel/Foil") != null)
+	for m: String in ["lambs_lettuce", "spinach"]:
+		var n := Node3D.new()
+		var it := HandItems.build(n, m)
+		_ok("Handmodell %s" % m, it.get_child_count() >= 6)
+		n.free()
+	Supplies.beds = keep
+	scene.get_tree().call_group("garden_bed", "refresh")

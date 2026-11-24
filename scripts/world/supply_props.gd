@@ -19,8 +19,9 @@ func _ready() -> void:
 	_bottles(Vector3(-0.75, _y + 0.92, -0.925 + 0.32))
 	var so := Shed.ORIGIN
 	_seed_packet("SeedsRadish", "seeds_radish", so + Vector3(1.62, 0.98, -1.05), Color(0.85, 0.2, 0.3))
-	_seed_packet("SeedsCarrot", "seeds_carrot", so + Vector3(1.62, 0.98, -0.75), Color(0.95, 0.55, 0.1))
-	_potato_sack("SeedPotatoes", so + Vector3(1.0, 0.03, 1.15))
+	# Wintergemüse für den Folientunnel (Christian 24.11.): Feldsalat und Winterspinat statt Karotten und Kartoffeln
+	_seed_packet("SeedsLettuce", "seeds_lettuce", so + Vector3(1.62, 0.98, -0.75), Color(0.45, 0.75, 0.2))
+	_seed_packet("SeedsSpinach", "seeds_spinach", so + Vector3(1.62, 0.98, -0.45), Color(0.15, 0.45, 0.15))
 	_oil_can("MotorOil", so + Vector3(1.62, 0.43, 0.35))
 	_spark_plug("SparePlug", so + Vector3(1.62, 0.43, -0.35))
 	_watering_can("WateringCan", Vector3(-8.95, 0.0, 9.3))   # am Rand des östlichen Hochbeets, von der Hütte aus gleich zu sehen
@@ -113,16 +114,6 @@ func _seed_packet(n: String, item: String, at: Vector3, col: Color) -> void:
 	for k in 3:
 		var pk := BuildKit.box(v, Vector3(0.09, 0.13, 0.012), at + Vector3(0, 0.065, -0.04 + k * 0.035), paper, false, Vector3(-8, 0, 0))
 		BuildKit.box(pk, Vector3(0.07, 0.06, 0.002), Vector3(0, 0.0, 0.007), BuildKit.color_mat(col, 0.8), false)
-	p.visuals.append(v)
-
-
-func _potato_sack(n: String, at: Vector3) -> void:
-	var p := _pickup(n, "seed_potato", 6, 6, Vector3(0.45, 0.45, 0.45), at)
-	var v := Node3D.new()
-	p.add_child(v)
-	BuildKit.sphere(v, 0.2, at + Vector3(0, 0.18, 0), BuildKit.tex_mat("fabric", 0.4, Color(1.2, 1.05, 0.75)), Vector3(1.0, 0.9, 0.9), 10)
-	for k in 4:
-		BuildKit.sphere(v, 0.045, at + Vector3(-0.08 + k * 0.05, 0.36, 0.02 * k), BuildKit.color_mat(Color(0.6, 0.45, 0.28), 0.9), Vector3(1.2, 0.9, 1.0), 6)
 	p.visuals.append(v)
 
 

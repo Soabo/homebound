@@ -17,6 +17,18 @@ crops = {
 "name": "Kartoffeln",
 "yield": [4, 7]
 },
+"lambs_lettuce": {
+"days": 3,
+"item": "lambs_lettuce",
+"name": "Feldsalat",
+"yield": [3, 5]
+},
+"spinach": {
+"days": 4,
+"item": "spinach",
+"name": "Winterspinat",
+"yield": [3, 6]
+},
 "radish": {
 "days": 2,
 "item": "radish",

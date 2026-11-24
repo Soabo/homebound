@@ -1063,12 +1063,12 @@ func _supplies_test() -> void:
 	print("KAMERAS am Start installiert: %d, Monitor Kamera 1 installiert: %s" % [Supplies.cameras.size(), sv.installed(0)])
 	# Fundstücke
 	for n: String in ["SupplyProps/Camera1Box", "SupplyProps/Camera2Box", "SupplyProps/Camera3Box", "SupplyProps/EmptyBottles",
-			"SupplyProps/SeedsRadish", "SupplyProps/SeedsCarrot", "SupplyProps/SeedPotatoes", "SupplyProps/MotorOil", "SupplyProps/WateringCan"]:
+			"SupplyProps/SeedsRadish", "SupplyProps/SeedsLettuce", "SupplyProps/SeedsSpinach", "SupplyProps/MotorOil", "SupplyProps/WateringCan"]:
 		var pk := scene.get_node(n) as ItemPickup
 		while pk.amount > 0:
 			pk.interact(player)
-	print("FUNDE: Kameras %d/%d/%d, Flaschen %d, Samen R%d K%d P%d, Öl %d, Kanne %d" % [Inventory.count("camera_1"), Inventory.count("camera_2"), Inventory.count("camera_3"),
-		Inventory.count("bottle_empty"), Inventory.count("seeds_radish"), Inventory.count("seeds_carrot"), Inventory.count("seed_potato"), Inventory.count("motor_oil"), Inventory.count("watering_can")])
+	print("FUNDE: Kameras %d/%d/%d, Flaschen %d, Samen R%d F%d S%d, Öl %d, Kanne %d" % [Inventory.count("camera_1"), Inventory.count("camera_2"), Inventory.count("camera_3"),
+		Inventory.count("bottle_empty"), Inventory.count("seeds_radish"), Inventory.count("seeds_lettuce"), Inventory.count("seeds_spinach"), Inventory.count("motor_oil"), Inventory.count("watering_can")])
 	await get_tree().create_timer(1.2).timeout
 	# Hochbeet: säen, ohne Kanne gießen geht nicht, Kanne füllen, gießen, wachsen, ernten
 	var bed := scene.get_node("Garden/GardenBed1") as GardenBed
@@ -1089,7 +1089,7 @@ func _supplies_test() -> void:
 	bed.interact(player)
 	print("ERNTE Radieschen +%d, Beet %s, Flag %s" % [Inventory.count("radish") - before, Supplies.bed_state(1 - 1), Tasks.flags.has("harvested")])
 	# vertrocknen
-	Supplies.plant(1, "seeds_carrot")
+	Supplies.plant(1, "seeds_lettuce")
 	for d in Supplies.config.dry_days_to_wither:
 		Supplies._on_day_changed(TimeManager.day)
 	print("BEET 2 ohne Wasser: %s" % Supplies.bed_state(1))

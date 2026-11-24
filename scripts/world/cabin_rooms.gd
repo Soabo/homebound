@@ -470,6 +470,9 @@ func _cellar() -> void:
 	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
 	BuildKit.sphere(c, 0.28, Vector3(0.0, fy + 0.22, -3.0), sack, Vector3(1.0, 0.8, 0.8), 10)
 	BuildKit.sphere(c, 0.28, Vector3(-0.1, fy + 0.22, -2.6), sack, Vector3(0.9, 0.8, 0.9), 10)
+	# Wintervorrat (Christian 24.11.): Kartoffeln und Karotten aus Stefanies Einlagerung – im Beet wächst jetzt nur Wintergemüse
+	_cellar_stock("CellarPotatoes", "potato", 8, "Kartoffelsack", Vector3(0.0, fy + 0.42, -3.0), Color(0.62, 0.47, 0.28), false)
+	_cellar_stock("CellarCarrots", "carrot", 6, "Karotten im Sandsack", Vector3(-0.1, fy + 0.42, -2.6), Color(0.93, 0.47, 0.08), true)
 	Babyfon.sender(c, Vector3(shelf_x + 0.2, fy + 1.33, -5.25), 90.0)
 	# Die zugemauerte Stelle an der Ostwand (Richtung alter Brunnen): jüngere Ziegel, Wurzeln in den Fugen
 	_bricked_wall(x1 - t * 0.5, fy)
@@ -477,6 +480,35 @@ func _cellar() -> void:
 	var dust := ParticlesKit.dust(Vector3(1.0, 0.8, 2.0))
 	dust.position = Vector3((x0 + x1) * 0.5, fy + 1.0, (z0 + z1) * 0.5)
 	c.add_child(dust)
+
+
+## Vorrat im Sack: oben liegen ein paar Kartoffeln bzw. Karotten (verschwinden beim Nehmen), [E] nehmen, [R] zurücklegen.
+func _cellar_stock(n: String, item: String, amount: int, label: String, top: Vector3, col: Color, carrots: bool) -> void:
+	var p := ItemPickup.new()
+	p.name = n
+	p.item_id = item
+	p.amount = amount
+	p.per_take = 1
+	p.restock = true
+	p.label = label
+	p.collider_size = Vector3(0.5, 0.45, 0.45)
+	p.collider_offset = top + Vector3(0, -0.18, 0)
+	c.add_child(p)
+	var holder := Node3D.new()
+	p.add_child(holder)
+	p.visuals.append(holder)
+	var mat := BuildKit.color_mat(col, 0.85)
+	var green := BuildKit.color_mat(Color(0.25, 0.45, 0.15), 0.8)
+	for i in mini(amount, 5):
+		var v := Node3D.new()
+		p.add_child(v)
+		var at := top + Vector3(-0.1 + (i % 3) * 0.09, 0.0 + (i / 3) * 0.03, -0.05 + (i % 2) * 0.09)
+		if carrots:
+			BuildKit.cylinder(v, 0.018, 0.12, at, mat, false, Vector3(80, i * 40.0, 0), 0.004, 6)
+			BuildKit.box(v, Vector3(0.01, 0.06, 0.01), at + Vector3(0, 0.03, 0), green, false, Vector3(0, i * 40.0, 20))
+		else:
+			BuildKit.sphere(v, 0.035, at, mat, Vector3(1.2, 0.85, 1.0), 6)
+		p.visuals.append(v)
 
 
 func _bricked_wall(wx: float, fy: float) -> void:

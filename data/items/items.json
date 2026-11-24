@@ -129,6 +129,44 @@
     "category": "Saatgut",
     "seed": "potato"
   },
+  "seeds_lettuce": {
+    "name": "Feldsalatsamen",
+    "weight": 0.05,
+    "stack": 20,
+    "category": "Saatgut",
+    "seed": "lambs_lettuce"
+  },
+  "seeds_spinach": {
+    "name": "Winterspinat-Samen",
+    "weight": 0.05,
+    "stack": 20,
+    "category": "Saatgut",
+    "seed": "spinach"
+  },
+  "lambs_lettuce": {
+    "name": "Feldsalat",
+    "weight": 0.1,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 6,
+      "thirst": 4
+    },
+    "hand": "food",
+    "hand_model": "lambs_lettuce"
+  },
+  "spinach": {
+    "name": "Winterspinat",
+    "weight": 0.15,
+    "stack": 20,
+    "category": "Nahrung",
+    "use": {
+      "hunger": 9,
+      "thirst": 2
+    },
+    "hand": "food",
+    "hand_model": "spinach"
+  },
   "radish": {
     "name": "Radieschen",
     "weight": 0.1,
