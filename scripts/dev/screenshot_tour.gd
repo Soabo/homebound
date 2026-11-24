@@ -111,6 +111,10 @@ const SHOTS := [
 	{"name": "H5_duenner_schnee", "day": 4, "hour": 15.0, "weather": "cloudy", "snow": 0.35, "pos": Vector3(-3.5, 0.0, 26.5), "look": Vector3(-30.0, 0.5, 30.0)},
 	{"name": "H6_folientunnel", "day": 5, "hour": 11.0, "weather": "cloudy", "snow": 0.6, "pos": Vector3(-6.8, 0.0, 12.5), "look": Vector3(-12.0, 0.3, 7.5)},
 	{"name": "H7_abend_1630", "day": 5, "hour": 16.6, "weather": "clear", "snow": 0.6, "pos": Vector3(-3.5, 0.0, 26.5), "look": Vector3(0.0, 2.0, 2.0)},
+	{"name": "I0_filz_latschen", "look_rel": true, "day": 5, "hour": 13.0, "weather": "cloudy", "snow": 0.3, "pos": Vector3(-585.0, 0.0, -5.0), "look": Vector3(-640.0, 1.0, 45.0)},
+	{"name": "I1_totholz", "day": 5, "hour": 13.0, "weather": "cloudy", "snow": 0.3, "place": "windwurf", "off": Vector3(-20.0, 0.0, -45.0), "look_off": Vector3(-60.0, 2.0, -120.0)},
+	{"name": "I2_blockmeer", "look_rel": true, "day": 5, "hour": 13.0, "weather": "clear", "snow": 0.3, "pos": Vector3(-975.0, 0.0, -895.0), "look": Vector3(-1025.0, 1.0, -945.0)},
+	{"name": "I3_hochschachten", "look_rel": true, "day": 5, "hour": 13.0, "weather": "clear", "snow": 0.3, "pos": Vector3(600.0, 0.0, -735.0), "look": Vector3(665.0, 3.0, -770.0)},
 	{"name": "F0_bretterlager", "hour": 14.0, "pos": Vector3(4.3, 0.45, 2.4), "look": Vector3(2.2, 0.9, 3.2), "lights": true},
 	{"name": "84_werkstatt_leiter", "hour": 14.0, "pos": Vector3(3.2, 0.45, 3.8), "look": Vector3(4.15, 2.2, 0.6), "lights": true, "attic_down": true},
 	{"name": "85_dachboden", "hour": 14.0, "pos": Vector3(3.3, 3.36, 0.1), "look": Vector3(-5.5, 3.9, 0.0), "lights": true, "attic_down": true},
@@ -240,6 +244,8 @@ func _run() -> void:
 			look.y = base.y + float(shot.get("look_off", Vector3(0, 1, -10)).y) + 1.6
 		elif pos.y <= 0.0 and not shot.get("abs_y", false):
 			pos.y = Terrain.height_at(pos.x, pos.z)
+		if shot.get("look_rel", false):
+			look.y += Terrain.height_at(look.x, look.z)   # Blickziel über dem Gelände (große Welt)
 		# große Welt: Gelände und Wald um den Standpunkt sofort laden
 		var terrain := get_tree().current_scene.get_node_or_null("Terrain") as Terrain
 		if terrain:

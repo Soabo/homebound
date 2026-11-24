@@ -53,7 +53,7 @@
     {"id": "kontrollpunkt", "name": "Kontrollpunkt Mauth", "road_z": 560, "ring": "day", "clear": 22, "flat": 0},
     {"id": "ferienlager", "name": "Ferienlager Waldfuchs", "pos": [-505, 285], "ring": "day", "clear": 38, "flat": 26},
     {"id": "schaefer", "name": "Schäferkarren", "pos": [330, 520], "ring": "day", "clear": 46, "flat": 10},
-    {"id": "moor", "name": "Finsterauer Filz", "pos": [-640, 40], "ring": "day", "clear": 100, "flat": 0},
+    {"id": "moor", "name": "Finsterauer Filz", "pos": [-640, 40], "ring": "day", "clear": 24, "flat": 0},
     {"id": "windwurf", "name": "Totholzhang", "pos": [262, -282], "ring": "day", "clear": 72, "flat": 8},
     {"id": "spiegel", "name": "Lichtung der Spiegel", "pos": [-330, -565], "ring": "day", "clear": 26, "flat": 6},
     {"id": "aussenstelle", "name": "Außenstelle Messpunkt 4", "sign": "Außenstelle MP 4", "pos": [-180, -930], "ring": "multi", "clear": 62, "flat": 48},
@@ -102,6 +102,25 @@
     {"id": "K2-Ost", "from": "messstelle", "to": "tunnel", "pts": [[72, -470], [180, -455], [300, -425], [400, -395], [560, -345], [700, -305], [826, -292]]},
     {"id": "K2-Sued", "from": "tunnel", "to": "steinbruch", "pts": [[836, -272], [790, -150], [700, 30], [610, 180], [578, 228]]}
   ],
+  "landscape": {"_info": "Bayerwald-Landschaft (Etappe 3, Christian 24.11.): deadwood = Totholz-Flächen nach Borkenkäfer (dead = Anteil toter Fichten, young = mehr Jungwuchs), blockfields = Granit-Blockmeere (r, big = Größe der Blöcke), schachten = alte Hochweiden auf den Kämmen (wie Lichtungen, mit einzelnen alten Hutebuchen/Bergahornen, trees = Anzahl), Latschen im Filz: latschen = Anteil.",
+    "deadwood": [
+      {"name": "Totholzhang", "pos": [262, -282], "r": 150, "dead": 0.6, "young": 0.8},
+      {"name": "Lusenhang", "pos": [-880, -760], "r": 260, "dead": 0.45, "young": 0.6},
+      {"name": "Rachelhang", "pos": [800, -860], "r": 240, "dead": 0.4, "young": 0.55},
+      {"name": "Grenzkamm", "pos": [-180, -960], "r": 230, "dead": 0.3, "young": 0.4}
+    ],
+    "blockfields": [
+      {"name": "Blockmeer am Lusen", "pos": [-1010, -930], "r": 95, "big": 1.0},
+      {"name": "Sieben Steine", "pos": [-610, -470], "r": 55, "big": 0.8},
+      {"name": "Schwarzberg", "pos": [1030, -300], "r": 70, "big": 0.8},
+      {"name": "Haidel", "pos": [-1030, 260], "r": 60, "big": 0.7}
+    ],
+    "schachten": [
+      {"id": "hochschachten", "name": "Hochschachten", "pos": [650, -760], "r": 55, "trees": 4},
+      {"id": "ruckowitz", "name": "Ruckowitzschachten", "pos": [820, -780], "r": 48, "trees": 3}
+    ],
+    "latschen": 0.55
+  },
   "totenbretter": {"_info": "Drei Totenbretter für Stefanie, Lena und Ben am Abzweig des Gunthersteigs (Christian 24.11.: Bayerwald-Brauch). near = Wunschpunkt, die Stelle wird daneben am Wegrand gesucht. note = Notiz beim Ansehen.", "near": [3.5, -39.0], "note": "totenbretter", "boards": [
     {"text": "Zum frommen\nAndenken an\n\nSTEFANIE\n\nMama", "color": [0.86, 0.82, 0.72]},
     {"text": "Zum frommen\nAndenken an\n\nLENA\n9 Jahre\n\nunser\nSonnenschein", "color": [0.80, 0.86, 0.90]},

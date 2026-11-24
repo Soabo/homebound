@@ -2,6 +2,8 @@ class_name TreeKit
 extends RefCounted
 ## Baumarten für Tal (`Forest`) und großen Wald (`WildForest`): Fichte, Kiefer, Buche, Birke, alter Laubbaum,
 ## abgestorbener Baum (Dürrständer) und Jungwuchs (junge Fichte, junger Laubbaum, ohne Kollision).
+## Bayerwald (Etappe 3): dazu tote Fichten auf Totholzflächen („snag“, silbergrau, Aststummel, oft abgebrochene Spitze),
+## alte Hutebuchen auf den Schachten („hute“, kurzer dicker Stamm, riesige Krone) und Spirken im Filz („bog_pine“).
 ## Ein Baum ist ein Dictionary {x, z, g, kind, h, r, yaw, seed}; `build` legt seine Teile in `Parts` ab.
 ## Wie oft welche Art wächst (nach Höhe, Nähe zum Wasser, Waldrand) steht in WorldConfig (forest_*).
 
@@ -65,6 +67,9 @@ static func make(x: float, z: float, g: float, kind: String, size: float, yaw: f
 		"birch": h = lerpf(9.0, 15.0, size); r = lerpf(0.11, 0.19, size)
 		"leaf": h = lerpf(8.0, 12.0, size); r = lerpf(0.2, 0.38, size)
 		"dead": h = lerpf(7.0, 14.0, size); r = lerpf(0.16, 0.3, size)
+		"snag": h = lerpf(11.0, 19.0, size); r = lerpf(0.2, 0.34, size)
+		"hute": h = lerpf(17.0, 23.0, size); r = lerpf(0.75, 1.05, size)
+		"bog_pine": h = lerpf(3.5, 7.5, size); r = lerpf(0.08, 0.14, size)
 		"young_spruce": h = lerpf(1.1, 3.4, size); r = 0.0
 		"young_leaf": h = lerpf(1.4, 3.2, size); r = 0.035
 	h *= lerpf(1.0, 0.6, smoothstep(100.0, 150.0, g))
@@ -149,6 +154,58 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 				var mid := Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)
 				p.trunks.append(Transform3D(b.scaled_local(Vector3(r * 0.22, len, r * 0.22)), mid))
 				p.trunk_cols.append(grey)
+		"snag":
+			# tote Fichte nach dem Borkenkäfer: silbergrau, Rinde in Fetzen, viele kurze Aststummel; jede dritte ohne Spitze
+			var broken := rng.randf() < 0.35
+			var th := h * (rng.randf_range(0.55, 0.75) if broken else 0.95)
+			var grey := Color(0.82, 0.8, 0.78) * rng.randf_range(0.85, 1.08)
+			_trunk(p.trunks, p.trunk_cols, x, z, g, r, th, yaw, rng, 0.05, grey)
+			var stubs := rng.randi_range(9, 16) if near else 3
+			for i in stubs:
+				var f := rng.randf_range(0.3, 0.97)
+				var ay := g + th * f - 0.3
+				var len := rng.randf_range(0.4, 1.6) * (1.0 - f * 0.6) * (h / 15.0)
+				var b := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, rng.randf_range(1.6, 2.1))
+				p.trunks.append(Transform3D(b.scaled_local(Vector3(r * 0.12, len, r * 0.12)), Vector3(x, ay, z) + b * Vector3(0, len * 0.5, 0)))
+				p.trunk_cols.append(grey * 0.92)
+			if broken and near:
+				# Bruchstück liegt daneben
+				var ang := rng.randf() * TAU
+				var fall := h - th
+				var bb := Basis(Vector3.UP, ang) * Basis(Vector3.RIGHT, PI * 0.5 - 0.06)
+				var dir := bb * Vector3.UP
+				p.trunks.append(Transform3D(bb.scaled_local(Vector3(r * 0.75, fall, r * 0.75)),
+						Vector3(x, g + 0.15, z) + dir * (fall * 0.5 + r * 2.0)))
+				p.trunk_cols.append(grey * 0.8)
+		"hute":
+			# alte Hutebuche auf der Weide: kurzer, dicker Stamm, drei starke Äste, breite niedrige Krone
+			var th := h * 0.32
+			var bark := Color(1.05, 1.03, 0.95) * rng.randf_range(0.85, 1.0)
+			_trunk(p.smooth, p.smooth_cols, x, z, g, r, th, yaw, rng, 0.02, bark)
+			for i in 3:
+				var ang := yaw + TAU * i / 3.0 + rng.randf_range(-0.4, 0.4)
+				var tilt := rng.randf_range(0.45, 0.8)
+				var len := h * rng.randf_range(0.3, 0.42)
+				var b := Basis(Vector3.UP, ang) * Basis(Vector3.RIGHT, tilt)
+				p.smooth.append(Transform3D(b.scaled_local(Vector3(r * 0.45, len, r * 0.45)), Vector3(x, g + th - 0.5, z) + b * Vector3(0, len * 0.5, 0)))
+				var sc := bark * 0.95
+				sc.a = 1.0
+				p.smooth_cols.append(sc)
+			_crown(p, x, z, g + th + h * 0.25, rng, 24 if near else 7, Vector2(3.4, 5.0), Vector3(6.5, 3.0, 6.5),
+					Color(0.6, 0.82, 0.45), Color(0.78, 0.9, 0.5), near)
+		"bog_pine":
+			# Spirke im Filz: niedrige, krumme Kiefer mit kleiner Krone
+			var th := h * 0.8
+			_trunk(p.trunks, p.trunk_cols, x, z, g, r, th, yaw, rng, 0.14, Color(1.1, 0.85, 0.65) * rng.randf_range(0.85, 1.0))
+			var green := Color(0.06, 0.11, 0.07).lerp(Color(0.09, 0.14, 0.08), rng.randf())
+			for i in (4 if near else 2):
+				var f := float(i) / 3.0
+				var lr := h * 0.22 * lerpf(1.0, 0.4, f) * rng.randf_range(0.8, 1.2)
+				p.cones.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.2, 0.2), yaw + i, rng.randf_range(-0.2, 0.2))).scaled(Vector3(lr, h * 0.12, lr)),
+						Vector3(x + rng.randf_range(-0.3, 0.3), g + lerpf(h * 0.45, h * 0.88, f), z + rng.randf_range(-0.3, 0.3))))
+				var col := green * lerpf(0.9, 1.15, f)
+				col.a = 1.0
+				p.cone_cols.append(col)
 		"young_spruce":
 			var green := Color(0.08, 0.15, 0.08).lerp(Color(0.13, 0.21, 0.1), rng.randf())
 			_fir(p, x, z, g - 0.05, h, yaw, rng, green, 5 if near else 2, rng.randf_range(0.2, 0.26), 0.05, near)
@@ -158,9 +215,10 @@ static func build(t: Dictionary, lod: int, p: Parts, body: StaticBody3D) -> void
 					Color(0.7, 0.88, 0.5), Color(0.9, 1.0, 0.6), near)
 	# Wurzelanläufe am Stammfuß (nur nah) und dürre Aststummel unten an Fichten
 	if near and r > 0.15 and kind != "birch":
-		var bark_col := Color(0.85, 0.8, 0.75) if kind != "beech" else Color(1.1, 1.08, 1.0)
-		var arr := p.smooth if kind == "beech" else p.trunks
-		var cols := p.smooth_cols if kind == "beech" else p.trunk_cols
+		var smooth_bark := kind == "beech" or kind == "hute"
+		var bark_col := Color(1.1, 1.08, 1.0) if smooth_bark else (Color(0.8, 0.78, 0.76) if kind == "snag" else Color(0.85, 0.8, 0.75))
+		var arr := p.smooth if smooth_bark else p.trunks
+		var cols := p.smooth_cols if smooth_bark else p.trunk_cols
 		for i in rng.randi_range(3, 5):
 			var a := yaw + TAU * float(i) / 4.0 + rng.randf_range(-0.4, 0.4)
 			var v := Vector3(cos(a) * 0.93, -0.36, sin(a) * 0.93).normalized()

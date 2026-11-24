@@ -390,6 +390,7 @@ func _t_more() -> void:
 	await _t_wild_wood_2411()
 	await _t_season_2411()
 	await _t_greens_2411()
+	await _t_landscape_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3366,3 +3367,62 @@ func _t_greens_2411() -> void:
 		n.free()
 	Supplies.beds = keep
 	scene.get_tree().call_group("garden_bed", "refresh")
+
+
+## Etappe 3 (Christian 24.11.): Bayerwald-Landschaft – mehr Fichten, Totholz, Granit-Blockmeere, Latschen im Filz, Schachten.
+func _t_landscape_2411() -> void:
+	var spruce := 0
+	for i in 1000:
+		if TreeKit.pick_kind((i + 0.5) / 1000.0, 50.0, 0.0, 0.0) == "spruce":
+			spruce += 1
+	_ok("Landschaft: Fichte ist der Hauptbaum (%d %%)" % (spruce / 10), spruce >= 550)
+	_ok("Landschaft: Totholz am Totholzhang (%.2f)" % WorldMap.deadwood_at(262, -282).x, WorldMap.deadwood_at(262, -282).x > 0.5)
+	_ok("Landschaft: Blockmeer am Lusen", WorldMap.blockfield_at(-1010, -930).x > 0.8)
+	_ok("Landschaft: zwei Schachten, baumfrei", WorldMap.schachten().size() == 2 and WorldMap.tree_density(650, -760, 60.0) <= 0.0)
+	var wf := _scene().get_node("WildForest") as WildForest
+	var kinds := {}
+	for pos: Vector2 in [Vector2(360, -282), Vector2(262, -380), Vector2(-680, 80), Vector2(-600, 0)]:
+		for t: Dictionary in wf._trees(Vector2i(int(floorf(pos.x / WildForest.CHUNK)), int(floorf(pos.y / WildForest.CHUNK)))):
+			kinds[t["kind"]] = int(kinds.get(t["kind"], 0)) + 1
+	_ok("Landschaft: tote Fichten am Totholzhang (%d)" % int(kinds.get("snag", 0)), int(kinds.get("snag", 0)) >= 8)
+	_ok("Landschaft: Spirken im Filz (%d)" % int(kinds.get("bog_pine", 0)), int(kinds.get("bog_pine", 0)) >= 3)
+	var hute := 0
+	for s: Dictionary in WorldMap.schachten():
+		var sp: Vector2 = s["pos"]
+		var sr: float = s["r"]
+		var seen := {}
+		for dx in [-1, 0, 1]:
+			for dz in [-1, 0, 1]:
+				var key := Vector2i(int(floorf((sp.x + dx * sr) / WildForest.CHUNK)), int(floorf((sp.y + dz * sr) / WildForest.CHUNK)))
+				if seen.has(key):
+					continue
+				seen[key] = true
+				for t: Dictionary in wf._trees(key):
+					if t["kind"] == "hute":
+						hute += 1
+	_ok("Landschaft: alte Hutebuchen auf den Schachten (%d)" % hute, hute >= 4)
+	_ok("Landschaft: Schild am Hochschachten", _scene().get_node_or_null("WorldTrails/Schachten_hochschachten") != null)
+	# Blockmeer: deutlich mehr Felsen als im normalen Wald; Latschen im Filz zum Verstecken
+	var rocks_block := _rock_count(wf, Vector3(-1000, 0, -920))
+	var rocks_norm := _rock_count(wf, Vector3(-300, 0, 400))
+	_ok("Landschaft: Blockmeer voller Granit (%d gegen %d Felsen)" % [rocks_block, rocks_norm], rocks_block > rocks_norm * 2 and rocks_block >= 30)
+	var bkey := Vector2i(int(floorf(-640.0 / WildForest.CHUNK)), int(floorf(40.0 / WildForest.CHUNK)))
+	var gp := wf._ground_start(bkey)
+	wf._ground_scatter(bkey, gp, -1)
+	var latschen := 0
+	for c: Color in gp.bush_cols:
+		if c.g < 0.4 and c.r < 0.3:
+			latschen += 1
+	gp.body.free()
+	_ok("Landschaft: Latschen im Filz bieten Deckung (%d Latschen, %d Verstecke)" % [latschen, gp.cover.size()], latschen >= 60 and latschen <= 400 and gp.cover.size() >= 40)
+	wf.update_around(_player().global_position, 0.0)
+
+
+func _rock_count(wf: WildForest, at: Vector3) -> int:
+	wf.update_around(at, 0.0)
+	var key := Vector2i(int(floorf(at.x / WildForest.CHUNK)), int(floorf(at.z / WildForest.CHUNK)))
+	var root := wf.get_node_or_null("W_%d_%d_2" % [key.x, key.y])
+	if root == null:
+		return -1
+	var mm := root.get_node_or_null("Rocks") as MultiMeshInstance3D
+	return mm.multimesh.instance_count if mm else 0

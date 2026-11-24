@@ -53,6 +53,7 @@ func _ready() -> void:
 			_furnish(t)
 	_flush_multimeshes()
 	_board()
+	_schachten_signs()
 	# Rastplätze an den langen Wegen (feste Namen: Feuer und Holz stehen im Spielstand)
 	for r: Dictionary in WorldMap.data().get("rest_spots", []):
 		var q := Vector2(float(r["pos"][0]), float(r["pos"][1]))
@@ -564,3 +565,31 @@ static func _length(t: Dictionary) -> float:
 	for i in pts.size() - 1:
 		l += _v(pts[i]).distance_to(_v(pts[i + 1]))
 	return l
+
+
+## Schachten (alte Hochweiden, Etappe 3): kleines Holzschild am nächsten Weg, Schrift zur Weide hin.
+func _schachten_signs() -> void:
+	for s: Dictionary in WorldMap.schachten():
+		var c: Vector2 = s["pos"]
+		# nächster Wegpunkt am Rand der Weide
+		var best := c
+		var best_d := INF
+		for seg: Array in WorldMap.segments():
+			var q := Geometry2D.get_closest_point_to_segment(c, seg[0], seg[1])
+			var d := q.distance_to(c)
+			if d < best_d:
+				best_d = d
+				best = q
+		if best_d > float(s["r"]) * 2.5:
+			continue
+		var out := (c - best).normalized() if best_d > 0.5 else Vector2(1, 0)
+		var at := best + out * 2.2
+		var g := Terrain.height_at(at.x, at.y)
+		var root := Node3D.new()
+		root.name = "Schachten_" + String(s["id"])
+		root.position = Vector3(at.x, g, at.y)
+		root.rotation.y = atan2(-out.x, -out.y) + PI   # Schrift zeigt zum Weg
+		add_child(root)
+		BuildKit.box(root, Vector3(0.09, 1.5, 0.09), Vector3(0, 0.75, 0), _dark, true)
+		BuildKit.box(root, Vector3(1.05, 0.42, 0.05), Vector3(0, 1.32, 0.06), _wood, false)
+		PlacesDay.label(root, String(s["name"]) + "\nalte Hochweide", Vector3(0, 1.32, 0.095), 26, Color(0.08, 0.07, 0.05))

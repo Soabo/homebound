@@ -10,7 +10,7 @@ varying vec3 wn;
 varying vec3 wp;
 
 void vertex() {
-	wn = normalize(mat3(MODEL_MATRIX) * NORMAL);
+	wn = normalize(MODEL_NORMAL_MATRIX * NORMAL);
 	wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	VERTEX += NORMAL * 0.015;
 }

@@ -19,6 +19,10 @@ static var _basins: Array = []           ## {pos, r, depth, steep, base}
 static var _bogs: Array = []             ## {pos, r, base, pools: [Vector3(x, z, r)]}
 static var _mountains: Array = []        ## {pos, r, h}
 static var _clearings: Array = []        ## {pos, r}
+## Bayerwald-Landschaft (map.json „landscape“): Totholz-Flächen, Granit-Blockmeere, Schachten (Hochweiden)
+static var _deadwood: Array = []         ## {pos, r, dead, young}
+static var _blockfields: Array = []      ## {pos, r, big}
+static var _schachten: Array = []        ## {id, name, pos, r, trees}
 static var _cuts: Array = []             ## Einschnitte für Tunnel: {pos, half: Vector2, yaw, place}
 static var _segments: Array = []         ## [a: Vector2, b: Vector2, half_w, kind]
 static var _buckets: Dictionary = {}     ## Vector2i -> PackedInt32Array
@@ -49,6 +53,16 @@ static func ensure() -> void:
 		_mountains.append({"pos": _v2(m["pos"]), "r": float(m["r"]), "h": float(m["h"]), "name": m.get("name", "")})
 	for c: Dictionary in _data.get("clearings", []):
 		_clearings.append({"pos": _v2(c["pos"]), "r": float(c["r"])})
+	var land: Dictionary = _data.get("landscape", {})
+	for d: Dictionary in land.get("deadwood", []):
+		_deadwood.append({"name": d.get("name", ""), "pos": _v2(d["pos"]), "r": float(d["r"]), "dead": float(d.get("dead", 0.4)), "young": float(d.get("young", 0.5))})
+	for b: Dictionary in land.get("blockfields", []):
+		_blockfields.append({"name": b.get("name", ""), "pos": _v2(b["pos"]), "r": float(b["r"]), "big": float(b.get("big", 1.0))})
+	for s: Dictionary in land.get("schachten", []):
+		var sp := _v2(s["pos"])
+		_schachten.append({"id": s["id"], "name": s.get("name", ""), "pos": sp, "r": float(s["r"]), "trees": int(s.get("trees", 3))})
+		# Schachten sind baumfreie Weiden – im Wald wie eine Lichtung
+		_clearings.append({"pos": sp, "r": float(s["r"])})
 	# Orte (Position evtl. an Straße oder Bach gebunden)
 	for p: Dictionary in _data.get("places", []):
 		var pos := _resolve_pos(p)
@@ -440,13 +454,65 @@ static func tree_density(x: float, z: float, h: float) -> float:
 	for b: Dictionary in cell["bogs"]:
 		var d := (b["pos"] as Vector2).distance_to(q)
 		if d < float(b["r"]):
-			dens *= 0.08
+			dens *= 0.18   # Spirken (niedrige Moorkiefern) stehen locker im Filz
 	for b: Dictionary in cell["basins"]:
 		if (b["pos"] as Vector2).distance_to(q) < float(b["r"]) * 1.05:
 			return 0.0
 	# Über der Baumgrenze nur noch vereinzelt
 	dens *= 1.0 - smoothstep(110.0, 150.0, h) * 0.9
 	return dens
+
+
+# --- Bayerwald-Landschaft ------------------------------------------------------------
+
+## Totholz (Borkenkäfer): Anteil toter Fichten hier (0..1) und Faktor für Jungwuchs (x = dead, y = young).
+static func deadwood_at(x: float, z: float) -> Vector2:
+	ensure()
+	var q := Vector2(x, z)
+	var best := Vector2.ZERO
+	for d: Dictionary in _deadwood:
+		var dist := (d["pos"] as Vector2).distance_to(q)
+		var r: float = d["r"]
+		if dist < r:
+			var f := 1.0 - smoothstep(r * 0.55, r, dist)
+			best = Vector2(maxf(best.x, float(d["dead"]) * f), maxf(best.y, float(d["young"]) * f))
+	return best
+
+
+## Granit-Blockmeer: 0..1 (Mitte = viele große Blöcke), dazu Blockgröße (x = Stärke, y = Größe).
+static func blockfield_at(x: float, z: float) -> Vector2:
+	ensure()
+	var q := Vector2(x, z)
+	var best := Vector2.ZERO
+	for b: Dictionary in _blockfields:
+		var dist := (b["pos"] as Vector2).distance_to(q)
+		var r: float = b["r"]
+		if dist < r:
+			var f := 1.0 - smoothstep(r * 0.5, r, dist)
+			if f > best.x:
+				best = Vector2(f, float(b["big"]))
+	return best
+
+
+static func schachten() -> Array:
+	ensure()
+	return _schachten
+
+
+static func deadwood_areas() -> Array:
+	ensure()
+	return _deadwood
+
+
+static func blockfields() -> Array:
+	ensure()
+	return _blockfields
+
+
+## Anteil Latschen im Filz (map.json landscape.latschen)
+static func latschen_share() -> float:
+	ensure()
+	return float((_data.get("landscape", {}) as Dictionary).get("latschen", 0.5))
 
 
 ## Lichtungen/Orte/Moor: Wiese statt Waldboden (0..1).

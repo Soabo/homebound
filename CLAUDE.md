@@ -798,6 +798,18 @@
     (`SupplyProps/SeedsLettuce|SeedsSpinach`). Karotten und Kartoffeln = Kellervorrat (`Cabin/CellarPotatoes` 8,
     `Cabin/CellarCarrots` 6, `CabinRooms._cellar_stock`). Alte Karotten-/Kartoffelsamen aus Spielständen lassen sich noch säen.
     Prüfung `RegressTest._t_greens_2411`.
+- Etappe 3 Landschaft (Christian 24.11.): map.json `landscape` (WorldMap `deadwood_at`, `blockfield_at`, `schachten()`, `latschen_share`).
+  - Mehr Fichten (WorldConfig forest_*: Fichte ~65 %, Kiefer selten, Buche, wenig Birke).
+  - Totholz nach Borkenkäfer (`deadwood`: Totholzhang, Lusenhang, Rachelhang, Grenzkamm): tote silbergraue Fichten `TreeKit` „snag“
+    (Aststummel, oft abgebrochene Spitze, Bruchstück daneben), viel Jungwuchs, mehr liegende (hackbare) Stämme.
+  - Granit (`blockfields`: Blockmeer am Lusen, Sieben Steine, Schwarzberg, Haidel): viele große runde Blöcke (`WildForest._granite`,
+    Kollision ab 0,7 m); im übrigen Wald mehr Granitblöcke, ab und zu ein großer „Wollsack“.
+  - Finsterauer Filz: Spirken (`TreeKit` „bog_pine“), Latschenfelder (dunkle, breite Büsche = Deckung/Cover), helles Wollgras.
+    Ort `moor` hat nur noch `clear` 24 (sonst wuchs im Filz nichts).
+  - Schachten (alte Hochweiden am Rachel-Weg: Hochschachten, Ruckowitzschachten): baumfrei wie Lichtungen, mit alten Hutebuchen
+    (`TreeKit` „hute“, feste Plätze je Schachten), Holzschild am Weg (`WorldTrails._schachten_signs`).
+  - Shader-Normalen jetzt mit `MODEL_NORMAL_MATRIX` (gestreckte Stämme bekamen sonst Schnee-Streifen).
+  - Tour-Bilder I0–I3 (Schlüssel `look_rel` = Blickziel über dem Gelände). Prüfung `RegressTest._t_landscape_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

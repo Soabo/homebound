@@ -24,7 +24,7 @@ float vnoise(vec2 p) {
 }
 
 void vertex() {
-	wnrm = normalize(mat3(MODEL_MATRIX) * NORMAL);
+	wnrm = normalize(MODEL_NORMAL_MATRIX * NORMAL);
 	wpos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 

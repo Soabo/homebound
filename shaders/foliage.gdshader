@@ -59,7 +59,7 @@ void vertex() {
 	VERTEX += inverse(mat3(MODEL_MATRIX)) * off;
 	VERTEX.y *= 1.0 - snow * snow_bury;
 	wpos = wp;
-	wnrm = normalize(mat3(MODEL_MATRIX) * NORMAL);
+	wnrm = normalize(MODEL_NORMAL_MATRIX * NORMAL);
 }
 
 void fragment() {

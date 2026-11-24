@@ -313,14 +313,41 @@ func _trees(key: Vector2i) -> Array:
 			if Terrain.water_level_at(x, z) > g - 0.2:
 				continue
 			var dens := WorldMap.tree_density(x, z, g)
+			var dw := WorldMap.deadwood_at(x, z)
 			if roll > 0.82 * dens:
-				# Lücke: Jungwuchs, wo noch Wald ist (nicht auf Lichtungen, Wegen, Orten)
-				if dens > 0.35 and young_roll < cfg.forest_young_chance * dens and WorldMap.trail_info(x, z).x > 1.0:
+				# Lücke: Jungwuchs, wo noch Wald ist (nicht auf Lichtungen, Wegen, Orten) – auf Totholzflächen viel junger Wald
+				if dens > 0.35 and young_roll < cfg.forest_young_chance * dens * (1.0 + dw.y) and WorldMap.trail_info(x, z).x > 1.0:
 					out.append(TreeKit.make(x, z, g, "young_spruce" if kind_roll < 0.6 or g > 90.0 else "young_leaf", size_roll, yaw, seed_value))
 				continue
 			var wet := 1.0 - smoothstep(4.0, 16.0, Terrain.stream_distance(x, z))
 			var edge := 1.0 - smoothstep(0.3, 0.8, dens)
-			out.append(TreeKit.make(x, z, g, TreeKit.pick_kind(kind_roll, g, wet, edge), size_roll, yaw, seed_value))
+			var kind := TreeKit.pick_kind(kind_roll, g, wet, edge)
+			# Totholz (Borkenkäfer): viele Fichten stehen tot und silbergrau
+			if (kind == "spruce" or kind == "dead") and dw.x > 0.0 and fposmod(young_roll * 7.31, 1.0) < dw.x:
+				kind = "snag"
+			# Filz: Spirken statt Wald
+			if WorldMap.bog_factor(x, z) > 0.3:
+				kind = "bog_pine" if kind_roll < 0.85 else "snag"
+			out.append(TreeKit.make(x, z, g, kind, size_roll, yaw, seed_value))
+	# Schachten: einzelne alte Hutebuchen auf der Weide (feste Plätze je Schachten)
+	for s: Dictionary in WorldMap.schachten():
+		var sp: Vector2 = s["pos"]
+		var sr: float = s["r"]
+		if sp.x + sr < key.x * CHUNK or sp.x - sr > (key.x + 1) * CHUNK or sp.y + sr < key.y * CHUNK or sp.y - sr > (key.y + 1) * CHUNK:
+			continue
+		var srng := RandomNumberGenerator.new()
+		srng.seed = hash(String(s["id"]))
+		for i in int(s["trees"]):
+			var a := srng.randf() * TAU
+			var d := srng.randf_range(0.25, 0.7) * sr
+			var size := srng.randf()
+			var tyaw := srng.randf() * TAU
+			var tseed := srng.randi()
+			var tx := sp.x + cos(a) * d
+			var tz := sp.y + sin(a) * d
+			if floorf(tx / CHUNK) != key.x or floorf(tz / CHUNK) != key.y or WorldMap.trail_info(tx, tz).x < 8.0:
+				continue
+			out.append(TreeKit.make(tx, tz, Terrain.height_at(tx, tz), "hute", size, tyaw, tseed))
 	_tree_cache[key] = out
 	return out
 
@@ -396,9 +423,30 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 				continue
 			in_place = true
 		var grass_share := 0.32 + meadow * 0.55
-		if in_place and roll >= grass_share:
+		# Bayerwald (Etappe 3): Granit-Blockmeere und Latschen im Filz
+		var bf := WorldMap.blockfield_at(x, z)
+		var bogf := WorldMap.bog_factor(x, z)
+		if in_place and roll >= grass_share and bogf <= 0.45:
 			continue
 		var high := smoothstep(150.0, 200.0, g)
+		if bf.x > 0.15 and not in_place and rng.randf() < bf.x * 0.13:
+			_granite(gp, rng, x, z, g, yaw, lerpf(0.8, 2.4, rng.randf()) * bf.y * (0.6 + 0.6 * bf.x), ti.x)
+			continue
+		if bogf > 0.45 and roll < 0.75:
+			if rng.randf() < WorldMap.latschen_share() * 0.3 and ti.x > 3.5:
+				# Latsche: niedriges, breites Kiefergestrüpp, dunkelgrün – dicht genug zum Verstecken
+				var ls := rng.randf_range(1.1, 1.7)
+				var lsc := Vector3(ls * 1.9, ls * 0.75, ls * 1.6)
+				gp.bushes.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(lsc), Vector3(x, g - 0.05, z)))
+				gp.bush_cols.append(Color(0.2, 0.3, 0.17).lerp(Color(0.28, 0.38, 0.22), rng.randf()))
+				var lr := 0.72 * minf(lsc.x, lsc.z)
+				if lr >= cfg.cover_min_radius and 1.15 * lsc.y >= 0.95:
+					gp.cover.append(Vector4(x, z, lr, 1.15 * lsc.y))
+			else:
+				# Wollgras und Pfeifengras: helle Büschel
+				gp.grass.append(Transform3D(Basis.from_euler(Vector3(0, yaw, 0)).scaled(Vector3(s * 0.55, s * 0.5, s * 0.55)), Vector3(x, g - 0.02, z)))
+				gp.grass_cols.append(Color(1.25, 1.18, 0.9).lerp(Color(1.4, 1.38, 1.3), rng.randf() * 0.6))
+			continue
 		if roll < grass_share:
 			# Gras: auf Lichtungen und am Wegrand dicht, im Wald dünn
 			if rng.randf() > 0.25 + meadow * 0.75 or high > 0.8:
@@ -416,7 +464,7 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 				gp.ferns.append(Transform3D(Basis.from_euler(Vector3(rng.randf_range(-0.15, 0.15), rng.randf() * TAU, 0)).scaled(Vector3(fs, fs, fs)),
 						Vector3(fx, Terrain.height_at(fx, fz) - 0.03, fz)))
 				gp.fern_cols.append(Color(0.8, 0.95, 0.7).lerp(Color(1.0, 1.0, 0.65), rng.randf() * 0.4) * rng.randf_range(0.7, 1.1))
-		elif roll < 0.95:
+		elif roll < 0.935:
 			var thicket := rng.randf() < cfg.wild_thicket_share
 			var bramble := not thicket and rng.randf() < 0.2
 			var bs := rng.randf_range(1.35, 2.0) if thicket else s
@@ -435,34 +483,40 @@ func _ground_scatter(key: Vector2i, gp: GroundParts, limit: int) -> bool:
 			if radius >= cfg.cover_min_radius and height >= 0.95:
 				gp.cover.append(Vector4(x, z, radius, height))
 		else:
-			if rng.randf() < 0.5 and high < 0.5:
+			if rng.randf() < 0.35 and high < 0.5:
 				continue
-			var rs := s * (1.0 + high * 0.8)
-			if ti.x < rs * 1.7 + 0.3:   # Felsen nicht auf oder direkt am Weg
-				continue
-			var sc := Vector3(rs * rng.randf_range(1.0, 1.7), rs * rng.randf_range(0.5, 0.85), rs * rng.randf_range(1.0, 1.5))
-			var rb := Basis.from_euler(Vector3(rng.randf() * 0.4, yaw, rng.randf() * 0.4))
-			gp.rocks.append(Transform3D(rb.scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
-			# Moos oben und an der Nordseite
-			if rng.randf() < 0.65:
-				gp.moss.append(Transform3D(rb.scaled(Vector3(sc.x * 0.93, sc.y * 0.55, sc.z * 0.93)), Vector3(x, g + sc.y * 0.62, z - sc.z * 0.12)))
-			gp.rock_cols.append(Color(0.75, 0.75, 0.72) * rng.randf_range(0.8, 1.1) if rng.randf() < 0.5 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))
-			if rs > 0.7:
-				var cs := CollisionShape3D.new()
-				var shape := SphereShape3D.new()
-				shape.radius = maxf(sc.x, sc.z) * 0.75
-				cs.shape = shape
-				cs.position = Vector3(x, g, z)
-				gp.body.add_child(cs)
+			# Granitblock („Wollsack“): ab und zu auch mitten im Wald ein großer, runder Brocken
+			var rs := s * (1.0 + high * 0.8) * (2.2 if rng.randf() < 0.12 else 1.0)
+			_granite(gp, rng, x, z, g, yaw, rs, ti.x)
 	return true
+
+
+## Ein Granitblock: rundlich, hellgrau mit Moos oben und an der Nordseite; ab 0,7 m mit Kollision.
+func _granite(gp: GroundParts, rng: RandomNumberGenerator, x: float, z: float, g: float, yaw: float, rs: float, trail_edge: float) -> void:
+	if trail_edge < rs * 1.7 + 0.3:   # Felsen nicht auf oder direkt am Weg
+		return
+	var sc := Vector3(rs * rng.randf_range(1.0, 1.6), rs * rng.randf_range(0.55, 0.85), rs * rng.randf_range(1.0, 1.45))
+	var rb := Basis.from_euler(Vector3(rng.randf() * 0.35, yaw, rng.randf() * 0.35))
+	gp.rocks.append(Transform3D(rb.scaled(sc), Vector3(x, g + sc.y * 0.25, z)))
+	if rng.randf() < 0.65:
+		gp.moss.append(Transform3D(rb.scaled(Vector3(sc.x * 0.93, sc.y * 0.55, sc.z * 0.93)), Vector3(x, g + sc.y * 0.62, z - sc.z * 0.12)))
+	gp.rock_cols.append(Color(0.8, 0.79, 0.76) * rng.randf_range(0.82, 1.08) if rng.randf() < 0.6 else Color(0.45, 0.6, 0.32) * rng.randf_range(0.8, 1.1))
+	if rs > 0.7:
+		var cs := CollisionShape3D.new()
+		var shape := SphereShape3D.new()
+		shape.radius = maxf(sc.x, sc.z) * 0.75
+		cs.shape = shape
+		cs.position = Vector3(x, g, z)
+		gp.body.add_child(cs)
 
 
 func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 	var rng := gp.rng
 	var x0 := key.x * CHUNK
 	var z0 := key.y * CHUNK
-	# Ein, zwei liegende Stämme
-	for k in rng.randi_range(0, 2):
+	# Ein, zwei liegende Stämme – auf Totholzflächen viele (umgestürzte tote Fichten)
+	var dwc := WorldMap.deadwood_at(x0 + CHUNK * 0.5, z0 + CHUNK * 0.5)
+	for k in rng.randi_range(0, 2) + (rng.randi_range(2, 5) if dwc.x > 0.15 else 0):
 		var x := x0 + rng.randf_range(6.0, CHUNK - 6.0)
 		var z := z0 + rng.randf_range(6.0, CHUNK - 6.0)
 		var g := Terrain.height_at(x, z)
