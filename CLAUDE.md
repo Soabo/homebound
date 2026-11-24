@@ -727,6 +727,11 @@
   Jetzt EINE Stelle `Settings.apply_render_scale()` (RetroFilter ruft sie): mit Filter Zeilen = `RetroFilter.VIRTUAL_HEIGHT` ×
   `retro_oversample` (quality_levels: 1.0/1.25/1.5), ohne MSAA/FXAA; ohne Filter `scale` + `msaa` der Stufe.
   FPS-Anzeige: FPS, CPU/GPU-ms, Bildschirm-Hz, Grafikkarte (`get_video_adapter_name`) und 3D-Auflösung. Prüfung `_t_render_2411`.
+  Danach lief es erst auf der AMD-Grafik im Prozessor (Windows-Grafikeinstellung), mit RTX 10 ms GPU bei 3840×1080 → Tal-Wald
+  (`Forest._add_multimesh`) jetzt in Feldern von `Forest.CHUNK` 36 m (Knoten „Trunks“ usw. = Gruppe mit Feldern), kleine Pflanzen
+  ohne Schatten nur bis `PLANT_RANGE` 60 m; Mondschatten nur ohne Sonne (2 Stufen), Sonnenschatten-Stufen je Grafikstufe
+  (`shadow_splits`), Volumennebel-Raster 64×64 (project.godot). FPS-Anzeige unter der Uhrzeit. GPU-Messung `--night-test=gpu`
+  (`GpuBench`) nur auf echter Grafik aussagekräftig – mit Software-Vulkan (lavapipe) sind die Zahlen wertlos.
 - Prüfung `RegressTest._t_dread_2311`.
 
 ## Technik

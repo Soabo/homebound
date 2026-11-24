@@ -7,6 +7,9 @@ extends Node3D
 const SEED := 1337
 const SPACING := 4.0
 const LIMIT := 108.0
+## Größe der Felder, in die jede Pflanzenart aufgeteilt wird (einzeln ausblendbar), und Sichtweite kleiner Pflanzen
+const CHUNK := 36.0
+const PLANT_RANGE := 60.0
 
 var _rng := RandomNumberGenerator.new()
 ## Alle Baumstämme (x, Bodenhöhe, z, Stammradius) – z. B. für Eichhörnchen
@@ -682,10 +685,6 @@ func _textured(kind: String, repeat_m: float) -> StandardMaterial3D:
 
 func _add_multimesh(node_name: String, mesh: Mesh, transforms: Array[Transform3D], colors: Array[Color],
 		mat: Material, shadows: bool) -> void:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = true
-	mm.mesh = mesh
 	# Nichts im Grundriss der Anbauten (Kinderzimmer, Büro) – sonst wächst Gras durch den Boden (Christian 14.11.).
 	# Erst hier aussortiert, damit der Zufall (und damit alle Baumplätze) gleich bleibt.
 	var keep: Array[int] = []
@@ -693,13 +692,35 @@ func _add_multimesh(node_name: String, mesh: Mesh, transforms: Array[Transform3D
 		var o := transforms[i].origin
 		if not Cabin.in_footprint(o.x, o.z, 0.25):
 			keep.append(i)
-	mm.instance_count = keep.size()
-	for k in keep.size():
-		mm.set_instance_transform(k, transforms[keep[k]])
-		mm.set_instance_color(k, colors[keep[k]])
-	var mmi := MultiMeshInstance3D.new()
-	mmi.name = node_name
-	mmi.multimesh = mm
-	mmi.material_override = mat
-	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mmi)
+	# In Felder von CHUNK m aufteilen (Christian 24.11.: Bildrate): Eine einzige MultiMesh für das ganze Tal wird immer
+	# komplett gezeichnet – in jedem Schattenausschnitt und auch, wenn sie hinter einem liegt. Felder werden einzeln
+	# weggelassen, wenn sie nicht im Blick sind; kleine Pflanzen (ohne Schatten) nur bis PLANT_RANGE m.
+	var cells := {}
+	for i in keep:
+		var o := transforms[i].origin
+		var key := Vector2i(floori(o.x / CHUNK), floori(o.z / CHUNK))
+		if not cells.has(key):
+			cells[key] = [] as Array[int]
+		(cells[key] as Array[int]).append(i)
+	var group := Node3D.new()
+	group.name = node_name
+	add_child(group)
+	for key: Vector2i in cells:
+		var idx: Array[int] = cells[key]
+		var cmm := MultiMesh.new()
+		cmm.transform_format = MultiMesh.TRANSFORM_3D
+		cmm.use_colors = true
+		cmm.mesh = mesh
+		cmm.instance_count = idx.size()
+		for k in idx.size():
+			cmm.set_instance_transform(k, transforms[idx[k]])
+			cmm.set_instance_color(k, colors[idx[k]])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "%s_%d_%d" % [node_name, key.x, key.y]
+		mmi.multimesh = cmm
+		mmi.material_override = mat
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if not shadows:
+			mmi.visibility_range_end = PLANT_RANGE
+			mmi.visibility_range_end_margin = 6.0
+		group.add_child(mmi)

@@ -944,8 +944,13 @@ func _t_cover() -> void:
 	var forest := _scene().find_child("Forest", true, false)
 	var kinds := 0
 	for n: String in ["Trunks", "BirchTrunks", "BeechTrunks", "Needles", "Crowns"]:
-		var mmi := forest.find_child(n, false, false) as MultiMeshInstance3D if forest else null
-		if mmi and mmi.multimesh.instance_count > 0:
+		var grp := forest.find_child(n, false, false) if forest else null
+		var count := 0
+		if grp:
+			for c in grp.get_children():
+				if c is MultiMeshInstance3D:
+					count += (c as MultiMeshInstance3D).multimesh.instance_count
+		if count > 0:
 			kinds += 1
 	_ok("Wald: Fichten, Birken, Buchen, Laubbäume im Tal", kinds == 5)
 	_ok("Wald: viele dichte Gebüsche zum Verstecken", Cover.count() >= 200, "%d" % Cover.count())

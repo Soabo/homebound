@@ -28,6 +28,11 @@ func _run() -> void:
 			await get_tree().physics_frame
 		get_tree().quit(1 if await FpsTest.run(self) > 0 else 0)
 		return
+	if mode == "gpu":
+		for i in 10:
+			await get_tree().physics_frame
+		get_tree().quit(await GpuBench.run(self))
+		return
 	if mode == "data":
 		for i in 10:
 			await get_tree().physics_frame

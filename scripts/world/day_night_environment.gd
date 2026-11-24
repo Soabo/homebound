@@ -111,6 +111,7 @@ func _ready() -> void:
 	moon.name = "Moon"
 	moon.shadow_enabled = true
 	moon.directional_shadow_max_distance = 60.0
+	moon.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS   # Mondschatten sind weich und schwach – 2 Stufen reichen
 	moon.light_color = Color(0.55, 0.65, 1.0)
 	moon.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
 	moon.rotation_degrees = Vector3(-38.0, 150.0, 0.0)
@@ -140,6 +141,9 @@ func _apply_settings() -> void:
 	var q := Settings.quality_values()
 	env.ssao_enabled = bool(q.get("ssao", true))
 	env.volumetric_fog_enabled = bool(q.get("volumetric", true))
+	# Sonnenschatten: Anzahl Stufen je Grafikstufe (jede Stufe zeichnet den Wald noch einmal)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS if int(q.get("shadow_splits", 4)) >= 4 \
+			else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
 
 
 func _process(delta: float) -> void:
@@ -206,6 +210,9 @@ func _apply(h: float, delta: float) -> void:
 	moon_clear = 1.0 - _cloud_cover(moon_dir) * 0.9
 	moon_visible = smoothstep(0.0, 1.5, mh) * night
 	moon.visible = moon_up > 0.01
+	# Morgens/abends stehen Sonne und Mond gleichzeitig am Himmel: nur einer wirft Schatten (sonst wird der ganze Wald
+	# doppelt in die Schattenkarte gezeichnet – Christian 24.11.: Einbrüche der Bildrate am Morgen)
+	moon.shadow_enabled = not sun.visible
 	moon.light_energy = moon_up * lerpf(0.12, 0.3, smoothstep(5.0, 30.0, -moon_rot.x)) * moon_clear * (1.0 - phase * 0.5) * (1.0 - foggy * 0.6)
 
 	var horizon := NIGHT_HORIZON.lerp(DAY_HORIZON, day).lerp(SUNSET_HORIZON if morning < 0.5 else DAWN_HORIZON, low_sun * 0.75 * (1.0 - clouds * 0.6))

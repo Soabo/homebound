@@ -122,7 +122,7 @@ func apply_fps() -> void:
 		_fps_label.anchor_right = 1.0
 		_fps_label.offset_left = -420
 		_fps_label.offset_right = -12
-		_fps_label.offset_top = 8
+		_fps_label.offset_top = 76   # unter der Uhrzeit (Hud._clock)
 		_fps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		_fps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_fps_label.add_theme_font_size_override("font_size", 18)

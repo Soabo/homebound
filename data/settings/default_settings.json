@@ -10,9 +10,9 @@
   "vsync": true,
   "show_fps": false,
   "quality_levels": {
-    "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false, "msaa": 0, "retro_oversample": 1.0},
-    "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false, "msaa": 0, "retro_oversample": 1.25},
-    "high": {"scale": 1.0, "shadow_size": 4096, "ssao": true, "volumetric": true, "msaa": 2, "retro_oversample": 1.5}
+    "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false, "msaa": 0, "retro_oversample": 1.0, "shadow_splits": 2},
+    "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false, "msaa": 0, "retro_oversample": 1.25, "shadow_splits": 2},
+    "high": {"scale": 1.0, "shadow_size": 4096, "ssao": true, "volumetric": true, "msaa": 2, "retro_oversample": 1.5, "shadow_splits": 4}
   },
   "endings": [
     {"id": "gehoert", "name": "Gehört", "kind": "gut"},
