@@ -5,6 +5,9 @@ extends Node3D
 ##  Glühwürmchen in ruhigen Nächten, fallende Blätter bei Wind, sichtbarer Atem in kalten Nächten.
 ## Alles folgt der Kamera, ist billig (CPU-Teilchen) und schaltet sich je nach Tageszeit, Wetter und Ort ein.
 
+## Mücken und Glühwürmchen gibt es im Spätherbst nicht (Bayerischer Wald, Ende November)
+const SEASON_INSECTS := false
+
 var _motes: CPUParticles3D
 var _gnats: CPUParticles3D
 var _flies: CPUParticles3D
@@ -147,11 +150,12 @@ func _process(delta: float) -> void:
 	var wdir := Vector3(wind.dir.x, 0, wind.dir.y) if wind else Vector3(1, 0, 0)
 	# Pollen und Schwebstaub: helle Tagesstunden, trocken, draußen
 	_motes.global_position = cam.origin + (-cam.basis.z) * 3.0
-	_motes.emitting = outside and not night and dry and w != "fog" and h > 8.0 and h < 19.5
+	_motes.emitting = outside and not night and dry and w != "fog" and w != "snow" and WorldState.snow < 0.3 and h > 9.0 and h < 15.5
 	_motes.gravity = Vector3(wdir.x, -0.01, wdir.z) * 0.05 * ws
 	# Mücken: über dem Bach an warmen Nachmittagen
 	var at_stream := Terrain.stream_distance(pp.x, pp.z) < 12.0
-	if at_stream and not _gnats.emitting and outside and not night and dry and h > 12.0 and h < 20.0 and ws < 0.5:
+	# Spätherbst: keine Mücken und keine Glühwürmchen mehr (SEASON_INSECTS)
+	if SEASON_INSECTS and at_stream and not _gnats.emitting and outside and not night and dry and h > 12.0 and h < 20.0 and ws < 0.5:
 		_gnats.global_position = pp + Vector3(_rng.randf_range(-3, 3), 1.4, _rng.randf_range(-3, 3))
 		_gnats.emitting = true
 	elif not at_stream or night or not dry or ws >= 0.5:
@@ -162,14 +166,15 @@ func _process(delta: float) -> void:
 	var calm := ws < 0.35 and dry and WorldState.stage() < 2 and get_tree().get_nodes_in_group("mauler").is_empty() \
 		and get_tree().get_nodes_in_group("creature").is_empty()
 	_flies.global_position = Vector3(pp.x, pp.y + 1.0, pp.z)
-	_flies.emitting = outside and night and calm and (h > 21.0 or h < 1.0)
+	_flies.emitting = SEASON_INSECTS and outside and night and calm and (h > 21.0 or h < 1.0)
 	# Fallende Blätter: bei Wind, draußen im Wald
 	_leaves.global_position = cam.origin + Vector3(0, 5, 0) - wdir * 3.0
 	_leaves.gravity = Vector3(0, -0.6, 0) + wdir * ws * 1.6
 	_leaves.emitting = outside and ws > 0.3 and Vector2(pp.x, pp.z).length() > 22.0
 	# Atem: kalte Nächte, Kälte, Höhe
 	_breath_t -= delta
-	var cold := outside and (night or Survival.warmth < 55.0 or pp.y > 120.0 or w == "fog")
+	# Ende November ist es draußen immer kalt genug für Atemwolken
+	var cold := outside
 	if cold and _breath_t <= 0.0 and not _player.holding_breath:
 		_breath_t = _rng.randf_range(3.2, 4.6) * (0.6 if Input.is_action_pressed("sprint") else 1.0)
 		_breath.global_position = cam.origin + (-cam.basis.z) * 0.32 - cam.basis.y * 0.12
@@ -178,7 +183,7 @@ func _process(delta: float) -> void:
 		breath_cloud_until = Time.get_ticks_msec() + 1500
 	# Dunst über dem Bach: Dämmerung, ruhiger Wind, nahe am Wasser
 	var sd := Terrain.stream_distance(pp.x, pp.z)
-	var misty_hour := (h > 4.5 and h < 9.0) or (h > 18.5 and h < 21.5) or w == "fog"
+	var misty_hour := (h > 5.5 and h < 10.0) or (h > 15.5 and h < 19.0) or w == "fog"
 	_mist.emitting = outside and misty_hour and sd < 40.0 and ws < 0.6
 	if _mist.emitting:
 		# Schwaden liegen über dem Bachlauf auf Höhe des Spielers (z), nicht beim Spieler selbst

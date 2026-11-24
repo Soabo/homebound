@@ -785,7 +785,13 @@
   - Spuren im Schnee: `SnowTracks` (Stiefel über `Player.stepped`, Krallen von creature/mauler/seeker/changeling), verblassen nach
     `track_hours`, Neuschnee `track_cover_snow` deckt sie zu, Tauwetter löscht sie (WorldConfig `track_*`).
   - Tour-Bilder H1–H5 (Schlüssel `snow`, `frost`, `tracks`). Prüfung `RegressTest._t_season_2411`.
-  - Tag/Nacht-Uhrzeiten bleiben wie bisher (7–19 Uhr), obwohl es Ende November früher dunkel wird – ggf. mit Christian klären.
+  - Kurze Tage (Christian 24.11.: „länger dunkel“): TimeConfig Tag 7:30–17:00 (`day_start_hour`/`night_start_hour`), Sonne geht
+    `sunset_before_night` (0,6 Std.) vor der Nacht unter und steht mittags nur `sun_max_altitude` (22°) hoch
+    (`DayNightEnvironment.sun_altitude_deg` liest TimeConfig). Echtzeit: Tag 8 Min., Nacht 12 Min. (gleiches Uhrtempo).
+    Abend-Hinweis 15:30, Aufwachen 7:30, neues Spiel beginnt 14 Uhr. Nachtereignisse verteilen sich über die längere Nacht.
+    Keine Mücken/Glühwürmchen (`AirFx.SEASON_INSECTS`), Atemwolken draußen immer.
+  - Folientunnel über allen vier Hochbeeten (`GardenBed._build_tunnel`: Metallbögen, Folie mit Schnee, Südseite hochgeschlagen,
+    Enden gerafft an Pflöcken) – darum wächst auch im Winter etwas. Bild H6.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

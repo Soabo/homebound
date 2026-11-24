@@ -98,7 +98,7 @@ func _update_snow(now: float, hours: float) -> void:
 			if day_time:
 				snow = maxf(0.0, snow - config.melt_day_per_hour * hours * (1.0 if weather == "clear" else 0.4))
 	if weather != "snow" and weather != "rain" and weather != "storm":
-		var cold_night := h >= 21.0 or h < 7.0
+		var cold_night := TimeManager.is_night()
 		if cold_night:
 			var clear := 1.0 if weather == "clear" else config.frost_cloud_factor
 			frost = minf(1.0, frost + config.frost_per_hour * hours * clear)

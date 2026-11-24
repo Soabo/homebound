@@ -159,9 +159,17 @@ func flash(strength: float, dir: Vector3) -> void:
 		get_tree().call_group("changeling", "on_lightning")
 
 
-## Sonnenhöhe in Grad: 0 kurz nach 7 Uhr und kurz vor 19 Uhr, Höchststand um 13 Uhr.
+## Sonnenhöhe in Grad (Ende November, Werte in TimeConfig): 0 bei Sonnenaufgang (day_start_hour) und Sonnenuntergang
+## (sunset_before_night vor night_start_hour), mittags nur sun_max_altitude hoch; nachts tief unter dem Horizont.
 static func sun_altitude_deg(h: float) -> float:
-	return sin(TAU * (h - 7.0) / 24.0) * 58.0 - 2.0
+	var tc := TimeManager.config
+	var rise := tc.day_start_hour
+	var set_h := tc.night_start_hour - tc.sunset_before_night
+	var day_len := maxf(set_h - rise, 1.0)
+	var t := fposmod(h - rise, 24.0)
+	if t <= day_len:
+		return sin(PI * t / day_len) * tc.sun_max_altitude
+	return -sin(PI * (t - day_len) / (24.0 - day_len)) * 45.0
 
 
 func _w(kind: String) -> float:
@@ -182,7 +190,9 @@ func _apply(h: float, delta: float) -> void:
 	var snowy := _w("snow")
 
 	var alt := sun_altitude_deg(h)
-	var az := (13.0 - h) * 12.0
+	# Mittag liegt zwischen Sonnenaufgang und -untergang; tiefe Wintersonne aus Südosten bis Südwesten
+	var noon := (TimeManager.config.day_start_hour + TimeManager.config.night_start_hour - TimeManager.config.sunset_before_night) * 0.5
+	var az := (noon - h) * 13.0
 	sun.rotation_degrees = Vector3(-maxf(alt, 0.5), az, 0.0)
 
 	var day := smoothstep(-9.0, 12.0, alt)

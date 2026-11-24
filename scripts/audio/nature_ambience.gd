@@ -75,7 +75,7 @@ func _process(delta: float) -> void:
 	_t += delta
 	var night := TimeManager.is_night()
 	var hour := TimeManager.hour
-	var dawn_dusk := hour > 5.5 and hour < 8.0 or hour > 18.0 and hour < 20.0
+	var dawn_dusk := hour > 6.5 and hour < 8.5 or hour > 15.5 and hour < 17.5
 	var player := get_tree().get_first_node_in_group("player") as Node3D
 	var indoor := player != null and (Cabin.is_inside(player.global_position) or Shed.is_inside(player.global_position))
 

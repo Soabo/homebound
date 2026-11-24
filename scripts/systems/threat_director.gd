@@ -449,7 +449,7 @@ func _process(delta: float) -> void:
 			_fire(t)
 
 
-## Gegen 17 Uhr: „Der Abend beginnt“ (Zeit-Werte in TimeConfig evening_warning_*).
+## Am Nachmittag (evening_warning_hour): „Der Abend beginnt“ (Zeit-Werte in TimeConfig evening_warning_*).
 func _check_evening() -> void:
 	var cfg := TimeManager.config
 	if _evening_warned == TimeManager.day or get_tree().current_scene == null or not GameState.in_game():

@@ -6,6 +6,12 @@ extends Interactable
 ##  reif:       [E] ernten
 ##  vertrocknet:[E] abräumen
 ## Unter fremdem Einfluss werden die Blätter grau – die Ernte ist dann verdorben.
+## Spätherbst (Christian 24.11.): Über jedem Beet steht ein Folientunnel (Metallbögen + Folie, Enden gerafft) – deshalb
+## wächst auch bei Frost und Schnee etwas. Säen, gießen und ernten geht durch die hochgeschlagene Seite.
+
+## Folientunnel: Höhe über der Erde, Zahl der Bögen
+const TUNNEL_HEIGHT := 0.62
+const TUNNEL_HOOPS := 4
 
 const SEEDS := ["seeds_radish", "seeds_carrot", "seed_potato", "alien_seeds"]
 
@@ -34,6 +40,7 @@ func _ready() -> void:
 	_leaf_dry = BuildKit.color_mat(Color(0.45, 0.36, 0.2), 1.0)
 	_plants = Node3D.new()
 	add_child(_plants)
+	_build_tunnel()
 	var area := Area3D.new()
 	var cs := CollisionShape3D.new()
 	var sh := BoxShape3D.new()
@@ -44,6 +51,78 @@ func _ready() -> void:
 	add_child(area)
 	Supplies.changed.connect(refresh)
 	refresh()
+
+
+## Folientunnel: halbrunde Bögen quer über das Beet, eine Folie darüber (durchscheinend, Schnee bleibt oben liegen),
+## an den Enden zusammengerafft und an einen Pflock gebunden.
+func _build_tunnel() -> void:
+	var tunnel := Node3D.new()
+	tunnel.name = "Tunnel"
+	add_child(tunnel)
+	var top := size.y + 0.02
+	var half_w := size.z * 0.5 - 0.04
+	var half_l := size.x * 0.5 - 0.05
+	var metal := BuildKit.color_mat(Color(0.62, 0.64, 0.66), 0.45, 0.6)
+	# Bögen (Querschnitt: Halbellipse, Breite = Beet, Höhe TUNNEL_HEIGHT)
+	for i in TUNNEL_HOOPS:
+		var x := lerpf(-half_l + 0.08, half_l - 0.08, float(i) / (TUNNEL_HOOPS - 1))
+		var pts := HandKit.arc(Vector3(x, top, 0), half_w, 180.0, 0.0, 12, Vector3(0, 0, 1), Vector3.UP, TUNNEL_HEIGHT)
+		HandKit.tube(tunnel, pts, 0.008, metal, 5)
+	# Firstlatte
+	HandKit.tube(tunnel, PackedVector3Array([Vector3(-half_l, top + TUNNEL_HEIGHT, 0), Vector3(half_l, top + TUNNEL_HEIGHT, 0)]), 0.006, metal, 4)
+	# Folie: Halbellipse entlang x, an der Südseite (+z) unten etwas hochgeschlagen
+	var foil := StandardMaterial3D.new()
+	foil.albedo_color = Color(0.86, 0.9, 0.93, 0.3)
+	foil.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	foil.cull_mode = BaseMaterial3D.CULL_DISABLED
+	foil.roughness = 0.15
+	foil.metallic_specular = 0.7
+	SnowCover.register(foil)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	const SEG := 14
+	const ROLL := 3   # unterste Segmente auf der Südseite fehlen (hochgeschlagen)
+	for k in SEG:
+		if k < ROLL:
+			continue
+		var a0 := PI * float(k) / SEG
+		var a1 := PI * float(k + 1) / SEG
+		var p0 := Vector3(0, top + sin(a0) * TUNNEL_HEIGHT, cos(a0) * half_w)
+		var p1 := Vector3(0, top + sin(a1) * TUNNEL_HEIGHT, cos(a1) * half_w)
+		var n0 := Vector3(0, sin(a0), cos(a0))
+		var n1 := Vector3(0, sin(a1), cos(a1))
+		for v: Array in [[p0, n0, -1.0], [p1, n1, -1.0], [p1, n1, 1.0], [p0, n0, -1.0], [p1, n1, 1.0], [p0, n0, 1.0]]:
+			var pp: Vector3 = v[0]
+			st.set_normal(v[1])
+			st.add_vertex(Vector3(half_l * float(v[2]), pp.y, pp.z))
+	# Enden: gerafft (flache Halbellipse, etwas nach innen gezogen)
+	for side: float in [-1.0, 1.0]:
+		for k in SEG:
+			var a0 := PI * float(k) / SEG
+			var a1 := PI * float(k + 1) / SEG
+			var c := Vector3(side * (half_l + 0.04), top, 0)
+			st.set_normal(Vector3(side, 0, 0))
+			st.add_vertex(c)
+			st.add_vertex(Vector3(side * half_l, top + sin(a0) * TUNNEL_HEIGHT, cos(a0) * half_w))
+			st.add_vertex(Vector3(side * half_l, top + sin(a1) * TUNNEL_HEIGHT, cos(a1) * half_w))
+	var mi := MeshInstance3D.new()
+	mi.name = "Foil"
+	mi.mesh = st.commit()
+	mi.material_override = foil
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	tunnel.add_child(mi)
+	# hochgeschlagene Rolle auf der Südseite und Pflöcke an den Enden
+	var a_roll := PI * float(ROLL) / SEG
+	var roll_y := top + sin(a_roll) * TUNNEL_HEIGHT
+	var roll_z := cos(a_roll) * half_w
+	HandKit.tube(tunnel, PackedVector3Array([Vector3(-half_l, roll_y, roll_z + 0.02), Vector3(half_l, roll_y, roll_z + 0.02)]), 0.03,
+			BuildKit.color_mat(Color(0.78, 0.82, 0.84, 0.8), 0.3), 8)
+	var peg := BuildKit.tex_mat("bark", 0.6)
+	for side: float in [-1.0, 1.0]:
+		# Pflock leicht nach Norden versetzt (südlich am Ostbeet steht die Gießkanne)
+		BuildKit.box(tunnel, Vector3(0.04, 0.3, 0.04), Vector3(side * (size.x * 0.5 + 0.2), 0.12, -0.35), peg, false)
+		HandKit.tube(tunnel, PackedVector3Array([Vector3(side * (half_l + 0.04), top + 0.05, 0), Vector3(side * (size.x * 0.5 + 0.2), 0.24, -0.35)]),
+				0.01, BuildKit.color_mat(Color(0.85, 0.88, 0.9, 0.7), 0.4), 4)
 
 
 func _bed() -> Dictionary:
