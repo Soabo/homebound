@@ -226,7 +226,10 @@ func plan_night(night_day: int) -> void:
 		_add(start + _rng.randf_range(0.6, night_len - 1.0), pool[_rng.randi() % pool.size()])
 	# Nächtliche Vorkommnisse (NightOmens): Hände, wandernde Dinge, Lichter und Sichtungen im Wald …
 	var oc := config.omen_count_quiet if night_kind in ["quiet", "siege"] else config.omen_count_busy
-	for i in (0 if night_kind == "siege" or calm else _rng.randi_range(oc.x, oc.y)):
+	var omen_n := 0 if night_kind == "siege" or calm else _rng.randi_range(oc.x, oc.y)
+	if omen_n > 0 and ForestVoices.is_rauhnacht(night_day):
+		omen_n += config.rauhnacht_omen_bonus
+	for i in omen_n:
 		var kind := _pick_omen(night_day)
 		if kind != "":
 			_add(start + _rng.randf_range(0.3, night_len - 0.8), "omen:" + kind)
@@ -333,11 +336,15 @@ func _pick_omen(night_day: int) -> String:
 				if night_day < config.omen_seeker_from_night: continue
 			"mauler_glimpse":
 				if night_day < config.omen_mauler_from_night: continue
+			"sunken_bell":
+				if night_day < config.omen_bell_from_night: continue
+			"wild_hunt":
+				if not (ForestVoices.is_rauhnacht(night_day) or WorldState.weather == "storm"): continue
 			"drawing":
 				var ic := get_tree().get_first_node_in_group("inside_changes")
 				if night_day < config.omen_drawing_from_night or _drawing_planned or (ic and ic.drawing_shown): continue
 		opts.append(k)
-		weights.append(config.omen_forest_weight if k in NightOmens.FOREST_KINDS else 1.0)
+		weights.append(config.omen_hunt_weight if k == "wild_hunt" else (config.omen_forest_weight if k in NightOmens.FOREST_KINDS else 1.0))
 	if opts.is_empty():
 		return ""
 	var total := 0.0

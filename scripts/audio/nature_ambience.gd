@@ -1,6 +1,7 @@
 class_name NatureAmbience
 extends Node
-## Lebendige Natur: Vögel am Tag, Grillen und Eulen in der Nacht.
+## Lebendige Natur: Vögel am Tag, Grillen und Frösche in der Nacht (im Spätherbst still, ambience.json season_insects).
+## Käuze, Hirsche, Raben, Specht und Glocken spielt ForestVoices.
 ## Ist etwas Fremdes in der Nähe, verstummen die Tiere (GDD 3.6 / 9.6) –
 ## Stille ist hier ein Warnsignal.
 
@@ -8,7 +9,6 @@ const CREATURE_SILENCE_RADIUS := 32.0
 
 var _crickets: AudioStreamPlayer
 var _birds: AudioStreamPlayer
-var _owl_timer: float = 20.0
 var _silence: float = 0.0  ## 0 = normal, 1 = völlige Stille
 var _forced_silence_until: float = 0.0
 var _t: float = 0.0
@@ -62,6 +62,11 @@ func _on_phase_changed(is_night: bool) -> void:
 	SoundBank.play_ui(self, "sting_dusk" if is_night else "sting_dawn", -6.0)
 
 
+## 0 = normal, 1 = völlige Stille (für ForestVoices)
+func silence_level() -> float:
+	return _silence
+
+
 ## Für Ereignisse: Die Tiere verstummen für einige Sekunden.
 ## dread = mit dem tiefen Brummton („etwas ist da“). Rascheln im Gebüsch lässt nur die Vögel verstummen,
 ## damit offen bleibt, ob es der Wind war.
@@ -88,14 +93,17 @@ func _process(delta: float) -> void:
 	_silence = move_toward(_silence, target_silence, delta * (0.5 if target_silence > _silence else 0.08))
 
 	var indoor_db := -10.0 if indoor else 0.0
-	var cricket_vol := (1.0 if night else (0.4 if dawn_dusk else 0.0)) * (1.0 - _silence)
+	# Spätherbst/Winter: keine Grillen, keine Frösche, Vogelgesang nur leise (ambience.json)
+	var amb := ForestVoices.cfg()
+	var insects := bool(amb.get("season_insects", true))
+	var cricket_vol := (1.0 if night else (0.4 if dawn_dusk else 0.0)) * (1.0 - _silence) * (1.0 if insects else 0.0)
 	var bird_vol := (0.0 if night else (0.5 if dawn_dusk else 1.0)) * (1.0 - _silence)
 	_crickets.volume_db = linear_to_db(maxf(cricket_vol, 0.0001)) - 8.0 + indoor_db
 	# Terraforming: Tiere verlassen das Tal – erst leiser, ab Stufe 3 fast verstummt
 	var st := WorldState.stage()
 	var fauna_db := 0.0 if st == 0 else (-7.0 if st < 3 else -22.0)
 	_crickets.volume_db += fauna_db
-	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 18.0 + indoor_db + fauna_db
+	_birds.volume_db = linear_to_db(maxf(bird_vol, 0.0001)) - 18.0 + indoor_db + fauna_db + float(amb.get("winter_birds", {}).get("birds_db", 0.0))
 
 	if player:
 		var pz := clampf(player.global_position.z, -100.0, 100.0)
@@ -106,7 +114,7 @@ func _process(delta: float) -> void:
 			_brook.volume_db = -13.0 + indoor_db
 		if _frogs:
 			_frogs.global_position = at + Vector3(2.0, 0, 6.0)
-			var frog_vol := (1.0 if night else 0.0) * (1.0 - _silence)
+			var frog_vol := (1.0 if night and insects else 0.0) * (1.0 - _silence)
 			_frogs.volume_db = linear_to_db(maxf(frog_vol, 0.0001)) - 10.0 + indoor_db + fauna_db
 	if _dread:
 		# Brummton nur, wenn wirklich etwas da ist (Kreatur in der Nähe oder ein Ereignis mit Brummen);
@@ -119,12 +127,3 @@ func _process(delta: float) -> void:
 			target_dread = maxf(target_dread, 0.08 + 0.06 * st)
 		_dread_level = move_toward(_dread_level, target_dread, delta * (0.5 if target_dread > _dread_level else 0.12))
 		_dread.volume_db = linear_to_db(maxf(_dread_level, 0.0001)) - 10.0
-
-	if night and _silence < 0.3:
-		_owl_timer -= delta
-		if _owl_timer <= 0.0:
-			_owl_timer = _rng.randf_range(35.0, 90.0)
-			var a := _rng.randf() * TAU
-			var p := Vector3(cos(a) * 35.0, 0, sin(a) * 35.0)
-			p.y = Terrain.height_at(p.x, p.z) + 8.0
-			SoundBank.play_at(get_tree().current_scene, "owl", p, -4.0, _rng.randf_range(0.9, 1.05))

@@ -49,6 +49,7 @@ func _ready() -> void:
 	add_child(truck)
 	add_child(WindAmbience.new())
 	add_child(NatureAmbience.new())
+	add_child(ForestVoices.new())   # Glocken, Käuze, Hirsche, Raben, Specht, Wilde Jagd (Etappe 6)
 	add_child(RetroFilter.new())
 	add_child(Hud.new())
 	add_child(GameMenus.new())

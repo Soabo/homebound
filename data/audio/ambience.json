@@ -1,0 +1,12 @@
+{
+  "_info": "Klänge des Bayerischen Waldes (Etappe 6, ForestVoices). bells: Kirchenglocken der Waldkapelle (source = Ort aus map.json) zu den Stunden hours, strokes = Anzahl Schläge (von..bis), db = Lautstärke ganz nah, far_drop = so viele dB leiser je 100 m Entfernung, min_db = leiser wird es nicht. owls: Käuze nachts alle interval Sekunden (von..bis), kinds = Art: Gewicht (owl = Waldkauz huu-hu, owl_kuwitt = Waldkauz-Weibchen ‚kuwitt‘ – im Volksglauben der Totenvogel, owl_boreal = Rauhfußkauz). deer: Hirsch/Reh schreckt (bellt) in Dämmerung und Nacht, dist = Entfernung in m. winter_birds: tagsüber Kolkrabe/Krähe und Schwarzspecht statt Gesang, birds_db = Vogelgesang leiser (Winter). season_insects: false = keine Grillen und Frösche (Spätherbst). sunken_bell: Vorkommnis ‚sunken_bell‘ – die versunkene Glocke von Altenreuth (source), strokes von..bis, gap = Sekunden zwischen den Schlägen. wild_hunt: Vorkommnis ‚wild_hunt‘ – die Wilde Jagd zieht über den Wald (nur in Rauhnächten oder bei Sturm), seconds = Dauer, height = Höhe über dem Spieler, fear = Schreck. rauhnacht: Rauhnächte vom Abend des Datums from bis zum Abend von to (Monat, Tag), notice_hour = Uhrzeit des Gedankens am ersten Abend, notice = Gedanke.",
+  "bells": {"source": "kapelle", "hours": [12.0, 16.0], "strokes": [9, 15], "db": 2.0, "far_drop": 4.0, "min_db": -16.0, "gap": 1.6},
+  "owls": {"interval": [35, 90], "kinds": {"owl": 3, "owl_kuwitt": 2, "owl_boreal": 1}, "dist": [25, 60]},
+  "deer": {"interval": [140, 320], "dist": [45, 85], "chance_day": 0.0},
+  "winter_birds": {"interval": [45, 120], "kinds": {"crow": 3, "woodpecker": 2}, "dist": [25, 70], "birds_db": -8.0},
+  "season_insects": false,
+  "sunken_bell": {"source": "dorf", "strokes": [3, 13], "gap": 3.2, "db": -4.0},
+  "wild_hunt": {"seconds": 9.0, "height": 18.0, "fear": 0.35, "db": 2.0},
+  "rauhnacht": {"from": [12, 21], "to": [1, 5], "notice_hour": 16.5,
+    "notice": "Rauhnacht. Die Alten hier sagen, in diesen Nächten zieht die Wilde Jagd über den Wald. Keine Wäsche draußen lassen, nicht pfeifen, nicht hinausgehen."}
+}

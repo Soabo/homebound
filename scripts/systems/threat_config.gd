@@ -101,6 +101,11 @@ extends Resource
 @export var omen_mauler_from_night: int = 5
 ## Neue Kinderzeichnung (einmalig) ab Nacht …
 @export var omen_drawing_from_night: int = 5
+## Etappe 6 (Bayerischer Wald): versunkene Glocke von Altenreuth ab Nacht …; Wilde Jagd nur in Rauhnächten oder bei Sturm
+@export var omen_bell_from_night: int = 3
+@export var omen_hunt_weight: float = 2.5
+## Rauhnächte (Daten in data/audio/ambience.json): so viele Vorkommnisse mehr pro Nacht
+@export var rauhnacht_omen_bonus: int = 2
 ## Morgens nach unruhigen Nächten stehen Dinge im Haus anders (Chance, Anzahl)
 @export var inside_change_chance: float = 0.6
 @export var inside_change_count: Vector2i = Vector2i(1, 2)

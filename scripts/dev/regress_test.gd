@@ -393,6 +393,7 @@ func _t_more() -> void:
 	await _t_landscape_2411()
 	await _t_places_2411()
 	await _t_waldler_2411()
+	await _t_sounds_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3498,3 +3499,49 @@ func _t_waldler_2411() -> void:
 	var gred := cabin.get_node_or_null("Gred")
 	_ok("Gred aus Granitplatten (ein Netz)", gred != null and gred.get_node_or_null("Merged") != null)
 	_ok("Gred: Schritte klingen nach Stein", Footsteps.surface_at(Vector3(-2.0, Cabin.FLOOR_Y + 0.05, 5.6)) == "stone")
+
+
+## Etappe 6 (Christian 24.11.): Klänge des Bayerischen Waldes – Glocken, Käuze, Hirsch, Raben, Specht, Rauhnacht
+func _t_sounds_2411() -> void:
+	var fv := _scene().get_tree().get_first_node_in_group("forest_voices") as ForestVoices
+	_ok("ForestVoices läuft", fv != null)
+	if fv == null:
+		return
+	var ids := ["church_bell", "sunken_bell", "owl_kuwitt", "owl_boreal", "deer_bark", "crow", "woodpecker", "wild_hunt"]
+	var ok_all := true
+	for id: String in ids:
+		var st := SoundBank.get_sound(id)
+		if st == null or st.get_length() < 0.3:
+			ok_all = false
+	_ok("Alle neuen Klänge vorhanden (Aufnahme oder Ersatz)", ok_all)
+	_ok("Rauhnächte: 21.12. bis 5.1. (Tag 36 ja, 35 nein, 40 ja, 51 ja, 52 nein)",
+			ForestVoices.is_rauhnacht(36) and not ForestVoices.is_rauhnacht(35) and ForestVoices.is_rauhnacht(40) \
+			and ForestVoices.is_rauhnacht(51) and not ForestVoices.is_rauhnacht(52) and not ForestVoices.is_rauhnacht(1))
+	var keep_day := TimeManager.day
+	var keep_hour := TimeManager.hour
+	var bells0 := int(fv.played.get("church_bell", 0))
+	fv._bells_done.clear()   # frühere Prüfungen können den Tag schon auf Mittag gestellt haben
+	TimeManager.set_time(keep_day, 12.05)
+	for i in 30:
+		await _scene().get_tree().process_frame
+	await _scene().get_tree().create_timer(0.4).timeout
+	_ok("Mittagsläuten um 12 Uhr", int(fv.played.get("church_bell", 0)) > bells0)
+	ForestVoices.omen(_scene(), "sunken_bell")
+	ForestVoices.omen(_scene(), "wild_hunt")
+	await _scene().get_tree().create_timer(0.3).timeout
+	_ok("Vorkommnisse: versunkene Glocke und Wilde Jagd", int(fv.played.get("sunken_bell", 0)) > 0 and int(fv.played.get("wild_hunt", 0)) > 0)
+	var hunts_r := 0
+	var hunts_n := 0
+	for i in 300:
+		if ThreatDirector._pick_omen(40) == "wild_hunt":
+			hunts_r += 1
+		if ThreatDirector._pick_omen(10) == "wild_hunt" and WorldState.weather != "storm":
+			hunts_n += 1
+	ThreatDirector._drawing_planned = false
+	_ok("Wilde Jagd nur in Rauhnächten (%d) / sonst nicht (%d)" % [hunts_r, hunts_n], hunts_r > 0 and hunts_n == 0)
+	TimeManager.set_time(keep_day, 22.0)
+	for i in 120:
+		await _scene().get_tree().process_frame
+	var na := _scene().get_node_or_null("NatureAmbience") as NatureAmbience
+	_ok("Spätherbst: keine Grillen nachts (%.0f dB)" % na._crickets.volume_db, na._crickets.volume_db < -60.0)
+	TimeManager.set_time(keep_day, keep_hour)

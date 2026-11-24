@@ -836,6 +836,22 @@
   - Drudenfuß ins Brett über der Haustür gebrannt + Sternsinger-Kreide (Gedanke „DrudenfussLook“), klein in Bens Bett-Kopfteil (`DrudenfussBen`).
   - Gred: Granitplatten statt Verandadielen (`Cabin/Gred`, Collider bleibt `PorchDeck`), Stufen aus Granit, Schritte = „stone“,
     Lichtschalter „Licht Gred“. Tour-Bilder K0–K2. Prüfung `RegressTest._t_waldler_2411`.
+- Etappe 6 Klänge (Christian 24.11.): `ForestVoices` (scripts/audio/forest_voices.gd, Kind von main neben NatureAmbience),
+  alle Werte `data/audio/ambience.json`.
+  - Kirchenglocken der Waldkapelle (`bells`: 12 und 16 Uhr, aus Richtung des Ortes, leiser/dumpfer je Entfernung, zwei Glocken
+    im Wechsel), Käuze nachts (owl, owl_kuwitt = Totenvogel „komm mit“, owl_boreal = Rauhfußkauz), Hirsch/Reh schreckt in
+    Dämmerung/Nacht (deer_bark), tagsüber Kolkrabe (crow) und Schwarzspecht (woodpecker). Alles schweigt, wenn NatureAmbience still ist
+    (`silence_level()`) oder ab Talstufe 3. Spätherbst: keine Grillen/Frösche (`season_insects`), Vogelgesang leiser (`birds_db`).
+  - Vorkommnisse (NightOmens FOREST_KINDS): `sunken_bell` = die versunkene Glocke von Altenreuth läutet dumpf (ab ThreatConfig
+    `omen_bell_from_night`), `wild_hunt` = die Wilde Jagd zieht über den Wald (Sturm, Heulen, Horn, Schreck) – nur in Rauhnächten
+    oder bei Wetter „storm“ (Gewicht `omen_hunt_weight`).
+  - Rauhnächte: `ForestVoices.is_rauhnacht(tag)` (Abend 21.12. bis 5.1., ambience.json `rauhnacht`), Gedanke am ersten Abend,
+    ThreatConfig `rauhnacht_omen_bonus` mehr Vorkommnisse. (Tag 36 = 21.12.)
+  - Achtung: Gruppe „nature_ambience“ enthält auch Wildlife – NatureAmbience über den Knotennamen holen.
+  - Ersatzklänge in SoundBank (`_bell`, `_kuwitt`, `_boreal`, `_deer_bark`, `_crow`, `_woodpecker`, `_wild_hunt`), Aufnahmen über
+    sfx.py MAP („Ambient church bell *“, „Ambient sunken bell *“, „Ambient owl kuwitt *“, „Ambient boreal owl *“, „Ambient deer bark *“,
+    „Ambient raven call *“, „Ambient woodpecker drumming *“, „Ambient wild hunt *“). Schnee-Schritte: assets/audio/steps/snow/.
+    Prüfung `RegressTest._t_sounds_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -104,6 +104,14 @@ static func get_generated(id: String) -> AudioStreamWAV:
 			s = _birds()
 			loop = true
 		"owl": s = _owl()
+		"church_bell": s = _bell(5.5, 1.0, false)
+		"sunken_bell": s = _bell(7.0, 0.62, true)
+		"owl_kuwitt": s = _kuwitt()
+		"owl_boreal": s = _boreal()
+		"deer_bark": s = _deer_bark()
+		"crow": s = _crow()
+		"woodpecker": s = _woodpecker()
+		"wild_hunt": s = _wild_hunt()
 		"scratch": s = _scratch()
 		"roof_steps": s = _roof_steps()
 		"rattle": s = _rattle()
@@ -581,6 +589,126 @@ static func _owl() -> PackedFloat32Array:
 			var t := float(i) / RATE
 			var f := 380.0 - t * 60.0
 			b[start + i] += sin(TAU * f * t) * sin(PI * t / len) * 0.5
+	return b
+
+
+## Glockenschlag: unharmonische Teiltöne (wie eine echte Glocke), langer Nachhall. muffled = unter Wasser (dumpf, schwebend).
+static func _bell(seconds: float, base_scale: float, muffled: bool) -> PackedFloat32Array:
+	var b := _buf(seconds)
+	var base := 220.0 * base_scale
+	var partials := [[0.5, 0.35, 0.6], [1.0, 0.5, 1.0], [1.19, 0.35, 1.4], [1.5, 0.25, 1.8], [2.0, 0.2, 2.4], [2.52, 0.12, 3.2], [3.0, 0.08, 4.0]]
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var v := 0.0
+		for pr: Array in partials:
+			var f: float = base * float(pr[0])
+			var wob := 1.0 + (sin(t * 3.0) * 0.004 if muffled else 0.0)
+			v += sin(TAU * f * wob * t) * float(pr[1]) * exp(-t * float(pr[2]) * (0.55 if muffled else 0.35))
+		var strike := exp(-t * 40.0) * sin(TAU * base * 4.2 * t) * 0.3
+		v += strike
+		if muffled:
+			lp += (v - lp) * 0.08
+			v = lp * 1.6
+		b[i] = clampf(v * 0.45, -1.0, 1.0)
+	return b
+
+
+## Waldkauz-Weibchen: scharfes „ku-witt“ (Volksglaube: der Totenvogel ruft „komm mit“)
+static func _kuwitt() -> PackedFloat32Array:
+	var b := _buf(0.9)
+	for part in 2:
+		var start := int((0.02 + part * 0.2) * RATE)
+		var len := 0.14 if part == 0 else 0.3
+		for i in int(len * RATE):
+			var t := float(i) / RATE
+			var f := (900.0 + t * 400.0) if part == 0 else (1100.0 + sin(PI * t / len) * 500.0)
+			b[start + i] += sin(TAU * f * t) * sin(PI * t / len) * 0.45 + sin(TAU * f * 2.0 * t) * sin(PI * t / len) * 0.12
+	return b
+
+
+## Rauhfußkauz: Reihe weicher „pu-pu-pu“, leicht ansteigend
+static func _boreal() -> PackedFloat32Array:
+	var b := _buf(2.2)
+	for k in 7:
+		var start := int((0.05 + k * 0.26) * RATE)
+		var len := 0.13
+		for i in int(len * RATE):
+			var t := float(i) / RATE
+			var f := 640.0 + k * 12.0
+			b[start + i] += sin(TAU * f * t) * sin(PI * t / len) * (0.3 + k * 0.03)
+	return b
+
+
+## Hirsch/Reh schreckt: kurzes, raues Bellen
+static func _deer_bark() -> PackedFloat32Array:
+	var b := _buf(0.6)
+	var r := RandomNumberGenerator.new()
+	r.seed = 77
+	var lp := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var env := minf(t / 0.02, 1.0) * exp(-t * 7.0)
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * 0.35
+		var voice := sin(TAU * (190.0 - t * 120.0) * t) * 0.6 + sin(TAU * 380.0 * t) * 0.25
+		b[i] = clampf((voice * 0.7 + lp * 0.5) * env * 0.7, -1.0, 1.0)
+	return b
+
+
+## Kolkrabe/Krähe: zwei, drei raue „kraa“
+static func _crow() -> PackedFloat32Array:
+	var b := _buf(1.6)
+	var r := RandomNumberGenerator.new()
+	r.seed = 88
+	for k in 3:
+		var start := int((0.05 + k * 0.45) * RATE)
+		var len := 0.3
+		var phase := 0.0
+		for i in int(len * RATE):
+			var t := float(i) / RATE
+			var f := 520.0 - t * 180.0
+			phase += f / RATE
+			var saw := fmod(phase, 1.0) * 2.0 - 1.0
+			var env := sin(PI * t / len)
+			b[start + i] += (saw * 0.35 + (r.randf() * 2.0 - 1.0) * 0.12) * env * (1.0 - k * 0.2)
+	return b
+
+
+## Schwarzspecht trommelt: schnelle Folge harter Schläge, gegen Ende leiser
+static func _woodpecker() -> PackedFloat32Array:
+	var b := _buf(2.0)
+	for k in 22:
+		var start := int((0.05 + k * 0.055) * RATE)
+		for i in int(0.03 * RATE):
+			var t := float(i) / RATE
+			b[start + i] += sin(TAU * 900.0 * t) * exp(-t * 160.0) * (0.6 - k * 0.02)
+	return b
+
+
+## Wilde Jagd: anschwellender Sturm, fernes Heulen (wie Hunde), ein dumpfes Horn
+static func _wild_hunt() -> PackedFloat32Array:
+	var b := _buf(10.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 1312
+	var lp := 0.0
+	var lp2 := 0.0
+	for i in b.size():
+		var t := float(i) / RATE
+		var swell := sin(PI * clampf(t / 10.0, 0.0, 1.0))
+		lp += ((r.randf() * 2.0 - 1.0) - lp) * (0.04 + swell * 0.06)
+		lp2 += (lp - lp2) * 0.2
+		var wind := lp2 * 3.5 * swell
+		var howl := 0.0
+		for k in 4:
+			var h0 := 1.5 + k * 1.9
+			if t > h0 and t < h0 + 1.6:
+				var ht := t - h0
+				howl += sin(TAU * (420.0 + k * 60.0 + sin(ht * 2.0) * 120.0) * ht) * sin(PI * ht / 1.6) * 0.18
+		var horn := 0.0
+		if t > 4.0 and t < 6.2:
+			var ht2 := t - 4.0
+			horn = (sin(TAU * 146.0 * ht2) * 0.25 + sin(TAU * 292.0 * ht2) * 0.1) * sin(PI * ht2 / 2.2)
+		b[i] = clampf(wind + howl + horn * 0.8, -1.0, 1.0)
 	return b
 
 

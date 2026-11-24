@@ -9,7 +9,7 @@ extends RefCounted
 ## Alle Arten. "house" = nur, wenn man zuhause ist; die anderen gehen überall um den Spieler.
 const HOUSE_KINDS := ["gap_hand", "deco_move", "lamp_swing", "knock_walk", "music_box", "window_fog", "window_pass",
 		"tap_run", "under_bed", "bird_thud", "wardrobe_open", "drawing"]
-const FOREST_KINDS := ["lights", "animals", "seeker_glimpse", "mauler_glimpse"]
+const FOREST_KINDS := ["lights", "animals", "seeker_glimpse", "mauler_glimpse", "sunken_bell", "wild_hunt"]
 
 ## Spalten im Haus, durch die Hände greifen: Ort + Richtung ins Zimmer
 const GAPS := [
@@ -47,6 +47,8 @@ static func fire(kind: String, scene: Node, player: Player, cfg: ThreatConfig, r
 		"animals": _animals(scene, player, rng)
 		"seeker_glimpse": _glimpse(scene, player, rng, "seeker")
 		"mauler_glimpse": _glimpse(scene, player, rng, "mauler")
+		"sunken_bell": ForestVoices.omen(scene, "sunken_bell")
+		"wild_hunt": ForestVoices.omen(scene, "wild_hunt")
 
 
 # --- Hilfen ------------------------------------------------------------------
