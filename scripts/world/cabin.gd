@@ -358,9 +358,12 @@ func _build_roof() -> void:
 
 
 func _build_porch() -> void:
-	var deck := BuildKit.tex_mat("floor", 1.2, Color(0.95, 0.92, 0.9))
+	# Gred (Etappe 5 Waldlerhaus): Granitplatten statt Holzdielen, darunter dunkle Fugen
+	var deck := BuildKit.tex_mat("stone", 0.9, Color(1.15, 1.13, 1.1))
+	var joint := BuildKit.tex_mat("stone_dark", 0.6, Color(0.55, 0.55, 0.55))
 	var z0 := HALF_Z + 0.2
-	BuildKit.box_mm(self, Vector3(-5.6, FLOOR_Y - 0.08, z0), Vector3(1.2, FLOOR_Y, 6.6), deck, true, "PorchDeck")
+	BuildKit.box_mm(self, Vector3(-5.6, FLOOR_Y - 0.08, z0), Vector3(1.2, FLOOR_Y, 6.6), joint, true, "PorchDeck")
+	WaldlerHouse.gred(self, -5.6, 1.2, z0, 6.6)
 	BuildKit.box_mm(self, Vector3(-5.6, 0, z0), Vector3(1.2, FLOOR_Y - 0.08, 6.5), m_stone, true)
 	# Treppe: sichtbare Stufen, darunter eine unsichtbare Rampe zum Hochlaufen
 	BuildKit.box_mm(self, Vector3(-4.0, 0, 6.6), Vector3(-2.0, 0.3, 7.05), deck, false)
@@ -385,6 +388,7 @@ func _build_porch() -> void:
 	BuildKit.box(self, Vector3(7.0, 0.16, 0.16), Vector3(-2.2, post_top + 0.02, 6.4), m_beam, false)
 	# Sitzbank an der Hauswand
 	_porch_bench()
+	WaldlerHouse.door_signs(self)
 	# Feuerholz auf der Veranda
 	var log_mat := BuildKit.tex_mat("logs", 0.6)
 	for row in 5:
@@ -583,64 +587,24 @@ func _build_wear() -> void:
 # --- Kamin --------------------------------------------------------------
 
 func _build_fireplace() -> void:
-	var wx := -HALF_X + CLAD
 	var y := FLOOR_Y
-	var front_x := -5.15
-	# Kern: Herdplatte, Pfeiler, Sturz, Rückwand
-	BuildKit.box_mm(self, Vector3(wx, y, 0.85), Vector3(-4.85, y + 0.12, 2.65), m_stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y, 0.95), Vector3(front_x, y + 1.32, 1.3), m_stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y, 2.2), Vector3(front_x, y + 1.32, 2.55), m_stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y + 0.95, 1.3), Vector3(front_x, y + 1.32, 2.2), m_stone, true)
-	BuildKit.box_mm(self, Vector3(wx, y + 0.12, 1.3), Vector3(wx + 0.06, y + 0.95, 2.2), m_stone_dark, false)
-	# Ruß im Feuerraum
-	BuildKit.box_mm(self, Vector3(wx + 0.06, y + 0.7, 1.3), Vector3(front_x - 0.05, y + 0.95, 2.2), BuildKit.color_mat(Color(0.04, 0.035, 0.03)), false)
-	# Einzelne Steine auf der Front für Tiefe
-	var sy := y + 0.14
-	var row := 0
-	while sy < y + 1.28:
-		var h := _rng.randf_range(0.11, 0.16)
-		var z := 0.95 + (0.0 if row % 2 == 0 else 0.1)
-		while z < 2.55:
-			var w := _rng.randf_range(0.14, 0.24)
-			var zc := z + w * 0.5
-			var in_opening := zc > 1.25 and zc < 2.25 and sy < y + 0.97
-			if not in_opening and zc < 2.55:
-				var tone := _rng.randf_range(0.75, 1.15)
-				BuildKit.box(self, Vector3(0.05, h - 0.02, w - 0.02), Vector3(front_x + 0.02, sy + h * 0.5, minf(zc, 2.5)),
-						BuildKit.tex_mat("stone", 0.8, Color(tone, tone, tone)), false, Vector3(_rng.randf_range(-4, 4), 0, 0))
-			z += w
-		sy += h
-		row += 1
-	# Bogensteine
-	var center := Vector2(1.75, y + 0.5)
-	for i in 9:
-		var a := PI * float(i) / 8.0
-		var p := center + Vector2(cos(a), sin(a)) * 0.62
-		BuildKit.box(self, Vector3(0.07, 0.12, 0.2), Vector3(front_x + 0.04, p.y, p.x), m_stone_dark, false, Vector3(rad_to_deg(a) - 90.0, 0, 0))
-	# Kaminsims
-	BuildKit.box_mm(self, Vector3(wx, y + 1.32, 0.82), Vector3(-5.0, y + 1.42, 2.68), m_beam, true, "Mantel")
-	for z: float in [1.0, 2.5]:
-		BuildKit.box_mm(self, Vector3(-5.2, y + 1.18, z - 0.05), Vector3(-5.05, y + 1.32, z + 0.05), m_beam, false)
-	# Kaminschacht bis zur Decke
-	BuildKit.box_mm(self, Vector3(wx, y + 1.42, 1.1), Vector3(-5.4, WALL_TOP, 2.4), m_stone_dark, true)
+	# Kachelofen statt Steinkamin (Etappe 5 Waldlerhaus): Körper, Kacheln, Ofenbank, Ofenstange
+	WaldlerHouse.kachelofen(self)
 	var fire := Fireplace.new()
 	fire.name = "Fireplace"
 	fire.position = Vector3(-5.6, y + 0.12, 1.75)
 	add_child(fire)
-	# Kaminbesteck und Holzkorb
-	BuildKit.cylinder(self, 0.08, 0.02, Vector3(-4.75, y + 0.01, 2.85), m_iron, false, Vector3.ZERO, -1.0, 8)
-	BuildKit.cylinder(self, 0.012, 0.75, Vector3(-4.75, y + 0.38, 2.85), m_iron, false, Vector3.ZERO, -1.0, 4)
-	for i in 3:
-		BuildKit.cylinder(self, 0.008, 0.6, Vector3(-4.75 + (i - 1) * 0.04, y + 0.35, 2.9), m_iron, false, Vector3((i - 1) * 6.0, 0, (i - 1) * 6.0), -1.0, 4)
+	# Holzkorb
 	var basket := WoodBasket.new()
 	basket.name = "WoodBasket"
 	basket.position = Vector3(-5.35, y, 0.5)   # dicht an der Wand neben dem Kamin – der Weg zum Couchtisch bleibt frei
 	add_child(basket)
-	# Auf dem Sims: Familienfoto (GDD 3.1), Krug, Kerzen
-	_photo(Vector3(-5.35, y + 1.42, 2.25), 90.0, 0.16, 0.12).add_to_group("family_photo")
-	BuildKit.cylinder(self, 0.08, 0.2, Vector3(-5.3, y + 1.52, 1.35), BuildKit.color_mat(Color(0.5, 0.22, 0.12), 0.7), false, Vector3.ZERO, 0.05, 10)
+	# Auf dem Ofengesims: Familienfoto (GDD 3.1), Krug, Kerzen
+	var ledge: float = y + WaldlerHouse.OVEN_BODY_H + 0.1
+	_photo(Vector3(-5.06, ledge, 2.3), 90.0, 0.16, 0.12).add_to_group("family_photo")
+	BuildKit.cylinder(self, 0.07, 0.2, Vector3(-5.04, ledge + 0.1, 1.2), BuildKit.color_mat(Color(0.5, 0.22, 0.12), 0.7), false, Vector3.ZERO, 0.05, 10)
 	for z: float in [1.75, 1.9]:
-		BuildKit.cylinder(self, 0.025, 0.12 + (z - 1.75), Vector3(-5.3, y + 1.48 + (z - 1.75) * 0.5, z), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
+		BuildKit.cylinder(self, 0.025, 0.12 + (z - 1.75), Vector3(-5.04, ledge + 0.06 + (z - 1.75) * 0.5, z), BuildKit.color_mat(Color(0.9, 0.86, 0.75)), false, Vector3.ZERO, -1.0, 6)
 
 
 # --- Licht --------------------------------------------------------------
@@ -664,7 +628,7 @@ func _build_lights() -> void:
 	var inside_front := HALF_Z - CLAD - 0.03
 	var hall_back := -1.0 - INT_T * 0.5 - 0.012
 	_switch("living", "Licht Wohnzimmer", Vector3(-3.8, FLOOR_Y + 1.25, inside_front), 180.0, [living, dining, lantern_a, lantern_b])
-	_switch("porch", "Licht Veranda", Vector3(-4.05, FLOOR_Y + 1.25, inside_front), 180.0, [porch])
+	_switch("porch", "Licht Gred", Vector3(-4.05, FLOOR_Y + 1.25, inside_front), 180.0, [porch])
 	_switch("bedroom", "Licht Schlafzimmer", Vector3(-1.75, FLOOR_Y + 1.25, hall_back), 180.0, [bedroom])
 	_switch("storage", "Licht Vorratsraum", Vector3(1.3, FLOOR_Y + 1.25, hall_back), 180.0, [storage])
 	_switch("tech", "Licht Bad", Vector3(4.75, FLOOR_Y + 1.25, hall_back), 180.0, [tech])
@@ -726,8 +690,8 @@ func _build_living_room() -> void:
 	behind.eye = 0.82
 	behind.crouch_drop = 0.2
 	behind.move = Vector2(0.22, 0.06)
-	behind.exit_dir = Vector3(1, 0, 0.35)
-	behind.exit_dist = 0.45
+	behind.exit_dir = Vector3(1, 0, 0.07)   # zwischen Ofenbank und Schaukelstuhl hinaus
+	behind.exit_dist = 0.4
 	behind.area_size = Vector3(0.9, 1.0, 0.6)
 	behind.area_center = Vector3(0, 0.5, 0)
 	add_child(behind)
@@ -771,6 +735,7 @@ func _build_living_room() -> void:
 	station.screen_size = Vector2(0.48, 0.32)
 	add_child(station)
 	_build_radio_corner(y)
+	WaldlerHouse.herrgottswinkel(self)
 	# Wanduhr
 	var clock := Node3D.new()
 	clock.position = Vector3(-1.4, y + 2.1, HALF_Z - CLAD - 0.03)

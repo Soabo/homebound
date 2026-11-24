@@ -297,6 +297,9 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 		# Kopfteil (Lena: Norden, Ben: Süden)
 		var hz := bz if b[2] == "Lena" else bz + 1.71
 		BuildKit.box_mm(c, Vector3(ix0, y, hz), Vector3(ix0 + 0.85, y + 0.75, hz + 0.04), frame, false)
+		if b[2] == "Ben":
+			# Drudenfuß ins Kopfteil geritzt (Etappe 5 Waldlerhaus) – schützt Kinder vor der Drud
+			WaldlerHouse.ben_bed_sign(c, Vector3(ix0 + 0.42, y + 0.58, hz - 0.003))
 	# (Bens Teddy gehört zu InsideChanges – er wandert nachts)
 	# Halb gestrichene Wand: grüner Streifen an der Nordwand, Farbeimer, Rolle
 	var green := BuildKit.color_mat(Color(0.45, 0.65, 0.45), 0.9)

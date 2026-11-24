@@ -392,6 +392,7 @@ func _t_more() -> void:
 	await _t_greens_2411()
 	await _t_landscape_2411()
 	await _t_places_2411()
+	await _t_waldler_2411()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3468,3 +3469,32 @@ func _t_places_2411() -> void:
 	var d := places.get_node_or_null("dorf/Glashuette")
 	_ok("Glashütte im versunkenen Dorf", d != null and d.find_children("*", "ResearchNote", true, false).size() >= 1)
 	_ok("Dorf heißt jetzt Altenreuth", String(WorldMap.places()["dorf"]["name"]).begins_with("Altenreuth"))
+
+
+## Etappe 5 (Christian 24.11.): Waldlerhaus – Kachelofen mit Speicherwärme, Herrgottswinkel, Drudenfuß, Gred
+func _t_waldler_2411() -> void:
+	var cabin := _scene().get_node("Cabin")
+	var oven := cabin.get_node_or_null("Kachelofen")
+	_ok("Kachelofen gebaut (%d Teile)" % (oven.get_child_count() if oven else 0), oven != null and oven.get_node_or_null("Tiles/Merged") != null and (oven.get_node("Tiles/Merged") as MeshInstance3D).mesh.get_surface_count() >= 5)
+	_ok("Kachelofen: Ofenbank zum Draufsetzen", oven != null and oven.get_node_or_null("Ofenbank") != null)
+	var fp := cabin.get_node("Fireplace") as Fireplace
+	var keep := fp.burn_until
+	var now := TimeManager.get_total_hours()
+	fp.burn_until = now - 2.0
+	_ok("Kachelofen: 2 Std. nach dem Erlöschen heizen die Kacheln noch", fp.heats_cabin() and fp.stored_heat() > 0.0)
+	_ok("Kachelofen: direkt davor noch etwas warm", fp.heat_at(fp.global_position + Vector3(0.9, 0.5, 0)) > 0.0)
+	fp.burn_until = now - 6.0
+	_ok("Kachelofen: nach 6 Std. ist er kalt", not fp.heats_cabin())
+	fp.burn_until = keep
+	# vom Schürloch aus erreicht man das Feuer (kein fester Körper davor)
+	var space := (cabin as Node3D).get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(Vector3(-4.4, Cabin.FLOOR_Y + 0.45, 1.75), Vector3(-5.6, Cabin.FLOOR_Y + 0.45, 1.75))
+	q.collide_with_areas = true
+	var hit := space.intersect_ray(q)
+	var target: Node = hit.get("collider") if not hit.is_empty() else null
+	_ok("Kachelofen: Feuer durchs Schürloch anvisierbar", target != null and target.get_parent() == fp)
+	_ok("Herrgottswinkel mit Gedanken", cabin.get_node_or_null("Herrgottswinkel") != null and cabin.get_node_or_null("HerrgottswinkelLook") != null)
+	_ok("Drudenfuß über der Tür und an Bens Bett", cabin.get_node_or_null("Drudenfuss") != null and cabin.find_child("DrudenfussBen", true, false) != null)
+	var gred := cabin.get_node_or_null("Gred")
+	_ok("Gred aus Granitplatten (ein Netz)", gred != null and gred.get_node_or_null("Merged") != null)
+	_ok("Gred: Schritte klingen nach Stein", Footsteps.surface_at(Vector3(-2.0, Cabin.FLOOR_Y + 0.05, 5.6)) == "stone")

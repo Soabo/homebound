@@ -328,7 +328,7 @@ func experiment_blocker(exp: Dictionary, st: String = "device") -> String:
 				return "braucht das fremde Analysegerät"
 		"heat":
 			if not heat_available():
-				return "braucht Feuer (Kamin/Ofen) oder den Gaskocher im Labor"
+				return "braucht Feuer (Kachelofen/Herd) oder den Gaskocher im Labor"
 		"water":
 			if not lab_built:
 				return "braucht fließendes Wasser (Labor)"

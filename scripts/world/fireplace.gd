@@ -1,6 +1,7 @@
 class_name Fireplace
 extends Interactable
-## Kaminfeuer: Glut, Holzscheite, flackerndes Licht und Knistern.
+## Feuer im Kachelofen (früher Kamin): Glut, Holzscheite, flackerndes Licht und Knistern.
+## Die Kacheln speichern die Wärme: nach dem Erlöschen heizt der Ofen die Hütte noch stored_heat_hours weiter.
 ## Der Knoten sitzt mittig vor der Feuerstelle; das Feuer strahlt nach +x.
 ## Es brennt etwa einen halben Tag; die letzten Stunden wird es dunkler und leiser, bis es aus ist.
 ## Mit Holz (E) brennt es wieder. Werte: data/house/house.json ("fireplace").
@@ -65,10 +66,11 @@ func get_prompt(_player: Node) -> String:
 	var wood := int(_cfg.get("wood", 1))
 	var have := Inventory.count_fuel()
 	if _strength <= 0.0:
-		return "Kamin – erloschen.  [E] Feuer anzünden (%d Holz – du hast %d)" % [wood, have]
+		var state := "Kachelofen – erloschen, die Kacheln sind noch warm." if stored_heat() > 0.0 else "Kachelofen – erloschen und kalt."
+		return "%s  [E] Feuer anzünden (%d Holz – du hast %d)" % [state, wood, have]
 	if _strength < 1.0:
-		return "Kamin – das Feuer wird schwächer.  [E] Holz nachlegen (%d Holz – du hast %d)" % [wood, have]
-	return "Kamin – das Feuer brennt.  [E] Holz nachlegen (%d Holz)" % wood
+		return "Kachelofen – das Feuer wird schwächer.  [E] Holz nachlegen (%d Holz – du hast %d)" % [wood, have]
+	return "Kachelofen – das Feuer brennt.  [E] Holz nachlegen (%d Holz)" % wood
 
 
 func get_secondary_prompt(_player: Node) -> String:
@@ -123,18 +125,31 @@ func interact(_player: Node) -> void:
 	EventBus.notify("Das Feuer brennt wieder.", 2.0)
 
 
-## Wie stark das Feuer gerade brennt (1 = voll, 0 = aus).
+## Heizt die Hütte: solange das Feuer brennt und danach, solange die Kacheln die Wärme halten.
 func heats_cabin() -> bool:
-	return strength() > 0.15
+	return strength() > 0.15 or stored_heat() > 0.0
+
+
+## Gespeicherte Wärme der Kacheln nach dem Erlöschen (1 = gerade aus, 0 = kalt).
+func stored_heat() -> float:
+	var hours := float(_cfg.get("stored_heat_hours", 0.0))
+	if hours <= 0.0:
+		return 0.0
+	var since := TimeManager.get_total_hours() - burn_until
+	if since < 0.0:
+		return 1.0
+	return clampf(1.0 - since / hours, 0.0, 1.0)
 
 
 ## Wärme direkt vor dem Kamin (0..1, Reichweite SurvivalConfig.hearth_radius).
 func heat_at(pos: Vector3) -> float:
 	var st := strength()
-	if st <= 0.0:
-		return 0.0
 	var d := to_global(Vector3(0.35, 0.45, 0)).distance_to(pos)
-	return clampf(1.0 - d / SurvivalConfig.get_default().hearth_radius, 0.0, 1.0) * clampf(st * 2.0, 0.3, 1.0)
+	var near := clampf(1.0 - d / SurvivalConfig.get_default().hearth_radius, 0.0, 1.0)
+	if st <= 0.0:
+		# warme Kacheln: direkt am Ofen (Ofenbank) noch etwas Wärme
+		return near * float(_cfg.get("stored_heat_near", 0.4)) * stored_heat()
+	return near * clampf(st * 2.0, 0.3, 1.0)
 
 
 func strength() -> float:
@@ -145,7 +160,7 @@ func strength() -> float:
 func _process(delta: float) -> void:
 	var now := TimeManager.get_total_hours()
 	if _last_h >= 0.0:
-		CookPot.tick(pot, _last_h, now, cook_until(), "Kamin")
+		CookPot.tick(pot, _last_h, now, cook_until(), "Kachelofen")
 	_last_h = now
 	_t += delta
 	_strength = strength()

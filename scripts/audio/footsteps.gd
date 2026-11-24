@@ -49,7 +49,7 @@ static func surface_at(p: Vector3) -> String:
 				return "carpet"
 		return "wood"
 	if p.y > 0.08 and PORCH.has_point(Vector2(p.x, p.z)):
-		return "porch"
+		return "stone"   # Gred aus Granitplatten (Etappe 5 Waldlerhaus)
 	var sd := Terrain.stream_distance(p.x, p.z)
 	if sd < WATER_DIST:
 		return "water"

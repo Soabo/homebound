@@ -826,6 +826,16 @@
   - Seen am Bach (`stream_z`): Quellsee = Spiegel am Bachanfang, alle anderen (Klausweiher) = Bachwasser am unteren Seeende
     (`WorldMap.lake_level`). Stollen: Portal am Wandfuß (X0 37), Gestein darüber in 1-m-Abschnitten, Einschnitt map.json cuts passend.
   - Tour-Bilder J0–J4. Prüfung `RegressTest._t_places_2411`.
+- Etappe 5 Waldlerhaus (Christian 24.11.): `WaldlerHouse` (scripts/world/waldler_house.gd), aufgerufen aus Cabin/CabinRooms.
+  - Kachelofen (`Cabin/Kachelofen`) statt Steinkamin: grüne Kacheln (zu einem Netz zusammengefasst, `WaldlerHouse.merge_meshes`),
+    Schürloch mit offenen Gusstürchen, Gesims (Foto/Krug/Kerzen), Aufsatz, weiß gekalktes Rauchrohr, Ofenbank an der Südseite,
+    Ofenstange mit Handtuch/Socken. Feuer bleibt `Cabin/Fireplace` (Holz, Kochen, Licht). Speicherwärme: house.json fireplace
+    `stored_heat_hours` (5) heizt die Hütte nach dem Erlöschen weiter, `stored_heat_near` = Wärme direkt am Ofen (`Fireplace.stored_heat`).
+  - Herrgottswinkel in der Stubenecke über dem Schreibtisch (Eckbrett, Kruzifix, Palmbuschen, zwei Bildchen, rotes Ewiges Licht),
+    Gedanke über `PlaceInspect` „HerrgottswinkelLook“.
+  - Drudenfuß ins Brett über der Haustür gebrannt + Sternsinger-Kreide (Gedanke „DrudenfussLook“), klein in Bens Bett-Kopfteil (`DrudenfussBen`).
+  - Gred: Granitplatten statt Verandadielen (`Cabin/Gred`, Collider bleibt `PorchDeck`), Stufen aus Granit, Schritte = „stone“,
+    Lichtschalter „Licht Gred“. Tour-Bilder K0–K2. Prüfung `RegressTest._t_waldler_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

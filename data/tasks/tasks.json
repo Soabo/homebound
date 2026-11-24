@@ -72,7 +72,7 @@
     {
       "id": "cook",
       "title": "Eine warme Mahlzeit kochen",
-      "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Fleisch und Gemüse zubereiten. Roh wird einem leicht übel.",
+      "text": "Am Herd (mit Strom) oder am brennenden Kachelofen lassen sich Fleisch und Gemüse zubereiten. Roh wird einem leicht übel.",
       "unlock": [
         "got:meat_raw"
       ],
@@ -83,7 +83,7 @@
     {
       "id": "cook2",
       "title": "Eine warme Mahlzeit kochen",
-      "text": "Am Herd (mit Strom) oder am brennenden Kamin lassen sich Kartoffeln und Gemüse zubereiten.",
+      "text": "Am Herd (mit Strom) oder am brennenden Kachelofen lassen sich Kartoffeln und Gemüse zubereiten.",
       "unlock": [
         "got:potato",
         "not:got:meat_raw"
