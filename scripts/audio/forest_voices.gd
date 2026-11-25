@@ -191,10 +191,11 @@ func ring_bells() -> void:
 	var st: Array = b.get("strokes", [9, 15])
 	var n := _rng.randi_range(int(st[0]), int(st[1]))
 	var gap := float(b.get("gap", 1.6))
+	var rec := SoundBank.has_recording("church_bell")   # echte Aufnahmen: verschiedene Glocken statt Tonhöhe
 	for i in n:
 		get_tree().create_timer(i * gap + _rng.randf_range(-0.05, 0.05)).timeout.connect(
 				_from_place.bind("church_bell", String(b.get("source", "kapelle")), float(b.get("db", 0.0)),
-				float(b.get("far_drop", 4.0)), float(b.get("min_db", -16.0)), 1.0 if i % 2 == 0 else 0.84))
+				float(b.get("far_drop", 4.0)), float(b.get("min_db", -16.0)), 1.0 if i % 2 == 0 or rec else 0.84))
 
 
 ## Vorkommnis: die versunkene Glocke von Altenreuth läutet unter Wasser – dumpf, langsam, die Tiere verstummen.

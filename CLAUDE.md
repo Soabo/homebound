@@ -851,6 +851,8 @@
   - Ersatzklänge in SoundBank (`_bell`, `_kuwitt`, `_boreal`, `_deer_bark`, `_crow`, `_woodpecker`, `_wild_hunt`), Aufnahmen über
     sfx.py MAP („Ambient church bell *“, „Ambient sunken bell *“, „Ambient owl kuwitt *“, „Ambient boreal owl *“, „Ambient deer bark *“,
     „Ambient raven call *“, „Ambient woodpecker drumming *“, „Ambient wild hunt *“). Schnee-Schritte: assets/audio/steps/snow/.
+    25.11. Sound_Pack_Bavaria geliefert: alle 8 Klänge echt, Schnee-Schritte je 12 (sneak/walk/run, `slice.py … 44 snow/<gang>` –
+    bei nur einer Aufnahme ANZAHL hoch setzen, sonst kappt die Grenze je Datei auf 4) + 1 Landung.
     Prüfung `RegressTest._t_sounds_2411`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
