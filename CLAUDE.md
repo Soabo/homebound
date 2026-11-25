@@ -866,7 +866,7 @@
   (-5,3) – dazwischen passt der Spieler durch (Prüfung Kapsel-Test in `_t_fixes_2511`).
 - Truhe: Gewicht je Stapel (bei mehreren „je …“) und Summe je Spalte (`GameMenus._fill_chest`).
 - Grafikstil (Christian 25.11.: „zu pixelig und zu klötzchenhaft“): `Look` (scripts/world/look.gd), Einstellung `Settings.look`
-  retro|klar (Menü „Grafikstil“, default_settings.json `look`, Befehlszeile `-- --look=klar` für Bilder/Tests). Wird in
+  retro|klar (Standard seit 25.11.: klar – Christian „passt fürs Erste“; Menü „Grafikstil“, default_settings.json `look`, Befehlszeile `-- --look=klar` für Bilder/Tests). Wird in
   `Settings._ready` VOR dem Weltaufbau gesetzt; Wechsel im Menü: Bildschicht sofort, Texturen/Kanten beim nächsten Laden.
   klar = Retro-Filter ohne Pixel/Farbstufen (`pixelate` 0, nur Vignette + feines Korn), volle Auflösung + MSAA/FXAA der Grafikstufe,
   Texturen ×4 weich vergrößert + Mipmaps + Linear/Anisotrop (`Look.tex_filter()` statt NEAREST, Shader-Dateien per

@@ -202,7 +202,7 @@ func _shadow_pass() -> void:
 	_shadow.visible = true
 	var mats := _shadow.find_children("*", "MeshInstance3D", true, false)
 	for m: MeshInstance3D in mats:
-		(m.mesh.surface_get_material(0) as StandardMaterial3D).albedo_color.a = 0.75 if lit else 0.35
+		(m.get_active_material(0) as StandardMaterial3D).albedo_color.a = 0.75 if lit else 0.35   # klarer Stil: Material sitzt am Objekt
 	var tw := create_tween()
 	tw.tween_property(_shadow, "position:z", size_z() * 0.5, 5.5)
 	tw.tween_callback(func() -> void: _shadow.visible = false)

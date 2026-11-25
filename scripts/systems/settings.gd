@@ -18,7 +18,7 @@ var max_fps: int = 0
 var vsync: bool = true
 var show_fps: bool = false
 ## Grafikstil: retro (grobe Pixel, wie bisher) | klar (volle Auflösung, weiche Texturen, abgeschrägte Kanten) – Christian 25.11.
-var look: String = "retro"
+var look: String = "klar"
 const LOOKS := ["retro", "klar"]
 const FPS_CHOICES := [30, 60, 120, 144, 165, 240, 0]
 var _fps_layer: CanvasLayer

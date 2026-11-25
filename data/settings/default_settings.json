@@ -9,7 +9,7 @@
   "max_fps": 0,
   "vsync": true,
   "show_fps": false,
-  "look": "retro",
+  "look": "klar",
   "quality_levels": {
     "low": {"scale": 0.6, "shadow_size": 1024, "ssao": false, "volumetric": false, "msaa": 0, "retro_oversample": 1.0, "shadow_splits": 2},
     "medium": {"scale": 0.8, "shadow_size": 2048, "ssao": true, "volumetric": false, "msaa": 0, "retro_oversample": 1.25, "shadow_splits": 2},

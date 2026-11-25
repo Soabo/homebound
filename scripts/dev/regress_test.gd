@@ -3037,6 +3037,8 @@ func _t_dread_2311() -> void:
 func _t_render_2411() -> void:
 	var vp := get_viewport()
 	var keep_q := Settings.quality
+	var keep_look := Settings.look
+	Settings.look = "retro"   # die Einsparung gilt nur im Retro-Stil
 	Settings.quality = "high"
 	Settings.apply()
 	var rf := get_tree().get_first_node_in_group("retro_filter")
@@ -3047,6 +3049,7 @@ func _t_render_2411() -> void:
 				absf(vp.scaling_3d_scale - want) < 0.01 and vp.msaa_3d == Viewport.MSAA_DISABLED)
 	else:
 		_ok("Grafik: Retro-Filter vorhanden", false)
+	Settings.look = keep_look
 	Settings.quality = keep_q
 	Settings.apply()
 
