@@ -340,6 +340,12 @@ func _ready() -> void:
 	_ground_mat.set_shader_parameter("grass_tex", TextureFactory.get_texture("grass_ground"))
 	_ground_mat.set_shader_parameter("path_tex", TextureFactory.get_texture("path_ground"))
 	_ground_mat.set_shader_parameter("litter_tex", TextureFactory.get_texture("litter"))
+	if Look.smooth:
+		# Foto-Waldboden nur im klaren Stil (im Retro-Stil passt die gezeichnete Textur besser)
+		_ground_mat.set_shader_parameter("photo", 1.0 if Look.forest_photo else 0.0)
+		_ground_mat.set_shader_parameter("floor_tex", load("res://assets/textures/ground/forest_floor_color.jpg"))
+		_ground_mat.set_shader_parameter("floor_nrm", load("res://assets/textures/ground/forest_floor_normal.jpg"))
+		_ground_mat.set_shader_parameter("floor_rough", load("res://assets/textures/ground/forest_floor_rough.jpg"))
 	_build_water_material()
 	# Das Tal sofort (Spieler, Garten und Hütte stehen darauf)
 	for cz in range(-CORE_CHUNKS, CORE_CHUNKS):

@@ -1,0 +1,2 @@
+forest_floor_*.jpg: ambientCG Ground068 (https://ambientcg.com/a/Ground068), CC0 1.0.
+Auf 1024 px verkleinert, Farbe mit halber Umgebungsverdeckung (AO) und etwas weniger Sättigung.

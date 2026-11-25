@@ -31,6 +31,15 @@ void vertex() {
 uniform sampler2D grass_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D path_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D litter_tex : source_color, filter_nearest_mipmap, repeat_enable;
+// Foto-Waldboden (nur klarer Grafikstil, Terrain setzt photo = 1): Moos mit Fichtennadeln (ambientCG Ground068, CC0).
+// Er ersetzt die gezeichnete Textur dort, wo die Eckpunktfarbe Waldboden ist (Nähe zu floor_ref).
+uniform float photo = 0.0;
+uniform sampler2D floor_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D floor_nrm : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D floor_rough : hint_roughness_r, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform float floor_meters = 2.6;        // so viele Meter misst eine Kachel des Fotos
+uniform float floor_gain = 0.85;         // Helligkeit gegenüber der alten Textur
+uniform vec3 floor_ref = vec3(0.11, 0.12, 0.06);   // Waldboden-Farbe aus Terrain.ground_color
 
 void fragment() {
 	vec3 grass = texture(grass_tex, UV).rgb;
@@ -45,6 +54,24 @@ void fragment() {
 	float lm = smoothstep(0.45, 0.75, big) * litter.a * (1.0 - m);
 	vec3 ground = mix(grass, litter.rgb * 1.6, lm * 0.7);
 	vec3 col = COLOR.rgb * mix(ground, path, m);
+	float fw = 0.0;
+	vec3 fnrm = vec3(0.5, 0.5, 1.0);
+	float frough = 1.0;
+	if (photo > 0.5) {
+		// zwei Maßstäbe, der zweite gedreht, großes Rauschen mischt – so sieht man keine Kachelwiederholung
+		vec2 fuv = wpos.xz / floor_meters;
+		vec2 ruv = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * wpos.xz / (floor_meters * 1.7) + vec2(0.31, 0.77);
+		float blend = smoothstep(0.3, 0.7, vnoise(wpos.xz * 0.11));
+		vec3 f1 = texture(floor_tex, fuv).rgb;
+		vec3 f2 = texture(floor_tex, ruv).rgb;
+		vec3 photo_col = mix(f1, f2, blend * 0.6);
+		// helle und dunkle Großflecken wie bisher (Eckpunktfarbe im Verhältnis zur Waldfarbe)
+		vec3 tint = clamp(COLOR.rgb / floor_ref, vec3(0.6), vec3(1.4));
+		fw = (1.0 - smoothstep(0.025, 0.075, distance(COLOR.rgb, floor_ref))) * (1.0 - m);
+		col = mix(col, photo_col * tint * floor_gain, fw);
+		fnrm = texture(floor_nrm, fuv).rgb;
+		frough = texture(floor_rough, fuv).r;
+	}
 	// Pfützen: in Senken des Wegs (Rauschen), nur wenn nass
 	// Pfützen: größer auf dem Weg, bei sehr nassem Boden auch kleine in Senken daneben
 	float hollow = noise * 0.6 + big * 0.5;
@@ -69,7 +96,12 @@ void fragment() {
 	col = mix(col, rimed, rime * 0.55 * (0.5 + 0.5 * step(0.45, noise)));
 	float glint = step(0.985, fract(sin(dot(floor(wpos.xz * 9.0), vec2(12.9898, 78.233))) * 43758.5453));
 	ALBEDO = col;
-	ROUGHNESS = mix(mix(mix(1.0, 0.6, wetness), 0.04, puddle), 0.75, max(cover, rime) * 0.7);
+	if (photo > 0.5) {
+		NORMAL_MAP = fnrm;
+		NORMAL_MAP_DEPTH = fw * (1.0 - cover) * (1.0 - puddle) * 1.2;
+	}
+	float base_rough = mix(1.0, frough, fw);
+	ROUGHNESS = mix(mix(mix(base_rough, 0.6, wetness), 0.04, puddle), 0.75, max(cover, rime) * 0.7);
 	SPECULAR = mix(0.5, 0.9, max(puddle, wetness * 0.3)) + glint * max(cover, rime) * 0.5;
 	METALLIC = 0.0;
 }

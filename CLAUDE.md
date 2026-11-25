@@ -873,6 +873,11 @@
   `Look.patch_shaders`, Gelände-Fernsicht `Look.shader_code`), `BuildKit.box` = abgeschrägte Kanten (`Look.bevel_box`, Netz je Maß
   geteilt, Material als material_override), Zylinder/Kugeln ≥ 14 Segmente (`Look.segments`, ≤ 4 Seiten bleiben eckig).
 
+- Foto-Waldboden (Christian 25.11.): ambientCG Ground068 (Moos + Fichtennadeln, CC0) unter `assets/textures/ground/forest_floor_*`
+  (1024 px, Farbe/Normal/Rauheit). Nur im klaren Stil: `ground.gdshader` Uniform `photo` (Terrain setzt es), ersetzt die gezeichnete
+  Textur, wo die Eckpunktfarbe nahe `floor_ref` (Waldboden aus `Terrain.ground_color`) liegt; zwei Maßstäbe + Drehung gegen Kachelmuster,
+  `floor_meters`, `floor_gain`. Wege, Wiese, Schnee, Pfützen bleiben. Vergleichsbilder: `-- --no-photo-floor` (`Look.forest_photo`), Tour-Bild L0.
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,

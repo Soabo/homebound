@@ -6,6 +6,8 @@ extends RefCounted
 ## Wird beim Programmstart aus den Einstellungen gesetzt (Settings.look) – die Welt baut sich danach mit dem
 ## passenden Stil. Ein Wechsel im Menü wirkt für Texturen und Kanten erst beim nächsten Laden.
 
+## Foto-Waldboden im klaren Stil (Befehlszeile -- --no-photo-floor schaltet ihn ab, für Vergleichsbilder)
+static var forest_photo: bool = not ("--no-photo-floor" in OS.get_cmdline_user_args())
 static var smooth := false
 
 static var _bevel_cache: Dictionary = {}

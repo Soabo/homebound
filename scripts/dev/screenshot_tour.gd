@@ -147,6 +147,7 @@ const SHOTS := [
 	{"name": "97_spur_tablet", "hour": 14.0, "pos": Vector3(-3.0, 0.45, 0.4), "look": Vector3(-5.0, 0.8, 1.75), "story_demo": true, "tablet_tab": "tasks"},
 	{"name": "98_meldekasten", "hour": 14.0, "wendt": 3},
 	{"name": "99_kabeltrasse", "hour": 14.0, "pos": Vector3(-9.0, 0.0, -30.0), "look": Vector3(-3.0, 0.5, -41.0)},
+	{"name": "L0_waldboden_nah", "look_rel": true, "hour": 12.0, "pos": Vector3(-25.0, 0.0, -45.0), "look": Vector3(-30.0, -0.6, -52.0)},
 	{"name": "A0_wald_tal", "hour": 11.0, "pos": Vector3(-70.0, 0.0, -66.0), "look": Vector3(-92.0, 2.0, -84.0)},
 	{"name": "A1_wald_weit", "hour": 11.0, "pos": Vector3(-168.0, 0.0, 125.0), "look": Vector3(-200.0, 3.0, 146.0)},
 	{"name": "B0_mond", "hour": 3.8, "pos": Vector3(-12.0, 0.0, 14.0), "look_moon": true},
