@@ -254,8 +254,10 @@
   `xvfb-run -a godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=BILD.png --pose=warn|charge|stalk --angle=90`.
 
 ## Phase 9: Speichern und Hauptmenü (Christian, 11/2026)
-- Entscheidungen: ~~Speichern jeden Morgen + beim Beenden~~ → seit 23.11. NUR beim Schlafen im Bett (`GameState.bed_save`,
-  siehe „Bedrohung à la Resident Evil“); Tod = zurück zum letzten Bettschlaf; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,
+- Entscheidungen: ~~Speichern jeden Morgen + beim Beenden~~ → 23.11. nur im Bett → seit 25.11. (Christian): nach JEDEM Schlaf
+  (Bett + Zelt, `GameState._on_slept` an `EventBus.sleep_finished`) und jeden Morgen automatisch (`_on_phase_changed`), Funktion
+  heißt weiter `bed_save`. Gespeichert wird die Stelle, an der man danach steht (`Player.get_state`: Meta `stand_from` aus
+  `Seat.sit_down`, `TentCamp.exit_point`, `HideSpot.front_point`); Tod = zurück zum letzten Bettschlaf; 3 Speicherplätze; Hauptmenü mit Einstellungen, Steuerung,
   gesehenen Enden und Titelbild der Hütte bei Nacht (langsam bewegt, Nebel, Fensterlicht).
 - `GameState`: `slot`, `play_seconds`, `save_game(current)`, `load_game(n)`, `new_game(n)`, `delete_slot`, `latest_slot`,
   `slot_info`, `to_menu`, `quit_game`. Datei `user://saves/slot_N.save` (store_var) mit `current` (Stand jetzt) und
@@ -708,7 +710,7 @@
   `passive_heal_cap`, Schlaf 3,5/Std., Gesundheit + Bein im Spielstand (`Survival.health`, `leg_until`, nach Laden mind.
   `restore_min_health`; nach einem Tod `Survival.make_survivable`: mind. Wärme/Essen `restore_min_*` – keine Todesschleife). Bein verletzt (`Survival.hurt_leg`: Falle, harter Sturz, schwere Treffer mit `leg_chance`): humpeln,
   kein Rennen, Hud „Bein verletzt“; Verbandskasten heilt es. Todesgründe fall, hide_found.
-- Speichern: `GameState.bed_save()` beim Aufwachen im Bett (Bed._on_woke) = Schnappschuss + Platz. Kein Morgen-Speichern, Beenden/
+- Speichern: `GameState.bed_save()` nach jedem Schlaf + jeden Morgen (seit 25.11., vorher nur Bett). Beenden/
   Hauptmenü speichern nicht (Pause zeigt „Zuletzt: Tag X“). `bed_day/bed_hour`. Neues Spiel und Enden sichern weiter.
   Nach dem Laden mitten in der Nacht holt der ThreatDirector Vergangenes nicht nach (`_skip_past`, außer „siege“).
 - `Dread` (scripts/systems/dread.gd, Kind des ThreatDirectors, `ThreatDirector.dread`), Werte ThreatConfig:
@@ -877,6 +879,11 @@
   (1024 px, Farbe/Normal/Rauheit). Nur im klaren Stil: `ground.gdshader` Uniform `photo` (Terrain setzt es), ersetzt die gezeichnete
   Textur, wo die Eckpunktfarbe nahe `floor_ref` (Waldboden aus `Terrain.ground_color`) liegt; zwei Maßstäbe + Drehung gegen Kachelmuster,
   `floor_meters`, `floor_gain`. Wege, Wiese, Schnee, Pfützen bleiben. Vergleichsbilder: `-- --no-photo-floor` (`Look.forest_photo`), Tour-Bild L0.
+
+- Zweite Liste 25.11.: Küchenflaschen (x -0,95) und Dosen (x -0,38) nicht mehr ineinander, Kamera 3 auf der Kiste rechts in der
+  Speis (1,47 | -1,6), Spind halb so laut, W-17-Suchgerät-Anzeige rechts neben der Schleich-Anzeige (nicht auf der Schnellleiste),
+  GadgetHud rutscht unter die FPS-Anzeige. Geschenk im Schlafzimmer (`Cabin` „Gift“) = Bens Geschenk „Für Papa“, nur Deko;
+  geöffnet wird es im Ende „Gehört“ (endings.json `gift`). Prüfung `RegressTest._t_fixes_2511b`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

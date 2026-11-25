@@ -346,7 +346,7 @@ func _on_player_died() -> void:
 	var info := death_info(player.death_cause if player else "")
 	_death.text = "Du bist gestorben.\n%s" % String(info.get("title", ""))
 	_death_tips.text = "Beim nächsten Mal:\n" + "\n".join(PackedStringArray(Array(info.get("tips", [])).map(func(t: Variant) -> String: return "•  " + String(t)))) \
-			+ "\n\nZurück zum letzten Schlaf im Bett (Tag %d)   –   [E] weiter" % GameState.bed_day
+			+ "\n\nZurück zum letzten Speicherstand (Tag %d)   –   [E] weiter" % GameState.bed_day
 	var tw := create_tween()
 	tw.tween_property(_hurt, "color:a", 0.6, 0.3)
 	tw.tween_property(_fade, "color:a", 1.0, 1.8)

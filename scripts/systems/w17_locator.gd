@@ -24,10 +24,11 @@ func _ready() -> void:
 	_label.anchor_right = 0.5
 	_label.anchor_top = 1.0
 	_label.anchor_bottom = 1.0
-	_label.offset_left = -120
-	_label.offset_right = 120
-	_label.offset_top = -118
-	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# rechts neben der Schleich-Anzeige, über der Schnellleiste (lag vorher mitten auf den Kästchen)
+	_label.offset_left = 50
+	_label.offset_right = 330
+	_label.offset_top = -196
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_label.visible = false
 	add_child(_label)
 
@@ -58,7 +59,7 @@ func _process(delta: float) -> void:
 	var sig := signal_at(_player.global_position)
 	var s: float = sig[0]
 	var bars := int(round(s * 6.0))
-	_label.text = "W-17  " + "▮".repeat(bars) + "▯".repeat(6 - bars)
+	_label.text = "W-17 Suchgerät  " + "▮".repeat(bars) + "▯".repeat(6 - bars)
 	_label.modulate.a = 0.55 + 0.45 * (0.5 + 0.5 * sin(_t * lerpf(2.0, 14.0, s)))
 	_beep -= delta
 	if s > 0.02 and _beep <= 0.0:

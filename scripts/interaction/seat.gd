@@ -55,6 +55,9 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Spieler setzt sich: dreht sich in Blickrichtung, sinkt ab, Kopf auf Sitzhöhe. look = danach frei umschauen.
 static func sit_down(owner: Node, p: Player, feet: Vector3, forward: Vector3, eye_h: float, look: bool) -> Tween:
 	p.velocity = Vector3.ZERO
+	# Hier steht man nach dem Aufstehen wieder (zählt fürs Speichern, siehe Player.get_state)
+	if not p.has_meta("stand_from"):
+		p.set_meta("stand_from", p.global_position)
 	p.input_locked = true
 	p.set_physics_process(false)
 	_stop_move(p)
@@ -73,6 +76,8 @@ static func sit_down(owner: Node, p: Player, feet: Vector3, forward: Vector3, ey
 ## Spieler steht auf und tritt zurück an die Stelle, von der er kam.
 static func stand_up(owner: Node, p: Player, back: Vector3) -> Tween:
 	p.look_only = false
+	if p.has_meta("stand_from"):
+		p.remove_meta("stand_from")
 	_stop_move(p)
 	var tw := owner.create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	p.set_meta("seat_tween", tw)

@@ -87,10 +87,15 @@ func leave() -> void:
 	var p := _player
 	_player = null
 	p.in_tent = null
+	Seat.stand_up(self, p, exit_point())
+	EventBus.interaction_prompt_changed.emit("")
+
+
+## Wo man nach dem Hinauskriechen steht (Speichern im Zelt).
+func exit_point() -> Vector3:
 	var back := global_position + global_transform.basis * Vector3(0, 0, size_z() * 0.5 + 1.0)
 	back.y = Terrain.height_at(back.x, back.z) + 0.1
-	Seat.stand_up(self, p, back)
-	EventBus.interaction_prompt_changed.emit("")
+	return back
 
 
 func size_z() -> float:

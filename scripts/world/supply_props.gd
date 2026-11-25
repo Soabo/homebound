@@ -15,8 +15,9 @@ func _ready() -> void:
 	name = "SupplyProps"
 	_camera_box("Camera1Box", "camera_1", 1, Vector3(5.45, _y + 0.245, 0.75), 90.0)
 	_camera_box("Camera2Box", "camera_2", 2, Vector3(-0.25, _y + 0.76, 2.05), 20.0)
-	_camera_box("Camera3Box", "camera_3", 3, Vector3(-1.6, _y + 2.05, -3.8), -15.0)
-	_bottles(Vector3(-0.75, _y + 0.92, -0.925 + 0.32))
+	# Kamera 3 auf der Kiste gleich rechts in der Speis (Christian 25.11., vorher auf dem Schlafzimmerschrank)
+	_camera_box("Camera3Box", "camera_3", 3, Vector3(1.47, _y + 0.8, -1.6), 10.0)
+	_bottles(Vector3(-0.95, _y + 0.92, -0.925 + 0.32))   # neben der Spüle, die Dosen weiter rechts (nicht ineinander)
 	var so := Shed.ORIGIN
 	_seed_packet("SeedsRadish", "seeds_radish", so + Vector3(1.62, 0.98, -1.05), Color(0.85, 0.2, 0.3))
 	# Wintergemüse für den Folientunnel (Christian 24.11.): Feldsalat und Winterspinat statt Karotten und Kartoffeln
@@ -28,8 +29,8 @@ func _ready() -> void:
 	_cooler_box("CoolerCans", COOLER_XZ)
 	# Vier ausgespülte leere Dosen neben der Spüle (Christian 14.11.)
 	var cz := -1.0 + Cabin.INT_T * 0.5
-	var kc := _pickup("KitchenCans", "cans", 4, 2, Vector3(0.36, 0.14, 0.2), Vector3(-0.62, Cabin.FLOOR_Y + 0.92, cz + 0.32))
-	empty_cans(kc, Vector3(-0.62, Cabin.FLOOR_Y + 0.92, cz + 0.32), 4)
+	var kc := _pickup("KitchenCans", "cans", 4, 2, Vector3(0.36, 0.14, 0.2), Vector3(-0.38, Cabin.FLOOR_Y + 0.92, cz + 0.32))
+	empty_cans(kc, Vector3(-0.38, Cabin.FLOOR_Y + 0.92, cz + 0.32), 4)
 
 
 ## Leere Blechdosen als sichtbare Teile eines Fundstücks (eine Dose je Stück, teils umgekippt).

@@ -8,8 +8,8 @@ extends Node
 ## gespeicherten Zustand in _ready() über GameState.restore(self).
 ##
 ## Phase 9 (Christians Entscheidung): 3 Speicherplätze auf der Platte (user://saves/slot_N.save).
-## Seit 23.11. (Christian: „Speichern am Bett“): Gespeichert wird NUR, wenn man im Bett geschlafen hat
-## (`bed_save`) – nicht morgens von selbst, nicht beim Beenden. Ein Tod führt zurück zum letzten Schlaf im Bett.
+## Seit 25.11. (Christian): Gespeichert wird nach JEDEM Schlaf (Bett und Zelt) und zusätzlich jeden Morgen
+## automatisch (Tagesbeginn) – nicht beim Beenden. Ein Tod führt zurück zum letzten Speicherstand.
 ## (Ausnahmen: neues Spiel legt den Platz an, vor einem Ende wird gesichert.)
 
 signal player_died
@@ -35,6 +35,7 @@ var play_seconds: float = 0.0      ## gespielte Zeit in diesem Spielstand
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	TimeManager.phase_changed.connect(_on_phase_changed)
+	EventBus.sleep_finished.connect(_on_slept)
 	get_tree().set_auto_accept_quit(false)
 	take_snapshot.call_deferred()
 	(func() -> void: _fresh = _snapshot.duplicate(true)).call_deferred()
@@ -60,11 +61,22 @@ var _restoring: bool = false
 
 
 func _on_phase_changed(is_night: bool) -> void:
-	# Kein Autospeichern am Morgen mehr – nur noch im Bett (bed_save)
-	pass
+	# Jeden Morgen automatisch speichern (Christian 25.11.). Wer gerade schläft, wird beim Aufwachen gesichert.
+	if is_night or dead or ending_lock or _restoring or EventBus.sleeping or not in_game():
+		return
+	(func() -> void:
+		if not dead and not EventBus.sleeping:
+			bed_save()).call_deferred()
 
 
-## Im Bett aufgewacht (Bed): jetzt wird gespeichert, und hierher führt ein Tod zurück.
+## Nach jedem Schlaf (Bett, Zelt) speichern.
+func _on_slept() -> void:
+	if dead or not in_game():
+		return
+	bed_save()
+
+
+## Geschlafen (Bett/Zelt) oder Morgen: jetzt wird gespeichert, und hierher führt ein Tod zurück.
 var bed_day: int = 1
 var bed_hour: float = 7.0
 

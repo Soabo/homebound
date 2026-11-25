@@ -395,6 +395,7 @@ func _t_more() -> void:
 	await _t_waldler_2411()
 	await _t_sounds_2411()
 	await _t_fixes_2511()
+	await _t_fixes_2511b()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3600,3 +3601,34 @@ func _t_fixes_2511() -> void:
 	var cabin := _scene().get_node("Cabin")
 	var sw := cabin.get_node_or_null("Switch_workshop") as Node3D
 	_ok("Werkstatt: Lichtschalter nördlich der Tür (nicht am Bretterregal)", sw != null and sw.position.z < 1.0)
+
+
+## Christians zweite Liste 25.11.: Dosen/Flaschen nicht ineinander, Kamera 3 in der Speis, Speichern bei jedem Schlaf + morgens.
+func _t_fixes_2511b() -> void:
+	var sp := _scene().find_child("SupplyProps", true, false)
+	var bot := sp.get_node_or_null("EmptyBottles") as ItemPickup if sp else null
+	var cans := sp.get_node_or_null("KitchenCans") as ItemPickup if sp else null
+	var gap := 0.0
+	if bot and cans:
+		gap = absf(cans.collider_offset.x - bot.collider_offset.x) - (bot.collider_size.x + cans.collider_size.x) * 0.5
+	_ok("Küche: Flaschen und Dosen stehen nebeneinander (Abstand %.2f m)" % gap, bot != null and cans != null and gap >= 0.0)
+	var cam3 := sp.get_node_or_null("Camera3Box") as ItemPickup if sp else null
+	var c3 := cam3.collider_offset if cam3 else Vector3.ZERO
+	_ok("Kamera 3 liegt in der Speis auf der Kiste (%.2f, %.2f, %.2f)" % [c3.x, c3.y, c3.z],
+			cam3 != null and c3.x > -1.0 and c3.x < 2.0 and c3.z > -4.5 and c3.z < -1.0 and c3.y > Cabin.FLOOR_Y + 0.75)
+	# Sitzen/Liegen: gespeichert wird die Stelle, an der man danach steht
+	var p := _player()
+	var before := p.global_position
+	p.set_meta("stand_from", before + Vector3(0.5, 0, 0))
+	var st := p.get_state()
+	p.remove_meta("stand_from")
+	_ok("Speichern im Sitzen/Liegen nimmt die Stelle vor dem Bett/Sitz", (st["position"] as Vector3).distance_to(before + Vector3(0.5, 0, 0)) < 0.01)
+	# Morgen und Schlaf speichern (ohne Platz: nur der Schnappschuss)
+	var keep_day := TimeManager.day
+	GameState.bed_day = -5
+	GameState._on_phase_changed(false)
+	await get_tree().process_frame
+	var morning_ok := GameState.bed_day == keep_day
+	GameState.bed_day = -5
+	GameState._on_slept()
+	_ok("Speichern: jeden Morgen und nach jedem Schlaf (Bett/Zelt)", morning_ok and GameState.bed_day == keep_day)

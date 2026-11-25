@@ -404,7 +404,7 @@ func _set_open(open: bool, secs: float, flung: bool = false) -> void:
 	var at := global_position + global_basis * Vector3(0, minf(size.y, 1.0), size.z * 0.5)
 	match style:
 		"locker":
-			SoundBank.play_at(self, "collect_metal", at, -3.0 if open else -1.0, 1.1 if open else 0.95)
+			SoundBank.play_at(self, "collect_metal", at, -9.0 if open else -7.0, 1.1 if open else 0.95)   # halb so laut (Christian 25.11.)
 		"curtain", "fort":
 			SoundBank.play_at(self, "rustle", at, -8.0, 1.3)
 		"chest":

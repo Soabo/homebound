@@ -38,6 +38,8 @@ func _process(delta: float) -> void:
 	if _player == null:
 		_player = get_tree().get_first_node_in_group("player") as Player
 		return
+	# unter der Bildraten-Anzeige, wenn die eingeschaltet ist (sonst lagen beide übereinander)
+	_label.offset_top = 170 if Settings.show_fps else 96
 	var lines: PackedStringArray = []
 	var sig := Research.signature()
 	if sig >= 0.1:

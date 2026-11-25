@@ -724,7 +724,16 @@ func _update_prompt(force: bool) -> void:
 
 ## Für den späteren Save Manager.
 func get_state() -> Dictionary:
-	return {"position": global_position, "yaw": rotation.y, "pitch": head.rotation.x, "flashlight": flashlight.visible}
+	# Gespeichert wird auch im Bett, im Zelt, im Sitzen oder im Versteck (Speichern bei jedem Schlaf + morgens):
+	# dann zählt die Stelle, an der man danach wieder steht – nicht die Liegestelle im Bett oder im Zelt.
+	var pos := global_position
+	if hidden_in != null and is_instance_valid(hidden_in) and hidden_in.has_method("front_point"):
+		pos = hidden_in.front_point(float(hidden_in.get("exit_dist")))
+	elif in_tent != null and is_instance_valid(in_tent) and in_tent.has_method("exit_point"):
+		pos = in_tent.exit_point()
+	elif has_meta("stand_from"):
+		pos = get_meta("stand_from")
+	return {"position": pos, "yaw": rotation.y, "pitch": head.rotation.x, "flashlight": flashlight.visible}
 
 
 ## Wasser und Moor: waten macht langsam, tiefes Wasser lässt einen nicht hinein (kein Schwimmen),
