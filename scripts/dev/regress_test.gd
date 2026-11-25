@@ -394,6 +394,7 @@ func _t_more() -> void:
 	await _t_places_2411()
 	await _t_waldler_2411()
 	await _t_sounds_2411()
+	await _t_fixes_2511()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3545,3 +3546,54 @@ func _t_sounds_2411() -> void:
 	var na := _scene().get_node_or_null("NatureAmbience") as NatureAmbience
 	_ok("Spätherbst: keine Grillen nachts (%.0f dB)" % na._crickets.volume_db, na._crickets.volume_db < -60.0)
 	TimeManager.set_time(keep_day, keep_hour)
+
+
+## Christians Liste 25.11.: Wegweiser zeigen zum Ziel, Kapelle, Hütte, Truhe
+func _t_fixes_2511() -> void:
+	var trails := _scene().find_child("WorldTrails", true, false)
+	var bad: Array[String] = []
+	var arms := 0
+	if trails:
+		for sign in trails.get_children():
+			if not String(sign.name).begins_with("Sign_"):
+				continue
+			for arm in sign.get_children():
+				if not (arm is Node3D) or arm.get_child_count() == 0:
+					continue
+				var lab := arm.get_child(arm.get_child_count() - 1) as Label3D
+				if lab == null:
+					continue
+				arms += 1
+				var tip: Vector3 = (arm as Node3D).global_transform * Vector3(-1.2, 0, 0)
+				var base: Vector3 = (arm as Node3D).global_position
+				var pointing := Vector2(tip.x - base.x, tip.z - base.z).normalized()
+				# Ziel aus dem Schildtext suchen
+				var target := Vector2.INF
+				for id in WorldMap.places():
+					var pl: Dictionary = WorldMap.places()[id]
+					if lab.text.begins_with(String(pl.get("sign", pl["name"])) + "  "):
+						target = WorldMap.place_pos(id)
+				if target == Vector2.INF:
+					continue
+				var want := (target - Vector2(base.x, base.z)).normalized()
+				if pointing.dot(want) < 0.95:
+					bad.append("%s→%s (%.2f)" % [sign.name, lab.text, pointing.dot(want)])
+	_ok("Wegweiser: alle %d Arme zeigen zum Ziel %s" % [arms, str(bad.slice(0, 6))], arms > 10 and bad.is_empty())
+	# Durchgang zwischen Kachelofen/Ofenbank und Schaukelstuhl: der Spieler passt durch
+	var shape := CapsuleShape3D.new()
+	shape.radius = Player.RADIUS
+	shape.height = 1.7
+	var space := (_scene() as Node3D).get_world_3d().direct_space_state
+	var stuck: Array[float] = []
+	var z := 3.1
+	while z <= 3.9:
+		var qp := PhysicsShapeQueryParameters3D.new()
+		qp.shape = shape
+		qp.transform = Transform3D(Basis.IDENTITY, Vector3(-4.82, Cabin.FLOOR_Y + 0.9, z))
+		if not space.intersect_shape(qp, 1).is_empty():
+			stuck.append(z)
+		z += 0.2
+	_ok("Durchgang Kachelofen ↔ Schaukelstuhl frei %s" % str(stuck), stuck.is_empty())
+	var cabin := _scene().get_node("Cabin")
+	var sw := cabin.get_node_or_null("Switch_workshop") as Node3D
+	_ok("Werkstatt: Lichtschalter nördlich der Tür (nicht am Bretterregal)", sw != null and sw.position.z < 1.0)

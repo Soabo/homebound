@@ -632,7 +632,8 @@ func _build_lights() -> void:
 	_switch("bedroom", "Licht Schlafzimmer", Vector3(-1.75, FLOOR_Y + 1.25, hall_back), 180.0, [bedroom])
 	_switch("storage", "Licht Vorratsraum", Vector3(1.3, FLOOR_Y + 1.25, hall_back), 180.0, [storage])
 	_switch("tech", "Licht Bad", Vector3(4.75, FLOOR_Y + 1.25, hall_back), 180.0, [tech])
-	_switch("workshop", "Licht Werkstatt", Vector3(2.0 + INT_T * 0.5 + 0.012, FLOOR_Y + 1.25, 2.35), 90.0, [workshop])
+	# auf der Nordseite des Türstocks – südlich steht das Bretterregal davor (Christian 25.11.)
+	_switch("workshop", "Licht Werkstatt", Vector3(2.0 + INT_T * 0.5 + 0.012, FLOOR_Y + 1.25, 0.65), 90.0, [workshop])
 
 
 func _lamp(pos: Vector3, energy: float, light_range: float, shadow: bool, lamp_style: String = "ceiling") -> Lamp:
@@ -679,19 +680,21 @@ func _build_living_room() -> void:
 	var couch := Couch.new()
 	couch.name = "Couch"
 	add_child(couch)
-	_rocking_chair(Vector3(-4.3, y, 3.45), 140.0)
+	# näher zur Haustür (Christian 25.11.): zwischen Stuhl und Kachelofen/Ofenbank passt man jetzt durch;
+	# weiter nach Osten geht nicht – sonst schlägt die offene Haustür an den Stuhl
+	_rocking_chair(Vector3(-4.05, y, 3.45), 140.0)
 	# Versteck direkt hinter dem Schaukelstuhl (Christian 24.11.): geduckt in der Ecke, Blick über die Lehne
 	var behind := HideSpot.new()
 	behind.name = "HideBehindChair"
 	behind.style = "open"
 	behind.label = "Hinter dem Schaukelstuhl"
-	behind.position = Vector3(-4.78, y, 4.0)
+	behind.position = Vector3(-4.53, y, 4.0)
 	behind.rotation_degrees.y = 140.0
 	behind.eye = 0.82
 	behind.crouch_drop = 0.2
 	behind.move = Vector2(0.22, 0.06)
-	behind.exit_dir = Vector3(1, 0, 0.07)   # zwischen Ofenbank und Schaukelstuhl hinaus
-	behind.exit_dist = 0.4
+	behind.exit_dir = Vector3(1, 0, 0.36)   # nach Nordwesten hinaus, zwischen Ofenbank und Schaukelstuhl
+	behind.exit_dist = 0.3
 	behind.area_size = Vector3(0.9, 1.0, 0.6)
 	behind.area_center = Vector3(0, 0.5, 0)
 	add_child(behind)
@@ -1313,10 +1316,8 @@ func _build_workshop() -> void:
 		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.5, y + 0.36, z), m_wood, false, Vector3(0, 0, 18))
 	BuildKit.box_mm(self, Vector3(5.28, y + 0.7, 2.6), Vector3(5.42, y + 0.76, 3.55), m_wood, true)
 	BuildKit.box(self, Vector3(0.22, 0.05, 1.2), Vector3(5.35, y + 0.79, 3.07), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
-	# Hackklotz mit Beil in der Ecke neben der Werkbank
+	# Hackklotz in der Ecke neben der Werkbank (das Deko-Beil ist weg – Christian 25.11., die echte Axt liegt im Garten)
 	BuildKit.cylinder(self, 0.22, 0.45, Vector3(5.45, y + 0.225, 3.95), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 12)
-	BuildKit.box(self, Vector3(0.035, 0.5, 0.035), Vector3(5.5, y + 0.65, 3.95), m_wood, false, Vector3(0, 0, 20))
-	BuildKit.box(self, Vector3(0.16, 0.1, 0.02), Vector3(5.43, y + 0.47, 3.95), m_iron, false, Vector3(0, 0, 20))
 
 
 func _build_reflection_probe() -> void:

@@ -100,6 +100,25 @@ func _make_snow() -> CPUParticles3D:
 	return p
 
 
+var _roof_t := 0.0
+var _roofed := false
+
+
+## Unter einem festen Dach (Kapelle, Hütten an den Orten, Hochsitz …)? Strahl senkrecht nach oben,
+## alle 0,25 s – so regnet und schneit es auch in Gebäuden draußen nicht hinein (Christian 25.11.).
+func _under_roof(cam: Vector3, delta: float) -> bool:
+	_roof_t -= delta
+	if _roof_t > 0.0:
+		return _roofed
+	_roof_t = 0.25
+	var q := PhysicsRayQueryParameters3D.create(cam + Vector3(0, 0.3, 0), cam + Vector3(0, 12.0, 0))
+	q.exclude = [_player.get_rid()]
+	q.collide_with_areas = false
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	_roofed = not hit.is_empty() and (hit["normal"] as Vector3).y < -0.3
+	return _roofed
+
+
 ## Nach dem Regen: einzelne große Tropfen fallen aus den Kronen.
 func _make_drops() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
@@ -136,7 +155,7 @@ func _process(delta: float) -> void:
 	var target := 1.0 if w == "storm" else (0.6 if w == "rain" else 0.0)
 	_rain_amount = move_toward(_rain_amount, target, delta / 20.0)
 	var cam := _player.camera.global_position
-	var indoor := Cabin.is_inside(_player.global_position) or Shed.is_inside(_player.global_position)
+	var indoor := Cabin.is_inside(_player.global_position) or Shed.is_inside(_player.global_position) or _under_roof(cam, delta)
 	var tent := _player.in_tent != null
 	# Regen um die Kamera (drinnen nicht – das Dach hält ihn ab)
 	var wind := Wind.current

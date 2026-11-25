@@ -74,7 +74,8 @@ static func _kapelle(root: Node3D) -> void:
 			var p := Vector3(sx * 1.15, 0, 1.6 - row * 1.3)
 			benches.append(p)
 			BuildKit.box(h, Vector3(1.6, 0.06, 0.4), p + Vector3(0, 0.45, 0), bench_mat, true)
-			BuildKit.box(h, Vector3(1.6, 0.4, 0.05), p + Vector3(0, 0.75, -0.2), bench_mat, false)
+			# Lehne hinten (vom Altar weg) – man sitzt mit Blick zum Altar (-z)
+			BuildKit.box(h, Vector3(1.6, 0.4, 0.05), p + Vector3(0, 0.75, 0.2), bench_mat, false)
 			for lx: float in [-0.7, 0.7]:
 				BuildKit.box(h, Vector3(0.06, 0.45, 0.35), p + Vector3(lx, 0.22, 0), bench_mat, false)
 	# Altar mit Kreuz, Kerzen, Gästebuch

@@ -86,10 +86,11 @@ func _sign(at: Vector2, targets: Array) -> void:
 		var dist := dir.length()
 		if dist < 60.0:
 			continue   # man steht schon da („Imkerei Brandl 0 m“) – kein Arm (Christian 15.11.)
-		var yaw := rad_to_deg(atan2(-dir.x, -dir.y))
 		var arm := Node3D.new()
 		arm.position = Vector3(0, y, 0)
-		arm.rotation_degrees = Vector3(0, yaw + 90.0, 0)
+		# Brett zeigt mit -x zum Ziel: -x gedreht um θ = (-cos θ, sin θ) → θ = atan2(dz, -dx)
+		# (vorher war der Winkel um 180° verdreht – alle Wegweiser zeigten vom Ziel weg, Christian 25.11.)
+		arm.rotation.y = atan2(dir.y, -dir.x)
 		root.add_child(arm)
 		# Brett zeigt in -x der Arm-Ebene … mit Spitze
 		BuildKit.box(arm, Vector3(1.15, 0.2, 0.035), Vector3(-0.62, 0, 0), _wood, false)

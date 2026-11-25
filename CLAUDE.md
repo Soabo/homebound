@@ -855,6 +855,17 @@
     bei nur einer Aufnahme ANZAHL hoch setzen, sonst kappt die Grenze je Datei auf 4) + 1 Landung.
     Prüfung `RegressTest._t_sounds_2411`.
 
+## Christians Liste 25.11.
+- Wegweiser: ALLE Arme zeigten um 180° verdreht vom Ziel weg. Jetzt `arm.rotation.y = atan2(dir.y, -dir.x)` (Brett-Spitze = lokal -x).
+  Prüfung in `RegressTest._t_fixes_2511` (alle Arme gegen die Richtung zum Ort im Schildtext).
+- Kirchenbänke (St. Gunther `PlacesNear._kapelle`, Altenreuth `DrownedVillage`): Lehne jetzt hinten, Blick zum Altar.
+- Regen/Schnee unter festen Dächern draußen (Kapelle, Hütten an den Orten …): `WeatherFx._under_roof` (Strahl nach oben, alle 0,25 s,
+  trifft Unterseite eines Körpers) zählt wie drinnen. Das halbe Dach in Altenreuth hat keine Kollision – dort regnet es weiter hinein (Absicht).
+- Werkstatt: Lichtschalter nördlich der Tür (z 0,65), Deko-Beil am Hackklotz entfernt. Schaukelstuhl (-4,05 | 3,45) + Versteck
+  (-4,53 | 4,0) näher an der Haustür (weiter geht nicht, sonst schlägt die offene Tür an), Ofenbank nur bis `WaldlerHouse.BANK_X`
+  (-5,3) – dazwischen passt der Spieler durch (Prüfung Kapsel-Test in `_t_fixes_2511`).
+- Truhe: Gewicht je Stapel (bei mehreren „je …“) und Summe je Spalte (`GameMenus._fill_chest`).
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,

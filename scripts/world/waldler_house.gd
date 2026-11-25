@@ -16,6 +16,8 @@ const MOUTH_Z0 := 1.3
 const MOUTH_Z1 := 2.2
 const MOUTH_H := 0.8
 const TILE := 0.2
+## Ofenbank reicht von der Wand bis hier (x)
+const BANK_X := -5.3
 
 ## Herrgottswinkel: Ecke Vorderwand/Werkstattwand in der Stube
 const CORNER := Vector2(1.925 - 0.012, 4.36 - 0.012)
@@ -110,13 +112,14 @@ static func kachelofen(c: Cabin) -> void:
 	var bank := BuildKit.tex_mat("planks_h", 0.7, Color(0.85, 0.7, 0.55))
 	var bz0 := OVEN_Z1 + 0.04
 	var bz1 := OVEN_Z1 + 0.38
-	BuildKit.box_mm(oven, Vector3(wx, y + 0.42, bz0), Vector3(fx + 0.02, y + 0.47, bz1), bank, true, "Ofenbank")
-	for px: float in [wx + 0.06, fx - 0.04]:
+	# nur bis BANK_X: davor bleibt Platz zum Durchgehen zwischen Ofen und Schaukelstuhl (Christian 25.11.)
+	BuildKit.box_mm(oven, Vector3(wx, y + 0.42, bz0), Vector3(BANK_X, y + 0.47, bz1), bank, true, "Ofenbank")
+	for px: float in [wx + 0.06, BANK_X - 0.06]:
 		BuildKit.box_mm(oven, Vector3(px - 0.04, y, bz1 - 0.08), Vector3(px + 0.04, y + 0.42, bz1 - 0.02), c.m_wood_dark, false)
 	BuildKit.box_mm(oven, Vector3(wx, y + 0.3, bz0), Vector3(wx + 0.03, y + 0.42, bz1), c.m_wood_dark, false)
 	var logs := BuildKit.tex_mat("logs", 0.6)
 	for i in 4:
-		BuildKit.cylinder(oven, 0.07, 0.55, Vector3(-5.5 + i * 0.13, y + 0.08, bz0 + 0.2), logs, false, Vector3(90, rng.randf_range(-8, 8), 0), -1.0, 7)
+		BuildKit.cylinder(oven, 0.07, 0.3, Vector3(-5.78 + i * 0.12, y + 0.08, bz0 + 0.17), logs, false, Vector3(90, rng.randf_range(-8, 8), 0), -1.0, 7)
 	# Ofenstange unter der Decke: Handtuch und Wollsocken zum Trocknen
 	var rod_y := y + 2.12
 	var rod_x := fx + 0.12

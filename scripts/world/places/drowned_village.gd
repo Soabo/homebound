@@ -195,7 +195,7 @@ static func church(ch: Node3D, rng: RandomNumberGenerator) -> void:
 			else:
 				pew.rotation_degrees.y = rng.randf_range(-6, 6)
 			BuildKit.box(pew, Vector3(2.6, 0.07, 0.42), Vector3(0, 0.46, 0), wood, true)
-			BuildKit.box(pew, Vector3(2.6, 0.55, 0.06), Vector3(0, 0.75, -0.22), wood, false)
+			BuildKit.box(pew, Vector3(2.6, 0.55, 0.06), Vector3(0, 0.75, 0.22), wood, false)   # Lehne hinten, Blick zum Altar
 			for lx: float in [-1.2, 1.2]:
 				BuildKit.box(pew, Vector3(0.07, 0.46, 0.42), Vector3(lx, 0.23, 0), wood, false)
 	# Altarraum: Stufe, Altar, Kreuz an der Rückwand

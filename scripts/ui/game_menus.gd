@@ -324,8 +324,11 @@ func _fill_chest() -> void:
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		col.add_theme_constant_override("separation", 6)
 		cols.add_child(col)
-		col.add_child(_text("Rucksack" if side == "bag" else "Truhe", 24, Color(0.95, 0.85, 0.65)))
 		var src: Dictionary = Inventory.items if side == "bag" else _chest.items
+		var sum := 0.0
+		for k in src:
+			sum += Inventory.weight_of(k) * int(src[k])
+		col.add_child(_text(("%s  %.1f kg" % ["Rucksack" if side == "bag" else "Truhe", sum]).replace(".", ","), 24, Color(0.95, 0.85, 0.65)))
 		if src.is_empty():
 			col.add_child(_text("leer", 18, Color(0.6, 0.58, 0.5)))
 		for id in src.keys():
@@ -335,6 +338,15 @@ func _fill_chest() -> void:
 			var l := _text("%s  ×%d" % [Inventory.display_name(id), int(src[id])], 18)
 			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.add_child(l)
+			# Gewicht des Stapels (bei mehreren auch je Stück) – Christian 25.11.
+			var each := Inventory.weight_of(id)
+			var wt := "%.1f kg" % (each * int(src[id]))
+			if int(src[id]) > 1:
+				wt += "  (je %.2f)" % each
+			var wl := _text(wt.replace(".", ","), 16, Color(0.6, 0.58, 0.5))
+			wl.custom_minimum_size.x = 150
+			wl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			row.add_child(wl)
 			for amount in [1, 9999]:
 				var b := _button(("1 →" if amount == 1 else "Alle →") if side == "bag" else ("← 1" if amount == 1 else "← Alle"))
 				b.custom_minimum_size = Vector2(80, 34)
