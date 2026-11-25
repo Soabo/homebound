@@ -20,6 +20,20 @@ func _ready() -> void:
 	opt.custom_minimum_size = Vector2(220, 36)
 	opt.item_selected.connect(func(i: int) -> void: Settings.set_value("quality", String(QUALITY[i][0])))
 	row.add_child(opt)
+	# Grafikstil (Christian 25.11.): Retro = grobe Pixel wie bisher, Klar = volle Auflösung, weiche Texturen, runde Kanten
+	var rl := _row("Grafikstil")
+	var lo := OptionButton.new()
+	for pair: Array in [["retro", "Retro (Pixel)"], ["klar", "Klar (weich, runde Kanten)"]]:
+		lo.add_item(String(pair[1]))
+		if pair[0] == Settings.look:
+			lo.select(lo.item_count - 1)
+	lo.custom_minimum_size = Vector2(220, 36)
+	lo.tooltip_text = "Bildschicht wechselt sofort. Texturen und Kanten ändern sich beim nächsten Laden eines Spielstands."
+	lo.item_selected.connect(func(i: int) -> void:
+		var style: String = ["retro", "klar"][i]
+		Settings.set_value("look", style)
+		EventBus.notify("Grafikstil: %s – Texturen und Kanten ab dem nächsten Laden" % ("Retro" if style == "retro" else "Klar"), 4.0))
+	rl.add_child(lo)
 	if OS.get_name() != "Web":
 		var r2 := _row("Vollbild")
 		var cb := CheckBox.new()

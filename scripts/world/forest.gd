@@ -701,7 +701,7 @@ func _textured(kind: String, repeat_m: float) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.vertex_color_use_as_albedo = true
 	m.albedo_texture = TextureFactory.get_texture(kind)
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	var s := 1.0 / repeat_m

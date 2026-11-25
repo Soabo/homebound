@@ -17,6 +17,9 @@ var stealth_hud: bool = true
 var max_fps: int = 0
 var vsync: bool = true
 var show_fps: bool = false
+## Grafikstil: retro (grobe Pixel, wie bisher) | klar (volle Auflösung, weiche Texturen, abgeschrägte Kanten) – Christian 25.11.
+var look: String = "retro"
+const LOOKS := ["retro", "klar"]
 const FPS_CHOICES := [30, 60, 120, 144, 165, 240, 0]
 var _fps_layer: CanvasLayer
 var _fps_label: Label
@@ -36,6 +39,7 @@ func _ready() -> void:
 	max_fps = int(d.get("max_fps", max_fps))
 	vsync = bool(d.get("vsync", vsync))
 	show_fps = bool(d.get("show_fps", show_fps))
+	look = String(d.get("look", look))
 	var cfg := ConfigFile.new()
 	if cfg.load(FILE) == OK:
 		volume = float(cfg.get_value("audio", "volume", volume))
@@ -47,7 +51,17 @@ func _ready() -> void:
 		max_fps = int(cfg.get_value("video", "max_fps", max_fps))
 		vsync = bool(cfg.get_value("video", "vsync", vsync))
 		show_fps = bool(cfg.get_value("video", "show_fps", show_fps))
+		look = String(cfg.get_value("video", "look", look))
 		endings_seen = cfg.get_value("profile", "endings", {})
+	# Befehlszeile (Vergleichsbilder, Tests): -- --look=klar
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--look="):
+			look = a.substr(7)
+	if not look in LOOKS:
+		look = "retro"
+	# vor dem Weltaufbau setzen – Texturen, Kanten und Shader richten sich danach
+	Look.set_style(look)
+	Look.patch_shaders()
 	apply.call_deferred()
 
 
@@ -66,6 +80,7 @@ func save() -> void:
 	cfg.set_value("video", "max_fps", max_fps)
 	cfg.set_value("video", "vsync", vsync)
 	cfg.set_value("video", "show_fps", show_fps)
+	cfg.set_value("video", "look", look)
 	cfg.set_value("profile", "endings", endings_seen)
 	cfg.save(FILE)
 
@@ -82,6 +97,9 @@ func apply() -> void:
 			DisplayServer.window_set_mode(want)
 	var q := quality_values()
 	RenderingServer.directional_shadow_atlas_set_size(int(q.get("shadow_size", 4096)), true)
+	var rf := get_tree().get_first_node_in_group("retro_filter") if is_inside_tree() else null
+	if rf:
+		rf.call("set_look", look)
 	apply_render_scale()
 	apply_fps()
 	changed.emit()
@@ -95,7 +113,7 @@ func apply_render_scale() -> void:
 	var vp := get_viewport()
 	var q := quality_values()
 	var retro := get_tree().get_first_node_in_group("retro_filter") if is_inside_tree() else null
-	var retro_on := retro != null and bool(retro.get("enabled"))
+	var retro_on := retro != null and bool(retro.get("enabled")) and look == "retro"
 	var scale := float(q.get("scale", 1.0))
 	var msaa := int(q.get("msaa", 2))
 	var h := float(vp.get_visible_rect().size.y)

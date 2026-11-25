@@ -258,7 +258,7 @@ static func _label_mat(kind: String, rough: float = 0.7, repeat: float = 2.0) ->
 	if not _tex.has(key):
 		var m := StandardMaterial3D.new()
 		m.albedo_texture = _label_tex(kind)
-		m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+		m.texture_filter = Look.tex_filter()
 		# u läuft beim Drehkörper von außen gesehen rückwärts: spiegeln, damit die Schrift stimmt
 		m.uv1_scale = Vector3(-repeat, -1, 1)
 		m.uv1_offset = Vector3(0, 1, 0)
@@ -431,7 +431,7 @@ static func _ration(n: Node3D) -> void:
 	# Aufdruck vorn (zur Kamera)
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = _label_tex("ration")
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.roughness = 0.7
 	var q := MeshInstance3D.new()
 	var qm := QuadMesh.new()
@@ -595,7 +595,7 @@ static func _dictaphone(n: Node3D) -> void:
 	# Lautsprecher-Schlitze unten, Mikrofon oben, Markenstreifen
 	var sp := StandardMaterial3D.new()
 	sp.albedo_texture = _label_tex("speaker")
-	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	sp.texture_filter = Look.tex_filter()
 	sp.roughness = 0.6
 	var q := MeshInstance3D.new()
 	var qm := QuadMesh.new()
@@ -673,7 +673,7 @@ static func _watering_can(n: Node3D) -> void:
 	BuildKit.cylinder(rose, 0.0135, 0.006, Vector3(0, -0.003, 0), brass, false, Vector3.ZERO, -1.0, 8)
 	var holes := StandardMaterial3D.new()
 	holes.albedo_texture = _label_tex("rose")
-	holes.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	holes.texture_filter = Look.tex_filter()
 	holes.roughness = 0.4
 	holes.metallic = 0.5
 	HandKit.disc(rose, 0.027, Vector3(0, 0.0485, 0), holes, 10)

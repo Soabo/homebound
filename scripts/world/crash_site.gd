@@ -37,7 +37,7 @@ static func hull_material() -> StandardMaterial3D:
 		_hull.albedo_color = Color(0.45, 0.48, 0.55)
 		_hull.metallic = 0.85
 		_hull.roughness = 0.28
-		_hull.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+		_hull.texture_filter = Look.tex_filter()
 		_hull.uv1_triplanar = true
 		_hull.uv1_scale = Vector3(3, 3, 3)
 	return _hull
@@ -111,7 +111,7 @@ func _build_scorch() -> void:
 	m.vertex_color_use_as_albedo = true
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.albedo_texture = TextureFactory.get_texture("grass_ground")
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.roughness = 1.0
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

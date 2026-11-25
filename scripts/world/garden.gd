@@ -214,7 +214,7 @@ func _build_rain_barrel(at: Vector3) -> void:
 	wood.albedo_texture = TextureFactory.get_texture("planks_v")
 	wood.albedo_color = Color(1.35, 1.15, 0.95)
 	wood.vertex_color_use_as_albedo = true
-	wood.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	wood.texture_filter = Look.tex_filter()
 	wood.uv1_triplanar = true
 	wood.uv1_world_triplanar = true
 	wood.uv1_scale = Vector3(2.0, 2.0, 2.0)

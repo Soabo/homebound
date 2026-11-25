@@ -710,6 +710,7 @@ void fragment() {
 	ROUGHNESS = 1.0;
 }
 """ % [FAR_DROP, CORE_CHUNKS * CHUNK - 8.0]
+	sh.code = Look.shader_code(sh.code)   # klarer Stil: weich gefiltert
 	_far_mat = ShaderMaterial.new()
 	_far_mat.shader = sh
 	_far_mat.set_shader_parameter("tex", TextureFactory.get_texture("grass_ground"))

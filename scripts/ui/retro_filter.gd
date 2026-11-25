@@ -22,6 +22,7 @@ func _ready() -> void:
 	_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rect.material = _mat
 	add_child(_rect)
+	set_look(Settings.look)
 	get_viewport().size_changed.connect(_update_pixel_size)
 	_update_pixel_size()
 
@@ -38,6 +39,11 @@ func _update_pixel_size() -> void:
 ## Rechnet jetzt Settings.apply_render_scale (zusammen mit der Grafikstufe).
 func _apply_render_scale() -> void:
 	Settings.apply_render_scale()
+
+
+## Grafikstil (Settings.look): retro = grobe Pixel + Farbstufen, klar = nur Vignette und feines Korn.
+func set_look(style: String) -> void:
+	_mat.set_shader_parameter("pixelate", 1.0 if style == "retro" else 0.0)
 
 
 ## Stärke der Verzerrung durch den Blick der Kreatur (0..1).

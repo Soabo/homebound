@@ -865,6 +865,13 @@
   (-4,53 | 4,0) näher an der Haustür (weiter geht nicht, sonst schlägt die offene Tür an), Ofenbank nur bis `WaldlerHouse.BANK_X`
   (-5,3) – dazwischen passt der Spieler durch (Prüfung Kapsel-Test in `_t_fixes_2511`).
 - Truhe: Gewicht je Stapel (bei mehreren „je …“) und Summe je Spalte (`GameMenus._fill_chest`).
+- Grafikstil (Christian 25.11.: „zu pixelig und zu klötzchenhaft“): `Look` (scripts/world/look.gd), Einstellung `Settings.look`
+  retro|klar (Menü „Grafikstil“, default_settings.json `look`, Befehlszeile `-- --look=klar` für Bilder/Tests). Wird in
+  `Settings._ready` VOR dem Weltaufbau gesetzt; Wechsel im Menü: Bildschicht sofort, Texturen/Kanten beim nächsten Laden.
+  klar = Retro-Filter ohne Pixel/Farbstufen (`pixelate` 0, nur Vignette + feines Korn), volle Auflösung + MSAA/FXAA der Grafikstufe,
+  Texturen ×4 weich vergrößert + Mipmaps + Linear/Anisotrop (`Look.tex_filter()` statt NEAREST, Shader-Dateien per
+  `Look.patch_shaders`, Gelände-Fernsicht `Look.shader_code`), `BuildKit.box` = abgeschrägte Kanten (`Look.bevel_box`, Netz je Maß
+  geteilt, Material als material_override), Zylinder/Kugeln ≥ 14 Segmente (`Look.segments`, ≤ 4 Seiten bleiben eckig).
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

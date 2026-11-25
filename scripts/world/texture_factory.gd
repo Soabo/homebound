@@ -48,6 +48,13 @@ static func get_texture(kind: String) -> Texture2D:
 		_:
 			img = Image.create(4, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.MAGENTA)
+	if Look.smooth and img.get_width() >= 8 and not img.has_mipmaps():
+		# klarer Stil: Pixelmuster weich vergrößern (runde Blattränder statt Treppen), dann Mipmaps gegen Flimmern
+		if img.get_width() <= 128 and img.get_height() <= 128:
+			if img.is_compressed():
+				img.decompress()
+			img.resize(img.get_width() * 4, img.get_height() * 4, Image.INTERPOLATE_CUBIC)
+		img.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(img)
 	_cache[kind] = tex
 	return tex

@@ -15,7 +15,7 @@ static func _materials() -> void:
 		return
 	skin = StandardMaterial3D.new()
 	skin.albedo_texture = TextureFactory.get_texture("alien_skin")
-	skin.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	skin.texture_filter = Look.tex_filter()
 	skin.uv1_triplanar = true
 	skin.uv1_world_triplanar = false
 	skin.uv1_scale = Vector3(4.0, 4.0, 4.0)

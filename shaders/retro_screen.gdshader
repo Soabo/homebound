@@ -9,6 +9,8 @@ uniform float dither_strength = 0.45;
 uniform float vignette_strength = 0.3;
 uniform float grain_strength = 0.018;
 uniform float enabled = 1.0;
+// 1 = Retro (grobe Pixel + Farbstufen), 0 = klarer Stil: nur Vignette und feines Korn
+uniform float pixelate = 1.0;
 // Blick der Kreatur ins Hirn (0 = nichts, 1 = volle Stärke): Wabern, Doppelbilder, Farbsäume, Rot und Dunkel
 uniform float mind = 0.0;
 // Farbabstimmung je Tageszeit (DayNightEnvironment): Farbe multiplizieren, Schatten anheben, Sättigung, Kontrast
@@ -30,8 +32,8 @@ float hash(vec2 p) {
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
-	vec2 cell = floor(FRAGCOORD.xy / pixel_size);
-	if (enabled > 0.5) {
+	vec2 cell = floor(FRAGCOORD.xy / (pixelate > 0.5 ? pixel_size : 1.0));
+	if (enabled > 0.5 && pixelate > 0.5) {
 		vec2 px = SCREEN_PIXEL_SIZE * pixel_size;
 		uv = (floor(SCREEN_UV / px) + 0.5) * px;
 	}
@@ -61,12 +63,14 @@ void fragment() {
 	c = max(c, vec3(0.0));
 	if (enabled > 0.5) {
 		int bi = int(mod(cell.x, 4.0)) + int(mod(cell.y, 4.0)) * 4;
-		float d = (BAYER[bi] / 16.0 - 0.5) * dither_strength;
-		c = floor(c * color_levels + d + 0.5) / color_levels;
+		if (pixelate > 0.5) {
+			float d = (BAYER[bi] / 16.0 - 0.5) * dither_strength;
+			c = floor(c * color_levels + d + 0.5) / color_levels;
+		}
 		vec2 v = SCREEN_UV - 0.5;
 		c *= 1.0 - dot(v, v) * vignette_strength * 1.6;
 		float g = hash(cell + vec2(floor(TIME * 18.0) * 3.7, 0.0)) - 0.5;
-		c += g * grain_strength;
+		c += g * grain_strength * (pixelate > 0.5 ? 1.0 : 0.7);
 	}
 	if (mind > 0.001) {
 		float m = mind;

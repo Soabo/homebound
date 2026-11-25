@@ -52,7 +52,7 @@ static func material(kind: String) -> StandardMaterial3D:
 	m.albedo_texture = texture(kind)
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	m.alpha_scissor_threshold = 0.5
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.roughness = 0.8
 	_mats[kind] = m
 	return m

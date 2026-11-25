@@ -88,7 +88,7 @@ static func tex_mat(kind: String, repeat_m: float = 1.0, tint: Color = Color.WHI
 	m.albedo_texture = TextureFactory.get_texture(kind)
 	m.albedo_color = tint
 	m.roughness = roughness
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = true
 	m.uv1_triplanar_sharpness = 4.0
@@ -127,7 +127,7 @@ static func log_end_mat() -> StandardMaterial3D:
 		return _materials[key]
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = TextureFactory.get_texture("log_end")
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.uv1_triplanar = true
 	m.uv1_world_triplanar = false
 	m.uv1_scale = Vector3(1.0 / 0.32, 1.0 / 0.32, 1.0 / 0.32)
@@ -148,7 +148,7 @@ static func cutout_mat(kind: String, tint: Color = Color.WHITE) -> StandardMater
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	m.alpha_scissor_threshold = 0.5
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	m.texture_filter = Look.tex_filter()
 	m.roughness = 1.0
 	m.vertex_color_use_as_albedo = true
 	_materials[key] = m
@@ -181,10 +181,15 @@ static func foliage_mat(kind: String, sway: float, height_ref: float = 1.0, rigi
 static func box(parent: Node, size: Vector3, pos: Vector3, mat: Material, collide: bool = true,
 		rot_deg: Vector3 = Vector3.ZERO, node_name: String = "") -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	bm.material = mat
-	mi.mesh = bm
+	if Look.smooth and minf(size.x, minf(size.y, size.z)) > 0.012:
+		# klarer Stil: abgeschrägte Kanten (Netz je Maß geteilt, Material am Objekt)
+		mi.mesh = Look.bevel_box(size)
+		mi.material_override = mat
+	else:
+		var bm := BoxMesh.new()
+		bm.size = size
+		bm.material = mat
+		mi.mesh = bm
 	mi.position = pos
 	mi.rotation_degrees = rot_deg
 	if node_name != "":
@@ -222,7 +227,7 @@ static func cylinder(parent: Node, radius: float, height: float, pos: Vector3, m
 	cm.bottom_radius = radius
 	cm.top_radius = radius if top_radius < 0.0 else top_radius
 	cm.height = height
-	cm.radial_segments = segments
+	cm.radial_segments = Look.segments(segments)
 	cm.rings = 1
 	cm.material = mat
 	mi.mesh = cm
@@ -243,8 +248,8 @@ static func sphere(parent: Node, radius: float, pos: Vector3, mat: Material,
 	var sm := SphereMesh.new()
 	sm.radius = radius
 	sm.height = radius * 2.0
-	sm.radial_segments = segments
-	sm.rings = maxi(segments / 2, 4)
+	sm.radial_segments = Look.segments(segments)
+	sm.rings = maxi(Look.segments(segments) / 2, 4)
 	sm.material = mat
 	mi.mesh = sm
 	mi.position = pos
