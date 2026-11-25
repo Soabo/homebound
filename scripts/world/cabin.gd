@@ -918,6 +918,14 @@ func _build_bedroom() -> void:
 	var ribbon := BuildKit.color_mat(Color(0.95, 0.78, 0.2), 0.4)
 	BuildKit.box_mm(self, Vector3(-1.49, y, -1.66), Vector3(-1.43, y + 0.285, -1.32), ribbon, false)
 	BuildKit.box_mm(self, Vector3(-1.63, y, -1.52), Vector3(-1.29, y + 0.285, -1.46), ribbon, false)
+	# Bens Geschenk „Für Papa“ – nur ansehen, geöffnet wird es erst im Ende „Gehört“ (Christian 25.11.)
+	var gift_look := PlaceInspect.new()
+	gift_look.name = "GiftLook"
+	gift_look.prompt = "[E] Bens Geschenk ansehen"
+	gift_look.text = "„Für Papa“, in Bens krakeliger Schrift. Er hatte es auf dem Schoß, die ganze Fahrt. Die Kanzlei hat es mir geschickt, ungeöffnet. Ich bringe es nicht über mich, es aufzumachen. Noch nicht."
+	gift_look.area_size = Vector3(0.45, 0.4, 0.45)
+	gift_look.position = Vector3(-1.46, y + 0.15, -1.49)
+	add_child(gift_look)
 	BuildKit.sphere(self, 0.05, Vector3(-1.46, y + 0.3, -1.49), ribbon, Vector3(1.2, 0.6, 1.2), 6)
 	# Kleiderhaken mit Jacke
 	var hz := -1.0 - INT_T * 0.5

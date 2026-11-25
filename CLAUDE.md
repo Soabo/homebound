@@ -118,7 +118,7 @@
 - Versorgungs-Manager `Supplies` (Autoload), Werte `data/supplies/supplies.tres` (`SupplyConfig`). Fundstücke: `SupplyProps`.
 - Aufgaben-Manager `Tasks` (Autoload), Inhalte `data/tasks/tasks.json` (Ziele + Tagesroutine, Bedingungen siehe `_info`),
   Systeme melden mit `Tasks.flag("…")`. Anzeige: Tablet-Reiter „Aufgaben“ (Christian: „Ziele + Tagesroutine“).
-- Überwachungskameras baut man selbst ein: Kamera 1–3 (`camera_N`) in der Hütte finden, im Baumodus nur außen an Hütte
+- Überwachungskameras baut man selbst ein: Kamera 1–3 (`camera_N`) in der Hütte finden, aus der Hand nur außen an Hütte
   oder Schuppen anbringen (`BuildController._camera_update`), R schwenkt; gespeichert in `Supplies.cameras`, Monitor
   (`Surveillance`, 3 Plätze) zeigt leere Plätze als „nicht installiert“.
   Tests nutzen `Surveillance.install_defaults()`. Test: `--night-test=supplies`.
@@ -884,6 +884,19 @@
   Speis (1,47 | -1,6), Spind halb so laut, W-17-Suchgerät-Anzeige rechts neben der Schleich-Anzeige (nicht auf der Schnellleiste),
   GadgetHud rutscht unter die FPS-Anzeige. Geschenk im Schlafzimmer (`Cabin` „Gift“) = Bens Geschenk „Für Papa“, nur Deko;
   geöffnet wird es im Ende „Gehört“ (endings.json `gift`). Prüfung `RegressTest._t_fixes_2511b`.
+
+- Bauen aus der Hand (Christian 25.11., Taste B und Baumodus entfallen): Bauteile, Kameras und Bretter haben items.json
+  `"hand": "build"` (liegen auf der Schnellleiste; rechte Hand bleibt leer, links der Bauhammer). `BuildController` folgt der
+  Schnellleiste (`_follow_hotbar`, `is_build_item`): angewählt = Vorschau, Linksklick = aufstellen/anbringen, R tippen = drehen/schwenken,
+  R halten (`DISMANTLE_HOLD`, `tick_r`) auf Gebautem = abbauen (auch ohne Bauteil in der Hand; `Structure.dismantle_hold`,
+  `BuildController.can_dismantle`; Player.use_target lässt R dort aus). E bleibt beim Bauen fürs Benutzen frei.
+  Bretter in der Hand: Fenster `CabinWindow.board_prompt/board_up` (verbarrikadieren/ausbessern), Haustür `Door.board_prompt/board_up`
+  (reparieren) – kosten Nägel; R am Fenster/zur Reparatur gibt es nicht mehr. Inventar-Knopf „In die Hand“ (`GameMenus._on_build`).
+  Einmalige Erklärungen über Tasks-Flags `hint_build_*`. Belagerung (Luke zunageln, Keller abstützen) und Zelt flicken bleiben wie gehabt.
+- W-17 erklärt sich (`W17Locator._explain`, Flag `w17_hint`, nach `HINT_DELAY` s Tragen) und markiert Orte, an denen es voll
+  ausschlägt (`HIT_AT`, Flag `w17_hit_<ort>`, `W17Locator.hit_sites`) – Karte zeigt „✦ W-17“, auch auf der alten Einsatzkarte.
+- Anwalts-Mail: Die Kanzlei hat die Sachen samt Bens Geschenk an die Hütte bringen lassen (tablet.json). Geschenk ansehen: `Cabin/GiftLook`.
+  Prüfung `RegressTest._t_build_hand_2511`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

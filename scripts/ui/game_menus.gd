@@ -302,7 +302,7 @@ func _fill_inventory() -> void:
 			b.pressed.connect(_on_use.bind(id))
 			row.add_child(b)
 		if def.has("build") or def.has("camera"):
-			var b := _button("Anbringen" if def.has("camera") else "Bauen")
+			var b := _button("In die Hand")
 			b.pressed.connect(_on_build.bind(id))
 			row.add_child(b)
 		var drop := _button("Ablegen")
@@ -369,7 +369,7 @@ func _fill_crafting() -> void:
 	var cooking := _station == "stove"
 	_title.text = "Kochen" if cooking else "Werkbank"
 	_info.text = ("Zutaten kommen in den Topf und garen, solange das Feuer brennt.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
-		"Traglast %.1f / %.0f kg   –   Hergestellte Bauteile setzt du über das Inventar (Tab → Bauen) oder mit B." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
+		"Traglast %.1f / %.0f kg   –   Bauteile auf die Schnellleiste legen und anwählen: Linksklick baut, R dreht." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
 	var busy := false
 	if cooking and is_instance_valid(_cooker):
 		var pot := _cooker.get("pot") as CookPot
@@ -459,9 +459,16 @@ static func can_discard(id: String) -> bool:
 	return not (int(def.get("stack", 99)) <= 1 and String(def.get("category", "")) in ["Werkzeug", "Kamera", "Fund", "Bauteil"])
 
 
+## Bauteil auf die Schnellleiste legen und anwählen (Bauen geht aus der Hand, Christian 25.11.).
 func _on_build(id: String) -> void:
+	var slot := Inventory.slot_of(id)
+	if slot < 0:
+		slot = Inventory.hotbar.find("")
+		if slot < 0:
+			slot = Inventory.selected
+		Inventory.set_slot(slot, id)
+	Inventory.select(slot)
 	close()
-	get_tree().call_group("build_controller", "start", id)
 
 
 func _on_craft(r: Dictionary) -> void:

@@ -312,7 +312,7 @@ func _t_build_through_menu() -> void:
 	await _frames(3)
 	var before := Builder.records.size()
 	menus.open_inventory()
-	bc._unhandled_input(_action("interact"))
+	bc._unhandled_input(_action("attack"))
 	_ok("Bauen: nicht durch ein offenes Menü", Builder.records.size() == before)
 	menus.close()
 	bc.stop()
@@ -396,6 +396,7 @@ func _t_more() -> void:
 	await _t_sounds_2411()
 	await _t_fixes_2511()
 	await _t_fixes_2511b()
+	await _t_build_hand_2511()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -1465,7 +1466,7 @@ func _t_blueprints() -> void:
 		if w is CabinWindow and (w as CabinWindow).barricade <= 0.0:
 			win = w
 	if win:
-		_ok("Fenster: Verbarrikadieren erst nach unruhiger Nacht", String(win.call("get_secondary_prompt", _player())) == "")
+		_ok("Fenster: Verbarrikadieren erst nach unruhiger Nacht", String(win.call("board_prompt")) == "")
 	Inventory.add("stone", 1)
 	_ok("Baupläne: erster Stein schaltet Lagerfeuer + Steinwall frei", Research.recipe_unlocked(rec["campfire"]) and Research.recipe_unlocked(rec["stone_wall"]))
 	Tasks.flag("unrest_night")
@@ -1692,7 +1693,7 @@ func _t_hands() -> void:
 	var bad: Array = []
 	var all := DataDB.items()
 	for id: String in all:
-		if not (all[id] is Dictionary) or not (all[id] as Dictionary).has("hand"):
+		if not (all[id] is Dictionary) or not (all[id] as Dictionary).has("hand") or String((all[id] as Dictionary)["hand"]) == "build":
 			continue
 		var it := HandItems.build(holder, HandItems.model_of(id))
 		if it.get_child_count() == 0 or float(it.get_meta("grip", 0.0)) <= 0.0:
@@ -3632,3 +3633,103 @@ func _t_fixes_2511b() -> void:
 	GameState.bed_day = -5
 	GameState._on_slept()
 	_ok("Speichern: jeden Morgen und nach jedem Schlaf (Bett/Zelt)", morning_ok and GameState.bed_day == keep_day)
+
+
+## Christian 25.11.: Bauen aus der Hand statt Baumodus (B), R halten = abbauen, Bretter in der Hand = Fenster zunageln.
+func _t_build_hand_2511() -> void:
+	var bc := _scene().get_node("BuildController") as BuildController
+	var p := _player()
+	_ok("Bauen: Taste B gibt es nicht mehr", not InputMap.has_action("build"))
+	Inventory.add("fence_panel", 2)
+	var slot := Inventory.slot_of("fence_panel")
+	if slot < 0:
+		slot = 7   # Leiste war voll: auf Platz 8 legen (wie „In die Hand“ im Inventar)
+		Inventory.set_slot(slot, "fence_panel")
+	_ok("Bauen: Zaun liegt auf der Schnellleiste", Inventory.slot_of("fence_panel") >= 0)
+	var old_sel := Inventory.selected
+	Inventory.select(slot)
+	await _frames(3)
+	_ok("Bauen: Zaun anwählen = Vorschau", bc.active and bc.type == "fence_panel" and bc._preview != null)
+	_ok("Bauen: rechte Hand frei, Hammer links", p.hands._wanted_right() == "")
+	var rot := bc._rot
+	bc.tick_r(0.1, true, p)
+	bc.tick_r(0.0, false, p)
+	_ok("Bauen: R tippen dreht", absf(bc._rot - rot - PI * 0.25) < 0.01)
+	# Aufstellen an einer freien Stelle im Garten
+	bc._pos = Vector3(12.0, Terrain.height_at(12.0, -12.0), -12.0)
+	bc._valid = true
+	var before := Builder.records.size()
+	bc._place()
+	await _frames(2)
+	_ok("Bauen: Linksklick stellt auf", Builder.records.size() == before + 1)
+	# Abbauen: R halten auf dem Zaun
+	var st: Structure = null
+	var uid := int(Builder.records[Builder.records.size() - 1]["uid"])
+	for s in get_tree().get_nodes_in_group("structure"):
+		if not (s as Structure).preview and (s as Structure).uid == uid:
+			st = s
+	var had := Inventory.count("fence_panel")
+	if st:
+		p.current_interactable = st
+		_ok("Abbauen: Hinweis R halten", String(st.get_secondary_prompt(p)).contains("R halten") and BuildController.can_dismantle(st))
+		bc.tick_r(0.1, true, p)
+		bc.tick_r(0.0, false, p)
+		_ok("Abbauen: kurz tippen baut nicht ab", is_instance_valid(st) and not st.is_queued_for_deletion())
+		for i in 12:
+			bc.tick_r(0.1, true, p)
+		bc.tick_r(0.0, false, p)
+		await _frames(2)
+		_ok("Abbauen: R halten baut ab, Teil zurück", not is_instance_valid(st) and Inventory.count("fence_panel") == had + 1)
+		p.current_interactable = null
+	else:
+		_ok("Abbauen: Zaun gefunden", false)
+	# Anderen Platz wählen = Bauen aus
+	var other := slot
+	for k in Inventory.SLOTS:
+		var hid: String = Inventory.hotbar[k]
+		if hid == "" or not BuildController.is_build_item(hid):
+			other = k
+			break
+	Inventory.select(other)
+	await _frames(2)
+	_ok("Bauen: anderer Platz = Bauen aus", not bc.active, "Leiste %s, gewählt %d, Typ %s" % [Inventory.hotbar, other, bc.type])
+	# Bretter in der Hand: Fenster zunageln (kostet Nägel)
+	if not Research.blueprints.has("bp_secure"):
+		Research.blueprints.append("bp_secure")
+	var win: CabinWindow = null
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow and (w as CabinWindow).barricade <= 0.0:
+			win = w
+	Inventory.add("planks", 4)
+	Inventory.add("nails", 8)
+	var ps := Inventory.slot_of("planks")
+	if ps < 0:
+		ps = 8
+		Inventory.set_slot(ps, "planks")
+	Inventory.select(ps)
+	await _frames(2)
+	_ok("Bretter: anwählen = Bauen mit Brettern", bc.active and bc.type == "planks", "Leiste %s, gewählt %d, Typ %s %s" % [Inventory.hotbar, Inventory.selected, bc.type, bc.active])
+	if win:
+		p.current_interactable = win
+		var planks := Inventory.count("planks")
+		var nails := Inventory.count("nails")
+		_ok("Bretter: Fenster zeigt Hinweis, R nicht mehr", win.board_prompt() != "" and win.get_secondary_prompt(p) == "")
+		bc._board_up(p)
+		_ok("Bretter: Linksklick nagelt zu (2 Bretter, 4 Nägel)", win.barricade > 0.0 and Inventory.count("planks") == planks - 2 and Inventory.count("nails") == nails - 4)
+		win.barricade = 0.0
+		win.call("_update_visuals")
+		p.current_interactable = null
+	Inventory.remove("planks", Inventory.count("planks"))
+	Inventory.remove("fence_panel", Inventory.count("fence_panel"))
+	Inventory.select(old_sel)
+	await _frames(2)
+	_ok("Bretter weg = Bauen aus", not bc.active)
+	# W-17: Gedanke beim Tragen und Markierung auf der Karte
+	Tasks.flags.erase("w17_hint")
+	var loc := _scene().find_child("W17Locator", true, false) as W17Locator
+	if loc:
+		loc._carried_for = 10.0
+		loc._explain(0.5)
+		loc._mark_site("absturz")
+	_ok("W-17: erklärt sich und markiert Orte", Tasks.flags.has("w17_hint") and W17Locator.hit_sites().has("absturz"))
+	Tasks.flags.erase("w17_hit_absturz")

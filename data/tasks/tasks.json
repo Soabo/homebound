@@ -28,7 +28,7 @@
     {
       "id": "cameras",
       "title": "Kameras anbringen",
-      "text": "Bring die Kameras außen an der Hütte oder am Schuppen an (B = Bauen) und richte sie aus. Das Bild siehst du am Monitor.",
+      "text": "Bring die Kameras außen an der Hütte oder am Schuppen an (Kamera auf die Schnellleiste, anwählen, Linksklick) und richte sie aus. Das Bild siehst du am Monitor.",
       "unlock": [
         "got:camera_1"
       ],

@@ -5,7 +5,7 @@ extends CanvasLayer
 
 const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Alt  Langsam + Atem anhalten        Leertaste  Springen\n" + \
 		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe        Y / X  Lehnen\n" + \
-		"Tab  Inventar        B  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        J (halten)  Aufgaben        Esc  Menü        F1  Hilfe"
+		"Tab  Inventar        Bauteil in der Hand  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        J (halten)  Aufgaben        Esc  Menü        F1  Hilfe"
 
 var _clock: Label
 var _prompt: Label

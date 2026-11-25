@@ -797,6 +797,7 @@ func _save_reload_check(day: int) -> void:
 	# Uhr anhalten, damit sich zwischen Sichern und Vergleichen nichts von selbst ändert
 	TimeManager.running = false
 	await _frames(2)
+	Story.update(false)   # fällige Story-Hinweise jetzt auslösen (sonst prüft Story erst in bis zu 1,5 s – nach dem Laden sofort)
 	GameState.take_snapshot()
 	var before := _fingerprint()
 	_restarted = false

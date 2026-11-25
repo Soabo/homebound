@@ -242,7 +242,11 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Der Tastendruck gilt danach als verbraucht: Sonst bekäme ihn im selben Augenblick auch noch die Bank
 ## oder der Schrank, in den man gerade gestiegen ist – und man stünde sofort wieder draußen.
 func use_target(secondary: bool) -> void:
-	if _building() or not current_interactable:
+	if not current_interactable:
+		return
+	# R beim Bauen = drehen; R auf Gebautem = halten zum Abbauen (beides im BuildController)
+	if secondary and (_building() or BuildController.can_dismantle(current_interactable)):
+		get_viewport().set_input_as_handled()
 		return
 	if secondary:
 		current_interactable.secondary_interact(self)
@@ -705,7 +709,7 @@ func aim_point() -> Dictionary:
 
 ## Gibt es gerade etwas Benutzbares im Fadenkreuz? (für den feinen Rahmen im HUD)
 func has_usable_target() -> bool:
-	return current_interactable != null and is_instance_valid(current_target_body) and _last_prompt != "" and not _building()
+	return current_interactable != null and is_instance_valid(current_target_body) and _last_prompt != ""
 
 
 func _update_prompt(force: bool) -> void:

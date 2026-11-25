@@ -246,6 +246,18 @@ func _place_marks() -> void:
 		for t: Dictionary in targets:
 			if (t["pos"] as Vector2).distance_to(p["pos"]) < 1.0:
 				circled = true
+		var w17_hit := Tasks.flags.has("w17_hit_" + id)
+		if w17_hit:
+			# W-17 hat hier voll ausgeschlagen (W17Locator._mark_site): violettes Zeichen
+			var wl := Label.new()
+			wl.text = "✦ W-17"
+			wl.add_theme_font_size_override("font_size", 13)
+			wl.add_theme_color_override("font_color", Color(0.8, 0.6, 1.0))
+			wl.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+			wl.add_theme_constant_override("outline_size", 4)
+			wl.position = _to_screen(p["pos"]) + Vector2(-6, 6)
+			_marks.add_child(wl)
+			circled = true
 		if not full and not seen and not circled:
 			continue   # alte Einsatzkarte: unbekannte Orte fehlen
 		var l := Label.new()

@@ -131,30 +131,42 @@ func get_prompt(_player: Node) -> String:
 	return "%s – %s" % [window_name, state]
 
 
+## Verbarrikadieren geht seit 25.11. nur mit Brettern in der Hand (Linksklick, BuildController).
 func get_secondary_prompt(_player: Node) -> String:
+	return ""
+
+
+## Was Bretter in der Hand hier tun würden ("" = nichts).
+func board_prompt() -> String:
 	if barricade <= 0.0 and not Research.blueprints.has("bp_secure"):
 		return ""   # erst nach der ersten unruhigen Nacht (Christian)
 	if barricade <= 0.0:
-		return "[R] Verbarrikadieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
+		return "Verbarrikadieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	if barricade < max_barricade:
-		return "[R] Barrikade ausbessern  (1 Brett + 2 Nägel)"
+		return "Barrikade ausbessern  (1 Brett + 2 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	return ""
 
 
 func secondary_interact(_player: Node) -> void:
+	board_up()
+
+
+## Bretter annageln. true = hat geklappt.
+func board_up() -> bool:
 	var need := 2 if barricade <= 0.0 else 1
 	if barricade <= 0.0 and not Research.blueprints.has("bp_secure"):
-		return
+		return false
 	if barricade >= max_barricade:
-		return
+		return false
 	if not Inventory.remove_all({"planks": need, "nails": need * 2}):
-		EventBus.notify("Du brauchst %d Bretter und %d Nägel. Beides gibt es in der Werkstatt." % [need, need * 2], 3.0)
-		return
+		EventBus.notify("Du brauchst %d Bretter und %d Nägel. Nägel gibt es an der Werkbank." % [need, need * 2], 3.0)
+		return false
 	barricade = max_barricade if need == 2 else minf(barricade + max_barricade * 0.5, max_barricade)
 	Tasks.flag("barricaded")
 	SoundBank.hammer_series(self, global_position + Vector3(0, height * 0.5, 0), 4 if need == 2 else 3)
 	EventBus.noise_made.emit(global_position, 12.0)
 	_update_visuals()
+	return true
 
 
 # --- Zugang für Kreaturen ----------------------------------------------

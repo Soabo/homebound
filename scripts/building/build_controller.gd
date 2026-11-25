@@ -1,13 +1,19 @@
 class_name BuildController
 extends Node
-## Baumodus (GDD 7.1/7.2): freies Platzieren auf dem Grundstück mit Vorschau.
-##  B          Baumodus an / nächstes Bauteil / aus
-##  R          drehen (45°)
-##  E / Klick  platzieren
-## Grün = passt, rot = geht hier nicht (Haus, Schuppen, zu steil, belegt).
+## Bauen aus der Hand (Christian 25.11., vorher eigener Baumodus mit B):
+## Ein Bauteil (Zaun, Falle, Zelt, Kamera …) auf der Schnellleiste anwählen = Vorschau erscheint.
+##  Linksklick   aufstellen / anbringen
+##  R (tippen)   drehen (Kamera: schwenken)
+##  R (halten)   auf ein Gebautes schauen = abbauen (geht immer, auch ohne Bauteil in der Hand)
+##  Bretter in der Hand + Blick auf Fenster/Haustür: Linksklick = verbarrikadieren / reparieren (kostet Nägel)
+## Grün = passt, rot = geht hier nicht (Haus, Schuppen, zu steil, belegt). E bleibt fürs Benutzen frei.
 
 const REACH := 6.0
 const GRID := 0.25
+## So lange R halten, bis ein Bauteil abgebaut ist (Sekunden)
+const DISMANTLE_HOLD := 0.9
+## R kürzer als das = tippen (drehen)
+const TAP_TIME := 0.35
 
 var active: bool = false
 var type: String = ""
@@ -19,17 +25,28 @@ const NO_BUILD := [Rect2(-6.4, -4.9, 12.8, 9.8), Rect2(-5.8, 4.6, 7.2, 2.2), Rec
 var _pos: Vector3
 
 
+## Zuletzt angewählter Gegenstand der Schnellleiste (Wechsel startet/beendet das Bauen)
+var _last_equipped: String = "-"
+## R halten: Zeit, Ziel, schon erledigt
+var _r_down: bool = false
+var _r_time: float = 0.0
+var _r_target: Node = null
+var _r_done: bool = false
+
+
 func _ready() -> void:
 	name = "BuildController"
 	add_to_group("build_controller")
 
 
-func _buildable_items() -> Array[String]:
-	var out: Array[String] = []
-	for id in Inventory.items:
-		if DataDB.item(id).has("build") or DataDB.item(id).has("camera"):
-			out.append(id)
-	return out
+## Gegenstände, mit denen man aus der Hand baut (Bauteile, Kameras, Bretter zum Verbarrikadieren).
+static func is_build_item(id: String) -> bool:
+	var d := DataDB.item(id)
+	return d.has("build") or d.has("camera") or id == "planks"
+
+
+func _is_planks() -> bool:
+	return type == "planks"
 
 
 # --- Kameras anbringen ------------------------------------------------------
@@ -98,8 +115,7 @@ func _camera_update(player: Player) -> void:
 			_cam_preview.position = _cam_pos
 			_cam_preview.look_target = SecurityCamera.aim_target(_cam_pos, _cam_normal, _cam_yaw)
 			get_tree().current_scene.add_child(_cam_preview)
-	EventBus.interaction_prompt_changed.emit("%s  –  [E / Linksklick] anbringen   [R] schwenken   [B] weiter / beenden%s" % [
-		Inventory.display_name(type), "" if _valid else "\n" + why])
+	_prompt("%s  –  [Linksklick] anbringen   [R] schwenken%s" % [Inventory.display_name(type), "" if _valid else "\n" + why], player)
 
 
 func _camera_place() -> void:
@@ -114,11 +130,8 @@ func _camera_place() -> void:
 	_hammer_taps(3)
 	EventBus.notify("%s angebracht. Das Bild siehst du am Monitor im Wohnzimmer." % Inventory.display_name(type), 3.0)
 	_cam_yaw = 0.0
-	var items := _buildable_items()
-	if items.is_empty():
+	if Inventory.count(type) <= 0:
 		stop()
-	else:
-		start(items[0])
 
 
 func start(id: String) -> void:
@@ -127,14 +140,15 @@ func start(id: String) -> void:
 	type = id
 	active = true
 	_cam_key = ""
-	if _is_camera():
+	if _cam_preview:
+		_cam_preview.queue_free()
+		_cam_preview = null
+	if _is_camera() or _is_planks():
 		if _preview:
 			_preview.queue_free()
 			_preview = null
-		EventBus.notify("Kamera anbringen: auf eine Außenwand zielen  –  E anbringen, R schwenken, B weiter/aus", 4.0)
 		return
 	_make_preview()
-	EventBus.notify("Bauen: %s  –  E platzieren, R drehen, B weiter/aus" % Inventory.display_name(id), 4.0)
 
 
 func stop() -> void:
@@ -146,6 +160,9 @@ func stop() -> void:
 		_cam_preview.queue_free()
 		_cam_preview = null
 	EventBus.interaction_prompt_changed.emit("")
+	var player := get_tree().get_first_node_in_group("player") as Player if is_inside_tree() else null
+	if player:
+		player.call("_update_prompt", true)
 
 
 func _make_preview() -> void:
@@ -159,45 +176,131 @@ func _make_preview() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	var player := get_tree().get_first_node_in_group("player") as Player
-	if player == null or get_tree().paused:
+	if player == null or get_tree().paused or not active or player.input_locked:
 		return
-	if event.is_action_pressed("build"):
-		if player.input_locked and not active:
-			return
-		var items := _buildable_items()
-		if items.is_empty():
-			if active:
-				stop()
-			else:
-				EventBus.notify("Keine Bauteile dabei. An der Werkbank kannst du welche herstellen.", 3.0)
-			return
-		if not active:
-			start(items[0])
-		else:
-			var i := items.find(type)
-			if i < 0 or i == items.size() - 1:
-				stop()
-			else:
-				start(items[i + 1])
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		return   # offenes Menü: nicht hindurch bauen
+	if event.is_action_pressed("attack"):
 		get_viewport().set_input_as_handled()
-		return
-	if not active or player.input_locked:
-		return
-	if event.is_action_pressed("interact_secondary"):
-		if _is_camera():
-			# schwenken: -75° … +75° in 15°-Schritten
-			_cam_yaw += deg_to_rad(15.0)
-			if _cam_yaw > deg_to_rad(76.0):
-				_cam_yaw = deg_to_rad(-75.0)
-		else:
-			_rot += PI * 0.25
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("interact") or (active and event.is_action_pressed("attack")):
-		get_viewport().set_input_as_handled()
-		if _is_camera():
+		if _is_planks():
+			_board_up(player)
+		elif _is_camera():
 			_camera_place()
 		else:
 			_place()
+
+
+## R: kurz tippen = drehen/schwenken (nur beim Bauen), halten auf einem Bauteil = abbauen.
+func _process(delta: float) -> void:
+	var player := get_tree().get_first_node_in_group("player") as Player
+	if player == null:
+		return
+	_follow_hotbar(player)
+	var held := Input.is_action_pressed("interact_secondary") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED \
+			and not player.input_locked and not get_tree().paused
+	tick_r(delta, held, player)
+
+
+## R-Taste auswerten (eigene Funktion, damit Tests sie ohne echte Tastatur aufrufen können).
+func tick_r(delta: float, held: bool, player: Player) -> void:
+	if held:
+		if not _r_down:
+			_r_down = true
+			_r_time = 0.0
+			_r_done = false
+			_r_target = player.current_interactable if can_dismantle(player.current_interactable) else null
+		_r_time += delta
+		if _r_target != null and not _r_done:
+			if not is_instance_valid(_r_target) or player.current_interactable != _r_target:
+				_r_target = null
+			elif _r_time >= TAP_TIME:
+				var f := clampf((_r_time - TAP_TIME) / (DISMANTLE_HOLD - TAP_TIME), 0.0, 1.0)
+				var n := int(round(f * 10.0))
+				EventBus.interaction_prompt_changed.emit("Abbauen  " + "▮".repeat(n) + "▯".repeat(10 - n))
+				if f >= 1.0:
+					_r_done = true
+					_r_target.secondary_interact(player)
+					_r_target = null
+					player.call("_update_prompt", true)
+	elif _r_down:
+		_r_down = false
+		if active and not _r_done and _r_time < TAP_TIME:
+			_rotate()
+		_r_target = null
+
+
+## Kann das Ziel mit gehaltenem R abgebaut werden?
+static func can_dismantle(t: Node) -> bool:
+	return t != null and is_instance_valid(t) and t.has_method("dismantle_hold") and bool(t.call("dismantle_hold"))
+
+
+func _rotate() -> void:
+	if _is_camera():
+		# schwenken: -75° … +75° in 15°-Schritten
+		_cam_yaw += deg_to_rad(15.0)
+		if _cam_yaw > deg_to_rad(76.0):
+			_cam_yaw = deg_to_rad(-75.0)
+	elif not _is_planks():
+		_rot += PI * 0.25
+
+
+## Bauen folgt der Schnellleiste: Bauteil anwählen = Vorschau an, etwas anderes = aus.
+func _follow_hotbar(player: Player) -> void:
+	var eq := Inventory.equipped()
+	if eq == _last_equipped:
+		return
+	_last_equipped = eq
+	if eq != "" and is_build_item(eq):
+		start(eq)
+		_first_hint(eq)
+	elif active:
+		stop()
+
+
+## Einmal pro Art erklären, wie Bauen aus der Hand geht.
+func _first_hint(id: String) -> void:
+	var key := "hint_build_" + ("planks" if id == "planks" else ("camera" if _is_camera() else "part"))
+	if Tasks.flags.has(key):
+		return
+	Tasks.flag(key)
+	if id == "planks":
+		EventBus.notify("Bretter in der Hand: auf ein Fenster oder die Haustür schauen, Linksklick = zunageln (braucht Nägel).", 5.0)
+	elif _is_camera():
+		EventBus.notify("Kamera in der Hand: auf eine Außenwand zielen, Linksklick = anbringen, R = schwenken.", 5.0)
+	else:
+		EventBus.notify("Bauteil in der Hand: Linksklick = aufstellen, R = drehen. Gebautes abbauen: draufschauen und R halten.", 5.0)
+
+
+## Hinweiszeile beim Bauen; E-Ziele bleiben sichtbar.
+func _prompt(text: String, player: Player) -> void:
+	if _r_target != null and _r_time >= TAP_TIME:
+		return   # Abbau-Balken hat Vorrang
+	var t := player.current_interactable
+	if t and is_instance_valid(t):
+		var line := String(t.get_prompt(player)).get_slice("\n", 0)
+		if line != "":
+			text += "\n" + line
+		if can_dismantle(t):
+			text += "   [R halten] abbauen"
+	EventBus.interaction_prompt_changed.emit(text)
+
+
+# --- Bretter: Fenster und Haustür ---------------------------------------
+
+func _board_target(player: Player) -> Node:
+	var t := player.current_interactable
+	if t and is_instance_valid(t) and t.has_method("board_prompt") and String(t.call("board_prompt")) != "":
+		return t
+	return null
+
+
+func _board_up(player: Player) -> void:
+	var t := _board_target(player)
+	if t == null:
+		EventBus.notify("Mit Brettern kannst du Fenster verbarrikadieren und die Haustür reparieren – dazu draufschauen.", 3.0)
+		return
+	if bool(t.call("board_up")):
+		_hammer_taps(3)
 
 
 func _physics_process(_delta: float) -> void:
@@ -208,6 +311,21 @@ func _physics_process(_delta: float) -> void:
 		return
 	var player := get_tree().get_first_node_in_group("player") as Player
 	if player == null:
+		return
+	# Sitzen, Leiter, Menü: Vorschau ausblenden
+	var idle := player.input_locked or GameState.dead
+	if _preview:
+		_preview.visible = not idle
+	if _cam_preview:
+		_cam_preview.visible = not idle
+	if idle:
+		return
+	if _is_planks():
+		var t := _board_target(player)
+		if t:
+			_prompt("Bretter  –  [Linksklick] " + String(t.call("board_prompt")), player)
+		else:
+			_prompt("Bretter  –  auf ein Fenster oder die Haustür schauen", player)
 		return
 	if _is_camera():
 		_camera_update(player)
@@ -229,8 +347,7 @@ func _physics_process(_delta: float) -> void:
 	_preview.rotation.y = _rot
 	_valid = _check_valid(p)
 	_preview.set_preview_valid(_valid)
-	EventBus.interaction_prompt_changed.emit("%s  –  [E / Linksklick] platzieren   [R] drehen   [B] weiter / beenden%s" % [
-		Inventory.display_name(type), "" if _valid else "\nHier geht es nicht."])
+	_prompt("%s  –  [Linksklick] aufstellen   [R] drehen%s" % [Inventory.display_name(type), "" if _valid else "\nHier geht es nicht."], player)
 
 
 func _build_type() -> String:
@@ -282,11 +399,7 @@ func _place() -> void:
 	_hammer_taps(1)
 	EventBus.noise_made.emit(_pos, 14.0)
 	if Inventory.count(type) <= 0:
-		var items := _buildable_items()
-		if items.is_empty():
-			stop()
-		else:
-			start(items[0])
+		stop()
 
 
 ## Die linke Hand schlägt mit dem Bauhammer zu.

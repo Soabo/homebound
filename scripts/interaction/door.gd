@@ -68,8 +68,6 @@ func get_prompt(_player: Node) -> String:
 
 
 func get_secondary_prompt(_player: Node) -> String:
-	if is_entry and (is_broken() or health < max_health * 0.99):
-		return "[R] Tür reparieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
 	if not lockable or is_open:
 		return ""
 	return "[R] %s" % ("Aufschließen" if is_locked else "Abschließen")
@@ -86,17 +84,28 @@ func interact(_player: Node) -> void:
 		EventBus.noise_made.emit(global_position, 10.0)
 
 
-func secondary_interact(_player: Node) -> void:
+## Reparieren geht seit 25.11. mit Brettern in der Hand (Linksklick, BuildController).
+func board_prompt() -> String:
 	if is_entry and (is_broken() or health < max_health * 0.99):
-		if not Inventory.remove_all({"planks": 2, "nails": 4}):
-			EventBus.notify("Du brauchst 2 Bretter und 4 Nägel. Beides gibt es in der Werkstatt.", 3.0)
-			return
-		health = minf(health + max_health * 0.6, max_health)
-		SoundBank.hammer_series(self, global_position + Vector3(width * 0.5, 1.0, 0), 4)
-		EventBus.noise_made.emit(global_position, 12.0)
-		if is_open:
-			set_open(false)
-		return
+		return "Tür reparieren  (2 Bretter + 4 Nägel – du hast %d / %d)" % [Inventory.count("planks"), Inventory.count("nails")]
+	return ""
+
+
+func board_up() -> bool:
+	if board_prompt() == "":
+		return false
+	if not Inventory.remove_all({"planks": 2, "nails": 4}):
+		EventBus.notify("Du brauchst 2 Bretter und 4 Nägel. Nägel gibt es an der Werkbank.", 3.0)
+		return false
+	health = minf(health + max_health * 0.6, max_health)
+	SoundBank.hammer_series(self, global_position + Vector3(width * 0.5, 1.0, 0), 4)
+	EventBus.noise_made.emit(global_position, 12.0)
+	if is_open:
+		set_open(false)
+	return true
+
+
+func secondary_interact(_player: Node) -> void:
 	if not lockable or is_open:
 		return
 	is_locked = not is_locked

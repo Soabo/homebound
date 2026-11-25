@@ -503,10 +503,21 @@ func get_secondary_prompt(_player: Node) -> String:
 	if type == "campfire" and fire and fire.burning():
 		return fire.get_secondary_prompt()
 	if type == "campfire":
-		return "[R] Abbauen und einpacken"
+		return "[R halten] Abbauen und einpacken"
 	if type == "tent" and camp and camp.torn:
-		return "[R] Zerrissenes Zelt abbauen (nur Reste)"
-	return "[R] Abbauen"
+		return "[R halten] Zerrissenes Zelt abbauen (nur Reste)"
+	return "[R halten] Abbauen"
+
+
+## R muss gehalten werden, wenn R hier abbaut (nicht beim brennenden Lagerfeuer = löschen).
+func dismantle_hold() -> bool:
+	if preview:
+		return false
+	if type == "campfire" and fire and fire.burning():
+		return false
+	if type == "tent" and camp and camp.has_method("is_occupied") and bool(camp.call("is_occupied")):
+		return false
+	return true
 
 
 func secondary_interact(_player: Node) -> void:

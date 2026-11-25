@@ -6,7 +6,7 @@ extends Node3D
 ## Diktiergerät, Gießkanne … – oder die Faust, wenn der Platz leer ist. Die Finger legen sich um den
 ## Gegenstand (HandRig), die Modelle kommen aus HandItems.
 ## Linksklick = Angriff / Benutzen, Rechtsklick = Blocken (Gießkanne: füllen).
-## Linke Hand: Smartwatch mit LED als Taschenlampe (F), Kompassnadel im Display, Bauhammer im Baumodus (B).
+## Linke Hand: Smartwatch mit LED als Taschenlampe (F), Kompassnadel im Display, Bauhammer, solange ein Bauteil auf der Schnellleiste gewählt ist.
 ## Beide Hände schwingen beim Umsehen verzögert nach; beim Wechsel taucht der alte Gegenstand
 ## nach unten ab und der neue kommt von unten.
 
@@ -527,13 +527,16 @@ func _wanted_right() -> String:
 	var kind := "fist"
 	if id != "":
 		kind = String(DataDB.item(id).get("hand", "fist"))
+	if kind == "build":
+		return ""   # Bauteil gewählt: rechte Hand frei, links der Bauhammer (BuildController)
 	return kind
 
 
 func _wanted_id() -> String:
 	if player and ((player.input_locked and not working) or GameState.dead):
 		return ""
-	return Inventory.equipped()
+	var id := Inventory.equipped()
+	return "" if id != "" and String(DataDB.item(id).get("hand", "")) == "build" else id
 
 
 func _on_hotbar_changed() -> void:

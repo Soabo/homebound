@@ -7,6 +7,7 @@
     "category": "Ressource"
   },
   "planks": {
+    "hand": "build",
     "name": "Bretter",
     "weight": 1.0,
     "stack": 20,
@@ -285,6 +286,7 @@
     "category": "Bauteil"
   },
   "camera_1": {
+    "hand": "build",
     "name": "Kamera 1",
     "weight": 1.2,
     "stack": 1,
@@ -292,6 +294,7 @@
     "camera": 0
   },
   "camera_2": {
+    "hand": "build",
     "name": "Kamera 2",
     "weight": 1.2,
     "stack": 1,
@@ -299,6 +302,7 @@
     "camera": 1
   },
   "camera_3": {
+    "hand": "build",
     "name": "Kamera 3",
     "weight": 1.2,
     "stack": 1,
@@ -409,6 +413,7 @@
     "category": "Werkzeug"
   },
   "signal_jammer": {
+    "hand": "build",
     "name": "Störsender",
     "weight": 3.0,
     "stack": 3,
@@ -417,6 +422,7 @@
     "signature": 0.1
   },
   "growth_barrier": {
+    "hand": "build",
     "name": "Myzel-Sperre",
     "weight": 2.5,
     "stack": 4,
@@ -424,6 +430,7 @@
     "build": "growth_barrier"
   },
   "resonance_sensor": {
+    "hand": "build",
     "name": "Resonanz-Sensor",
     "weight": 3.0,
     "stack": 4,
@@ -432,6 +439,7 @@
     "signature": 0.15
   },
   "strobe_light": {
+    "hand": "build",
     "name": "Stroboskop-Leuchte",
     "weight": 3.5,
     "stack": 4,
@@ -440,6 +448,7 @@
     "signature": 0.05
   },
   "fence_panel": {
+    "hand": "build",
     "name": "Holzzaun-Element",
     "weight": 4.0,
     "stack": 6,
@@ -447,6 +456,7 @@
     "build": "fence_panel"
   },
   "spike_barricade": {
+    "hand": "build",
     "name": "Spießbarrikade",
     "weight": 5.0,
     "stack": 4,
@@ -454,6 +464,7 @@
     "build": "spike_barricade"
   },
   "stone_wall": {
+    "hand": "build",
     "name": "Steinwall",
     "weight": 8.0,
     "stack": 4,
@@ -461,6 +472,7 @@
     "build": "stone_wall"
   },
   "can_alarm": {
+    "hand": "build",
     "name": "Dosenalarm",
     "weight": 1.0,
     "stack": 6,
@@ -468,6 +480,7 @@
     "build": "can_alarm"
   },
   "motion_light": {
+    "hand": "build",
     "name": "Bewegungsmelder-Leuchte",
     "weight": 3.0,
     "stack": 4,
@@ -475,6 +488,7 @@
     "build": "motion_light"
   },
   "bear_trap": {
+    "hand": "build",
     "name": "Bärenfalle",
     "weight": 2.5,
     "stack": 4,
@@ -482,6 +496,7 @@
     "build": "bear_trap"
   },
   "snare": {
+    "hand": "build",
     "name": "Kleintierschlinge",
     "weight": 0.4,
     "stack": 6,
@@ -502,6 +517,7 @@
     "category": "Werkzeug"
   },
   "campfire": {
+    "hand": "build",
     "name": "Lagerfeuer-Bündel",
     "weight": 2.5,
     "stack": 1,
@@ -533,6 +549,7 @@
     "category": "Werkzeug"
   },
   "tent": {
+    "hand": "build",
     "name": "Zelt",
     "weight": 3.5,
     "stack": 1,
@@ -941,6 +958,7 @@
     "category": "Werkzeug"
   },
   "drone_decoy": {
+    "hand": "build",
     "name": "Drohnenköder",
     "weight": 2.5,
     "stack": 2,
@@ -949,6 +967,7 @@
     "signature": 0.1
   },
   "light_lure": {
+    "hand": "build",
     "name": "Lichtköder",
     "weight": 1.5,
     "stack": 3,

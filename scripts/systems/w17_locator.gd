@@ -5,11 +5,16 @@ extends CanvasLayer
 ## Der Sucher spürt W-17 auch (SeekerConfig.w17_range).
 
 const RANGE := 320.0
+## Ab dieser Signalstärke „schlägt W-17 voll aus“: der Ort wird auf der Karte markiert (Tasks-Flag w17_hit_<ort>).
+const HIT_AT := 0.8
+## Wie lange W-17 getragen sein muss, bevor der erklärende Gedanke kommt (Sekunden)
+const HINT_DELAY := 6.0
 
 var _label: Label
 var _t: float = 0.0
 var _beep: float = 0.0
 var _player: Node3D
+var _carried_for: float = 0.0
 
 
 func _ready() -> void:
@@ -55,9 +60,14 @@ func _process(delta: float) -> void:
 	var carried := Inventory.count("w17") > 0 and _player != null
 	_label.visible = carried
 	if not carried:
+		_carried_for = 0.0
 		return
 	var sig := signal_at(_player.global_position)
 	var s: float = sig[0]
+	_carried_for += delta
+	_explain(s)
+	if s >= HIT_AT and String(sig[1]) != "":
+		_mark_site(String(sig[1]))
 	var bars := int(round(s * 6.0))
 	_label.text = "W-17 Suchgerät  " + "▮".repeat(bars) + "▯".repeat(6 - bars)
 	_label.modulate.a = 0.55 + 0.45 * (0.5 + 0.5 * sin(_t * lerpf(2.0, 14.0, s)))
@@ -65,3 +75,35 @@ func _process(delta: float) -> void:
 	if s > 0.02 and _beep <= 0.0:
 		_beep = lerpf(3.2, 0.3, s)
 		SoundBank.play_ui(self, "signal", lerpf(-26.0, -12.0, s), lerpf(0.7, 1.6, s))
+
+
+## Christian 25.11.: Beim ersten Tragen soll klar werden, was W-17 tut und wohin es führt.
+func _explain(s: float) -> void:
+	if _carried_for < HINT_DELAY or Tasks.flags.has("w17_hint"):
+		return
+	Tasks.flag("w17_hint")
+	if s > 0.02:
+		EventBus.notify("W-17 piept. Je näher ich an etwas Fremdes komme, desto schneller – wie ein Suchgerät. Wo es voll ausschlägt, markiere ich die Stelle auf der Karte [M].", 7.0)
+	else:
+		EventBus.notify("W-17 ist kalt und still. Aber am Funkgerät hat es geknackt, im Takt der Lichter. Vielleicht schlägt es an, wenn ich in die Nähe von etwas Fremdem komme.", 7.0)
+
+
+## Ort, an dem W-17 voll ausschlägt: einmal melden und auf der Karte markieren.
+func _mark_site(id: String) -> void:
+	var key := "w17_hit_" + id
+	if Tasks.flags.has(key):
+		return
+	Tasks.flag(key)
+	var place: Dictionary = WorldMap.places().get(id, {})
+	var nm := String(place.get("name", "hier"))
+	EventBus.notify("W-17 schlägt voll aus – %s. Ich markiere die Stelle auf der Karte." % nm, 5.0)
+	SoundBank.play_ui(self, "signal", -8.0, 1.9)
+
+
+## Orte, an denen W-17 schon voll ausgeschlagen hat (für die Karte).
+static func hit_sites() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in WorldMap.data().get("w17_sites", []):
+		if Tasks.flags.has("w17_hit_" + id):
+			out.append(id)
+	return out

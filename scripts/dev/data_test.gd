@@ -12,7 +12,7 @@ const EFFECTS := ["", "drain", "noise", "signal", "hurt", "escape"]
 const ESCAPES := ["crawl", "spread", "call", "bloom"]
 const DROP_AFTER := ["changeling", "any", "creature", "drone", "manipulator", "seeker", "mauler", "change"]
 const DROP_WHERE := ["yard", "window", "porch", "garden", "forest", "stream", "patch", "player"]
-const HAND_KINDS := ["axe", "tin_snips", "food", "water", "watering_can", "dictaphone"]
+const HAND_KINDS := ["axe", "tin_snips", "food", "water", "watering_can", "dictaphone", "build"]
 const TASK_VALUES := ["day", "cameras", "tier", "analyses", "stage", "fuel", "gencond", "phase", "bottles_full"]
 const TASK_WORDS := ["beds_planted", "beds_watered", "firewood", "radio_heard", "water_bad"]
 ## Flags, die mit einem Vorsatz + Kennung gemeldet werden (Tasks.flag("vorsatz" + id))
