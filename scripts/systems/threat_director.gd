@@ -324,6 +324,11 @@ func siege_tonight() -> bool:
 	return h >= 16.0 or h < config.siege_end_hour
 
 
+## Steht für die kommende Nacht eine Belagerung an (auch schon tagsüber, für Hinweise)?
+func siege_planned() -> bool:
+	return night_kind == "siege" and siege_done_day != _planned_for_day
+
+
 ## Welches Vorkommnis heute Nacht möglich ist (mit Tagesgrenzen), Draußen-Dinge etwas häufiger.
 func _pick_omen(night_day: int) -> String:
 	var opts: Array[String] = []
@@ -439,6 +444,7 @@ var _evening_warned: int = -1
 
 func _process(delta: float) -> void:
 	_check_evening()
+	_check_siege_morning()
 	_check_forest_stalker(delta)
 	_check_mauler(delta)
 	_check_night_roam(delta)
@@ -464,13 +470,76 @@ func _check_evening() -> void:
 	if TimeManager.hour >= cfg.evening_warning_hour and TimeManager.hour < cfg.night_start_hour:
 		_evening_warned = TimeManager.day
 		if siege_tonight():
-			EventBus.notify("Etwas stimmt nicht. Heute Nacht kommen sie – kein Schlaf. Bereite die Hütte vor: Holz, Diesel, Bretter.", 7.0)
 			SoundBank.play_ui(self, "sting_dusk", -4.0)
+			if not brief_siege():
+				EventBus.notify(String(siege_briefing().get("evening_again", "")), 7.0)
 			return
 		EventBus.notify(cfg.evening_warning_text, 4.0)
 		SoundBank.play_ui(self, "menu_click", -10.0, 0.7)
 	elif TimeManager.hour < cfg.evening_warning_hour and TimeManager.hour > 6.0:
 		pass
+
+
+# --- Belagerung ankündigen (Christian 25.11.) ---------------------------------
+
+var _siege_hint_day: int = -1
+static var _briefing: Dictionary = {}
+
+
+static func siege_briefing() -> Dictionary:
+	if _briefing.is_empty():
+		var f := FileAccess.open("res://data/story/siege_briefing.json", FileAccess.READ)
+		if f:
+			_briefing = JSON.parse_string(f.get_as_text())
+	return _briefing
+
+
+## Morgens nach dem Aufwachen: Zeichen, dass heute Nacht eine Belagerung kommt.
+func _check_siege_morning() -> void:
+	if _siege_hint_day == TimeManager.day or not GameState.in_game() or EventBus.sleeping or TimeManager.is_night():
+		return
+	if TimeManager.hour < float(siege_briefing().get("morning_from_hour", 8.0)) or not siege_planned():
+		return
+	_siege_hint_day = TimeManager.day
+	EventBus.notify(String(siege_briefing().get("morning", "")), 8.0)
+	SoundBank.play_ui(self, "sting_dusk", -10.0, 0.8)
+
+
+## Zeile auf der Uhr-Aufgabenliste (J), solange heute Nacht eine Belagerung ansteht.
+func siege_watch_line() -> String:
+	if siege_planned() and not TimeManager.is_night():
+		return String(siege_briefing().get("watch_line", ""))
+	return ""
+
+
+## Vor der ersten Belagerung: Spiel anhalten und erklären, was zu tun ist. true = Erklärung gezeigt.
+func brief_siege(force: bool = false) -> bool:
+	if Tasks.flags.has("siege_briefed") and not force:
+		return false
+	if get_tree().get_first_node_in_group("choice_dialog") != null:
+		return false
+	Tasks.flag("siege_briefed")
+	var b := siege_briefing()
+	var txt := String(b.get("intro", "")) + "\n\n" + String(b.get("tasks_head", ""))
+	for id in SiegeNight.planned_tasks(get_tree()):
+		txt += "\n•  " + String((b.get("tasks", {}) as Dictionary).get(id, id))
+	txt += "\n\n" + String(b.get("rules_head", ""))
+	for r in b.get("rules", []):
+		txt += "\n•  " + String(r)
+	txt += "\n\n(Das steht auch auf dem Tablet unter Notizen.)"
+	if String(b.get("note", "")) != "":
+		Research.read_note(String(b["note"]))
+	if GameState.slot < 0:
+		EventBus.notify(String(b.get("title", "")), 4.0)   # automatische Tests: nicht anhalten
+		return true
+	var d := ChoiceDialog.new()
+	d.title = String(b.get("title", "Belagerung"))
+	d.text = txt
+	d.options = [{"id": "ok", "label": String(b.get("ok", "OK"))}]
+	d.show_cancel = false
+	d.pause_game = true
+	get_tree().root.add_child(d)
+	return true
 
 
 ## Zerfleischer (ab Story-Phase 2): nachts im Zeitfenster eines „mauler“-Ereignisses, sobald du draußen bist

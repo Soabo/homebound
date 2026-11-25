@@ -397,6 +397,7 @@ func _t_more() -> void:
 	await _t_fixes_2511()
 	await _t_fixes_2511b()
 	await _t_build_hand_2511()
+	await _t_fixes_2511c()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2950,10 +2951,7 @@ func _t_dread_2311() -> void:
 	_ok("Gesundheit: Treffer zählen mehr (%.0f statt 34)" % hit, hit > 40.0)
 	p.health = 100.0
 	p.take_damage(10.0, p.global_position + Vector3(1, 1, 0), "trap")
-	_ok("Gesundheit: Falle verletzt das Bein", Survival.leg_hurt())
-	Inventory.add("medkit", 1)
-	Inventory.use("medkit")
-	_ok("Gesundheit: Verbandskasten schient das Bein", not Survival.leg_hurt())
+	_ok("Gesundheit: kein verletztes Bein mehr (Christian 25.11.)", not Survival.leg_hurt())
 	_ok("Gesundheit: Schlaf heilt nur wenig (%.1f/Std.)" % Survival.cfg.sleep_heal_per_hour, Survival.cfg.sleep_heal_per_hour <= 5.0)
 	p.health = 40.0
 	var st := Survival.get_state()
@@ -3733,3 +3731,61 @@ func _t_build_hand_2511() -> void:
 		loc._mark_site("absturz")
 	_ok("W-17: erklärt sich und markiert Orte", Tasks.flags.has("w17_hint") and W17Locator.hit_sites().has("absturz"))
 	Tasks.flags.erase("w17_hit_absturz")
+
+
+## Christians Liste 25.11. abends (nach der ersten Belagerung).
+func _t_fixes_2511c() -> void:
+	var p := _player()
+	var keep := p.global_position
+	Survival.hurt_leg()
+	_ok("Kein verletztes Bein mehr", not Survival.leg_hurt())
+	# Belagerung: Erklärung kennt die Aufgaben, Notiz landet auf dem Tablet
+	var td := ThreatDirector
+	var keep_kind: String = td.night_kind
+	td.night_kind = "siege"
+	td.siege_done_day = -1
+	Tasks.flags.erase("siege_briefed")
+	var planned := SiegeNight.planned_tasks(get_tree())
+	var shown := td.brief_siege()
+	_ok("Belagerung: Erklärung mit Aufgaben (%s), Notiz auf dem Tablet" % str(planned),
+		shown and not planned.is_empty() and Research.notes.has("belagerung_regeln") and Tasks.flags.has("siege_briefed"))
+	_ok("Belagerung: Hinweis auf der Uhr", TimeManager.is_night() or td.siege_watch_line() != "")
+	# Eindringen: erscheint vor dem Versteck, geht in die Hocke, verschwindet
+	var s := SiegeNight.new()
+	s.cfg = td.config
+	s.index = 1
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	s.set_process(false)
+	var hs := _scene().find_child("Wardrobe", true, false) as HideSpot
+	s._start_intrusion(Vector3(-3.0, 1.0, 3.6))
+	_ok("Eindringen: anfangs unsichtbar (nur Schritte)", s._intrusion >= 0.0 and not is_instance_valid(s._intruder))
+	var hidden_ok := false
+	if hs:
+		p.hidden_in = hs
+		hs.occupied = true
+		hs.settled = true
+		hs.door_open = false
+		hidden_ok = p.is_hidden()
+	p.holding_breath = true
+	s._update_intrusion(td.config.siege_hide_seconds + 0.1)
+	var appeared := is_instance_valid(s._intruder)
+	var near := appeared and s._intruder.global_position.distance_to(hs.global_position) < 2.5
+	s._update_intrusion(5.0)
+	var crouched := appeared and is_instance_valid(s._intruder)
+	_ok("Eindringen: steht mit Blitz vor dem Versteck, man ist versteckt", hidden_ok and appeared and near and crouched and p.health > 0.0)
+	s._update_intrusion(5.0)
+	_ok("Eindringen: mit angehaltenem Atem verschwindet es wieder", s._intrusion < 0.0 and not is_instance_valid(s._intruder) and p.health > 0.0)
+	p.holding_breath = false
+	hs.occupied = false
+	hs.settled = false
+	p.hidden_in = null
+	s.queue_free()
+	td.night_kind = keep_kind
+	p.global_position = keep
+	# Schrott ums Haus, Wasser im Topf
+	_ok("Schrott: Fundstellen auch ums Haus", Supplies.config.scrap_near_home > 0.2 and Supplies.config.scrap_spots_max >= 10)
+	_ok("Wasser: 8 Flaschen tragbar", int(DataDB.item("water").get("stack", 0)) >= 8)
+	# Foto-Fels/Hüttenboden im klaren Stil
+	var m := StandardMaterial3D.new()
+	_ok("Foto-Texturen: Fels setzbar", Look.apply_photo(m, "rock") == (Look.smooth and Look.forest_photo) and (not Look.smooth or m.normal_texture != null))

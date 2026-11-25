@@ -370,6 +370,7 @@ func _fill_crafting() -> void:
 	_title.text = "Kochen" if cooking else "Werkbank"
 	_info.text = ("Zutaten kommen in den Topf und garen, solange das Feuer brennt.   Roh wird einem leicht übel – abkochen und braten hilft." if cooking else
 		"Traglast %.1f / %.0f kg   –   Bauteile auf die Schnellleiste legen und anwählen: Linksklick baut, R dreht." % [Inventory.total_weight(), Inventory.MAX_WEIGHT])
+	_info.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 	var busy := false
 	if cooking and is_instance_valid(_cooker):
 		var pot := _cooker.get("pot") as CookPot
@@ -384,7 +385,11 @@ func _fill_crafting() -> void:
 			var tb := _button("Herausnehmen")
 			tb.pressed.connect(func() -> void:
 				_cooker.call("take_pot")
-				_refresh())
+				_refresh()
+				# passte nicht in den Rucksack: Meldung hier im Menü zeigen (die Hinweiszeile liegt hinter dem Menü)
+				if _cooker.get("pot") != null:
+					_info.text = "Davon kannst du nicht mehr tragen – erst etwas trinken, ablegen oder in die Truhe legen."
+					_info.add_theme_color_override("font_color", Color(1.0, 0.5, 0.4)))
 			row.add_child(col)
 			row.add_child(tb)
 		else:

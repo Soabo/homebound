@@ -214,6 +214,8 @@ static func run(tree: SceneTree) -> int:
 	# Wendts Meldekästen (map.json "wendt_boxes") legen ihre Notizen selbst ab
 	for b: Dictionary in WorldMap.data().get("wendt_boxes", []):
 		beat_notes.append(String(b.get("note", "")))
+	# Erklärung vor der ersten Belagerung (siege_briefing.json "note")
+	beat_notes.append(String(DataDB.load_json("res://data/story/siege_briefing.json").get("note", "")))
 	for n: String in notes:
 		if not code.contains("\"%s\"" % n) and not beat_notes.has(n):
 			errs.append("Notiz %s: wird nirgends in der Welt abgelegt" % n)

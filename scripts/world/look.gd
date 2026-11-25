@@ -107,3 +107,25 @@ static func bevel_box(size: Vector3) -> Mesh:
 	var mesh := st.commit()
 	_bevel_cache[key] = mesh
 	return mesh
+
+
+## Foto-Texturen (Christian 25.11.) für Materialien im klaren Stil: Farbe + Normalen + Rauheit.
+## Sätze: "rock" = Fels (Felsbrocken, Granit, Höhle), "wood_floor" = Hüttenboden. Gibt true zurück, wenn gesetzt.
+const PHOTO_SETS := {
+	"rock": "res://assets/textures/ground/rock_",
+	"wood_floor": "res://assets/textures/ground/wood_floor_",
+}
+
+
+static func apply_photo(m: StandardMaterial3D, set_name: String) -> bool:
+	if not smooth or not forest_photo or m == null or not PHOTO_SETS.has(set_name):
+		return false
+	var base := String(PHOTO_SETS[set_name])
+	m.albedo_texture = load(base + "color.jpg")
+	m.normal_enabled = true
+	m.normal_texture = load(base + "normal.jpg")
+	m.normal_scale = 1.0
+	m.roughness_texture = load(base + "rough.jpg")
+	m.roughness = 1.0
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return true

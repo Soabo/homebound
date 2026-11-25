@@ -309,7 +309,13 @@ func _spawn_scrap_spot() -> void:
 		return
 	for attempt in 30:
 		var p: Vector3
-		if _rng.randf() < config.scrap_near_wreck:
+		var roll := _rng.randf()
+		if roll < config.scrap_near_home:
+			# rund ums Grundstück (Zaun x -20..22, z -16..18), etwas Abstand
+			var a := _rng.randf() * TAU
+			var r := _rng.randf_range(config.scrap_home_range.x, config.scrap_home_range.y)
+			p = Vector3(1.0 + cos(a) * (21.0 + r), 0, 1.0 + sin(a) * (17.0 + r))
+		elif roll < config.scrap_near_home + config.scrap_near_wreck:
 			var a := _rng.randf() * TAU
 			p = WRECK + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(6.0, 22.0)
 		else:

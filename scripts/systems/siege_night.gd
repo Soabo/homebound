@@ -53,22 +53,40 @@ func _ready() -> void:
 	current = self
 	_rng.randomize()
 	_player = get_tree().get_first_node_in_group("player") as Player
-	var n := clampi(cfg.siege_tasks_first + index - 1, 1, TASK_ORDER.size())
-	var order: Array = TASK_ORDER.duplicate()
-	# Keller nur, wenn man ihn schon kennt (Teppich weg); sonst rückt die nächste Aufgabe nach
-	var ch := get_tree().get_first_node_in_group("cellar_hatch") as CellarHatch
-	if ch == null or not ch.rug_moved:
-		order.erase("cellar")
-	if Story.phase < cfg.changeling_from_phase:
-		order.erase("fake")
+	var order := task_order(get_tree())
+	var n := task_count(index, cfg, order)
 	for i in order.size():
 		tasks[order[i]] = {"p": 0.0, "on": i < n}
 	wind = 1.0
 	EventBus.notify("Sie kommen. Halte die Hütte bis zum Morgengrauen.", 5.0)
 	SoundBank.play_ui(self, "sting_creature", -4.0)
 	get_tree().call_group("music_box", "start_siege")
+	# noch nie erklärt (z. B. nach dem Laden mitten in der Nacht): jetzt erklären
+	if not Tasks.flags.has("siege_briefed") and GameState.in_game():
+		ThreatDirector.brief_siege.call_deferred()
 	EventBus.noise_made.connect(_on_noise)
 	print("[Siege] Nacht %d beginnt, Aufgaben: %s" % [index, str(tasks.keys().filter(func(k: String) -> bool: return tasks[k]["on"]))])
+
+
+## Welche Aufgaben es geben kann (Keller nur, wenn man ihn kennt; Wechselbalg erst ab seiner Story-Phase).
+static func task_order(tree: SceneTree) -> Array:
+	var order: Array = TASK_ORDER.duplicate()
+	var ch := tree.get_first_node_in_group("cellar_hatch") as CellarHatch
+	if ch == null or not ch.rug_moved:
+		order.erase("cellar")
+	if Story.phase < ThreatDirector.config.changeling_from_phase:
+		order.erase("fake")
+	return order
+
+
+static func task_count(idx: int, c: ThreatConfig, order: Array) -> int:
+	return clampi(c.siege_tasks_first + idx - 1, 1, mini(TASK_ORDER.size(), order.size()))
+
+
+## Die Aufgaben der kommenden Belagerung (für die Erklärung am Nachmittag).
+static func planned_tasks(tree: SceneTree) -> Array:
+	var order := task_order(tree)
+	return order.slice(0, task_count(maxi(ThreatDirector.siege_count, 1), ThreatDirector.config, order))
 
 
 func _exit_tree() -> void:
@@ -372,22 +390,57 @@ func _strike(why: String, from: Vector3) -> void:
 
 
 ## „Es ist im Haus“: verstecken (Schrank/Spind, Keller mit geschlossener Luke, Dachboden mit hochgezogener Leiter) oder sterben.
+## Christian 25.11.: Es läuft nicht mehr sichtbar durchs Haus (ohne Wegfindung glitt es nur dahin) – man hört es kommen.
+## Nach der Frist steht es mit einem Blitz direkt vor dem Versteck, man muss den Atem anhalten, es geht langsam in die Hocke
+## und späht hinein … und verschwindet wieder mit einem Blitz.
 func _start_intrusion(from: Vector3) -> void:
 	_intrusion = 0.0
 	_breath_heard = 0.0
 	_breath_warned = false
+	_search_started = false
 	EventBus.notify("Es ist im Haus! Versteck dich – Schrank, Spind, Keller oder Dachboden!", 5.0)
 	EventBus.fear_spike.emit(1.0)
 	SoundBank.play_ui(self, "heartbeat", 0.0)
 	CreatureSounds.play(get_parent(), "shriek", from, 4.0, 0.85)
+	_intrude_from = from
+	_intrude_from.y = Cabin.FLOOR_Y
+	if not Cabin.is_inside(_intrude_from):
+		_intrude_from = Vector3(-3.0, Cabin.FLOOR_Y, 3.6)
+
+
+## Wie lange es vor dem Versteck steht und hineinspäht (Sekunden)
+const SEARCH_SECONDS := 9.0
+var _intrude_from := Vector3.ZERO
+var _search_started := false
+var _pose_rest: Dictionary = {}
+var _pose_crouch: Dictionary = {}
+
+
+## Die Kreatur mit einem Blitz an einer Stelle erscheinen lassen, Blick auf look_to.
+func _appear(at: Vector3, look_to: Vector3) -> void:
+	if is_instance_valid(_intruder):
+		_intruder.queue_free()
 	_intruder = Node3D.new()
+	_intruder.name = "SiegeIntruder"
 	get_tree().current_scene.add_child(_intruder)
-	CreatureModel.build(_intruder)
-	var start := from
-	start.y = Cabin.FLOOR_Y
-	if not Cabin.is_inside(start):
-		start = Vector3(-3.0, Cabin.FLOOR_Y, 3.6)
-	_intruder.global_position = start
+	var parts := CreatureModel.build(_intruder)
+	_pose_rest = CreatureModel.capture_pose(parts)
+	CreatureModel.pose_crouch(parts)
+	_pose_crouch = CreatureModel.capture_pose(parts)
+	CreatureModel.apply_pose(_pose_rest, _pose_crouch, 0.0)
+	_intruder.global_position = at
+	var to := look_to - at
+	to.y = 0.0
+	if to.length() > 0.05:
+		_intruder.look_at(at + to.normalized(), Vector3.UP)
+	Apparition.flash(get_tree().current_scene, at + Vector3(0, 1.3, 0))
+
+
+func _vanish() -> void:
+	if is_instance_valid(_intruder):
+		Apparition.flash(get_tree().current_scene, _intruder.global_position + Vector3(0, 1.3, 0))
+		_intruder.queue_free()
+	_intruder = null
 
 
 ## Schleichen: Was man im Haus laut macht (Schritte, knarrende Dielen), hören sie – oben auf dem Dach und am Fenster.
@@ -419,62 +472,67 @@ func is_safe(p: Player) -> bool:
 func _update_intrusion(delta: float) -> void:
 	_intrusion += delta
 	var safe := is_safe(_player)
-	if is_instance_valid(_intruder):
-		# geht langsam dorthin, wo du zuletzt warst
-		var target := _player.global_position
-		target.y = Cabin.FLOOR_Y
-		var d := target - _intruder.global_position
-		d.y = 0.0
-		if d.length() > 1.0 and not safe:
-			_intruder.global_position += d.normalized() * minf(1.1 * delta, d.length())
-			_intruder.look_at(_intruder.global_position + d.normalized(), Vector3.UP)
+	var hide := cfg.siege_hide_seconds
+	if _intrusion < hide:
+		# man hört es durchs Haus kommen: Schritte wandern vom Einstieg zu dir
 		if fmod(_intrusion, 0.9) < delta:
-			CreatureSounds.play(get_parent(), "step", _intruder.global_position, -2.0, 0.85)
-	if _intrusion < cfg.siege_hide_seconds:
+			var f := clampf(_intrusion / hide, 0.0, 1.0)
+			var at := _intrude_from.lerp(Vector3(_player.global_position.x, Cabin.FLOOR_Y, _player.global_position.z), f * 0.85)
+			CreatureSounds.play(get_parent(), "step", at, -2.0 + f * 3.0, 0.85)
 		return
-	if safe:
-		# Es sucht … steht vor deinem Versteck und lauscht (Alt: Atem anhalten) … und zieht ab
-		if _player.is_hidden() and is_instance_valid(_intruder):
-			var spot := (_player.hidden_in as HideSpot).front_point(0.0)
-			spot.y = Cabin.FLOOR_Y
-			var to := spot - _intruder.global_position
-			to.y = 0.0
-			if to.length() > 0.8:
-				_intruder.global_position += to.normalized() * minf(1.0 * delta, to.length() - 0.8)
-				_intruder.look_at(_intruder.global_position + to.normalized(), Vector3.UP)
-			elif not _breath_warned:
-				_breath_warned = true
-				EventBus.notify("Es steht direkt vor dir. [Alt] Atem anhalten!", 3.0)
-				# Verstecke lernen: ein oft benutztes Versteck kennt es schon (ThreatDirector.hide_uses)
-				var uses := int(ThreatDirector.hide_uses.get(String((_player.hidden_in as Node).name), 0))
-				if _rng.randf() < minf(float(uses) * cfg.hide_tear_per_use, cfg.hide_tear_max):
-					(_player.hidden_in as HideSpot).force_open()
-					_found_hidden()
-					return
-			if to.length() <= 1.6 and not _player.holding_breath:
-				_breath_heard += delta
-				if _breath_heard > cfg.siege_breath_grace:
-					_found_hidden()
-					return
-		if _intrusion >= cfg.siege_hide_seconds + 8.0:
-			if is_instance_valid(_intruder):
-				Apparition.flash(get_tree().current_scene, _intruder.global_position + Vector3(0, 1.3, 0))
-				_intruder.queue_free()
-			_intrusion = -1.0
-			strikes = 1
-			for id: String in tasks:
-				_set_p(id, minf(pressure(id), 0.3))
-			wind = maxf(wind, 0.7)
-			_calm_until = _t + cfg.siege_calm_after
-			EventBus.notify("Es ist weg. Noch nicht vorbei – halte durch.", 3.5)
-		return
-	# nicht versteckt: aus
-	if is_instance_valid(_intruder):
+	if not safe:
+		# nicht versteckt: es steht mit einem Blitz vor dir – aus
+		var fwd := -_player.global_transform.basis.z
+		fwd.y = 0.0
+		_appear(_player.global_position + fwd.normalized() * 1.1, _player.global_position)
 		CreatureSounds.play(get_parent(), "shriek", _intruder.global_position + Vector3(0, 1.6, 0), 6.0)
-	_intrusion = -1.0
-	_player.take_damage(9999.0, _intruder.global_position + Vector3(0, 1.4, 0) if is_instance_valid(_intruder) else _player.global_position, "siege_found")
+		_intrusion = -1.0
+		_player.take_damage(9999.0, _intruder.global_position + Vector3(0, 1.4, 0), "siege_found")
+		_vanish()
+		return
+	if _intrusion >= hide + SEARCH_SECONDS:
+		_end_intrusion()
+		return
+	var spot_node := _player.hidden_in as HideSpot if _player.is_hidden() else null
+	if spot_node == null:
+		# Keller/Dachboden: man hört es suchen, dann ist es weg
+		if fmod(_intrusion, 1.3) < delta:
+			CreatureSounds.play(get_parent(), "step", _intrude_from, -4.0, 0.8)
+		return
+	var t := _intrusion - hide
+	if not _search_started:
+		_search_started = true
+		var front := spot_node.front_point(maxf(float(spot_node.exit_dist), 0.55))
+		front.y = spot_node.global_position.y
+		_appear(front, spot_node.global_position)
+		CreatureSounds.play(get_parent(), "breath", front + Vector3(0, 1.5, 0), 0.0, 0.8)
+		EventBus.notify("Es steht direkt vor deinem Versteck. [Alt] Atem anhalten!", 4.0)
+		EventBus.fear_spike.emit(0.8)
+		# Verstecke lernen: ein oft benutztes Versteck kennt es schon (ThreatDirector.hide_uses)
+		var uses := int(ThreatDirector.hide_uses.get(String(spot_node.name), 0))
+		if _rng.randf() < minf(float(uses) * cfg.hide_tear_per_use, cfg.hide_tear_max):
+			spot_node.force_open()
+			_found_hidden()
+			return
+	# langsam in die Hocke, späht hinein
 	if is_instance_valid(_intruder):
-		_intruder.queue_free()
+		CreatureModel.apply_pose(_pose_rest, _pose_crouch, smoothstep(1.5, 6.0, t))
+	if t > 1.0 and not _player.holding_breath:
+		_breath_heard += delta
+		if _breath_heard > cfg.siege_breath_grace:
+			_found_hidden()
+
+
+## Es hat aufgegeben: Blitz, weg, kurze Ruhe.
+func _end_intrusion() -> void:
+	_vanish()
+	_intrusion = -1.0
+	strikes = 1
+	for id: String in tasks:
+		_set_p(id, minf(pressure(id), 0.3))
+	wind = maxf(wind, 0.7)
+	_calm_until = _t + cfg.siege_calm_after
+	EventBus.notify("Es ist weg. Noch nicht vorbei – halte durch.", 3.5)
 
 
 ## Wechselbalg: ein Ding im Haus ist nicht echt und rückt bei jedem Wegsehen näher. Uhr-LED drauf = er flieht.
@@ -527,9 +585,7 @@ func _found_hidden() -> void:
 	_player.take_damage(cfg.siege_hit_damage, from, "siege_fail")
 	EventBus.screen_shake.emit(0.7)
 	EventBus.notify("Es hat dich atmen gehört! Die Schranktür fliegt auf – dann ist es mit einem Blitz weg.", 4.5)
-	if is_instance_valid(_intruder):
-		Apparition.flash(get_tree().current_scene, _intruder.global_position + Vector3(0, 1.3, 0))
-		_intruder.queue_free()
+	_vanish()
 	for id: String in tasks:
 		_set_p(id, minf(pressure(id), 0.3))
 

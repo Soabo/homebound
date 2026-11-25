@@ -108,6 +108,25 @@ static func pose_crouch(p: Dictionary) -> void:
 		(p["forearm_%d" % side] as Node3D).rotation_degrees.x = 18.0
 
 
+## Haltung merken (Ort + Drehung aller Gelenke), um zwischen zwei Haltungen überzublenden.
+static func capture_pose(p: Dictionary) -> Dictionary:
+	var out := {}
+	for k: String in p:
+		if p[k] is Node3D:
+			var n := p[k] as Node3D
+			out[n] = [n.position, n.rotation]
+	return out
+
+
+## Zwischen zwei gemerkten Haltungen überblenden (f = 0 → a, 1 → b).
+static func apply_pose(a: Dictionary, b: Dictionary, f: float) -> void:
+	for n in a:
+		if not is_instance_valid(n) or not b.has(n):
+			continue
+		(n as Node3D).position = (a[n][0] as Vector3).lerp(b[n][0], f)
+		(n as Node3D).rotation = (a[n][1] as Vector3).lerp(b[n][1], f)
+
+
 # --- Körperteile ------------------------------------------------------
 
 static func _pelvis(hips: Node3D) -> void:

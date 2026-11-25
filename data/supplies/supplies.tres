@@ -76,10 +76,12 @@ wild_stones = 4
 wild_stones_regrow = 2
 wild_stone_chance = 0.3
 wild_stone_chance_water = 0.9
-scrap_spots_max = 7
-scrap_spots_per_day = Vector2i(1, 2)
-scrap_spots_start = 3
-scrap_near_wreck = 0.45
+scrap_spots_max = 12
+scrap_spots_per_day = Vector2i(2, 3)
+scrap_spots_start = 6
+scrap_near_wreck = 0.3
+scrap_near_home = 0.35
+scrap_home_range = Vector2(10, 40)
 scrap_kinds = {
 "barrel": {
 "name": "Rostiges Ölfass",

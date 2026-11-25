@@ -224,15 +224,13 @@ func make_survivable() -> void:
 	thirst = maxf(thirst, cfg.restore_min_food)
 
 
+## Verletztes Bein ist seit 25.11. abgeschaltet (Christian: zu wenige Verbandskästen) – die Aufrufe bleiben, tun aber nichts.
 func leg_hurt() -> bool:
-	return TimeManager.get_total_hours() < leg_until
+	return false
 
 
 func hurt_leg() -> void:
-	var was := leg_hurt()
-	leg_until = maxf(leg_until, TimeManager.get_total_hours() + cfg.leg_hours)
-	if not was:
-		EventBus.notify("Dein Bein! Du humpelst – rennen geht nicht. Ein Verbandskasten hilft.", 4.5)
+	pass
 
 
 func heal_leg() -> void:
@@ -253,7 +251,7 @@ func set_state(s: Dictionary) -> void:
 	thirst = float(s.get("thirst", 75.0))
 	warmth = float(s.get("warmth", 90.0))
 	health = float(s.get("health", 100.0))
-	leg_until = float(s.get("leg_until", -1.0))
+	leg_until = -1.0   # Bein-Verletzung gibt es nicht mehr (alte Spielstände)
 	stamina = STAMINA_MAX
 	# Reste des abgebrochenen Tages: nasse Kleidung, laufender Schlaf, Warnungen
 	wet_until = -1.0

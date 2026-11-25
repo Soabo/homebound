@@ -1,0 +1,26 @@
+{
+  "_info": "Belagerungsnacht: Hinweis am Morgen, Erklärung vor der ersten Belagerung (Spiel hält an). Gelesen von ThreatDirector._check_siege_morning/_brief_siege.",
+  "morning_from_hour": 8.0,
+  "morning": "Die Vögel sind still. Am Fenster sind Kratzer, die gestern nicht da waren – drei lange Striche, wie eine Strichliste. Heute Nacht wird anders. Ich sollte die Hütte vorbereiten.",
+  "watch_line": "Heute Nacht: Belagerung – Hütte vorbereiten, nicht schlafen",
+  "evening_again": "Heute Nacht kommen sie wieder – kein Schlaf. Holz, Diesel, Bretter bereitlegen.",
+  "title": "Heute Nacht: Belagerung",
+  "intro": "Sie kommen heute Nacht zur Hütte. Schlafen geht nicht. Halte bis zum Morgengrauen durch. Auf dem Babyfon und dem Monitor in Stefanies Büro siehst du, wo es gerade drängt.",
+  "tasks_head": "Heute Nacht musst du:",
+  "tasks": {
+    "window": "Fenster: Steht es vor einem Fenster und kratzt, leuchte es mit der Uhr-LED [F] an. Bretter vor dem Fenster halten es länger auf.",
+    "music": "Spieluhr: Bens Spieluhr im Kinderzimmer läuft ab – [E] aufziehen, bevor sie verstummt.",
+    "attic": "Dachboden: Es drückt gegen die Luke – [E] zuhalten oder [R] zunageln (2 Bretter). Lass die Leiter oben.",
+    "cellar": "Keller: Wurzeln drücken gegen die zugemauerte Stelle – [E] mit einem Brett abstützen.",
+    "fake": "Falsches Ding: Etwas im Haus gehört nicht dorthin und rückt näher, wenn du wegschaust. Leuchte es mit der LED an."
+  },
+  "rules_head": "Wichtig:",
+  "rules": [
+    "Nicht hinausgehen – draußen bist du Beute.",
+    "Leise sein – Rennen und knarrende Dielen hört es.",
+    "Schafft es eine Aufgabe nicht, verletzt es dich. Beim zweiten Mal kommt es herein.",
+    "„Es ist im Haus“: sofort verstecken (Schrank, Spind, Deckenburg … oder Keller mit geschlossener Luke). Steht es davor: [Alt] Atem anhalten."
+  ],
+  "note": "belagerung_regeln",
+  "ok": "Verstanden"
+}

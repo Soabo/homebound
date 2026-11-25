@@ -608,6 +608,9 @@ func watch_log_lines() -> Array:
 	if n == 0:
 		lines.append(["Im Moment nichts Offenes.", "none"])
 	lines.append(["HEUTE", "head_day"])
+	var siege_line := ThreatDirector.siege_watch_line()
+	if siege_line != "":
+		lines.append(["⚠  " + siege_line, "open"])
 	var routine := Tasks.daily()
 	if routine.is_empty():
 		lines.append(["Noch keine festen Routinen.", "none"])

@@ -31,15 +31,29 @@ void vertex() {
 uniform sampler2D grass_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D path_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D litter_tex : source_color, filter_nearest_mipmap, repeat_enable;
-// Foto-Waldboden (nur klarer Grafikstil, Terrain setzt photo = 1): Moos mit Fichtennadeln (ambientCG Ground068, CC0).
-// Er ersetzt die gezeichnete Textur dort, wo die Eckpunktfarbe Waldboden ist (Nähe zu floor_ref).
+// Foto-Boden (nur klarer Grafikstil, Terrain setzt photo = 1). Sechs Lagen in einem Texturstapel (assets/textures/ground):
+// 0 Waldboden (Moos + Fichtennadeln), 1 Boden/Wiese, 2 Fels, 3 Bachbett-Kiesel, 4 Weg (Schotter), 5 Schnee.
+// Lagen 1–5 sind auf mittlere Helligkeit gebracht und werden wie die alten Texturen mit der Eckpunktfarbe getönt.
 uniform float photo = 0.0;
-uniform sampler2D floor_tex : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D floor_nrm : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D floor_rough : hint_roughness_r, filter_linear_mipmap_anisotropic, repeat_enable;
-uniform float floor_meters = 2.6;        // so viele Meter misst eine Kachel des Fotos
-uniform float floor_gain = 0.85;         // Helligkeit gegenüber der alten Textur
+uniform sampler2DArray photo_col : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2DArray photo_nrm : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform vec4 layer_meters = vec4(2.6, 3.0, 4.0, 1.6);   // Kachelgröße in m: Waldboden, Boden, Fels, Bachbett
+uniform vec2 layer_meters2 = vec2(2.2, 2.5);            // Weg, Schnee
+uniform float floor_gain = 0.85;         // Helligkeit Waldboden gegenüber der alten Textur
+uniform float layer_gain = 1.05;         // Helligkeit der übrigen Lagen
 uniform vec3 floor_ref = vec3(0.11, 0.12, 0.06);   // Waldboden-Farbe aus Terrain.ground_color
+uniform vec3 bed_ref = vec3(0.22, 0.2, 0.16);      // Bachbett-Farbe aus Terrain.ground_color
+
+// Eine Lage ohne sichtbare Kachelwiederholung: zwei Maßstäbe, der zweite gedreht, großes Rauschen mischt.
+vec3 layer_col(float i, float meters, vec2 p, float blend) {
+	vec3 a = texture(photo_col, vec3(p / meters, i)).rgb;
+	vec2 q = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * p / (meters * 1.7) + vec2(0.31, 0.77);
+	vec3 b = texture(photo_col, vec3(q, i)).rgb;
+	return mix(a, b, blend * 0.6);
+}
+vec3 layer_nrm(float i, float meters, vec2 p) {
+	return texture(photo_nrm, vec3(p / meters, i)).rgb;
+}
 
 void fragment() {
 	vec3 grass = texture(grass_tex, UV).rgb;
@@ -57,20 +71,33 @@ void fragment() {
 	float fw = 0.0;
 	vec3 fnrm = vec3(0.5, 0.5, 1.0);
 	float frough = 1.0;
+	vec3 snow_tex = vec3(1.0);
+	vec3 snow_nrm = vec3(0.5, 0.5, 1.0);
 	if (photo > 0.5) {
-		// zwei Maßstäbe, der zweite gedreht, großes Rauschen mischt – so sieht man keine Kachelwiederholung
-		vec2 fuv = wpos.xz / floor_meters;
-		vec2 ruv = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * wpos.xz / (floor_meters * 1.7) + vec2(0.31, 0.77);
-		float blend = smoothstep(0.3, 0.7, vnoise(wpos.xz * 0.11));
-		vec3 f1 = texture(floor_tex, fuv).rgb;
-		vec3 f2 = texture(floor_tex, ruv).rgb;
-		vec3 photo_col = mix(f1, f2, blend * 0.6);
-		// helle und dunkle Großflecken wie bisher (Eckpunktfarbe im Verhältnis zur Waldfarbe)
-		vec3 tint = clamp(COLOR.rgb / floor_ref, vec3(0.6), vec3(1.4));
-		fw = (1.0 - smoothstep(0.025, 0.075, distance(COLOR.rgb, floor_ref))) * (1.0 - m);
-		col = mix(col, photo_col * tint * floor_gain, fw);
-		fnrm = texture(floor_nrm, fuv).rgb;
-		frough = texture(floor_rough, fuv).r;
+		vec2 p = wpos.xz;
+		float blend = smoothstep(0.3, 0.7, vnoise(p * 0.11));
+		vec3 c = COLOR.rgb;
+		// Zonen aus der Eckpunktfarbe: Fels (grau, hell), Bachbett, Waldboden, sonst Boden/Wiese
+		float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
+		float rock = (1.0 - smoothstep(0.03, 0.07, sat)) * smoothstep(0.24, 0.32, (c.r + c.g + c.b) / 3.0);
+		float bed = (1.0 - smoothstep(0.02, 0.05, distance(c, bed_ref))) * (1.0 - rock);
+		fw = (1.0 - smoothstep(0.025, 0.075, distance(c, floor_ref))) * (1.0 - rock) * (1.0 - bed);
+		float meadow = 1.0 - rock - bed - fw;
+		vec3 detail = layer_col(1.0, layer_meters.y, p, blend) * meadow
+				+ layer_col(2.0, layer_meters.z, p, blend) * rock
+				+ layer_col(3.0, layer_meters.w, p, blend) * bed;
+		vec3 path_ph = layer_col(4.0, layer_meters2.x, p, blend);
+		col = c * mix(detail * layer_gain, path_ph * layer_gain, m);
+		// Waldboden: eigenes Foto, nur getönt (Großflecken), wie zuvor
+		vec3 tint = clamp(c / floor_ref, vec3(0.6), vec3(1.4));
+		col = mix(col, layer_col(0.0, layer_meters.x, p, blend) * tint * floor_gain, fw * (1.0 - m));
+		vec3 n = layer_nrm(1.0, layer_meters.y, p) * meadow + layer_nrm(2.0, layer_meters.z, p) * rock
+				+ layer_nrm(3.0, layer_meters.w, p) * bed + layer_nrm(0.0, layer_meters.x, p) * fw;
+		fnrm = mix(n, layer_nrm(4.0, layer_meters2.x, p), m);
+		frough = mix(0.97 * meadow + 0.85 * rock + 0.8 * bed + 0.95 * fw, 0.92, m);
+		fw = 1.0;   // ab hier: Stärke der Normalen (alle Lagen haben welche)
+		snow_tex = layer_col(5.0, layer_meters2.y, p, blend);
+		snow_nrm = layer_nrm(5.0, layer_meters2.y, p);
 	}
 	// Pfützen: in Senken des Wegs (Rauschen), nur wenn nass
 	// Pfützen: größer auf dem Weg, bei sehr nassem Boden auch kleine in Senken daneben
@@ -88,7 +115,7 @@ void fragment() {
 	cover *= mix(1.0, 0.7, m * smoothstep(0.3, 1.0, snow));   // Wege: zertreten, Erde schaut durch
 	puddle *= 1.0 - cover;
 	col = mix(col, water, puddle);
-	vec3 snow_col = vec3(0.9, 0.92, 0.96) * (0.92 + litter.a * 0.1) * mix(1.0, 0.82, m);
+	vec3 snow_col = vec3(0.9, 0.92, 0.96) * (0.92 + litter.a * 0.1) * mix(1.0, 0.82, m) * mix(vec3(1.0), snow_tex / 0.93, photo);
 	col = mix(col, snow_col, cover);
 	// Raureif: weißlicher Hauch auf Gras und Streu (nicht unter Schnee), feines Glitzern
 	float rime = frost * (1.0 - cover) * (0.55 + 0.45 * flat_ground) * mix(1.0, 0.5, m);
@@ -97,8 +124,8 @@ void fragment() {
 	float glint = step(0.985, fract(sin(dot(floor(wpos.xz * 9.0), vec2(12.9898, 78.233))) * 43758.5453));
 	ALBEDO = col;
 	if (photo > 0.5) {
-		NORMAL_MAP = fnrm;
-		NORMAL_MAP_DEPTH = fw * (1.0 - cover) * (1.0 - puddle) * 1.2;
+		NORMAL_MAP = mix(fnrm, snow_nrm, cover);
+		NORMAL_MAP_DEPTH = (1.0 - puddle) * mix(1.1, 0.8, cover);
 	}
 	float base_rough = mix(1.0, frough, fw);
 	ROUGHNESS = mix(mix(mix(base_rough, 0.6, wetness), 0.04, puddle), 0.75, max(cover, rime) * 0.7);

@@ -8,6 +8,10 @@ var text: String = ""
 var options: Array = []
 var on_pick: Callable
 var _player: Player
+## Spiel anhalten, solange das Fenster offen ist (Erklärung vor der ersten Belagerung)
+var pause_game: bool = false
+## Knopf „Zurück (Esc)“ anzeigen
+var show_cancel: bool = true
 
 
 static func open(tree: SceneTree, p_title: String, p_text: String, p_options: Array, callback: Callable) -> ChoiceDialog:
@@ -27,6 +31,8 @@ func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player") as Player
 	if _player:
 		_player.input_locked = true
+	if pause_game:
+		get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.55)
@@ -69,10 +75,11 @@ func _ready() -> void:
 			b.text += "\n    – " + String(o["why"])
 		b.pressed.connect(_pick.bind(String(o.get("id", ""))))
 		box.add_child(b)
-	var cancel := Button.new()
-	cancel.text = "Zurück  (Esc)"
-	cancel.pressed.connect(_pick.bind(""))
-	box.add_child(cancel)
+	if show_cancel:
+		var cancel := Button.new()
+		cancel.text = "Zurück  (Esc)"
+		cancel.pressed.connect(_pick.bind(""))
+		box.add_child(cancel)
 	# Mitte ausrichten, sobald die Größe feststeht
 	await get_tree().process_frame
 	panel.position = (get_viewport().get_visible_rect().size - panel.size) * 0.5
@@ -81,7 +88,7 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
-		_pick("")
+		_pick("" if show_cancel else String(options[0].get("id", "")) if not options.is_empty() else "")
 
 
 func _pick(id: String) -> void:
@@ -89,6 +96,8 @@ func _pick(id: String) -> void:
 		return
 	if _player and is_instance_valid(_player):
 		_player.input_locked = false
+	if pause_game:
+		get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	queue_free()
 	if on_pick.is_valid():

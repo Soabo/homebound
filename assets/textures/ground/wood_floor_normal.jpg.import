@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://kkajy4slo68f"
-path.s3tc="res://.godot/imported/forest_floor_normal.jpg-bd6492cd9557d32706eb32a7706d511f.s3tc.ctex"
+uid="uid://bagxalgv62spf"
+path.s3tc="res://.godot/imported/wood_floor_normal.jpg-61ae32b1bb7bcd25c00277ef1d3db1b3.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/ground/forest_floor_normal.jpg"
-dest_files=["res://.godot/imported/forest_floor_normal.jpg-bd6492cd9557d32706eb32a7706d511f.s3tc.ctex"]
+source_file="res://assets/textures/ground/wood_floor_normal.jpg"
+dest_files=["res://.godot/imported/wood_floor_normal.jpg-61ae32b1bb7bcd25c00277ef1d3db1b3.s3tc.ctex"]
 
 [params]
 

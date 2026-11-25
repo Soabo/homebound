@@ -83,6 +83,9 @@ extends Resource
 @export var scrap_spots_start: int = 3
 ## Anteil der neuen Stellen, die in der Nähe des Autowracks entstehen
 @export var scrap_near_wreck: float = 0.45
+## Anteil der Fundstellen nah an der Hütte (Christian 25.11.: mehr Schrott ums Haus), Abstand vom Grundstück in m
+@export var scrap_near_home: float = 0.35
+@export var scrap_home_range: Vector2 = Vector2(10.0, 40.0)
 ## Je Art: Schrott (min/max), Chance auf Zündkerze / Motoröl
 @export var scrap_kinds: Dictionary = {
 	"exhaust": {"name": "Alter Auspuff", "scrap": [2, 3], "plug": 0.0, "oil": 0.0},

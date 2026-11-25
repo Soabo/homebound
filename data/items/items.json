@@ -68,7 +68,7 @@
   "water": {
     "name": "Wasserflasche",
     "weight": 1.0,
-    "stack": 4,
+    "stack": 8,
     "category": "Nahrung",
     "use": {
       "thirst": 40,
@@ -79,13 +79,13 @@
   "bottle_empty": {
     "name": "Leere Flasche",
     "weight": 0.2,
-    "stack": 6,
+    "stack": 8,
     "category": "Ressource"
   },
   "water_raw": {
     "name": "Flasche Rohwasser",
     "weight": 1.0,
-    "stack": 4,
+    "stack": 8,
     "category": "Nahrung",
     "use": {
       "thirst": 30,
@@ -98,7 +98,7 @@
   "water_tainted": {
     "name": "Flasche verfärbtes Wasser",
     "weight": 1.0,
-    "stack": 4,
+    "stack": 8,
     "category": "Nahrung",
     "use": {
       "thirst": 15,

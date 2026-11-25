@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bhu77c67h6fl"
-path.s3tc="res://.godot/imported/forest_floor_rough.jpg-a81cc43ebfc331ac6a464ac77bc567d8.s3tc.ctex"
+uid="uid://dlfdbuvdmfto6"
+path.s3tc="res://.godot/imported/wood_floor_color.jpg-779fdbb80f9901ee24fabe71b34a344f.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/textures/ground/forest_floor_rough.jpg"
-dest_files=["res://.godot/imported/forest_floor_rough.jpg-a81cc43ebfc331ac6a464ac77bc567d8.s3tc.ctex"]
+source_file="res://assets/textures/ground/wood_floor_color.jpg"
+dest_files=["res://.godot/imported/wood_floor_color.jpg-779fdbb80f9901ee24fabe71b34a344f.s3tc.ctex"]
 
 [params]
 

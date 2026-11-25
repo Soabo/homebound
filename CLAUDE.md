@@ -707,7 +707,7 @@
   Folgen: Herzschlag, dunkle Ränder (Hud-Shader), Zittern von Händen + LED (`PlayerHands._avoid_walls`), `make_noise` × noise_factor,
   Atem hörbar ab `breath_betray_from` (Stealth.breath_radius), Rennen/Atemanhalten kosten mehr Puste.
 - Gesundheit (SurvivalConfig „Gesundheit“): `damage_factor` 1,35 auf alle Treffer (take_damage), von selbst nur langsam bis
-  `passive_heal_cap`, Schlaf 3,5/Std., Gesundheit + Bein im Spielstand (`Survival.health`, `leg_until`, nach Laden mind.
+  `passive_heal_cap`, Schlaf 3,5/Std., Gesundheit im Spielstand (`Survival.health`; Bein seit 25.11. aus, nach Laden mind.
   `restore_min_health`; nach einem Tod `Survival.make_survivable`: mind. Wärme/Essen `restore_min_*` – keine Todesschleife). Bein verletzt (`Survival.hurt_leg`: Falle, harter Sturz, schwere Treffer mit `leg_chance`): humpeln,
   kein Rennen, Hud „Bein verletzt“; Verbandskasten heilt es. Todesgründe fall, hide_found.
 - Speichern: `GameState.bed_save()` nach jedem Schlaf + jeden Morgen (seit 25.11., vorher nur Bett). Beenden/
@@ -897,6 +897,29 @@
   ausschlägt (`HIT_AT`, Flag `w17_hit_<ort>`, `W17Locator.hit_sites`) – Karte zeigt „✦ W-17“, auch auf der alten Einsatzkarte.
 - Anwalts-Mail: Die Kanzlei hat die Sachen samt Bens Geschenk an die Hütte bringen lassen (tablet.json). Geschenk ansehen: `Cabin/GiftLook`.
   Prüfung `RegressTest._t_build_hand_2511`.
+
+## Christians Liste 25.11. abends (nach der ersten Belagerung)
+- Verletztes Bein abgeschaltet (`Survival.leg_hurt()` immer false, `hurt_leg()` tut nichts; alte Spielstände ohne Bein).
+- Belagerung „Es ist im Haus“: Kreatur läuft nicht mehr sichtbar durchs Haus (glitt ohne Wegfindung), man hört Schritte vom Einstieg
+  heranrücken (`_intrude_from`). Nach `siege_hide_seconds`: versteckt im HideSpot → Blitz, sie steht vor dem Versteck (`_appear`,
+  `front_point`), „[Alt] Atem anhalten“, geht über `CreatureModel.capture_pose/apply_pose` langsam in die Hocke, nach `SEARCH_SECONDS`
+  Blitz und weg (`_end_intrusion`); atmet man (> `siege_breath_grace`) oder kennt sie das Versteck → `_found_hidden`. Nicht versteckt
+  → erscheint vor dir, Tod. Keller/Dachboden: nur Schritte.
+- Ankündigung: morgens ab `morning_from_hour` Gedanke (Kratzer am Fenster, `ThreatDirector._check_siege_morning`), Zeile auf der
+  Uhr-Aufgabenliste (`siege_watch_line`), 15:30 vor der ersten Belagerung Erklärfenster, Spiel hält an (`brief_siege`, ChoiceDialog
+  `pause_game`/`show_cancel`, Flag `siege_briefed`, Aufgaben der Nacht über `SiegeNight.planned_tasks`), Notiz `belagerung_regeln`
+  aufs Tablet. Texte: `data/story/siege_briefing.json`. Tests (slot -1) halten nicht an.
+- Schrott ums Haus: SupplyConfig `scrap_near_home` (0,35) im Ring `scrap_home_range` ums Grundstück, max 12, 2–3 neue pro Tag, Start 6.
+- Topf: Wasser/Rohwasser/verseuchtes Wasser/leere Flaschen jetzt Stapel 8; passt das Ergebnis nicht in den Rucksack, sagt es das
+  Kochmenü selbst (die Hinweiszeile lag hinter dem Menü – „Herausnehmen tut nichts“).
+- Foto-Texturen im klaren Stil (Christian, alle CC0, Lizenz in assets/textures/ground/LICENSE.txt, Aufbereitung tools/textures_prep.py):
+  Boden als Texturstapel `ground_color_array.jpg` / `ground_normal_array.jpg` (6 Lagen: Waldboden, Boden/Wiese Ground110, Fels Rock030,
+  Bachbett-Kiesel, Weg Gravel040, Schnee Snow014; Import `2d_array_texture`, slices/vertical=6) – `ground.gdshader` wählt die Zone aus der
+  Eckpunktfarbe (grau-hell = Fels, `bed_ref` = Bachbett, `floor_ref` = Waldboden, sonst Boden), Lagen 1–5 werden wie die alten Texturen
+  mit der Eckpunktfarbe getönt (`layer_gain`, Kachelgrößen `layer_meters`). `Look.apply_photo(m, "rock"|"wood_floor")`: Felsbrocken
+  (Forest/WildForest „stone“), `tex_mat("rock")` (Höhle, Steine) und der Hüttenboden (`Cabin.m_floor`; Werkbank/Schuppen bleiben gezeichnet).
+  Kreaturhaut (Onyx013 = schwarzer Marmor) nicht eingebaut – nachgefragt. Tour-Bilder 92/95/I2/K0/H1.
+  Prüfung `RegressTest._t_fixes_2511c`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

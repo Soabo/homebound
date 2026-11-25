@@ -1775,6 +1775,7 @@
     }
   },
   "notes": {
+    "belagerung_regeln": {"name": "Belagerungsnacht – was zu tun ist", "text": "Sie kommen heute Nacht zur Hütte. Schlafen geht nicht. Halte bis zum Morgengrauen durch. Auf dem Babyfon und dem Monitor in Stefanies Büro siehst du, wo es gerade drängt.\n\nMögliche Aufgaben:\n• Fenster: Steht es vor einem Fenster und kratzt, leuchte es mit der Uhr-LED [F] an. Bretter vor dem Fenster halten es länger auf.\n• Spieluhr: Bens Spieluhr im Kinderzimmer läuft ab – [E] aufziehen, bevor sie verstummt.\n• Dachboden: Es drückt gegen die Luke – [E] zuhalten oder [R] zunageln (2 Bretter). Lass die Leiter oben.\n• Keller: Wurzeln drücken gegen die zugemauerte Stelle – [E] mit einem Brett abstützen.\n• Falsches Ding: Etwas im Haus gehört nicht dorthin und rückt näher, wenn du wegschaust. Leuchte es mit der LED an.\n\nWichtig:\n• Nicht hinausgehen – draußen bist du Beute.\n• Leise sein – Rennen und knarrende Dielen hört es.\n• Schafft es eine Aufgabe nicht, verletzt es dich. Beim zweiten Mal kommt es herein.\n• „Es ist im Haus“: sofort verstecken (Schrank, Spind, Deckenburg … oder Keller mit geschlossener Luke). Steht es davor: [Alt] Atem anhalten."},
     "ranger_note": {
       "name": "Zerknitterte Notiz",
       "text": "»Tag 9. De Liachta kemman jetzt jede Nacht. Landen toan s' ned, de VERMESSN. Oiwei de gleichen drei Punkt. Des Ding im Krater hob i gfundn, des rührt se, wenn ma d'Plattn hihoit. Wer des liest: Bleib bei da Nacht im Haus. Und lass as Liacht o.« – G. W., Nationalparkwacht Finsterau"

@@ -113,6 +113,13 @@ func _ready() -> void:
 	m_logs = BuildKit.tex_mat("logs", 1.1)
 	m_wall = BuildKit.tex_mat("planks_v", 1.0)
 	m_floor = BuildKit.tex_mat("floor", 1.4)
+	if Look.smooth and Look.forest_photo:
+		# Hüttenboden: Foto-Dielen (Christian 25.11.), eigene Kopie – Werkbank/Schuppen behalten die gezeichneten Bretter
+		var wf := (m_floor as StandardMaterial3D).duplicate() as StandardMaterial3D
+		wf.albedo_color = Color(0.95, 0.9, 0.85)
+		wf.uv1_scale = Vector3(0.5, 0.5, 0.5)   # eine Kachel ≈ 2 m
+		Look.apply_photo(wf, "wood_floor")
+		m_floor = wf
 	m_stone = BuildKit.tex_mat("stone", 0.8)
 	m_stone_dark = BuildKit.tex_mat("stone_dark", 0.9)
 	m_beam = BuildKit.tex_mat("planks_h", 2.0, Color(0.55, 0.5, 0.48))

@@ -707,6 +707,8 @@ func _textured(kind: String, repeat_m: float) -> StandardMaterial3D:
 	var s := 1.0 / repeat_m
 	m.uv1_scale = Vector3(s, s, s)
 	m.roughness = 0.95
+	if kind == "stone":
+		Look.apply_photo(m, "rock")   # Felsbrocken: Foto-Fels im klaren Stil
 	return m
 
 
