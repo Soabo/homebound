@@ -936,6 +936,30 @@
   Gred `gred_*` (ambientCG PavingStones070, CC0) als eine Fläche „Merged“ statt Einzelplatten (`WaldlerHouse.gred`).
   Vorschau Kreatur: creature_preview `--what=creature`. Screenshot-Tour wird im Workspace auch für Einzelbilder vom Speicher gekillt.
 
+## Einstieg für neue Spieler und eigene Handschrift (Christian 26.11.)
+- Christians Wahl: spielbares Intro, geführter erster Tag, Meldungen als „Gedanken + Uhr“, Look „Notizbuch und Uhr“.
+- Look: `UiStyle` (scripts/ui/ui_style.gd) – Schriften in assets/fonts (Lizenzen dort): Barlow Condensed = Menüs/Anzeigen
+  (auch Standardschrift über project.godot `gui/theme/custom_font`), Caveat = Gedanken (Handschrift), Special Elite = Schreibmaschine
+  (Titel, Tageskarte, Intro-Nachspann, Tod). Farben INK/EMBER/WATCH/DANGER, `paper()` (dunkles Papier), `keycap()`/`key_row()`, `fade_in()`.
+- Bedürfnisse: `NeedsHud` (unten links) – Ringe mit gezeichneten Zeichen (Tropfen, Gabel, Flamme, Blitz, Herz), nur bei Bedarf
+  (`SHOW_BELOW`), beim Blick auf die Uhr (J) alle mit Namen. Alte Balken sind weg. Punkt „n neu · J“ = ungelesene Einträge.
+- Meldungen: `Hud.show_notification` → Gedanke unten (Caveat), immer nur einer, Warteschlange (data/ui/notices.json `queue_max`,
+  `min_seconds`), „!“ drängelt vor. Anfänge in `quiet` (Neue Aufgabe, Neuer Fund, Gespeichert, Getrunken, Es wird dunkel …) erscheinen nur
+  still auf der Uhr unter ZULETZT (`Hud.log_entries`, `unread`). Tests: `current_notification()` = letzte Meldung, `visible_thought()`.
+  Nach dem Aufwachen Tageskarte (`Hud.show_day_card`). F1 = Tastenbild `KeyCard` (data/ui/controls.json), auch Pause/Hauptmenü „Steuerung“.
+- Geführter erster Tag: `Tutorial` (scripts/systems/tutorial.gd, Knoten in main), Inhalte data/tutorial/tutorial.json (9 Schritte:
+  Ankommen, Ofen, Trinken, Essen, Tablet, Uhr, Zaun, Schleichen, Schlafen), Karte `TutorialCard` oben links. Fortschritt = Tasks-Merker
+  `tutorial_on`, `tut_<id>`, `tutorial_done`. Start in `GameState.new_game` (Tag 1 + `Settings.tutorial`): Ofen aus, Durst/Hunger/Wärme
+  gesenkt (`start_needs`). Schritt-`tempo` setzt `TimeManager.tempo` (0 = Uhr steht bis zum Zaun). Neue Merker: `fire_lit` (Fireplace),
+  `tablet_opened` (TabletMenu). Pause → „Einführung überspringen“ (`Tutorial.skip`).
+- Intro: `IntroScene` (scenes/intro.tscn, scripts/ui/intro_scene.gd), Texte data/story/intro.json: Büro bei Regen, Handy klingelt
+  (Stefanie), [E] abnehmen, zwei Antworten (1/2), Unfallgeräusch im Dunkeln, Uhr 19:58, Polizei, Nachspann in Schreibmaschine
+  (Beerdigung, Rückzug, ein Jahr später, die Hütte), „HOMEBOUND“. Esc halten = überspringen. `GameState.new_game` geht bei Tag 1 +
+  `Settings.intro` erst ins Intro, das ruft `GameState.finish_intro()`. Klingelton/Vibration/Reifen erzeugt (`_ringtone` usw.).
+- Einstellungen: „Intro vor neuem Spiel“, „Geführter erster Tag“ (Settings `intro`, `tutorial`).
+- Prüfungen: `RegressTest._t_ui_2611`, `scripts/dev/flow_check.gd` (Menü → Intro → Spiel mit Einführung), `scripts/dev/intro_check.gd`
+  (Intro im Zeitraffer bis ins Spiel). Schnelle Vorschau: `scenes/dev/ui_preview.tscn -- --what=hud|keys|tutorial|intro|intro_epi`.
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,

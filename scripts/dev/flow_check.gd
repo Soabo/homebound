@@ -17,7 +17,12 @@ func _run() -> void:
 	print("FLOW Menü: ", current_scene.name)
 	var keep: Variant = gs.call("_read", 1)
 	gs.call("new_game", 1)
+	await create_timer(2.0).timeout
+	# seit 26.11.: erst das Intro (Esc halten überspringt) – hier direkt beenden
+	print("FLOW Intro: ", current_scene.name)
+	gs.call("finish_intro")
 	await create_timer(4.0).timeout
+	print("FLOW Einführung aktiv: ", root.get_node("Tasks").get("flags").has("tutorial_on"))
 	print("FLOW Spiel: ", current_scene.name, " Platz ", gs.get("slot"), " gespeichert ", not (gs.call("slot_info", 1) as Dictionary).is_empty())
 	root.get_node("Inventory").call("add", "wood", 5)
 	gs.call("to_menu")

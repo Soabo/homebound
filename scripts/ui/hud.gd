@@ -3,21 +3,24 @@ extends CanvasLayer
 ## Bildschirmanzeige: Uhr, Fadenkreuz, Benutzen-Hinweis, Meldungen, Inventar,
 ## Verletzungs-Effekt, Monitor-Ansicht (Kameras), Schlaf- und Todesbildschirm.
 
-const HELP_TEXT := "WASD  Gehen        Shift  Rennen        Strg / C  Ducken        Alt  Langsam + Atem anhalten        Leertaste  Springen\n" + \
-		"E / Linksklick  Benutzen        R  Abschließen / Verbarrikadieren / Nachfüllen        F  Taschenlampe        Y / X  Lehnen\n" + \
-		"Tab  Inventar        Bauteil in der Hand  Bauen        T (halten)  Zeit vorspulen (Test)        F2  Retro-Filter        J (halten)  Aufgaben        Esc  Menü        F1  Hilfe"
 
 var _clock: Label
 var _prompt: Label
-var _notes: VBoxContainer   ## Hinweise oben: neuester oben, ältere rutschen nach unten und grauen aus
+var _thought: Label           ## Gedanke unten in Handschrift – immer nur einer (Christian 26.11.)
+var _queue: Array = []         ## wartende Gedanken [Text, Dauer]
+var _thought_t := 0.0          ## Restzeit des sichtbaren Gedankens
+var _thought_age := 0.0        ## so lange ist er schon zu sehen
+var _last_text := ""
+var log_entries: Array = []    ## Uhr: ZULETZT (neueste zuerst) {text, clock}
+var unread := 0                ## stille Einträge, seit man zuletzt auf die Uhr geschaut hat
+var _needs: NeedsHud
+var _keycard: Control
+var _clock_day: Label
 var _help: Label
 var _title: Label
 var _weight: Label
 var _fade: ColorRect
 var _hurt: ColorRect
-const NOTE_MAX := 4            ## so viele Hinweise stehen höchstens untereinander
-const NOTE_OLD_MIN := 4.0      ## ein nach unten gerutschter Hinweis bleibt noch mindestens so lange lesbar
-var _help_time: float = 20.0
 var _sleeping: bool = false
 
 # Monitor-Ansicht
@@ -68,17 +71,27 @@ func _ready() -> void:
 	cross.offset_bottom = 2
 	root.add_child(cross)
 
-	_clock = _label(root, 30, HORIZONTAL_ALIGNMENT_RIGHT)
+	# Uhrzeit groß, darunter Tag + Datum klein (Barlow, Papier-Weiß)
+	_clock = _label(root, 34, HORIZONTAL_ALIGNMENT_RIGHT)
+	UiStyle.style(_clock, "ui_bold", 34)
 	_clock.anchor_left = 1.0
 	_clock.anchor_right = 1.0
 	_clock.offset_left = -400
 	_clock.offset_right = -32
-	_clock.offset_top = 24
-	_clock.offset_bottom = 70
+	_clock.offset_top = 18
+	_clock.offset_bottom = 62
+	_clock_day = _label(root, 18, HORIZONTAL_ALIGNMENT_RIGHT)
+	UiStyle.style(_clock_day, "ui", 18, UiStyle.INK_DIM)
+	_clock_day.anchor_left = 1.0
+	_clock_day.anchor_right = 1.0
+	_clock_day.offset_left = -400
+	_clock_day.offset_right = -32
+	_clock_day.offset_top = 58
+	_clock_day.offset_bottom = 84
 
 	# Christian 23.11.: keine Inventar-Zeile mehr unten rechts (Inhalt steht im Rucksack, Tab)
 	# Traglast: getragen / Maximum, bei Überladung rot mit „ÜBERLADEN“
-	_weight = _label(root, 20, HORIZONTAL_ALIGNMENT_RIGHT)
+	_weight = _label(root, 18, HORIZONTAL_ALIGNMENT_RIGHT)
 	_weight.anchor_left = 1.0
 	_weight.anchor_right = 1.0
 	_weight.anchor_top = 1.0
@@ -89,34 +102,30 @@ func _ready() -> void:
 	_weight.offset_bottom = -28
 
 	_prompt = _label(root, 24, HORIZONTAL_ALIGNMENT_CENTER)
+	UiStyle.style(_prompt, "ui_bold", 25)
 	_prompt.anchor_right = 1.0
 	_prompt.anchor_top = 0.5
 	_prompt.anchor_bottom = 0.5
 	_prompt.offset_top = 40
 	_prompt.offset_bottom = 120
 
-	# Meldungen: mittig, höchstens ~60 % der Bildbreite, lange Texte brechen um (Radio, Tablet …)
-	_notes = VBoxContainer.new()
-	_notes.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_notes.anchor_left = 0.2
-	_notes.anchor_right = 0.8
-	_notes.anchor_top = 0.18
-	_notes.anchor_bottom = 0.18
-	_notes.grow_vertical = Control.GROW_DIRECTION_END
-	_notes.add_theme_constant_override("separation", 4)
-	root.add_child(_notes)
+	# Gedanken: unten in Handschrift, höchstens ~56 % der Bildbreite, lange Texte brechen um
+	_thought = Label.new()
+	_thought.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_thought.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_thought.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_thought.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	UiStyle.style(_thought, "thought", 36, UiStyle.INK, 7)
+	_thought.anchor_left = 0.22
+	_thought.anchor_right = 0.78
+	_thought.anchor_top = 0.62
+	_thought.anchor_bottom = 0.79
+	_thought.modulate.a = 0.0
+	root.add_child(_thought)
+	_help = _thought   # alte Tests/Verweise: _help gibt es nicht mehr als Tastenzeile (Tastenbild: F1)
 
-	_help = _label(root, 18, HORIZONTAL_ALIGNMENT_LEFT)
-	_help.anchor_top = 1.0
-	_help.anchor_bottom = 1.0
-	_help.anchor_right = 1.0
-	_help.offset_left = 32
-	_help.offset_top = -110
-	_help.offset_bottom = -24
-	_help.text = HELP_TEXT
-	_help.modulate.a = 0.85
-
-	_build_bars(root)
+	_needs = NeedsHud.new()
+	root.add_child(_needs)
 	_build_monitor(root)
 
 	_fade = ColorRect.new()
@@ -131,13 +140,14 @@ func _ready() -> void:
 	_title.anchor_bottom = 0.38
 	_title.offset_bottom = 160
 	_title.text = "HOMEBOUND"
+	UiStyle.style(_title, "type", 76, UiStyle.INK, 0)
 
 	_death = _label(root, 34, HORIZONTAL_ALIGNMENT_CENTER)
 	_death.anchor_right = 1.0
 	_death.anchor_top = 0.34
 	_death.anchor_bottom = 0.34
 	_death.offset_bottom = 120
-	_death.add_theme_color_override("font_color", Color(0.85, 0.2, 0.15))
+	UiStyle.style(_death, "type", 38, Color(0.85, 0.22, 0.17))
 	_death.modulate.a = 0.0
 	_death_tips = _label(root, 22, HORIZONTAL_ALIGNMENT_CENTER)
 	_death_tips.anchor_right = 1.0
@@ -147,7 +157,7 @@ func _ready() -> void:
 	_death_tips.offset_right = -260
 	_death_tips.offset_bottom = 300
 	_death_tips.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_death_tips.add_theme_color_override("font_color", Color(0.85, 0.8, 0.72))
+	UiStyle.style(_death_tips, "ui", 23, UiStyle.INK)
 	_death_tips.modulate.a = 0.0
 
 	EventBus.interaction_prompt_changed.connect(_on_prompt)
@@ -165,10 +175,7 @@ func _label(parent: Control, size: int, align: HorizontalAlignment) -> Label:
 	var l := Label.new()
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.horizontal_alignment = align
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", Color(0.92, 0.9, 0.85))
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	l.add_theme_constant_override("outline_size", 8)
+	UiStyle.style(l, "ui", size)
 	parent.add_child(l)
 	return l
 
@@ -178,16 +185,14 @@ func _on_prompt(text: String) -> void:
 
 
 func _process(delta: float) -> void:
-	_clock.text = "Tag %d · %s    %s" % [TimeManager.day, TimeManager.date_text(), TimeManager.get_clock_text()]
+	_clock.text = TimeManager.get_clock_text()
+	_clock_day.text = "Tag %d · %s" % [TimeManager.day, TimeManager.date_text()]
 	_update_weight()
 	_update_notes(delta)
 	_update_watch_log(delta)
-	if _help_time > 0.0:
-		_help_time -= delta
-		if _help_time <= 0.0:
-			_fade_help(false)
+	_needs.unread = unread
 	if Input.is_action_just_pressed("toggle_help"):
-		_fade_help(_help.modulate.a < 0.5)
+		toggle_keycard()
 	_hurt.color.a = move_toward(_hurt.color.a, 0.0, delta * 0.5)
 	# Bei wenig Lebenspunkten bleibt der Rand rot
 	var player := get_tree().get_first_node_in_group("player") as Player
@@ -195,61 +200,115 @@ func _process(delta: float) -> void:
 		_hurt.color.a = maxf(_hurt.color.a, (50.0 - player.health) / 50.0 * 0.25)
 	if _monitor_open:
 		_update_monitor(delta)
-	_update_bars()
 
 
-## Neuer Hinweis erscheint oben; die älteren rutschen nach unten, werden grau und kleiner
-## und bleiben noch eine Weile lesbar (Christian 23.11.: schnell aufeinanderfolgende Hinweise nachlesen können).
+## Meldungen (Christian 26.11.: „nicht überladen“): Unwichtiges (data/ui/notices.json „quiet“) geht still auf die Uhr,
+## alles andere erscheint als Gedanke unten – immer nur einer, die nächsten warten kurz. Mit „!“ drängelt eine Meldung vor.
 func show_notification(text: String, duration: float = 3.0) -> void:
-	if _notes.get_child_count() > 0:
-		var top := _notes.get_child(0) as Label
-		if top.text == text:
-			top.set_meta("t", maxf(float(top.get_meta("t")), duration))
-			top.modulate.a = 1.0
+	if text.strip_edges() == "":
+		return
+	_last_text = text
+	_remember(text)
+	if is_quiet(text):
+		unread += 1
+		return
+	duration = maxf(duration, 2.5)
+	if _thought_t > 0.0 and _thought.text == text:
+		_thought_t = maxf(_thought_t, duration)
+		return
+	for q: Array in _queue:
+		if String(q[0]) == text:
 			return
-	for c in _notes.get_children():
-		var old := c as Label
-		old.set_meta("t", maxf(float(old.get_meta("t")), NOTE_OLD_MIN))
-		old.add_theme_font_size_override("font_size", 20)
-		old.add_theme_color_override("font_color", Color(0.62, 0.62, 0.6))
-	var l := Label.new()
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.add_theme_font_size_override("font_size", 26)
-	l.add_theme_color_override("font_color", Color(0.92, 0.9, 0.85))
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	l.add_theme_constant_override("outline_size", 8)
-	l.text = text
-	l.set_meta("t", duration)
-	_notes.add_child(l)
-	_notes.move_child(l, 0)
-	while _notes.get_child_count() > NOTE_MAX:
-		var last := _notes.get_child(_notes.get_child_count() - 1)
-		_notes.remove_child(last)
-		last.queue_free()
+	if _thought_t <= 0.0:
+		_show_thought(text, duration)
+		return
+	if text.contains("!"):
+		_queue.push_front([text, duration])
+		_thought_t = minf(_thought_t, 0.35)   # der aktuelle Gedanke macht sofort Platz
+	else:
+		_queue.append([text, duration])
+	while _queue.size() > int(notice_cfg().get("queue_max", 3)):
+		_queue.pop_back() if text.contains("!") else _queue.pop_front()
 
 
-## Der jüngste Hinweis im Stapel (leer, wenn keiner da ist) – auch für Tests.
+static var _cfg: Dictionary = {}
+
+
+static func notice_cfg() -> Dictionary:
+	if _cfg.is_empty():
+		_cfg = DataDB.load_json("res://data/ui/notices.json")
+	return _cfg
+
+
+## Gehört die Meldung zu den stillen (nur auf der Uhr)?
+static func is_quiet(text: String) -> bool:
+	for q in Array(notice_cfg().get("quiet", [])):
+		if text.begins_with(String(q)):
+			return true
+	return false
+
+
+func _remember(text: String) -> void:
+	if not log_entries.is_empty() and String(log_entries[0]["text"]) == text:
+		return
+	log_entries.push_front({"text": text, "clock": TimeManager.get_clock_text()})
+	while log_entries.size() > int(notice_cfg().get("log_keep", 12)):
+		log_entries.pop_back()
+
+
+func _show_thought(text: String, duration: float) -> void:
+	_thought.text = text
+	# lange Texte etwas kleiner, damit sie nicht den halben Bildschirm füllen
+	_thought.add_theme_font_size_override("font_size", 36 if text.length() < 90 else (32 if text.length() < 170 else 28))
+	_thought_t = duration
+	_thought_age = 0.0
+
+
+## Die jüngste Meldung (auch stille) – für Tests.
 func current_notification() -> String:
-	return (_notes.get_child(0) as Label).text if _notes.get_child_count() > 0 else ""
+	return _last_text
+
+
+## Der gerade sichtbare Gedanke (leer, wenn keiner da ist).
+func visible_thought() -> String:
+	return _thought.text if _thought_t > 0.0 else ""
 
 
 func _update_notes(delta: float) -> void:
-	for c in _notes.get_children():
-		var l := c as Label
-		var t := float(l.get_meta("t")) - delta
-		l.set_meta("t", t)
-		var faded := 0.55 if c.get_index() > 0 else 1.0   # ältere sind blasser
-		l.modulate.a = clampf(t / 0.6, 0.0, 1.0) * faded
-		if t <= 0.0:
-			_notes.remove_child(l)
-			l.queue_free()
+	if _thought_t > 0.0:
+		_thought_t -= delta
+		_thought_age += delta
+		if not _queue.is_empty() and _thought_age >= float(notice_cfg().get("min_seconds", 2.2)):
+			_thought_t = minf(_thought_t, 0.35)
+		_thought.modulate.a = clampf(_thought_t / 0.35, 0.0, 1.0) * clampf(_thought_age / 0.3, 0.0, 1.0)
+	elif not _queue.is_empty():
+		var q: Array = _queue.pop_front()
+		_show_thought(String(q[0]), float(q[1]))
+	else:
+		_thought.modulate.a = 0.0
 
 
-func _fade_help(show: bool) -> void:
-	_help_time = 0.0
-	create_tween().tween_property(_help, "modulate:a", 0.85 if show else 0.0, 0.5)
+## Tastenbild (F1) ein/aus.
+func toggle_keycard() -> void:
+	if _keycard and is_instance_valid(_keycard):
+		var k := _keycard
+		_keycard = null
+		var tw := k.create_tween()
+		tw.tween_property(k, "modulate:a", 0.0, 0.25)
+		tw.tween_callback(k.queue_free)
+		return
+	# mittig: CenterContainer über den ganzen Bildschirm, darin die Karte
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hurt.get_parent().add_child(center)
+	center.add_child(KeyCard.new())
+	_keycard = center
+	UiStyle.fade_in(_keycard, 0.3, 0.0)
+
+
+func keycard_open() -> bool:
+	return _keycard != null and is_instance_valid(_keycard)
 
 
 func _update_weight() -> void:
@@ -274,7 +333,7 @@ func _intro() -> void:
 	if TimeManager.day == TimeManager.config.start_day and TimeManager.hour > 16.0:
 		tw.tween_callback(func() -> void: show_notification("Die Sonne steht schon tief.", 4.0))
 	else:
-		tw.tween_callback(func() -> void: show_notification("Tag %d" % TimeManager.day, 3.0))
+		tw.tween_callback(show_day_card)
 
 
 # --- Schlafen -----------------------------------------------------------
@@ -295,11 +354,32 @@ func _on_sleep_requested(wake_hour: float) -> void:
 			ThreatDirector.scared_until = TimeManager.get_total_hours() + ThreatDirector.config.scared_awake_hours
 			show_notification("Du schreckst hoch.  %s" % TimeManager.get_clock_text(), 4.0)
 		else:
-			show_notification("Tag %d, %s  –  %s" % [TimeManager.day, TimeManager.date_text(), TimeManager.get_clock_text()], 4.0))
+			show_day_card())
 	tw.tween_property(_fade, "color:a", 0.0, 1.8 if disturb < 0.0 else 0.6)
 	tw.tween_callback(func() -> void:
 		_sleeping = false
 		EventBus.sleep_finished.emit())
+
+
+## Tageskarte nach dem Aufwachen: Tag + Datum in Schreibmaschine, mittig, blendet langsam aus.
+var _day_card: Label
+
+
+func show_day_card() -> void:
+	if _day_card == null:
+		_day_card = _label(_hurt.get_parent(), 40, HORIZONTAL_ALIGNMENT_CENTER)
+		UiStyle.style(_day_card, "type", 40, UiStyle.INK, 0)
+		_day_card.anchor_right = 1.0
+		_day_card.anchor_top = 0.3
+		_day_card.anchor_bottom = 0.3
+		_day_card.offset_bottom = 110
+	_day_card.text = "Tag %d\n%s · %s" % [TimeManager.day, TimeManager.date_text(), TimeManager.get_clock_text()]
+	_remember(_day_card.text.replace("\n", "  ·  "))
+	var tw := create_tween()
+	_day_card.modulate.a = 0.0
+	tw.tween_property(_day_card, "modulate:a", 1.0, 1.2)
+	tw.tween_interval(2.4)
+	tw.tween_property(_day_card, "modulate:a", 0.0, 1.6)
 
 
 func _on_phase_changed(is_night: bool) -> void:
@@ -365,61 +445,6 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("interact") or event.is_action_pressed("jump") or (event is InputEventMouseButton and event.pressed):
 			GameState.death_continue()
 			get_viewport().set_input_as_handled()
-
-
-# --- Survival-Anzeige ---------------------------------------------------
-
-var _bars: Dictionary = {}
-var _bar_root: VBoxContainer
-
-
-func _build_bars(root: Control) -> void:
-	_bar_root = VBoxContainer.new()
-	_bar_root.anchor_top = 1.0
-	_bar_root.anchor_bottom = 1.0
-	_bar_root.offset_left = 32
-	_bar_root.offset_top = -212
-	_bar_root.offset_right = 260
-	_bar_root.offset_bottom = -120
-	_bar_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bar_root.add_theme_constant_override("separation", 4)
-	root.add_child(_bar_root)
-	for key: String in ["Ausdauer", "Hunger", "Durst", "Wärme", "Gesundheit"]:
-		var row := HBoxContainer.new()
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var l := _label(row, 14, HORIZONTAL_ALIGNMENT_LEFT)
-		l.text = key
-		l.custom_minimum_size = Vector2(90, 0)
-		var bg := ColorRect.new()
-		bg.color = Color(0, 0, 0, 0.5)
-		bg.custom_minimum_size = Vector2(120, 8)
-		bg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(bg)
-		var fg := ColorRect.new()
-		fg.color = {"Ausdauer": Color(0.9, 0.9, 0.85), "Hunger": Color(0.9, 0.6, 0.25), "Durst": Color(0.35, 0.65, 0.95),
-			"Wärme": Color(0.95, 0.75, 0.35), "Gesundheit": Color(0.85, 0.2, 0.2)}[key]
-		fg.size = Vector2(120, 8)
-		fg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.add_child(fg)
-		_bar_root.add_child(row)
-		_bars[key] = [row, fg]
-
-
-func _update_bars() -> void:
-	var player := get_tree().get_first_node_in_group("player") as Player
-	var values := {"Ausdauer": Survival.stamina, "Hunger": Survival.hunger, "Durst": Survival.thirst,
-			"Wärme": Survival.warmth, "Gesundheit": player.health if player else 100.0}
-	for key in _bars:
-		var v: float = values[key]
-		var row: Control = _bars[key][0]
-		var fg: ColorRect = _bars[key][1]
-		fg.size.x = 120.0 * clampf(v / 100.0, 0.0, 1.0)
-		# Nur zeigen, wenn es etwas zu sehen gibt
-		var show := v < 60.0 if key in ["Hunger", "Durst", "Wärme"] else v < 99.0
-		if key == "Wärme":
-			fg.color = Color(0.95, 0.75, 0.35).lerp(Color(0.45, 0.7, 1.0), 1.0 - clampf(v / 60.0, 0.0, 1.0))
-		row.modulate.a = move_toward(row.modulate.a, 1.0 if show else 0.0, 0.05)
 
 
 # --- Monitor-Ansicht ----------------------------------------------------
@@ -558,15 +583,10 @@ const WATCH_LOG_WIDTH := 380.0
 func _build_watch_log() -> void:
 	_watch_log = PanelContainer.new()
 	_watch_log.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.02, 0.05, 0.06, 0.62)
-	sb.border_color = Color(0.4, 0.75, 0.85, 0.5)
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(6)
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	sb.content_margin_top = 8
-	sb.content_margin_bottom = 8
+	# Uhr-Display: dunkles Glas mit kaltem Rand
+	var sb := UiStyle.paper(0.7, 8, 14)
+	sb.bg_color = Color(0.02, 0.04, 0.05, 0.72)
+	sb.border_color = Color(UiStyle.WATCH.r, UiStyle.WATCH.g, UiStyle.WATCH.b, 0.45)
 	_watch_log.add_theme_stylebox_override("panel", sb)
 	_watch_log.custom_minimum_size = Vector2(WATCH_LOG_WIDTH, 0)
 	_watch_log_box = VBoxContainer.new()
@@ -582,10 +602,7 @@ func _log_line(text: String, size: int, col: Color) -> void:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(WATCH_LOG_WIDTH - 24.0, 0)
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
-	l.add_theme_constant_override("outline_size", 4)
+	UiStyle.style(l, "ui_bold" if size <= 14 else "ui", size + 2, col, 3)
 	_watch_log_box.add_child(l)
 
 
@@ -616,6 +633,15 @@ func watch_log_lines() -> Array:
 		lines.append(["Noch keine festen Routinen.", "none"])
 	for d: Dictionary in routine:
 		lines.append([("✓  " if d["done"] else "○  ") + String(d["title"]), "done" if d["done"] else "open"])
+	# ZULETZT: die letzten Meldungen zum Nachlesen (auch die stillen)
+	if not log_entries.is_empty():
+		lines.append(["ZULETZT", "head_log"])
+		for i in mini(4, log_entries.size()):
+			var e: Dictionary = log_entries[i]
+			var t := String(e["text"])
+			if t.length() > 90:
+				t = t.left(88) + " …"
+			lines.append([String(e["clock"]) + "   " + t, "log_new" if i < unread else "log"])
 	return lines
 
 
@@ -627,8 +653,12 @@ func _fill_watch_log() -> void:
 		match String(ln[1]):
 			"head_story":
 				_log_line(String(ln[0]), 13, Color(1.0, 0.58, 0.42))
-			"head_day":
+			"head_day", "head_log":
 				_log_line(String(ln[0]), 13, Color(1.0, 0.82, 0.45))
+			"log_new":
+				_log_line(String(ln[0]), 14, UiStyle.INK)
+			"log":
+				_log_line(String(ln[0]), 14, UiStyle.INK_DIM)
 			"story":
 				_log_line(String(ln[0]), 16, Color(1.0, 0.88, 0.74))
 			"goal":
@@ -655,6 +685,8 @@ func _update_watch_log(delta: float) -> void:
 	if not _watch_log.visible or _watch_log_t <= 0.0:
 		_fill_watch_log()
 		_watch_log_t = 1.0
+		if _watch_log.visible:
+			unread = 0   # gelesen, sobald die Liste einmal dastand
 	_watch_log_t -= delta
 	_watch_log.visible = true
 	_watch_log.modulate.a = clampf((k - 0.4) / 0.5, 0.0, 1.0)

@@ -123,6 +123,7 @@ func interact(_player: Node) -> void:
 	burn_until = TimeManager.get_total_hours() + float(_cfg.get("burn_hours", 12.0))
 	SoundBank.play_at(self, "place", global_position + Vector3(0.2, 0.3, 0), -4.0)
 	EventBus.notify("Das Feuer brennt wieder.", 2.0)
+	Tasks.flag("fire_lit")
 
 
 ## Heizt die Hütte: solange das Feuer brennt und danach, solange die Kacheln die Wärme halten.

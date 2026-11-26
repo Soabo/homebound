@@ -13,6 +13,8 @@ var quality: String = "high"
 var fullscreen: bool = true
 ## Schleich-Anzeige (Auge/Licht/Geräusch über dem Schnellplatz)
 var stealth_hud: bool = true
+var intro: bool = true      ## Intro (Telefonat) vor einem neuen Spiel
+var tutorial: bool = true   ## geführter erster Tag
 ## Bilder pro Sekunde: Obergrenze (0 = unbegrenzt), Bildsynchronisierung, Anzeige oben rechts (Christian 23.11.)
 var max_fps: int = 0
 var vsync: bool = true
@@ -36,6 +38,8 @@ func _ready() -> void:
 	quality = String(d.get("quality", quality))
 	fullscreen = bool(d.get("fullscreen", fullscreen))
 	stealth_hud = bool(d.get("stealth_hud", stealth_hud))
+	intro = bool(d.get("intro", intro))
+	tutorial = bool(d.get("tutorial", tutorial))
 	max_fps = int(d.get("max_fps", max_fps))
 	vsync = bool(d.get("vsync", vsync))
 	show_fps = bool(d.get("show_fps", show_fps))
@@ -48,6 +52,8 @@ func _ready() -> void:
 		quality = String(cfg.get_value("video", "quality", quality))
 		fullscreen = bool(cfg.get_value("video", "fullscreen", fullscreen))
 		stealth_hud = bool(cfg.get_value("game", "stealth_hud", stealth_hud))
+		intro = bool(cfg.get_value("game", "intro", intro))
+		tutorial = bool(cfg.get_value("game", "tutorial", tutorial))
 		max_fps = int(cfg.get_value("video", "max_fps", max_fps))
 		vsync = bool(cfg.get_value("video", "vsync", vsync))
 		show_fps = bool(cfg.get_value("video", "show_fps", show_fps))
@@ -77,6 +83,8 @@ func save() -> void:
 	cfg.set_value("video", "quality", quality)
 	cfg.set_value("video", "fullscreen", fullscreen)
 	cfg.set_value("game", "stealth_hud", stealth_hud)
+	cfg.set_value("game", "intro", intro)
+	cfg.set_value("game", "tutorial", tutorial)
 	cfg.set_value("video", "max_fps", max_fps)
 	cfg.set_value("video", "vsync", vsync)
 	cfg.set_value("video", "show_fps", show_fps)

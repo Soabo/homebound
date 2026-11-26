@@ -160,6 +160,7 @@ func _label(t: String, size: int, col: Color) -> Label:
 
 func open(couch: Couch) -> void:
 	_couch = couch
+	Tasks.flag("tablet_opened")
 	_root.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_current = ""

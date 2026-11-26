@@ -33,6 +33,7 @@ func _ready() -> void:
 	_build_cameras()
 	Builder.spawn_all(self)
 	add_child(Surveillance.new())
+	add_child(Tutorial.new())
 
 	var player := Player.new()
 	player.position = PLAYER_SPAWN + Vector3(0, Terrain.height_at(PLAYER_SPAWN.x, PLAYER_SPAWN.z) + 0.05, 0)

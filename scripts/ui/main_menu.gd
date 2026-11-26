@@ -7,14 +7,6 @@ extends Control
 
 const TITLE_IMAGE := "res://assets/ui/title.jpg"
 const AMBER := Color(1.0, 0.78, 0.48)
-const CONTROLS := [
-	["W A S D", "Gehen"], ["Shift (halten)", "Rennen"], ["Alt (halten)", "Langsam gehen und Atem anhalten"], ["C / Strg", "Ducken"], ["Y / X (halten)", "Nach links / rechts lehnen (spähen)"],
-	["Leertaste", "Springen"], ["Maus", "Umsehen"], ["E", "Benutzen, aufheben, öffnen"], ["R", "Zweite Aktion (z. B. hineinlegen, hinsetzen)"],
-	["Linksklick", "Werkzeug in der Hand benutzen, schlagen"], ["Rechtsklick", "Blocken (Gießkanne: füllen)"], ["1 – 9 / Mausrad", "Schnellplatz wählen"],
-	["F (kurz)", "Uhrlicht an/aus"], ["F (halten)", "Uhrlicht: LED oder weißes Display"], ["Tab / I", "Rucksack und Werkbank"],
-	["Bauteil wählen + Linksklick", "Bauen (R drehen, R halten = abbauen)"], ["Q (halten)", "Fernglas"], ["M", "Wanderkarte"], ["J (halten)", "Aufgaben auf der Uhr"], ["Esc", "Pause"], ["F1", "Hilfe ein/aus"],
-	["F2", "Retro-Bild ein/aus"], ["F11", "Vollbild"],
-]
 
 var _bg: TextureRect
 var _fog: Array = []
@@ -149,7 +141,8 @@ func _build_buttons() -> void:
 	add_child(box)
 	var title := Label.new()
 	title.text = "HOMEBOUND"
-	title.add_theme_font_size_override("font_size", 86)
+	title.add_theme_font_override("font", UiStyle.font("type"))
+	title.add_theme_font_size_override("font_size", 92)
 	title.add_theme_color_override("font_color", Color(0.93, 0.9, 0.84))
 	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	title.add_theme_constant_override("shadow_offset_x", 3)
@@ -157,7 +150,8 @@ func _build_buttons() -> void:
 	box.add_child(title)
 	var sub := Label.new()
 	sub.text = "Etwas sucht etwas in diesem Wald."
-	sub.add_theme_font_size_override("font_size", 22)
+	sub.add_theme_font_override("font", UiStyle.font("thought"))
+	sub.add_theme_font_size_override("font_size", 32)
 	sub.add_theme_color_override("font_color", Color(0.75, 0.72, 0.66))
 	box.add_child(sub)
 	var gap := Control.new()
@@ -186,7 +180,8 @@ func _button(parent: Control, text: String, small: String = "") -> Button:
 	b.flat = true
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.custom_minimum_size = Vector2(380, 44)
-	b.add_theme_font_size_override("font_size", 28)
+	b.add_theme_font_override("font", UiStyle.font("ui_bold"))
+	b.add_theme_font_size_override("font_size", 30)
 	b.add_theme_color_override("font_color", Color(0.86, 0.84, 0.8))
 	b.add_theme_color_override("font_hover_color", AMBER)
 	b.add_theme_color_override("font_focus_color", AMBER)
@@ -214,6 +209,7 @@ func _build_panel() -> void:
 	outer.add_theme_constant_override("separation", 18)
 	_panel.add_child(outer)
 	_panel_title = Label.new()
+	_panel_title.add_theme_font_override("font", UiStyle.font("type"))
 	_panel_title.add_theme_font_size_override("font_size", 32)
 	_panel_title.add_theme_color_override("font_color", AMBER)
 	outer.add_child(_panel_title)
@@ -334,15 +330,7 @@ func _show_settings() -> void:
 
 func _show_controls() -> void:
 	_open_panel("Steuerung")
-	for c: Array in CONTROLS:
-		var row := HBoxContainer.new()
-		var k := _label(String(c[0]), 19, AMBER)
-		k.custom_minimum_size = Vector2(210, 0)
-		row.add_child(k)
-		var v := _label(String(c[1]), 19)
-		v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(v)
-		_panel_box.add_child(row)
+	_panel_box.add_child(KeyCard.build_grid(17))   # dasselbe Tastenbild wie F1 im Spiel (data/ui/controls.json)
 
 
 func _show_endings() -> void:

@@ -398,6 +398,7 @@ func _t_more() -> void:
 	await _t_fixes_2511b()
 	await _t_build_hand_2511()
 	await _t_fixes_2511c()
+	await _t_ui_2611()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -2695,12 +2696,15 @@ func _t_batch6_2311() -> void:
 	if hud == null:
 		hud = get_tree().get_first_node_in_group("hud") as Hud
 	if hud:
+		# seit 26.11.: Gedanken nacheinander, beide lassen sich auf der Uhr nachlesen
+		hud._queue.clear()
+		hud._thought_t = 0.0
 		hud.show_notification("Erster Hinweis", 0.5)
 		hud.show_notification("Zweiter Hinweis", 3.0)
-		var lines := hud._notes.get_children().map(func(c: Node) -> String: return (c as Label).text)
-		_ok("Hinweise: neuer oben, alter darunter (%s)" % [lines], lines.size() >= 2 and lines[0] == "Zweiter Hinweis" and lines[1] == "Erster Hinweis")
-		await get_tree().create_timer(1.0).timeout
-		_ok("Hinweise: der alte bleibt länger lesbar", hud._notes.get_child_count() >= 2)
+		_ok("Hinweise: erster bleibt sichtbar, zweiter wartet", hud.visible_thought() == "Erster Hinweis")
+		_ok("Hinweise: beide auf der Uhr nachlesbar", hud.log_entries.size() >= 2 and String(hud.log_entries[0]["text"]) == "Zweiter Hinweis")
+		await get_tree().create_timer(3.2).timeout
+		_ok("Hinweise: danach kommt der zweite", hud.visible_thought() == "Zweiter Hinweis")
 	else:
 		_ok("Hinweise: Hud gefunden", false)
 	# Umzugskarton erst mit Aufgabe
@@ -3789,3 +3793,64 @@ func _t_fixes_2511c() -> void:
 	# Foto-Fels/Hüttenboden im klaren Stil
 	var m := StandardMaterial3D.new()
 	_ok("Foto-Texturen: Fels setzbar", Look.apply_photo(m, "rock") == (Look.smooth and Look.forest_photo) and (not Look.smooth or m.normal_texture != null))
+
+
+## Einführung, Meldungen, Look (Christian 26.11.)
+func _t_ui_2611() -> void:
+	for k: String in UiStyle.FONTS:
+		_ok("Schrift %s lädt" % k, UiStyle.font(k) != null)
+	_ok("Tastenbild: drei Gruppen", Array(KeyCard.data().get("groups", [])).size() >= 3)
+	var hud := get_tree().get_first_node_in_group("hud") as Hud
+	if hud:
+		var u := hud.unread
+		hud.show_notification("Gespeichert.", 2.0)
+		_ok("Meldungen: Unwichtiges nur still auf der Uhr", hud.unread == u + 1 and hud.visible_thought() != "Gespeichert." and String(hud.log_entries[0]["text"]) == "Gespeichert.")
+		hud.show_notification("Ein ruhiger Gedanke.", 3.0)
+		hud.show_notification("Gefahr! Lauf!", 3.0)
+		await get_tree().create_timer(0.5).timeout
+		_ok("Meldungen: Gefahr drängelt vor", hud.visible_thought() == "Gefahr! Lauf!" or hud._queue.is_empty() == false and String(hud._queue[0][0]) == "Gefahr! Lauf!")
+		hud._queue.clear()
+		hud.unread = 0
+		_ok("Bedürfnis-Ringe vorhanden", hud._needs != null)
+		Survival.thirst = 30.0
+		_ok("Durst-Ring erscheint bei Durst", hud._needs.visible_needs().has("thirst"))
+		Survival.thirst = 100.0
+		hud.toggle_keycard()
+		_ok("F1: Tastenbild auf", hud.keycard_open())
+		hud.toggle_keycard()
+	# Einführung
+	var tut := _scene().get_node_or_null("Tutorial") as Tutorial
+	_ok("Einführung: Knoten in der Szene", tut != null)
+	var keep_flags := Tasks.flags.duplicate()
+	var fp := _scene().get_node_or_null("Cabin/Fireplace")
+	var keep_burn: float = fp.get("burn_until") if fp else 0.0
+	for f in ["tutorial_on", "tutorial_done", "fire_lit", "tablet_opened"]:
+		Tasks.flags.erase(f)
+	for st: Dictionary in tut.steps:
+		Tasks.flags.erase("tut_" + String(st["id"]))
+	Tutorial.begin()
+	_ok("Einführung: aktiv, Ofen aus, Durst gesenkt", Tutorial.active() and Survival.thirst < 60.0 and fp != null and float(fp.get("burn_until")) < TimeManager.get_total_hours())
+	await get_tree().create_timer(0.6).timeout
+	_ok("Einführung: erster Schritt läuft, Uhr steht (%d, %.2f)" % [tut.index, TimeManager.tempo], tut.index == 0 and TimeManager.tempo == 0.0)
+	_ok("Einführung: Karte sichtbar", tut.card != null and tut.card.visible)
+	if fp:
+		Inventory.add("wood", 1)
+		fp.call("interact", _player())
+	var fire_step: Dictionary = tut.steps[1]
+	_ok("Einführung: Ofen anheizen erkannt", tut.is_done(fire_step))
+	Tasks.flag("tablet_opened")
+	_ok("Einführung: Tablet erkannt", tut.is_done(tut.steps[4]))
+	Tutorial.skip()
+	await get_tree().create_timer(0.3).timeout
+	_ok("Einführung: überspringen → Uhr läuft", not Tutorial.active() and TimeManager.tempo == 1.0)
+	Tasks.flags = keep_flags
+	if fp:
+		fp.set("burn_until", keep_burn)
+	Survival.thirst = 100.0
+	Survival.hunger = 100.0
+	Survival.warmth = 100.0
+	# Intro: Texte und Klingelton
+	var intro: Dictionary = DataDB.load_json("res://data/story/intro.json")
+	_ok("Intro: Gespräch, Polizei, Nachspann", Array(intro.get("call", [])).size() >= 5 and Array(intro.get("police", [])).size() >= 1 and Array(intro.get("epilogue", [])).size() >= 5)
+	_ok("Intro: Klingelton und Vibration", IntroScene._ringtone() != null and IntroScene._vibrate() != null and IntroScene._skid() != null)
+	_ok("Intro: Szene vorhanden", ResourceLoader.exists(GameState.INTRO_SCENE))

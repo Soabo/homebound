@@ -1,0 +1,27 @@
+{
+  "_info": "Meldungen (Christian 26.11.: nicht überladen). Alles, was mit einem der quiet-Anfänge beginnt, erscheint NICHT im Bild, sondern nur still auf der Uhr (J halten) unter ZULETZT – ein Punkt unten links zeigt, dass etwas Neues dasteht. Alles andere erscheint als Gedanke unten in Handschrift, eins nach dem anderen. Meldungen mit einem Ausrufezeichen drängeln vor (Gefahr). log_keep = so viele Einträge merkt sich die Uhr. min_seconds = so lange bleibt ein Gedanke mindestens, wenn schon der nächste wartet. queue_max = so viele Gedanken warten höchstens.",
+  "quiet": [
+    "Neue Aufgabe",
+    "Neuer Fund",
+    "Neue Erkenntnis",
+    "Bauplan gefunden",
+    "Im Archiv lässt sich",
+    "Gespeichert",
+    "Hergestellt",
+    "Getrunken",
+    "Gegessen",
+    "Gegossen",
+    "Gießkanne gefüllt",
+    "Tank aufgefüllt",
+    "Holzgas:",
+    "Holz nachgelegt",
+    "Fertig zubereitet",
+    "Uhr: ",
+    "Retro-Filter",
+    "Es wird dunkel.",
+    "Der Morgen graut."
+  ],
+  "log_keep": 12,
+  "min_seconds": 2.2,
+  "queue_max": 3
+}

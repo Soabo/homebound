@@ -1,0 +1,35 @@
+{
+  "_info": "Intro vor einem neuen Spiel (Christian 26.11.: kurze spielbare Szene). Christian sitzt abends im Büro, Regen, das Handy klingelt (Stefanie). call = Gespräch: who (Stefanie|Ben|Lena|Christian|Polizei), text; choice = zwei Antworten zur Wahl (Taste 1/2 oder Klick), beide führen weiter. after_call = Gedanke danach. Dann Unfallgeräusch im Dunkeln, Uhr springt auf later_clock, zweiter Anruf (police). Danach epilogue = Zeilen in Schreibmaschine auf Schwarz, sound = Klang zur Zeile (church_bell, wind, silence …). Passt zur Story-Bibel: Stefanie fährt mit Lena und Ben zu ihrer Mutter („Kommst du nach?“, 18:42), Ben hält sein Geschenk für Papa, sie will „über die Hütte“ reden.",
+  "office_clock": "18:39",
+  "caller": "Stefanie ♥",
+  "call": [
+    {"who": "Stefanie", "text": "Hey. Du bist noch im Büro, oder?"},
+    {"choice": ["Ja … die Abnahme morgen. Ich muss das noch fertig machen.", "Sorry. Ich hab total die Zeit vergessen."]},
+    {"who": "Stefanie", "text": "Wir fahren jetzt los zu Mama. Es schüttet wie verrückt."},
+    {"who": "Ben", "text": "Papa! Ich hab was für dich! Aber du darfst noch nicht gucken!"},
+    {"who": "Stefanie", "text": "Er lässt das Ding keine Sekunde los."},
+    {"who": "Lena", "text": "Kommst du nach, Papa?"},
+    {"choice": ["Ich komme nach. Versprochen.", "Eine Stunde noch, dann bin ich da."]},
+    {"who": "Stefanie", "text": "Fahr vorsichtig, ja? Und … am Wochenende müssen wir reden. Über die Hütte. Über ein paar Sachen."},
+    {"who": "Christian", "text": "Worüber?"},
+    {"who": "Stefanie", "text": "Nicht am Telefon. Ich hab dich lieb."}
+  ],
+  "after_call": "Eine Stunde noch.",
+  "later_clock": "19:58",
+  "police_caller": "Unbekannte Nummer",
+  "police": [
+    {"who": "Polizei", "text": "Guten Abend. Hier ist die Polizeiinspektion Freyung. Spreche ich mit dem Ehemann von Stefanie …?"},
+    {"who": "Polizei", "text": "Es hat einen Unfall gegeben. Auf der B12. Es tut mir sehr leid."}
+  ],
+  "epilogue": [
+    {"text": "Stefanie. Lena. Ben.", "hold": 3.5},
+    {"text": "Ein Lastwagen war bei Starkregen auf ihre Spur geraten. Sie hatten keine Chance, hieß es.", "hold": 5.0},
+    {"text": "Die Beerdigung war an einem Dienstag. Drei Särge. Einer so klein, dass ich nicht hinsehen konnte.", "hold": 5.5, "sound": "church_bell"},
+    {"text": "Danach habe ich aufgehört, ans Telefon zu gehen. Katrin schreibt trotzdem. Jede Woche.", "hold": 5.0},
+    {"text": "Ich habe die Arbeit hingeschmissen. Die Wohnung verkauft. Irgendwann habe ich aufgehört, die Tage zu zählen.", "hold": 5.5},
+    {"text": "Ein Jahr später.", "hold": 3.0, "sound": "wind"},
+    {"text": "Es gibt nur einen Ort, an dem sie noch alle drei sind:\ndie Hütte, die Stefanie ausgesucht hat. Mitten im Bayerischen Wald.", "hold": 6.0},
+    {"text": "Ich nehme nur mit, was in den Pickup passt.", "hold": 4.0}
+  ],
+  "skip_hint": "Esc halten = Intro überspringen"
+}

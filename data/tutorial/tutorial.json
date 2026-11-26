@@ -1,0 +1,61 @@
+{
+  "_info": "Geführter erster Tag (Christian 26.11.). Nur bei neuem Spiel mit eingeschalteter Einführung (Einstellungen). Schritte der Reihe nach; jeder zeigt einen Gedanken (Handschrift), die passenden Tasten und eine kurze Erklärung. done: inside | fire | drink | eat | watch | light | sneak | slept | flag:NAME | built:TYP | item:ID>=N. tempo = Uhrtempo, solange dieser Schritt läuft (0 = Uhr steht, damit niemand in die Nacht hetzt). start_needs = Bedürfnisse beim Start der Einführung (damit die Ringe gleich auftauchen). quiet_until_done: tagsüber keine Zwischenfälle, solange die Einführung läuft.",
+  "start_needs": {"thirst": 48.0, "hunger": 52.0, "warmth": 46.0},
+  "steps": [
+    {
+      "id": "arrive", "done": "inside", "tempo": 0.0,
+      "thought": "Da ist sie also. Stefanies Hütte. Ich sollte erst mal reingehen.",
+      "keys": [["W / A / S / D", "Gehen"], ["Maus", "Umsehen"], ["Shift", "Rennen (halten)"], ["E", "Tür öffnen"]],
+      "text": "Die Hütte ist dein Mittelpunkt. Von hier aus geht alles los – und hierher kommst du zurück."
+    },
+    {
+      "id": "fire", "done": "flag:fire_lit", "tempo": 0.0,
+      "thought": "Hier drin ist es eiskalt. Erst mal den Kachelofen anheizen.",
+      "keys": [["E", "Holz aus dem Korb neben dem Ofen nehmen"], ["E", "Am Ofen: Holz nachlegen"]],
+      "text": "Draußen und nachts wird dir schnell kalt (Flamme unten links). Feuer, Hütte und später ein Schlafsack halten dich warm."
+    },
+    {
+      "id": "drink", "done": "drink", "tempo": 0.0,
+      "thought": "Mein Mund ist ganz trocken. In der Küche gibt es Wasser.",
+      "keys": [["E", "Flasche nehmen oder am Hahn füllen"], ["1–9", "Flasche in die Hand nehmen"], ["Linksklick", "Trinken"], ["Tab", "Rucksack: alles, was du trägst"]],
+      "text": "Durst und Hunger sinken langsam. Wird etwas knapp, erscheint unten links ein Ring. Ist er leer, nimmst du Schaden."
+    },
+    {
+      "id": "eat", "done": "eat", "tempo": 0.0,
+      "thought": "Seit heute früh nichts gegessen. In der Speis stehen Konserven.",
+      "keys": [["E", "Konserve aus dem Regal nehmen"], ["1–9", "In die Hand nehmen"], ["Linksklick", "Essen"]],
+      "text": "Vorräte gehen zur Neige. Später wachsen Wintersalat und Spinat in den Hochbeeten, Schlingen fangen Hasen."
+    },
+    {
+      "id": "tablet", "done": "flag:tablet_opened", "tempo": 0.0,
+      "thought": "Mein Tablet liegt auf der Couch. Vielleicht hat jemand geschrieben.",
+      "keys": [["E", "Auf die Couch setzen, Tablet nehmen"]],
+      "text": "Das Tablet ist dein Notizbuch: Aufgaben und Spur, Post, Notizen, Funde und Tagebuch. Wenn du nicht weiterweißt, schau hier nach."
+    },
+    {
+      "id": "watch", "done": "watch", "tempo": 0.0,
+      "thought": "Die Uhr am Arm. Stefanie hat sie mir geschenkt.",
+      "keys": [["J", "Auf die Uhr schauen (halten): Aufgaben, Bedürfnisse, Neues"], ["F", "Uhrlicht an/aus"]],
+      "text": "Kleinere Meldungen erscheinen nicht im Bild, sondern still auf der Uhr. Ein Punkt unten links zeigt, wenn dort etwas Neues steht."
+    },
+    {
+      "id": "fence", "done": "built:fence_panel", "tempo": 0.0,
+      "thought": "Der Gartenzaun hat Lücken. In der Werkstatt liegen Bretter und Nägel.",
+      "keys": [["E", "Bretter vom Regal, Nägel aus der Kiste nehmen"], ["Tab", "An der Werkbank: Zaunelement bauen"], ["1–9", "Zaunelement in die Hand"], ["Linksklick", "Aufstellen (grün = passt)"], ["R", "Drehen  ·  R halten = wieder abbauen"]],
+      "text": "Zäune, Barrikaden und Fallen halten nachts etwas auf oder verlangsamen es. Fenster und Tür kannst du mit Brettern in der Hand verstärken."
+    },
+    {
+      "id": "sneak", "done": "sneak", "tempo": 1.0,
+      "thought": "Die Sonne geht bald unter. Ich weiß nicht, warum – aber ich will heute Nacht nicht gehört werden.",
+      "keys": [["Strg", "Ducken"], ["Alt", "Leise gehen und Atem anhalten (halten)"], ["Y / X", "Um Ecken lehnen"]],
+      "text": "Was draußen ist, hört Schritte, Atem und knarrende Dielen und sieht Licht. Wer leise ist und im Dunkeln bleibt, wird schwerer entdeckt. Probier zwei davon aus."
+    },
+    {
+      "id": "sleep", "done": "slept", "tempo": 1.0,
+      "thought": "Genug für heute. Sobald es dunkel ist, lege ich mich hin.",
+      "keys": [["E", "Am Bett: schlafen (ab Einbruch der Nacht)"], ["F1", "Alle Tasten auf einen Blick"]],
+      "text": "Jeder Schlaf speichert, und jeden Morgen wird automatisch gespeichert. Stirbst du, geht es dort weiter."
+    }
+  ],
+  "finish": "Die erste Nacht ist vorbei. Ab heute bin ich auf mich allein gestellt."
+}

@@ -1,0 +1,31 @@
+{
+  "_info": "Tastenbild (F1 im Spiel, Pause → Steuerung, Hauptmenü → Steuerung). Gruppen mit [Tasten, Erklärung]; mehrere Tasten mit „/“ trennen.",
+  "groups": [
+    {"title": "Bewegen", "keys": [
+      ["W / A / S / D", "Gehen"],
+      ["Maus", "Umsehen"],
+      ["Shift", "Rennen (halten)"],
+      ["Alt", "Langsam, leise gehen und Atem anhalten (halten)"],
+      ["Strg / C", "Ducken"],
+      ["Y / X", "Nach links / rechts lehnen, um Ecken spähen"],
+      ["Leertaste", "Springen"]
+    ]},
+    {"title": "Hände und Uhr", "keys": [
+      ["E", "Benutzen, aufheben, öffnen"],
+      ["R", "Zweite Aktion (hineinlegen, zurückstellen …)"],
+      ["Linksklick", "Gegenstand in der Hand benutzen, schlagen, bauen"],
+      ["Rechtsklick", "Blocken / Gießkanne füllen"],
+      ["1–9 / Mausrad", "Schnellplatz wählen"],
+      ["F", "Uhrlicht an/aus (halten: LED oder Display)"],
+      ["J", "Blick auf die Uhr: Aufgaben, Bedürfnisse, Neues (halten)"]
+    ]},
+    {"title": "Rucksack und Welt", "keys": [
+      ["Tab / I", "Rucksack, Werkbank, Kochen"],
+      ["R", "Bauteil in der Hand drehen (halten: Gebautes abbauen)"],
+      ["Q", "Fernglas (halten)"],
+      ["M", "Karte"],
+      ["Esc", "Pause"],
+      ["F1", "Dieses Tastenbild"]
+    ]}
+  ]
+}

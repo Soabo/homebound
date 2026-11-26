@@ -57,7 +57,8 @@ func _ready() -> void:
 	_name = Label.new()
 	_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name.add_theme_font_size_override("font_size", 14)
+	_name.add_theme_font_size_override("font_size", 18)
+	_name.add_theme_font_override("font", UiStyle.font("ui_bold"))
 	_name.add_theme_color_override("font_color", Color(0.95, 0.88, 0.7))
 	_name.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_name.add_theme_constant_override("outline_size", 4)

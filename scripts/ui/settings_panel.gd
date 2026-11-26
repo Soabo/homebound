@@ -67,6 +67,16 @@ func _ready() -> void:
 	sh.tooltip_text = "Kleines Auge über dem Schnellplatz: wie sehr dich etwas bemerkt, wie sichtbar und wie laut du bist."
 	sh.toggled.connect(func(on: bool) -> void: Settings.set_value("stealth_hud", on))
 	r3.add_child(sh)
+	# Christian 26.11.: Intro und geführter erster Tag (gelten für das nächste neue Spiel)
+	for pair: Array in [["intro", "Intro vor neuem Spiel", "Telefonat mit Stefanie und wie alles kam. Lässt sich mit Esc (halten) überspringen."],
+			["tutorial", "Geführter erster Tag", "Am ersten Tag Schritt für Schritt: Wärme, Durst, Hunger, Tablet, Uhr, Bauen, Schleichen, Schlafen."]]:
+		var rr := _row(String(pair[1]))
+		var cbx := CheckBox.new()
+		var key := String(pair[0])
+		cbx.button_pressed = bool(Settings.get(key))
+		cbx.tooltip_text = String(pair[2])
+		cbx.toggled.connect(func(on: bool) -> void: Settings.set_value(key, on))
+		rr.add_child(cbx)
 	var hint := Label.new()
 	hint.text = "Niedrig rechnet mit kleinerer Auflösung und weniger Schatten – gut für ältere Rechner und den Browser."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

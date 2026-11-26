@@ -16,6 +16,7 @@ var day: int = 1
 var hour: float = 0.0
 var running: bool = true
 var fast_forward: bool = false
+var tempo: float = 1.0   ## Uhrtempo (Einführung am ersten Tag hält die Uhr an, bis man soweit ist)
 
 var _last_minute: int = -1
 var _last_hour: int = -1
@@ -37,7 +38,7 @@ func _process(delta: float) -> void:
 	if not running:
 		return
 	var multiplier := config.debug_fast_forward_multiplier if fast_forward else 1.0
-	advance_hours(delta * get_hours_per_second() * multiplier)
+	advance_hours(delta * get_hours_per_second() * multiplier * (1.0 if fast_forward else tempo))
 
 
 # --- Abfragen -----------------------------------------------------------

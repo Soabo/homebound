@@ -5,6 +5,8 @@ extends CanvasLayer
 var _root: Control
 var _info: Label
 var _settings: SettingsPanel
+var _keys: Control
+var _skip_tut: Button
 
 
 func _ready() -> void:
@@ -27,16 +29,20 @@ func _ready() -> void:
 	box.add_theme_constant_override("separation", 18)
 	center.add_child(box)
 
-	var title := Label.new()
-	title.text = "Pause"
+	var title := UiStyle.label(box, "type", 52, UiStyle.INK, "Pause")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
-	box.add_child(title)
 
 	var resume := _button(box, "Weiter")
 	resume.pressed.connect(func() -> void: set_paused(false))
+	var keys := _button(box, "Steuerung")
+	keys.pressed.connect(_toggle_keys)
 	var settings := _button(box, "Einstellungen")
 	settings.pressed.connect(_toggle_settings)
+	# nur während der Einführung am ersten Tag
+	_skip_tut = _button(box, "Einführung überspringen")
+	_skip_tut.pressed.connect(func() -> void:
+		Tutorial.skip()
+		_skip_tut.visible = false)
 	var menu := _button(box, "Zum Hauptmenü")
 	menu.pressed.connect(func() -> void: GameState.to_menu())
 	if OS.get_name() != "Web":
@@ -50,6 +56,9 @@ func _ready() -> void:
 	_settings = SettingsPanel.new()
 	_settings.visible = false
 	box.add_child(_settings)
+	_keys = KeyCard.build_grid(17)
+	_keys.visible = false
+	box.add_child(_keys)
 
 	visible = false
 
@@ -58,7 +67,8 @@ func _button(parent: Control, text: String) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(320, 56)
-	b.add_theme_font_size_override("font_size", 24)
+	b.add_theme_font_size_override("font_size", 25)
+	b.add_theme_font_override("font", UiStyle.font("ui_bold"))
 	parent.add_child(b)
 	return b
 
@@ -84,6 +94,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _toggle_settings() -> void:
 	_settings.visible = not _settings.visible
+	_keys.visible = false
+
+
+func _toggle_keys() -> void:
+	_keys.visible = not _keys.visible
+	_settings.visible = false
 
 
 func set_paused(value: bool) -> void:
@@ -91,6 +107,8 @@ func set_paused(value: bool) -> void:
 	visible = value
 	if value and _info:
 		_settings.visible = false
+		_keys.visible = false
+		_skip_tut.visible = Tutorial.active()
 		_info.text = ("Speicherplatz %d – gespeichert wird bei jedem Schlaf (Bett, Zelt) und jeden Morgen.\nZuletzt: Tag %d (%s), %02d:%02d Uhr. Was seitdem geschah, geht beim Beenden verloren." % [GameState.slot + 1, GameState.bed_day, TimeManager.date_text(GameState.bed_day), int(GameState.bed_hour), int(fmod(GameState.bed_hour, 1.0) * 60.0)]) if GameState.slot >= 0 else "Kein Speicherplatz (Testlauf)."
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value or _menu_needs_mouse() else Input.MOUSE_MODE_CAPTURED
 

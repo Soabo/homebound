@@ -259,6 +259,12 @@ func load_game(n: int) -> bool:
 ## Neues Spiel in einen Platz (überschreibt ihn beim ersten Speichern).
 ## start_day > 1 = Teststart (Hauptmenü): gleich an diesem Tag, mit Zelt, Schlafsack und Marschgepäck.
 func new_game(n: int, start_day: int = 1) -> void:
+	# Christian 26.11.: vor einem echten neuen Spiel erst das Intro (Telefonat), danach geht es von dort aus weiter
+	if start_day == 1 and Settings.intro and not intro_done:
+		intro_slot = n
+		get_tree().change_scene_to_file(INTRO_SCENE)
+		return
+	intro_done = false
 	slot = n
 	play_seconds = 0.0
 	_apply(_fresh.duplicate(true), _fresh.duplicate(true))
@@ -267,8 +273,21 @@ func new_game(n: int, start_day: int = 1) -> void:
 	await get_tree().create_timer(1.0).timeout
 	if start_day > 1:
 		test_start(start_day)
+	elif Settings.tutorial:
+		Tutorial.begin()
 	take_snapshot()
 	save_game(false)
+
+
+const INTRO_SCENE := "res://scenes/intro.tscn"
+var intro_slot := 0          ## Speicherplatz, der nach dem Intro beginnt
+var intro_done := false      ## Intro gesehen/übersprungen → new_game startet jetzt wirklich
+
+
+## Vom Intro aufgerufen: jetzt das eigentliche Spiel beginnen.
+func finish_intro() -> void:
+	intro_done = true
+	new_game(intro_slot, 1)
 
 
 ## Teststart (Christian 14.11.): Nächte bis start_day fortschreiben, Tag start_day um TEST_START_HOUR,
