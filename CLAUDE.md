@@ -926,6 +926,8 @@
 - Zerfleischer-Haut (Christian 26.11., aitextured „Dark Cracked Skin“): `assets/textures/creatures/mauler_skin_*` (Farbe mit fahleren
   Fugen, Normal/Rauheit aus dem Farbbild berechnet), `FleshKit.photo_skin(name, tint, tile_m)` – Mauler skin 0,75 m / shade 0,55 m.
   Weitere Wesen: gleicher Weg (Datei `<name>_color.jpg` usw., dann photo_skin).
+- Knarrende Dielen im klaren Stil: gleiche Foto-Textur wie der Hüttenboden, schmal wie eine Foto-Diele (`Cabin.PLANK_W` 0,125 m),
+  längs (z) und auf die Dielenfugen gerastert (lagen vorher quer über den Fotodielen). Dachboden behält die gezeichneten Bretter.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

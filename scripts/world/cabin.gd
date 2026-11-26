@@ -542,16 +542,34 @@ static func stain_texture() -> Texture2D:
 
 
 ## Knarrende Dielen (Schleichen): etwas hellere, lose Bretter mit zwei Nagelköpfen – man lernt, sie zu meiden.
+## Breite einer Diele im Foto-Hüttenboden (WoodFloor041: 16 Dielen je 2-m-Kachel)
+const PLANK_W := 0.125
+
+
 func _build_creaky_boards() -> void:
 	var board := BuildKit.tex_mat("planks_h", 1.0, Color(0.78, 0.7, 0.6))
 	var nail := BuildKit.color_mat(Color(0.2, 0.19, 0.18), 0.5)
+	# Foto-Dielen (klarer Stil): die Dielen laufen in z-Richtung, 16 je 2 m → lose Bretter genauso ausrichten, auf eine
+	# Diele einrasten und mit demselben Foto (nur heller) belegen – sonst liegt ein fremdes Brett quer darüber (Christian 26.11.)
+	var photo := m_floor is StandardMaterial3D and (m_floor as StandardMaterial3D).normal_texture != null
+	if photo:
+		board = (m_floor as StandardMaterial3D).duplicate() as StandardMaterial3D
+		(board as StandardMaterial3D).albedo_color = Color(1.25, 1.18, 1.1)
 	var i := 0
 	for b: Dictionary in Stealth.boards():
-		var top := WALL_TOP + 0.1 if bool(b.get("attic", false)) else FLOOR_Y
-		var c := Vector3(float(b["x"]), top + 0.006, float(b["z"]))
-		BuildKit.box(self, Vector3(1.1, 0.012, 0.15), c, board, false).name = "CreakyBoard_%d" % i
-		for sx: float in [-0.46, 0.46]:
-			BuildKit.box(self, Vector3(0.025, 0.008, 0.025), c + Vector3(sx, 0.008, 0.0), nail, false)
+		var attic := bool(b.get("attic", false))
+		var top := WALL_TOP + 0.1 if attic else FLOOR_Y
+		var c := Vector3(float(b["x"]), top + 0.003, float(b["z"]))
+		var size := Vector3(1.1, 0.006 if photo else 0.012, 0.15)
+		var nail_off := [Vector3(-0.46, 0.006, 0.0), Vector3(0.46, 0.006, 0.0)]
+		if photo and not attic:
+			c.x = (floor(c.x / PLANK_W) + 0.5) * PLANK_W
+			size = Vector3(PLANK_W - 0.004, 0.006, 1.1)
+			nail_off = [Vector3(0, 0.005, -0.46), Vector3(0, 0.005, 0.46)]
+		var bx := BuildKit.box(self, size, c, board if (photo and not attic) or not photo else BuildKit.tex_mat("planks_h", 1.0, Color(0.78, 0.7, 0.6)), false)
+		bx.name = "CreakyBoard_%d" % i
+		for o: Vector3 in nail_off:
+			BuildKit.box(self, Vector3(0.02, 0.006, 0.02), c + o, nail, false)
 		i += 1
 
 
