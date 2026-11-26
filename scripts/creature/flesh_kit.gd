@@ -30,16 +30,25 @@ static func photo_skin(name: String, tint: Color = Color.WHITE, tile_m: float = 
 	if not ResourceLoader.exists(base + "color.jpg"):
 		return skin(tint, 0.6, tile_m)
 	var m := skin(tint, 0.6, tile_m)
+	apply_photo(m, name)
+	m.rim = 0.18   # dunkle Haut: Umriss im Licht trotzdem erkennbar
+	return m
+
+
+## Legt einen Foto-Satz auf ein vorhandenes Material (Größe/Farbe bleiben). false = Satz fehlt.
+static func apply_photo(m: StandardMaterial3D, name: String, normal_scale: float = 1.2) -> bool:
+	var base := "res://assets/textures/creatures/" + name + "_"
+	if m == null or not ResourceLoader.exists(base + "color.jpg"):
+		return false
 	m.albedo_texture = load(base + "color.jpg")
 	m.normal_enabled = true
 	m.normal_texture = load(base + "normal.jpg")
-	m.normal_scale = 1.2
+	m.normal_scale = normal_scale
 	m.roughness_texture = load(base + "rough.jpg")
 	m.roughness = 1.0
 	m.metallic_specular = 0.5
-	m.rim = 0.18   # dunkle Haut: Umriss im Licht trotzdem erkennbar
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
-	return m
+	return true
 
 
 ## Glatte Kurve durch die Stützpunkte (Catmull-Rom), `steps` Zwischenpunkte je Abschnitt.

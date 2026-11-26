@@ -120,6 +120,17 @@ func _ready() -> void:
 		wf.uv1_scale = Vector3(0.5, 0.5, 0.5)   # eine Kachel ≈ 2 m
 		Look.apply_photo(wf, "wood_floor")
 		m_floor = wf
+		# Stämme der Blockhütte und Bretterwand innen: Foto-Texturen (Christian 26.11.)
+		var lg := (m_logs as StandardMaterial3D).duplicate() as StandardMaterial3D
+		lg.albedo_color = Color(1.0, 0.97, 0.94)
+		lg.uv1_scale = Vector3.ONE / 1.6
+		Look.apply_photo(lg, "logs")
+		m_logs = lg
+		var pw := (m_wall as StandardMaterial3D).duplicate() as StandardMaterial3D
+		pw.albedo_color = Color(0.92, 0.88, 0.84)
+		pw.uv1_scale = Vector3.ONE / 2.4
+		Look.apply_photo(pw, "plank_wall")
+		m_wall = pw
 	m_stone = BuildKit.tex_mat("stone", 0.8)
 	m_stone_dark = BuildKit.tex_mat("stone_dark", 0.9)
 	m_beam = BuildKit.tex_mat("planks_h", 2.0, Color(0.55, 0.5, 0.48))

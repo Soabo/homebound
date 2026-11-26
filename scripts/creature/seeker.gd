@@ -134,9 +134,9 @@ func _build_model() -> void:
 	# vorgebeugt, Finger bis unters Knie, Kopf ohne Gesicht: nur ein senkrechter Spalt voller kleiner Augen.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2701
-	var hide := FleshKit.skin(Color(0.44, 0.39, 0.41), 0.36, 0.11)
-	var pale := FleshKit.skin(Color(0.5, 0.45, 0.44), 0.42, 0.11)     # Knochenpunkte unter dünner Haut
-	var dark := FleshKit.skin(Color(0.16, 0.13, 0.15), 0.3, 0.11)
+	var hide := FleshKit.photo_skin("seeker_skin", Color(0.62, 0.55, 0.56), 0.2)
+	var pale := FleshKit.photo_skin("seeker_skin", Color(0.78, 0.71, 0.68), 0.16)     # Knochenpunkte unter dünner Haut
+	var dark := FleshKit.photo_skin("seeker_skin", Color(0.26, 0.22, 0.24), 0.16)
 	var vein_mat := BuildKit.color_mat(Color(0.14, 0.12, 0.17), 0.6)
 	var lip := FleshKit.skin(Color(0.42, 0.22, 0.26), 0.25)
 	var nail := BuildKit.color_mat(Color(0.1, 0.09, 0.08), 0.2, 0.2)

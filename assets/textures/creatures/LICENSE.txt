@@ -1,2 +1,3 @@
 mauler_skin_*: von Christian geliefert (aitextured.com „Dark Cracked Skin with Glossy Highlights“, AITextured Free Commercial License).
 Normal- und Rauheitskarte aus dem Farbbild berechnet (tools: siehe CLAUDE.md), Goldton der Fugen etwas zurückgenommen.
+creature_skin_*, seeker_skin_* : Bilder von Christian (26.11.2026), nahtlos gemacht, Normalen/Rauheit aus dem Farbbild berechnet

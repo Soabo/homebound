@@ -26,6 +26,11 @@ static func _materials() -> void:
 	skin.rim_enabled = true
 	skin.rim = 0.2
 	skin.rim_tint = 0.4
+	if FleshKit.apply_photo(skin, "creature_skin", 1.0):
+		# Foto-Haut (Christian 26.11.): blass, netzartig, feucht
+		skin.uv1_scale = Vector3(2.5, 2.5, 2.5)
+		skin.albedo_color = Color(0.84, 0.86, 0.83)
+		skin.roughness = 0.75
 	skin_dark = skin.duplicate() as StandardMaterial3D
 	skin_dark.albedo_color = Color(0.75, 0.77, 0.74)
 	nail = BuildKit.color_mat(Color(0.12, 0.11, 0.1), 0.2)

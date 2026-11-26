@@ -1,7 +1,7 @@
 extends Node
 ## Schnelle Vorschau einer Gegner-Figur ohne die ganze Welt:
 ## xvfb-run godot --path . --rendering-driver vulkan --resolution 960x540 res://scenes/dev/creature_preview.tscn -- --out=/pfad/bild.png --pose=warn|charge|stalk --angle=0
-## Sucher: --what=seeker  (Abstand --dist=3.6)
+## Sucher: --what=seeker  (Abstand --dist=3.6), Kreatur: --what=creature
 ## Wechselbalg: --changeling=masks (alle Tarnungen, oben deutlicher Fehler, unten feiner) | --changeling=true (wahre Gestalt)
 
 func _ready() -> void:
@@ -70,6 +70,22 @@ func _run() -> void:
 		cam3.position = Vector3(1.3, 1.1, 1.3)
 		cam3.look_at(arm._j1.global_position)
 		for i in 10:
+			await get_tree().process_frame
+		get_viewport().get_texture().get_image().save_png(out)
+		get_tree().quit()
+		return
+	if what == "creature":
+		# Kreatur (CreatureModel), aufrecht
+		var holder := Node3D.new()
+		world.add_child(holder)
+		holder.rotation_degrees.y = angle
+		CreatureModel.build(holder)
+		var cam4 := Camera3D.new()
+		world.add_child(cam4)
+		cam4.position = Vector3(0, 1.5, dist)
+		cam4.look_at(Vector3(0, 1.3, 0))
+		cam4.fov = 50
+		for i in 12:
 			await get_tree().process_frame
 		get_viewport().get_texture().get_image().save_png(out)
 		get_tree().quit()

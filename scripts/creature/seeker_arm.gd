@@ -84,8 +84,8 @@ func _ready() -> void:
 	var y := normal
 	var x := y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
 	basis = Basis(x, y, x.cross(y).normalized())
-	var skin := FleshKit.skin(Color(0.44, 0.39, 0.41), 0.55, 0.11)
-	var pale := FleshKit.skin(Color(0.5, 0.45, 0.44), 0.55, 0.11)
+	var skin := FleshKit.photo_skin("seeker_skin", Color(0.62, 0.55, 0.56), 0.2)
+	var pale := FleshKit.photo_skin("seeker_skin", Color(0.78, 0.71, 0.68), 0.16)
 	var nail := BuildKit.color_mat(Color(0.1, 0.09, 0.08), 0.2, 0.2)
 	var hole := BuildKit.color_mat(Color(0.02, 0.015, 0.015), 1.0)
 	# Loch mit splittrigem Rand

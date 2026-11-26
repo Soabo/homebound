@@ -928,6 +928,13 @@
   Weitere Wesen: gleicher Weg (Datei `<name>_color.jpg` usw., dann photo_skin).
 - Knarrende Dielen im klaren Stil: gleiche Foto-Textur wie der Hüttenboden, schmal wie eine Foto-Diele (`Cabin.PLANK_W` 0,125 m),
   längs (z) und auf die Dielenfugen gerastert (lagen vorher quer über den Fotodielen). Dachboden behält die gezeichneten Bretter.
+- Foto-Texturen Runde 2 (Christian 26.11., Aufbereitung `tools/textures_prep2.py`): Kreaturhaut `creature_skin_*` (gespiegeltes
+  KI-Bild, nahtlos gemacht + große Flecken eingeebnet; `CreatureModel._materials` über `FleshKit.apply_photo`), Sucherhaut `seeker_skin_*`
+  (nahtlos, weniger Kontrast; Seeker + SeekerArm über `photo_skin`, Kachel 0,16–0,2 m). Nur im klaren Stil (`Look.apply_photo`):
+  Blockhütten-Stämme `logs_*` (Bretterbild um 90° gedreht → Maserung längs, Fugen wirken wie Trockenrisse, Kachel 1,6 m, Kopie von
+  `Cabin.m_logs`), Bretterwand innen `plank_wall_*` (Poly Haven raw_plank_wall, CC0, Kachel 2,4 m, Kopie von `Cabin.m_wall`),
+  Gred `gred_*` (ambientCG PavingStones070, CC0) als eine Fläche „Merged“ statt Einzelplatten (`WaldlerHouse.gred`).
+  Vorschau Kreatur: creature_preview `--what=creature`. Screenshot-Tour wird im Workspace auch für Einzelbilder vom Speicher gekillt.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

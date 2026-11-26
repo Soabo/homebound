@@ -114,6 +114,9 @@ static func bevel_box(size: Vector3) -> Mesh:
 const PHOTO_SETS := {
 	"rock": "res://assets/textures/ground/rock_",
 	"wood_floor": "res://assets/textures/ground/wood_floor_",
+	"logs": "res://assets/textures/ground/logs_",
+	"gred": "res://assets/textures/ground/gred_",
+	"plank_wall": "res://assets/textures/ground/plank_wall_",
 }
 
 

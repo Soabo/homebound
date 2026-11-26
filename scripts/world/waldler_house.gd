@@ -248,6 +248,14 @@ static func gred(c: Cabin, x0: float, x1: float, z0: float, z1: float) -> void:
 	var n := Node3D.new()
 	n.name = "Gred"
 	c.add_child(n)
+	# Klarer Stil: Foto-Pflaster aus Granit (Christian 26.11.) als eine Fläche – die Fugen sind schon im Bild
+	var photo := BuildKit.tex_mat("stone", 0.9).duplicate() as StandardMaterial3D
+	photo.albedo_color = Color.WHITE
+	photo.uv1_scale = Vector3.ONE / 1.3
+	if Look.apply_photo(photo, "gred"):
+		var slab := BuildKit.box_mm(n, Vector3(x0, y, z0), Vector3(x1, y + 0.014, z1), photo, false)
+		slab.name = "Merged"   # wie das zusammengefasste Netz der gezeichneten Platten
+		return
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1721
 	var mats: Array[Material] = []
