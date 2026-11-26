@@ -960,6 +960,21 @@
 - Prüfungen: `RegressTest._t_ui_2611`, `scripts/dev/flow_check.gd` (Menü → Intro → Spiel mit Einführung), `scripts/dev/intro_check.gd`
   (Intro im Zeitraffer bis ins Spiel). Schnelle Vorschau: `scenes/dev/ui_preview.tscn -- --what=hud|keys|tutorial|intro|intro_epi`.
 
+## Christians Liste 26.11. mittags
+- Holz gibt es immer einzeln (Talstämme, Waldstämme, Polter, Holzstapel am Schuppen `woodpile.per_take` 1; Steine weiter 2).
+- „Radio“ heißt in allen Texten „Funkgerät“ (Knoten/Klasse bleiben `Radio`, „Autoradio“ am Wrack bleibt).
+- Analysegerät Stufe 2 steht weiter vorn auf dem Funktisch. Umzugskarton: geöffnet steht er herausgezogen vor dem Tisch
+  (`MovingBox.PULL`), damit der Deckel nicht durch die Platte geht. Schaukelstuhl-Lehne neigt nach hinten.
+- Drudenfuß-Brett über der Haustür: liegt auf den Stämmen (HALF_Z + LOG_R), zwischen Türzarge und Vordach; Kreide auf dem Brett,
+  `shaded` (leuchtet nicht mehr). Der Drudenfuß ist Absicht (Waldlerhaus, Schutzzeichen gegen die Drud).
+- Holzlager `WoodStore` (Cabin/WoodStore, Werkstatt-Ostwand statt Sägebock, persistent): bis 20 Scheite sichtbar, [E] eins nehmen,
+  [R] alles getragene Holz einlagern. Werte house.json `wood_store`.
+- Leere Dosen: nur die letzte darf liegen, quer und abseits, Falz liegt auf (`SupplyProps.empty_cans`). Icon `meat_cooked` neu (Christian).
+- Einführung: Tablet-Schritt erst fertig, wenn das Tablet wieder weggelegt ist (`tablet_read`), Uhr-Schritt braucht J UND Licht
+  (`watch_light`). „Tablet liegt auf dem Couchtisch“.
+- Schnelle Hüttenansicht ohne Welt (wenig Speicher, Sekunden): `scenes/dev/cabin_preview.tscn -- --out=… --cam=x,y,z --look=x,y,z [--open=MovingBox]`.
+- Prüfung `RegressTest._t_fixes_2611`.
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,

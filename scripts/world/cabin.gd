@@ -899,8 +899,8 @@ func _rocking_chair(pos: Vector3, rot_y: float) -> void:
 	BuildKit.box_mm(n, Vector3(-0.27, 0.42, -0.24), Vector3(0.27, 0.46, 0.24), m_wood, true)
 	# Lehne hinten (gegenüber den vorderen Armlehnstützen), leicht nach hinten geneigt
 	var back := Node3D.new()
-	back.position = Vector3(0, 0.46, -0.24)
-	back.rotation_degrees.x = 12
+	back.position = Vector3(0, 0.44, -0.26)
+	back.rotation_degrees.x = -14   # Christian 26.11.: oben nach hinten (+x kippte sie nach vorn über den Sitz)
 	n.add_child(back)
 	for i in 5:
 		BuildKit.box(back, Vector3(0.06, 0.7, 0.025), Vector3(-0.2 + i * 0.1, 0.35, 0), m_wood, false)
@@ -1355,11 +1355,11 @@ func _build_workshop() -> void:
 	rack.z_to = 3.8
 	rack.floor_y = y
 	add_child(rack)
-	for z: float in [2.75, 3.4]:
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.2, y + 0.36, z), m_wood, false, Vector3(0, 0, -18))
-		BuildKit.box(self, Vector3(0.06, 0.75, 0.06), Vector3(5.5, y + 0.36, z), m_wood, false, Vector3(0, 0, 18))
-	BuildKit.box_mm(self, Vector3(5.28, y + 0.7, 2.6), Vector3(5.42, y + 0.76, 3.55), m_wood, true)
-	BuildKit.box(self, Vector3(0.22, 0.05, 1.2), Vector3(5.35, y + 0.79, 3.07), BuildKit.tex_mat("planks_h", 1.0, Color(1.3, 1.25, 1.1)), false, Vector3(0, 4, 0))
+	# Holzlager an der Ostwand (Christian 26.11., statt des Sägebocks): bis zu 20 Scheite, [E] nehmen, [R] einlagern
+	var store := WoodStore.new()
+	store.name = "WoodStore"
+	store.position = Vector3(HALF_X - LOG_R - WoodStore.DEPTH - 0.01, y, 3.1)
+	add_child(store)
 	# Hackklotz in der Ecke neben der Werkbank (das Deko-Beil ist weg – Christian 25.11., die echte Axt liegt im Garten)
 	BuildKit.cylinder(self, 0.22, 0.45, Vector3(5.45, y + 0.225, 3.95), BuildKit.tex_mat("bark", 0.5), true, Vector3.ZERO, -1.0, 12)
 

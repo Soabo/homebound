@@ -474,7 +474,7 @@ func _polter(q: Vector2, dir: Vector2) -> void:
 	wood.name = "PolterWood"
 	wood.wild_key = "polter_%d_%d" % [int(q.x), int(q.y)]
 	wood.item_id = "wood"
-	wood.per_action = 2
+	wood.per_action = 1   # Christian 26.11.: Holz immer einzeln
 	wood.max_amount = Supplies.config.polter_wood
 	wood.amount = wood.max_amount
 	wood.regrow_per_day = Supplies.config.polter_regrow

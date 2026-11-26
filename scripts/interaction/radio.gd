@@ -80,12 +80,12 @@ func get_prompt(_player: Node) -> String:
 			status = "  (%s: %d%%)" % [Research.analysis(Research.slot).get("name", ""), int(Research.progress_of(Research.slot) * 100.0)]
 		return "[E] %s%s" % [Research.device_name(), status]
 	var new_msg := "  – neue Nachricht" if has_new_message() else ""
-	return "[E] Radio %s%s" % ["ausschalten" if is_on else "einschalten", new_msg]
+	return "[E] Funkgerät %s%s" % ["ausschalten" if is_on else "einschalten", new_msg]
 
 
 func get_secondary_prompt(_player: Node) -> String:
 	if Research.tier >= 1:
-		return "[R] Radio %s%s" % ["ausschalten" if is_on else "einschalten", "  – neue Nachricht" if has_new_message() else ""]
+		return "[R] Funkgerät %s%s" % ["ausschalten" if is_on else "einschalten", "  – neue Nachricht" if has_new_message() else ""]
 	return ""
 
 
@@ -133,7 +133,7 @@ func _update_tier() -> void:
 	if Research.tier >= 2 and _tier2 == null:
 		_tier2 = Node3D.new()
 		add_child(_tier2)
-		CrashSite.build_analyzer_model(_tier2, anchor + Vector3(0.12, 0.0, 0.99), 0.7)
+		CrashSite.build_analyzer_model(_tier2, anchor + Vector3(-0.1, 0.0, 0.99), 0.7)   # Christian 26.11.: weg von der Wand
 		_alien_glow = CrashSite.glow_material()
 
 
@@ -203,7 +203,7 @@ func set_on(v: bool, night_event: bool = false) -> void:
 			var msg := message_for_today()
 			if msg != "":
 				var again := "" if has_new_message() else "(Wiederholung) "
-				EventBus.notify("Im Radio: " + again + msg, 8.0)
+				EventBus.notify("Am Funkgerät: " + again + msg, 8.0)
 				message_until_msec = Time.get_ticks_msec() + int(float(_data.get("play_seconds", 20.0)) * 1000.0)
 				heard_day = TimeManager.day
 				Tasks.flag("radio_day_%d" % TimeManager.day)   # z. B. Bauplan Wasserfilter nach der Wasser-Warnung (Tag 7)

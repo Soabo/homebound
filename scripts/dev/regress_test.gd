@@ -399,6 +399,7 @@ func _t_more() -> void:
 	await _t_build_hand_2511()
 	await _t_fixes_2511c()
 	await _t_ui_2611()
+	await _t_fixes_2611()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3854,3 +3855,40 @@ func _t_ui_2611() -> void:
 	_ok("Intro: Gespräch, Polizei, Nachspann", Array(intro.get("call", [])).size() >= 5 and Array(intro.get("police", [])).size() >= 1 and Array(intro.get("epilogue", [])).size() >= 5)
 	_ok("Intro: Klingelton und Vibration", IntroScene._ringtone() != null and IntroScene._vibrate() != null and IntroScene._skid() != null)
 	_ok("Intro: Szene vorhanden", ResourceLoader.exists(GameState.INTRO_SCENE))
+
+
+## Christians Liste 26.11. mittags
+func _t_fixes_2611() -> void:
+	var cabin := _scene().get_node("Cabin")
+	var st := cabin.get_node_or_null("WoodStore") as WoodStore
+	_ok("Holzlager in der Werkstatt (20 Plätze)", st != null and st.max_wood == 20 and st._logs.size() == 20)
+	if st:
+		var keep := st.count
+		var had := Inventory.count("wood")
+		Inventory.add("wood", 5)
+		st.count = 0
+		st.secondary_interact(_player())
+		_ok("Holzlager: [R] lagert alles getragene Holz ein", st.count == mini(20, had + 5) and Inventory.count("wood") == maxi(0, had + 5 - 20))
+		st.interact(_player())
+		_ok("Holzlager: [E] nimmt ein Scheit", st.count == mini(20, had + 5) - 1)
+		Inventory.remove("wood", Inventory.count("wood"))
+		Inventory.add("wood", had)
+		st.count = keep
+		st._update()
+	var piles := get_tree().get_nodes_in_group("persistent").filter(func(n: Node) -> bool: return n is ResourceNode and (n as ResourceNode).item_id == "wood")
+	var two := piles.filter(func(n: Node) -> bool: return (n as ResourceNode).per_action > 1)
+	_ok("Holz gibt es immer einzeln (%d Stellen, %d mit mehr)" % [piles.size(), two.size()], two.is_empty())
+	var radio := cabin.get_node("Radio") as Radio
+	_ok("Funkgerät statt Radio im Hinweis", radio.get_prompt(_player()).contains("Funkgerät"))
+	var box := cabin.get_node("MovingBox") as MovingBox
+	var z0 := box.position.z
+	var was := box.opened
+	box.opened = true
+	box._apply()
+	_ok("Umzugskarton steht offen vor dem Tisch", box.position.z > z0 + 0.5 or was)
+	box.opened = was
+	box._apply()
+	var sign := cabin.get_node("Drudenfuss") as Node3D
+	_ok("Zeichen über der Tür liegt auf den Stämmen, unter dem Vordach", absf(sign.position.z - (Cabin.HALF_Z + Cabin.LOG_R)) < 0.01 and sign.position.y + 0.125 < Cabin.FLOOR_Y + 2.47)
+	var brief: Dictionary = DataDB.load_json("res://data/story/siege_briefing.json")
+	_ok("Belagerung: „Schaffst du eine Aufgabe nicht“", JSON.stringify(brief).contains("Schaffst du eine Aufgabe nicht"))

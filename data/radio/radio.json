@@ -1,5 +1,5 @@
 {
-  "_info": "Radio: Einstellungen und Nachrichten. Jeden Tag gibt es eine neue Nachricht (Tag 1, 2, ...); danach die Liste 'later' der Reihe nach. 'crash_hint' ersetzt die Tagesnachricht, solange die Absturzstelle nicht gefunden ist (Tag 1-3). 'night' = Fetzen, wenn sich das Radio nachts von selbst einschaltet.",
+  "_info": "Radio: Einstellungen und Nachrichten. Jeden Tag gibt es eine neue Nachricht (Tag 1, 2, ...); danach die Liste 'later' der Reihe nach. 'crash_hint' ersetzt die Tagesnachricht, solange die Absturzstelle nicht gefunden ist (Tag 1-3). 'night' = Fetzen, wenn sich das Funkgerät nachts von selbst einschaltet.",
   "play_seconds": 20,
   "fade_seconds": 4,
   "crash_hint": "Rauschen, dann Bruchstücke – „…helle Lichter über dem Wald … nordwestlich der alten Forststraße … Rauch …“",
@@ -13,7 +13,7 @@
     "7": "Regionalfunk: „…das Wasserwirtschaftsamt warnt: Brunnen und Bäche im Tal nicht als Trinkwasser nutzen. Verfärbungen wurden gemeldet …“",
     "8": "Nur ein Ton: drei kurze Pieptöne, eine Pause, drei lange. Immer wieder. Dazwischen Zahlen in einer Sprache, die du nicht kennst.",
     "9": "Regionalfunk, stockend: „…offiziell keine Gefahr … Hubschrauber über dem Tal sind Teil einer Übung … bitte bleiben Sie in …“ – dann Stille.",
-    "10": "Eine Stimme, ganz nah, als säße jemand neben dem Radio: „Du bist noch da.“ Danach nur Rauschen."
+    "10": "Eine Stimme, ganz nah, als säße jemand neben dem Funkgerät: „Du bist noch da.“ Danach nur Rauschen."
   },
   "later": [
     "Regionalfunk: „…weitere Vermisstenmeldungen aus dem Tal. Die Behörden äußern sich nicht …“",
@@ -24,8 +24,8 @@
     "Morsezeichen. Du kannst sie nicht lesen, aber sie wiederholen sich exakt im Takt deines Herzschlags."
   ],
   "night": [
-    "Das Radio springt von selbst an. Rauschen – und ganz kurz deine eigene Stimme.",
-    "Das Radio schaltet sich ein. Nur ein tiefes Brummen, das den Tisch vibrieren lässt.",
-    "Das Radio ist an. Jemand flüstert Zahlen. Bei der Zahl Neun bricht es ab."
+    "Das Funkgerät springt von selbst an. Rauschen – und ganz kurz deine eigene Stimme.",
+    "Das Funkgerät schaltet sich ein. Nur ein tiefes Brummen, das den Tisch vibrieren lässt.",
+    "Das Funkgerät ist an. Jemand flüstert Zahlen. Bei der Zahl Neun bricht es ab."
   ]
 }

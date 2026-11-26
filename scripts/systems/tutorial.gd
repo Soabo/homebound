@@ -118,7 +118,16 @@ func _start(i: int) -> void:
 
 
 func _track_input() -> void:
-	if String(steps[index].get("done", "")) != "sneak":
+	var cond := String(steps[index].get("done", ""))
+	if cond == "watch_light":
+		# Christian 26.11.: erst weiter, wenn man auf die Uhr geschaut UND das Licht eingeschaltet hat
+		var player := get_tree().get_first_node_in_group("player") as Player
+		if player and player.hands and player.hands.log_raise > 0.7:
+			_used["watch"] = true
+		if player and player.light_shining():
+			_used["light"] = true
+		return
+	if cond != "sneak":
 		return
 	if Input.is_action_pressed("crouch"):
 		_used["crouch"] = true
@@ -147,6 +156,12 @@ func is_done(st: Dictionary) -> bool:
 			return player != null and player.light_shining()
 		"sneak":
 			return _used.size() >= 2
+		"watch_light":
+			return _used.has("watch") and _used.has("light")
+		"tablet_read":
+			# Christian 26.11.: erst, wenn das Tablet wieder weggelegt ist – Zeit zum Lesen
+			var tm := get_tree().get_first_node_in_group("tablet_menu") as TabletMenu
+			return Tasks.flags.has("tablet_opened") and (tm == null or not tm.is_open())
 		"slept":
 			return _slept
 	if cond.begins_with("flag:"):

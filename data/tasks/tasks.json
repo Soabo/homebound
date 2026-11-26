@@ -369,7 +369,7 @@
     },
     {
       "id": "d_radio",
-      "title": "Radio hören",
+      "title": "Funkgerät abhören",
       "unlock": [
         "day>=2"
       ],

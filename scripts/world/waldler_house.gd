@@ -217,18 +217,22 @@ static func door_signs(c: Cabin) -> void:
 	var y := Cabin.FLOOR_Y
 	var n := Node3D.new()
 	n.name = "Drudenfuss"
-	n.position = Vector3(-3.0, y + 2.42, Cabin.HALF_Z + 0.2)
+	# Christian 26.11.: Brett liegt auf den Stämmen auf (Vorderkante der Stämme = HALF_Z + LOG_R) und passt zwischen
+	# Türzarge (bis 2,19 m) und Vordach (ab ~2,47 m); die Kreide steht unten auf dem Brett und leuchtet nicht.
+	n.position = Vector3(-3.0, y + 2.33, Cabin.HALF_Z + Cabin.LOG_R - 0.002)
 	c.add_child(n)
-	BuildKit.box(n, Vector3(0.52, 0.34, 0.03), Vector3.ZERO, BuildKit.tex_mat("planks_h", 0.5, Color(0.95, 0.82, 0.62)), false)
-	drudenfuss(n, Vector3(0, -0.01, 0.017), 0.13, BuildKit.color_mat(Color(0.12, 0.07, 0.04)), 0.014)
-	var chalk := PlacesDay.label(n, "20 * C + M + B * 26", Vector3(0, -0.24, 0.0), 16, Color(0.92, 0.92, 0.88))
-	chalk.position.z = 0.05
+	BuildKit.box(n, Vector3(0.5, 0.25, 0.03), Vector3.ZERO, BuildKit.tex_mat("planks_h", 0.5, Color(0.95, 0.82, 0.62)), false)
+	drudenfuss(n, Vector3(0, 0.035, 0.017), 0.072, BuildKit.color_mat(Color(0.12, 0.07, 0.04)), 0.011)
+	var chalk := PlacesDay.label(n, "20 * C + M + B * 26", Vector3(0, -0.085, 0.0), 12, Color(0.92, 0.92, 0.88))
+	chalk.position.z = 0.0165
+	chalk.shaded = true
+	chalk.pixel_size = 0.003
 	var look := PlaceInspect.new()
 	look.name = "DrudenfussLook"
 	look.prompt = "[E] Zeichen über der Tür ansehen"
 	look.text = "Ein Drudenfuß, ins Brett gebrannt. Gegen die Drud, die sich nachts auf die Brust der Schlafenden setzt, sagen die Alten hier. Darunter die Kreide der Sternsinger. Früher hätte ich darüber gelacht."
 	look.area_size = Vector3(0.7, 0.5, 0.4)
-	look.position = Vector3(-3.0, y + 2.18, Cabin.HALF_Z + 0.3)
+	look.position = Vector3(-3.0, y + 2.2, Cabin.HALF_Z + 0.3)
 	c.add_child(look)
 
 

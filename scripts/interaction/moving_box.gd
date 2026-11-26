@@ -50,7 +50,15 @@ func _ready() -> void:
 	_apply()
 
 
+## Geöffnet steht der Karton vor dem Funktisch: so weit herausgezogen, dass der Deckel nicht durch die Tischplatte geht.
+const PULL := 0.62
+var _home_z := INF
+
+
 func _apply() -> void:
+	if _home_z == INF:
+		_home_z = position.z
+	position.z = _home_z + (PULL if opened else 0.0)
 	_lid.rotation_degrees.x = -105.0 if opened else 0.0
 	_w17_vis.visible = not w17_taken
 

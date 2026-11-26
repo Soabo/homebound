@@ -41,9 +41,12 @@ static func empty_cans(p: ItemPickup, at: Vector3, n: int, seed_value: int = 7) 
 		var off := Vector3(-0.12 + (i % 2) * 0.1 + rng.randf_range(-0.02, 0.02), 0, -0.05 + (i / 2) * 0.09 + rng.randf_range(-0.02, 0.02))
 		var c := HandItems.can_body(p, at + off)
 		c.rotation.y = rng.randf() * TAU
-		if rng.randf() < 0.3:
-			c.rotation.x = PI * 0.5
-			c.position.y += 0.0375
+		var lie := rng.randf() < 0.3
+		if lie and i == n - 1:
+			# Christian 26.11.: liegende Dose ragte in die Nachbardose und mit dem Falz in den Tisch –
+			# nur die letzte darf liegen, quer, etwas abseits, Falz (Radius × 1,03) liegt auf
+			c.rotation = Vector3(PI * 0.5, PI * 0.5, 0.0)
+			c.position = at + Vector3(0.1, 0.0375 * 1.03 + 0.001, off.z) - Vector3(0.054, 0, 0)
 		p.visuals.append(c)
 
 

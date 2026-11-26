@@ -328,7 +328,7 @@ func _build_forest_details() -> void:
 			var wood := ResourceNode.new()
 			wood.name = "WoodLog_%d" % i
 			wood.item_id = "wood"
-			wood.per_action = 2
+			wood.per_action = 1   # Christian 26.11.: Holz immer einzeln
 			wood.amount = 6
 			wood.max_amount = 6
 			wood.regrow_per_day = 2

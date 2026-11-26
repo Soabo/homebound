@@ -543,7 +543,7 @@ func _ground_finish(key: Vector2i, root: Node3D, gp: GroundParts) -> void:
 		wood.name = "WildLog_%d" % k
 		wood.wild_key = "log_%d_%d_%d" % [key.x, key.y, k]
 		wood.item_id = "wood"
-		wood.per_action = 2
+		wood.per_action = 1   # Christian 26.11.: Holz immer einzeln
 		wood.max_amount = Supplies.config.wild_log_wood
 		wood.amount = wood.max_amount
 		wood.regrow_per_day = Supplies.config.wild_log_regrow
