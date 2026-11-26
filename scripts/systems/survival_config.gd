@@ -43,6 +43,10 @@ static func get_default() -> SurvivalConfig:
 ## Im Zelt kühlt man so viel langsamer aus (Faktor auf den Verlust); mit Schlafsack noch einmal
 @export var tent_factor: float = 0.5
 @export var sleeping_bag_factor: float = 0.25
+## Im Zelt zählt Wetter (Schneetreiben, Regen, Schneedecke, Reif) nur zu diesem Anteil (Christian 26.11.: milder)
+@export var tent_weather_share: float = 0.4
+## Schaden, wenn man im Zelt durchgefroren aufwacht (im Freien ohne Zelt: sleep_freeze_damage)
+@export var tent_freeze_damage: float = 15.0
 
 @export_group("Feuer")
 ## Gewinn pro Stunde direkt am Feuer (nimmt mit der Entfernung ab)

@@ -920,6 +920,9 @@
   (Forest/WildForest „stone“), `tex_mat("rock")` (Höhle, Steine) und der Hüttenboden (`Cabin.m_floor`; Werkbank/Schuppen bleiben gezeichnet).
   Kreaturhaut (Onyx013 = schwarzer Marmor) nicht eingebaut – nachgefragt. Tour-Bilder 92/95/I2/K0/H1.
   Prüfung `RegressTest._t_fixes_2511c`.
+- Zeltnächte im Schnee milder (Christian 26.11.): im Zelt zählt Wetter (Schneetreiben, Regen, Schneedecke, Reif) nur zu
+  `tent_weather_share` (0,4), `tent_factor` 0,4, `sleeping_bag_factor` 0,22, durchgefroren im Zelt aufwachen kostet `tent_freeze_damage` (15).
+  Mit Schlafsack verliert man nachts bei Schneefall ≈ 1/Std., ohne ≈ 5/Std. Kreatur-Texturen: Vorschläge an Christian, er lädt sie hoch.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

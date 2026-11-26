@@ -73,15 +73,18 @@ func warmth_rate(p: Node3D) -> float:
 	if TimeManager.get_total_hours() < wet_until:
 		loss *= cfg.wet_factor
 	# Spätherbst: Schneetreiben, kalter Regen, Schnee am Boden, Reif
+	# Im Zelt hält die Plane Schneetreiben und Reif zum Teil ab (Christian 26.11.: Zeltnächte im Schnee milder)
+	var tent := p.get("in_tent") as Node
+	var in_tent := tent != null and is_instance_valid(tent)
+	var cold_share := cfg.tent_weather_share if in_tent else 1.0
 	match WorldState.weather:
-		"snow": loss *= cfg.snowing_factor
-		"rain", "storm": loss *= cfg.rain_cold_factor
-	loss *= lerpf(1.0, cfg.snow_cover_factor, WorldState.snow)
-	loss *= lerpf(1.0, cfg.frost_factor, WorldState.frost)
+		"snow": loss *= lerpf(1.0, cfg.snowing_factor, cold_share)
+		"rain", "storm": loss *= lerpf(1.0, cfg.rain_cold_factor, cold_share)
+	loss *= lerpf(1.0, cfg.snow_cover_factor, WorldState.snow * cold_share)
+	loss *= lerpf(1.0, cfg.frost_factor, WorldState.frost * cold_share)
 	if Inventory.count("heat_stone") > 0:
 		loss *= float(Research.gadget("heat_stone", "loss_factor", 0.55))
-	var tent := p.get("in_tent") as Node
-	if tent and is_instance_valid(tent):
+	if in_tent:
 		loss *= cfg.tent_factor
 		if Inventory.count("sleeping_bag") > 0:
 			loss *= cfg.sleeping_bag_factor
@@ -124,9 +127,11 @@ func _on_sleep(_wake: float) -> void:
 				if float(n.call("heat_at", p.global_position)) > 0.1:
 					fire = maxf(fire, float(n.call("hours_left")))
 		_sleep_fire_hours = fire
+	_sleep_tent = p != null and is_instance_valid(p.get("in_tent") as Node) if p else false
 
 
 var _sleep_fire_hours: float = 0.0
+var _sleep_tent: bool = false
 
 
 func _on_woke() -> void:
@@ -147,7 +152,8 @@ func _on_woke() -> void:
 		var p := get_tree().get_first_node_in_group("player")
 		if p:
 			var h := float(p.get("health"))
-			p.set("health", maxf(h - cfg.sleep_freeze_damage, minf(h, cfg.sleep_min_health)))
+			var outside_tent := _sleep_tent
+			p.set("health", maxf(h - (cfg.tent_freeze_damage if outside_tent else cfg.sleep_freeze_damage), minf(h, cfg.sleep_min_health)))
 		# Gnadenfrist: durchgefroren, aber nicht gleich weiter erfrieren – Zeit für Feuer, Bewegung, Heimweg
 		# (Christian: Zeltnacht verletzt, tötet aber nicht)
 		warmth = maxf(warmth, cfg.freeze_below + cfg.wake_grace)
