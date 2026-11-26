@@ -107,8 +107,9 @@ func _make_door(thick: float) -> Node3D:
 
 ## Holzschrank: Sockel, Kranzleiste, Füllungstür mit Sehschlitz auf Augenhöhe, Knauf, Kleiderstange mit Kleidung.
 func _build_wardrobe() -> void:
-	var wood := BuildKit.tex_mat("planks_v", 0.5, Color(0.95, 0.78, 0.6))
-	var dark := BuildKit.tex_mat("planks_v", 0.5, Color(0.6, 0.45, 0.33))
+	# Bauernschrank: rötlich gebeiztes altes Holz im klaren Stil (Christian 26.11.)
+	var wood := Look.photo_mat(BuildKit.tex_mat("planks_v", 0.5, Color(0.95, 0.78, 0.6)), "furn_cabinet", 1.0)
+	var dark := Look.photo_mat(BuildKit.tex_mat("planks_v", 0.5, Color(0.6, 0.45, 0.33)), "furn_cabinet", 1.0, Color(0.6, 0.52, 0.48))
 	var brass := BuildKit.color_mat(Color(0.75, 0.6, 0.3), 0.35, 0.8)
 	_shell(wood, dark)
 	# Kranzleiste oben, Sockelleiste unten, kleine Füße
@@ -213,7 +214,7 @@ func _place_curtain(t: float) -> void:
 
 ## Alte Truhe (Dachboden): Eisenbeschläge, Deckel klappt nach hinten auf, Sehschlitz vorn auf Augenhöhe.
 func _build_chest() -> void:
-	var wood := BuildKit.tex_mat("planks_h", 0.5, Color(0.62, 0.42, 0.28))
+	var wood := Look.photo_mat(BuildKit.tex_mat("planks_h", 0.5, Color(0.62, 0.42, 0.28)), "furn_cabinet", 0.9, Color(0.8, 0.7, 0.62))
 	var iron := BuildKit.color_mat(Color(0.16, 0.15, 0.14), 0.6, 0.6)
 	var w := size.x
 	var h := size.y

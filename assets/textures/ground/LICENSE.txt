@@ -11,3 +11,5 @@ Auf 1024 px verkleinert; Farben mit halber Umgebungsverdeckung (AO), Boden-Lagen
 gred_* : ambientCG PavingStones070 (CC0), geliefert von Christian 26.11.2026
 plank_wall_* : Poly Haven raw_plank_wall (CC0), geliefert von Christian 26.11.2026
 logs_* : Bild von Christian (26.11.2026), gedreht und aufbereitet
+furn_fine_* : Poly Haven fine_grained_wood (CC0), furn_table_* : wood_table_worn (CC0), furn_cabinet_* : wood_cabinet_worn_long (CC0),
+furn_painted_* : weathered_brown_planks (CC0) – geliefert von Christian 26.11.2026, Aufbereitung tools/textures_prep3.py

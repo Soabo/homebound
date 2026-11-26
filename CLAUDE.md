@@ -972,6 +972,11 @@
 - Leere Dosen: nur die letzte darf liegen, quer und abseits, Falz liegt auf (`SupplyProps.empty_cans`). Icon `meat_cooked` neu (Christian).
 - Einführung: Tablet-Schritt erst fertig, wenn das Tablet wieder weggelegt ist (`tablet_read`), Uhr-Schritt braucht J UND Licht
   (`watch_light`). „Tablet liegt auf dem Couchtisch“.
+- Möbel-Texturen (Christian 26.11., Poly Haven CC0, `tools/textures_prep3.py`, nur klarer Stil): `Look.photo_mat(mat, set, kachel_m, farbe)`
+  (Kopie, dreiseitig in Weltkoordinaten, Normalen halb so stark). `furn_fine` = `Cabin.m_wood`/`m_wood_dark` (Stühle, Schaukelstuhl,
+  Bänke, Regale, Rahmen), `furn_table` = neues `Cabin.m_table` (Esstisch, Couchtisch, Schreibtische, Funktisch, Werkbank),
+  `furn_cabinet` = Kleiderschrank/Truhe (HideSpot) und Lagertruhe (StorageChest), `furn_painted` = Kinderbetten. Vorschau cabin_preview
+  stellt selbst auf „klar“.
 - Schnelle Hüttenansicht ohne Welt (wenig Speicher, Sekunden): `scenes/dev/cabin_preview.tscn -- --out=… --cam=x,y,z --look=x,y,z [--open=MovingBox]`.
 - Prüfung `RegressTest._t_fixes_2611`.
 

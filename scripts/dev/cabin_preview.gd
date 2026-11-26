@@ -35,6 +35,8 @@ func _ready() -> void:
 	lamp.omni_range = 8.0
 	lamp.light_energy = 1.5
 	add_child(lamp)
+	Look.set_style("klar")   # Vorschau immer im klaren Stil mit Foto-Texturen
+	Look.patch_shaders()
 	var cabin := Cabin.new()
 	cabin.name = "Cabin"
 	add_child(cabin)

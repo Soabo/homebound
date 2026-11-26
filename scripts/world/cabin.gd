@@ -65,6 +65,7 @@ var m_stone_dark: Material
 var m_beam: Material
 var m_wood: Material
 var m_wood_dark: Material
+var m_table: Material   ## Tischplatten und Werkbank (Foto-Holz im klaren Stil)
 var m_iron: Material
 var m_fabric: Material
 
@@ -136,6 +137,11 @@ func _ready() -> void:
 	m_beam = BuildKit.tex_mat("planks_h", 2.0, Color(0.55, 0.5, 0.48))
 	m_wood = BuildKit.tex_mat("planks_h", 0.7)
 	m_wood_dark = BuildKit.tex_mat("planks_h", 0.7, Color(0.55, 0.5, 0.48))
+	# Möbel im klaren Stil mit Foto-Holz (Christian 26.11., Poly Haven CC0): helles feines Holz für Stühle/Bänke/Rahmen,
+	# abgenutzte Tischplatten für Tische und Werkbank
+	m_table = Look.photo_mat(m_wood, "furn_table", 0.8, Color(0.86, 0.8, 0.76))
+	m_wood = Look.photo_mat(m_wood, "furn_fine", 0.6, Color(0.98, 0.92, 0.84))
+	m_wood_dark = Look.photo_mat(m_wood_dark, "furn_fine", 0.6, Color(0.55, 0.45, 0.38))
 	m_iron = BuildKit.tex_mat("metal", 0.4, Color(0.55, 0.52, 0.5), 0.55)
 	m_fabric = BuildKit.tex_mat("fabric", 0.5)
 
@@ -252,7 +258,7 @@ func _build_radio_corner(y: float) -> void:
 	var x0 := 2.0 + INT_T * 0.5 + 0.03
 	var x1 := 3.42
 	var zf := wz + 0.66
-	BuildKit.box_mm(self, Vector3(x0, y + 0.72, wz + 0.005), Vector3(x1, y + 0.76, zf), m_wood, true, "RadioTable")
+	BuildKit.box_mm(self, Vector3(x0, y + 0.72, wz + 0.005), Vector3(x1, y + 0.76, zf), m_table, true, "RadioTable")
 	for lx: float in [x0 + 0.05, x1 - 0.05]:
 		for lz: float in [wz + 0.05, zf - 0.05]:
 			BuildKit.box(self, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), m_wood_dark, false)
@@ -736,7 +742,7 @@ func _build_living_room() -> void:
 	add_child(behind)
 	# Couchtisch mit Becher und Buch
 	# schmal genug, dass man zwischen Tisch und Couch und zwischen Tisch und Kamin/Holzkorb durchgehen kann
-	BuildKit.box_mm(self, Vector3(-4.15, y + 0.38, 1.3), Vector3(-3.75, y + 0.44, 2.2), m_wood, true, "CoffeeTable")
+	BuildKit.box_mm(self, Vector3(-4.15, y + 0.38, 1.3), Vector3(-3.75, y + 0.44, 2.2), m_table, true, "CoffeeTable")
 	for p: Vector2 in [Vector2(-4.09, 1.36), Vector2(-3.81, 1.36), Vector2(-4.09, 2.14), Vector2(-3.81, 2.14)]:
 		BuildKit.box_mm(self, Vector3(p.x - 0.03, y, p.y - 0.03), Vector3(p.x + 0.03, y + 0.38, p.y + 0.03), m_wood_dark, false)
 	# (Becher und Buch gehören zu InsideChanges – sie wandern nachts)
@@ -759,7 +765,7 @@ func _build_living_room() -> void:
 	BuildKit.box_mm(self, Vector3(-4.08, y + 1.43, dz + 0.004), Vector3(-3.96, y + 1.56, dz + 0.006), BuildKit.color_mat(Color(0.8, 0.25, 0.2)), false)
 	BuildKit.box_mm(self, Vector3(-3.94, y + 1.55, dz + 0.004), Vector3(-3.88, y + 1.61, dz + 0.007), BuildKit.color_mat(Color(0.95, 0.8, 0.1)), false)
 	# Schreibtisch mit altem Röhrenmonitor und Radio – später die Überwachungsstation (GDD 7.5)
-	BuildKit.box_mm(self, Vector3(1.2, y + 0.7, 3.0), Vector3(1.925, y + 0.76, 4.25), m_wood, true, "Desk")
+	BuildKit.box_mm(self, Vector3(1.2, y + 0.7, 3.0), Vector3(1.925, y + 0.76, 4.25), m_table, true, "Desk")
 	BuildKit.box_mm(self, Vector3(1.25, y, 3.05), Vector3(1.9, y + 0.7, 3.45), m_wood_dark, true)
 	BuildKit.box_mm(self, Vector3(1.85, y, 4.15), Vector3(1.9, y + 0.7, 4.2), m_wood_dark, false)
 	var plastic := BuildKit.color_mat(Color(0.62, 0.6, 0.55), 0.6)
@@ -1313,7 +1319,7 @@ func _build_workshop() -> void:
 	var y := FLOOR_Y
 	var ex := HALF_X - CLAD
 	# Werkbank an der Ostwand, nördlich vom Fenster (das Fenster bleibt frei)
-	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.85), Vector3(ex, y + 0.92, 1.35), BuildKit.tex_mat("floor", 0.8, Color(1.15, 1.1, 1.0)), true, "Workbench")
+	BuildKit.box_mm(self, Vector3(5.1, y + 0.82, -0.85), Vector3(ex, y + 0.92, 1.35), Look.photo_mat(BuildKit.tex_mat("floor", 0.8, Color(1.15, 1.1, 1.0)), "furn_table", 0.8, Color(0.82, 0.76, 0.72)), true, "Workbench")
 	for z: float in [-0.75, 0.25, 1.25]:
 		BuildKit.box_mm(self, Vector3(5.15, y, z - 0.05), Vector3(5.8, y + 0.82, z + 0.05), m_wood_dark, true)
 	BuildKit.box_mm(self, Vector3(5.15, y + 0.2, -0.75), Vector3(5.8, y + 0.24, 1.25), m_wood, false)
@@ -1456,7 +1462,7 @@ static func fuel_can(parent: Node, pos: Vector3, rot_y: float = 0.0, node_name: 
 
 
 func _table(from: Vector3, to: Vector3) -> void:
-	BuildKit.box_mm(self, Vector3(from.x, to.y - 0.05, from.z), to, m_wood, true)
+	BuildKit.box_mm(self, Vector3(from.x, to.y - 0.05, from.z), to, m_table, true)
 	for p: Vector2 in [Vector2(from.x + 0.08, from.z + 0.08), Vector2(to.x - 0.08, from.z + 0.08),
 			Vector2(from.x + 0.08, to.z - 0.08), Vector2(to.x - 0.08, to.z - 0.08)]:
 		BuildKit.cylinder(self, 0.045, to.y - 0.05 - from.y, Vector3(p.x, (from.y + to.y - 0.05) * 0.5, p.y), m_wood_dark, true, Vector3.ZERO, 0.035, 6)

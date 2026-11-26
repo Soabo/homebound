@@ -11,8 +11,8 @@ var _lid: Node3D
 func _ready() -> void:
 	add_to_group("persistent")
 	add_to_group("storage_chest")
-	var wood := BuildKit.tex_mat("planks_h", 0.6, Color(0.85, 0.7, 0.55))
-	var dark := BuildKit.tex_mat("planks_h", 0.6, Color(0.5, 0.42, 0.36))
+	var wood := Look.photo_mat(BuildKit.tex_mat("planks_h", 0.6, Color(0.85, 0.7, 0.55)), "furn_cabinet", 0.9, Color(0.95, 0.88, 0.8))
+	var dark := Look.photo_mat(BuildKit.tex_mat("planks_h", 0.6, Color(0.5, 0.42, 0.36)), "furn_cabinet", 0.9, Color(0.55, 0.48, 0.44))
 	var iron := BuildKit.color_mat(Color(0.2, 0.2, 0.21), 0.5, 0.7)
 	var h := size.y * 0.72
 	# Kasten mit Bodenleisten, Eisenbeschlägen an den Ecken, Griffen an den Seiten

@@ -160,7 +160,7 @@ func _office_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 	var ix1 := x1 - Cabin.CLAD - 0.03
 	var iz0 := z0 + Cabin.CLAD + 0.03
 	# Schreibtisch an der Nordwand (Ostteil), Stuhl, Lampe, Papiere
-	BuildKit.box_mm(c, Vector3(1.55, y + 0.72, iz0), Vector3(3.0, y + 0.76, iz0 + 0.7), wood, true, "OfficeDesk")
+	BuildKit.box_mm(c, Vector3(1.55, y + 0.72, iz0), Vector3(3.0, y + 0.76, iz0 + 0.7), c.m_table, true, "OfficeDesk")
 	for lx: float in [1.6, 2.95]:
 		for lz: float in [iz0 + 0.05, iz0 + 0.65]:
 			BuildKit.box(c, Vector3(0.05, 0.72, 0.05), Vector3(lx, y + 0.36, lz), dark, false)
@@ -283,7 +283,8 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 	var ix0 := x0 + Cabin.CLAD + 0.03
 	var iz0 := z0 + Cabin.CLAD + 0.03
 	var iz1 := z1 - Cabin.CLAD - 0.03
-	var frame := BuildKit.tex_mat("planks_h", 0.8, Color(0.95, 0.9, 0.8))
+	# Kinderbetten: bemaltes, abgeplatztes Holz im klaren Stil (Christian 26.11.)
+	var frame := Look.photo_mat(BuildKit.tex_mat("planks_h", 0.8, Color(0.95, 0.9, 0.8)), "furn_painted", 1.0, Color(1.05, 1.0, 0.95))
 	var sheet_a := BuildKit.tex_mat("fabric", 0.5, Color(0.9, 1.5, 1.0))     # Lena: grün
 	var sheet_b := BuildKit.tex_mat("fabric", 0.5, Color(1.0, 1.1, 1.7))     # Ben: blau
 	# Zwei Kinderbetten an der Westwand, das Fenster dazwischen bleibt frei

@@ -115,9 +115,26 @@ const PHOTO_SETS := {
 	"rock": "res://assets/textures/ground/rock_",
 	"wood_floor": "res://assets/textures/ground/wood_floor_",
 	"logs": "res://assets/textures/ground/logs_",
+	"furn_fine": "res://assets/textures/ground/furn_fine_",
+	"furn_table": "res://assets/textures/ground/furn_table_",
+	"furn_cabinet": "res://assets/textures/ground/furn_cabinet_",
+	"furn_painted": "res://assets/textures/ground/furn_painted_",
 	"gred": "res://assets/textures/ground/gred_",
 	"plank_wall": "res://assets/textures/ground/plank_wall_",
 }
+
+
+## Kopie eines Materials mit Foto-Satz (nur im klaren Stil; sonst bleibt es das gezeichnete Material).
+## tile_m = Kachelgröße in Metern (Materialien von tex_mat sind dreiseitig in Weltkoordinaten projiziert), tint = Farbe darüber.
+static func photo_mat(base: Material, set_name: String, tile_m: float, tint: Color = Color.WHITE) -> Material:
+	if not smooth or not forest_photo or not (base is StandardMaterial3D) or not PHOTO_SETS.has(set_name):
+		return base
+	var m := (base as StandardMaterial3D).duplicate() as StandardMaterial3D
+	m.albedo_color = tint
+	m.uv1_scale = Vector3.ONE / tile_m
+	apply_photo(m, set_name)
+	m.normal_scale = 0.5   # Möbel: Holzporen nur andeuten, sonst wirkt es wie Pressspan
+	return m
 
 
 static func apply_photo(m: StandardMaterial3D, set_name: String) -> bool:
