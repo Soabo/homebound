@@ -923,6 +923,9 @@
 - Zeltnächte im Schnee milder (Christian 26.11.): im Zelt zählt Wetter (Schneetreiben, Regen, Schneedecke, Reif) nur zu
   `tent_weather_share` (0,4), `tent_factor` 0,4, `sleeping_bag_factor` 0,22, durchgefroren im Zelt aufwachen kostet `tent_freeze_damage` (15).
   Mit Schlafsack verliert man nachts bei Schneefall ≈ 1/Std., ohne ≈ 5/Std. Kreatur-Texturen: Vorschläge an Christian, er lädt sie hoch.
+- Zerfleischer-Haut (Christian 26.11., aitextured „Dark Cracked Skin“): `assets/textures/creatures/mauler_skin_*` (Farbe mit fahleren
+  Fugen, Normal/Rauheit aus dem Farbbild berechnet), `FleshKit.photo_skin(name, tint, tile_m)` – Mauler skin 0,75 m / shade 0,55 m.
+  Weitere Wesen: gleicher Weg (Datei `<name>_color.jpg` usw., dann photo_skin).
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

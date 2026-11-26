@@ -23,6 +23,25 @@ static func skin(tint: Color, roughness: float = 0.6, tex_m: float = 0.35) -> St
 	return m
 
 
+## Haut aus einem Foto-Satz (assets/textures/creatures/<name>_color|normal|rough.jpg), z. B. „mauler_skin“ (Christian 26.11.).
+## tile_m = Kachelgröße in m, tint färbt (weiß = wie im Bild).
+static func photo_skin(name: String, tint: Color = Color.WHITE, tile_m: float = 0.35) -> StandardMaterial3D:
+	var base := "res://assets/textures/creatures/" + name + "_"
+	if not ResourceLoader.exists(base + "color.jpg"):
+		return skin(tint, 0.6, tile_m)
+	var m := skin(tint, 0.6, tile_m)
+	m.albedo_texture = load(base + "color.jpg")
+	m.normal_enabled = true
+	m.normal_texture = load(base + "normal.jpg")
+	m.normal_scale = 1.2
+	m.roughness_texture = load(base + "rough.jpg")
+	m.roughness = 1.0
+	m.metallic_specular = 0.5
+	m.rim = 0.18   # dunkle Haut: Umriss im Licht trotzdem erkennbar
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return m
+
+
 ## Glatte Kurve durch die Stützpunkte (Catmull-Rom), `steps` Zwischenpunkte je Abschnitt.
 static func smooth(pts: Array, steps: int = 4) -> PackedVector3Array:
 	var out := PackedVector3Array()

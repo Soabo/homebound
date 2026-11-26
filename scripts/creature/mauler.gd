@@ -88,8 +88,9 @@ func _build_model() -> void:
 	# Grey-Schädel mit Wangenknochen und Brauenwulst, Maul mit Zahnfleisch und Reißzähnen, sichelförmige Klauen.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3601
-	var skin := FleshKit.skin(Color(0.58, 0.55, 0.57), 0.6, 0.11)
-	var shade := FleshKit.skin(Color(0.45, 0.42, 0.45), 0.6, 0.11)      # Muskelfurchen, Rückengrat
+	# Haut: dunkle, rissige Platten mit fahlen Fugen (Foto von Christian, 26.11.)
+	var skin := FleshKit.photo_skin("mauler_skin", Color(1.0, 1.0, 1.0), 0.75)
+	var shade := FleshKit.photo_skin("mauler_skin", Color(0.75, 0.72, 0.75), 0.55)      # Muskelfurchen, Rückengrat
 	var dark := BuildKit.color_mat(Color(0.16, 0.15, 0.17), 0.45)
 	var vein_mat := BuildKit.color_mat(Color(0.27, 0.24, 0.32), 0.6)
 	var claw_mat := BuildKit.color_mat(Color(0.07, 0.065, 0.06), 0.2, 0.35)
