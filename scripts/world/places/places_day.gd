@@ -36,42 +36,396 @@ static func label(parent: Node3D, text: String, pos: Vector3, size: int = 40, co
 	return l
 
 
-## Messstelle 4-Nord: eingezäunter Container von ReZort Industries, Kabel führen in einen Schacht.
+## Messstelle 4-Nord (27.11. neu, so detailliert wie die Hütte): eingezäuntes Kiesgelände von ReZort Industries mit
+## Stacheldraht und offenem Tor, Wellblech-Container (Stufen, Klimagerät, Kabeltrasse, Scheinwerfer), drinnen Arbeitsplatz
+## mit Monitor, Serverschrank mit blinkenden Lämpchen, Regal mit Ordnern, Whiteboard, Kalender, Feuerlöscher.
+## Draußen Stromaggregat, Kabeltrommel, Fässer, Paletten, Messpfähle, Mast mit Schüssel, verschweißter Schacht.
+## Knotennamen der Funde (Container/Electronics, Batteries, Keycard, Protocols, BP_bp_winch, Note_messstelle_log) bleiben.
 static func _messstelle(root: Node3D) -> void:
 	root.rotation_degrees.y = 10.0
-	PlaceKit.fence(root, [Vector2(-8, -6), Vector2(8, -6), Vector2(8, 6), Vector2(-8, 6), Vector2(-8, -6)], 2.2, [Vector2(50.0, 53.5)])
-	var c := PlaceKit.hut(root, "Container", Vector3(0, PlaceKit.ground(root, 0, 0) + 0.25, -1.0), Vector2(6.0, 2.6), 2.5, 0.0, "tin", "flat", "tin", 0.9, true)
-	label(c, "ReZort Industries\nMessstelle 4-Nord\nBetreten verboten", Vector3(-1.8, 1.6, 1.38), 36, Color(0.75, 0.1, 0.08))
-	BuildKit.box(c, Vector3(1.6, 0.04, 0.7), Vector3(1.4, 0.8, -0.8), PlaceKit.mat("steel_dark"), true)
-	for sx: float in [-0.7, 0.7]:
-		BuildKit.box(c, Vector3(0.04, 0.8, 0.6), Vector3(1.4 + sx, 0.4, -0.8), PlaceKit.mat("steel_dark"), false)
-	PlaceKit.loot(c, "Electronics", "electronics", 3, Vector3(-1.8, 0.06, -0.8), "case")
-	PlaceKit.loot(c, "Batteries", "battery", 2, Vector3(-1.0, 0.06, -0.85), "case")
-	PlaceKit.loot(c, "Keycard", "keycard_m4", 1, Vector3(1.1, 0.83, -0.7), "card")
-	PlaceKit.loot(c, "Protocols", "rz_protocol", 1, Vector3(0.75, 0.83, -0.75), "paper")
-	PlaceKit.blueprint(c, "bp_winch", "Kabelwinde", Vector3(1.7, 0.83, -0.85))
-	# Wartungsprotokoll: Klemmbrett an der Wand über dem Tisch – groß und beschriftet (Christian 27.11.: wurde übersehen)
-	PlaceKit.note(c, "messstelle_log", Vector3(2.1, 1.3, -1.12), true)
-	BuildKit.box(c, Vector3(0.34, 0.46, 0.015), Vector3(2.1, 1.42, -1.25), PlaceKit.mat("wood_old"), false)
-	BuildKit.box(c, Vector3(0.28, 0.38, 0.004), Vector3(2.1, 1.4, -1.24), PlaceKit.mat("paper"), false)
-	BuildKit.box(c, Vector3(0.12, 0.035, 0.02), Vector3(2.1, 1.63, -1.235), PlaceKit.mat("metal"), false)
-	var log_lab := label(c, "WARTUNGS-\nPROTOKOLL\nMP4-N", Vector3(2.1, 1.5, -1.236), 18, Color(0.08, 0.08, 0.1))
-	log_lab.pixel_size = 0.0035
-	# Mast mit Schüssel
-	var g := PlaceKit.ground(root, 5.5, 3.5)
-	BuildKit.cylinder(root, 0.07, 7.0, Vector3(5.5, g + 3.5, 3.5), PlaceKit.mat("metal"), true, Vector3.ZERO, 0.05, 8)
-	BuildKit.cylinder(root, 0.55, 0.12, Vector3(5.5, g + 6.4, 3.0), PlaceKit.mat("white"), false, Vector3(70, 0, 0), 0.1, 14)
-	# Schachtdeckel mit Kabeln
-	var m := PlaceKit.on_ground(root, -4.5, 3.5)
-	BuildKit.cylinder(root, 0.6, 0.1, m + Vector3(0, 0.05, 0), PlaceKit.mat("steel_dark"), true, Vector3.ZERO, -1.0, 14)
+	# Kiesfläche im Zaun
+	for gx in 4:
+		for gz in 3:
+			var p := Vector3(-6.0 + gx * 4.0, 0, -4.0 + gz * 4.0)
+			p.y = PlaceKit.ground(root, p.x, p.z) + 0.02
+			BuildKit.box(root, Vector3(4.05, 0.04, 4.05), p, PlaceKit.mat("gravel"), false)
+	_mess_fence(root)
+	var c := _mess_container(root)
+	_mess_inside(c)
+	_mess_yard(root)
+
+
+## Maschendrahtzaun mit Betonfüßen, Stacheldraht oben, Warnschildern, offenem Tor (aufgebrochenes Schloss).
+static func _mess_fence(root: Node3D) -> void:
+	var pts := [Vector2(-8, -6), Vector2(8, -6), Vector2(8, 6), Vector2(-8, 6), Vector2(-8, -6)]
+	PlaceKit.fence(root, pts, 2.2, [Vector2(50.0, 53.5)])
+	var wire := PlaceDetail.col(Color(0.35, 0.35, 0.36), 0.5, 0.8)
+	var dist := 0.0
+	for i in pts.size() - 1:
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
+		var steps := maxi(int(a.distance_to(b) / 3.0), 1)
+		var out := Vector2(b.y - a.y, a.x - b.x).normalized() * -1.0
+		for k in steps + 1:
+			var q := a.lerp(b, float(k) / steps)
+			var g := PlaceKit.ground(root, q.x, q.y)
+			BuildKit.box(root, Vector3(0.22, 0.25, 0.22), Vector3(q.x, g + 0.05, q.y), PlaceKit.mat("concrete"), false)
+			# Ausleger für den Stacheldraht (nach außen geneigt)
+			BuildKit.beam_between(root, Vector3(q.x, g + 2.2, q.y), Vector3(q.x + out.x * 0.35, g + 2.55, q.y + out.y * 0.35), 0.03, PlaceKit.mat("metal"))
+		for strand in 3:
+			var off := 0.12 + strand * 0.11
+			var ga := PlaceKit.ground(root, a.x, a.y)
+			var gb := PlaceKit.ground(root, b.x, b.y)
+			var mid := dist + a.distance_to(b) * 0.5
+			if i == 3 and mid > 0.0:
+				# Torseite: Draht nur bis zum Tor
+				var cut := a.lerp(b, 6.0 / 12.0)
+				var gc := PlaceKit.ground(root, cut.x, cut.y)
+				PlaceDetail.cable(root, Vector3(a.x + out.x * off * 3.0, ga + 2.2 + off, a.y + out.y * off * 3.0), Vector3(cut.x + out.x * off * 3.0, gc + 2.2 + off, cut.y + out.y * off * 3.0), 0.04, 0.004, Color(0.3, 0.3, 0.3))
+				var cut2 := a.lerp(b, 9.5 / 12.0)
+				var gc2 := PlaceKit.ground(root, cut2.x, cut2.y)
+				PlaceDetail.cable(root, Vector3(cut2.x + out.x * off * 3.0, gc2 + 2.2 + off, cut2.y + out.y * off * 3.0), Vector3(b.x + out.x * off * 3.0, gb + 2.2 + off, b.y + out.y * off * 3.0), 0.04, 0.004, Color(0.3, 0.3, 0.3))
+				continue
+			PlaceDetail.cable(root, Vector3(a.x + out.x * off * 3.0, ga + 2.2 + off, a.y + out.y * off * 3.0), Vector3(b.x + out.x * off * 3.0, gb + 2.2 + off, b.y + out.y * off * 3.0), 0.05, 0.004, Color(0.3, 0.3, 0.3))
+		dist += a.distance_to(b)
+	# Tor (Westseite, z 0 … -3,5): zwei Flügel aus Rohrrahmen, einer offen, Kette mit aufgebrochenem Schloss
+	var gate_x := -8.0
+	for k in 2:
+		var hinge_z := 0.0 if k == 0 else -3.5
+		var g := PlaceKit.ground(root, gate_x, hinge_z)
+		var leaf := Node3D.new()
+		leaf.name = "GateLeaf%d" % k
+		leaf.position = Vector3(gate_x, g, hinge_z)
+		leaf.rotation_degrees.y = -100.0 if k == 0 else 8.0
+		root.add_child(leaf)
+		var dir := -1.0 if k == 0 else 1.0
+		var w := 1.72
+		for yy: float in [0.12, 1.0, 1.95]:
+			BuildKit.cylinder(leaf, 0.025, w, Vector3(0, yy, dir * w * 0.5), wire, false, Vector3(90, 0, 0), -1.0, 6)
+		for zz: float in [0.0, w]:
+			BuildKit.cylinder(leaf, 0.03, 1.95, Vector3(0, 1.0, dir * zz), wire, false, Vector3.ZERO, -1.0, 6)
+		var mesh := PlaceKit.chainlink_mat()
+		BuildKit.box(leaf, Vector3(0.01, 1.8, w), Vector3(0, 1.05, dir * w * 0.5), mesh, k == 1)
+		BuildKit.cylinder(root, 0.06, 2.4, Vector3(gate_x, g + 1.2, hinge_z), PlaceKit.mat("metal"), true, Vector3.ZERO, -1.0, 8)
+	# Kette mit aufgebrochenem Vorhängeschloss im Kies
+	var lock_p := PlaceKit.on_ground(root, -7.4, -1.6, 0.03)
+	for i in 8:
+		BuildKit.cylinder(root, 0.012, 0.06, lock_p + Vector3(i * 0.05, 0, sin(i * 1.3) * 0.04), wire, false, Vector3(90, i * 40.0, 0), -1.0, 5)
+	BuildKit.box(root, Vector3(0.06, 0.07, 0.025), lock_p + Vector3(0.45, 0.01, 0.02), PlaceDetail.col(Color(0.7, 0.6, 0.25), 0.4, 0.8), false, Vector3(70, 20, 0))
+	# Warnschilder am Zaun
+	var signs := [["BETRETEN VERBOTEN\nReZort Industries – Sondertechnik", Vector3(-8.03, 1.4, 1.5), -90.0, Color(0.9, 0.9, 0.86), Color(0.7, 0.1, 0.08)],
+			["VORSICHT\nHochspannung", Vector3(-8.03, 1.4, -4.6), -90.0, Color(0.95, 0.8, 0.1), Color(0.05, 0.05, 0.05)],
+			["Videoüberwacht", Vector3(2.0, 1.5, 6.03), 0.0, Color(0.9, 0.9, 0.86), Color(0.1, 0.1, 0.1)],
+			["MP4-N · Messfeld\nKein Zutritt", Vector3(8.03, 1.4, -2.0), 90.0, Color(0.9, 0.9, 0.86), Color(0.1, 0.2, 0.45)]]
+	for sg: Array in signs:
+		var sp: Vector3 = sg[1]
+		sp.y += PlaceKit.ground(root, sp.x, sp.z)
+		PlaceDetail.sign(root, String(sg[0]), sp, Vector2(0.6, 0.38), float(sg[2]), sg[3] as Color, sg[4] as Color, 34)
+
+
+## Wellblech-Container mit Stufen, Tür, vergittertem Fenster, Klimagerät, Antenne, Scheinwerfer, Beschriftung.
+static func _mess_container(root: Node3D) -> Node3D:
+	const HX := 3.03
+	const HZ := 1.22
+	const H := 2.6
+	const T := 0.08
+	var base_y := PlaceKit.ground(root, 0, -1.0) + 0.35
+	var c := Node3D.new()
+	c.name = "Container"
+	c.position = Vector3(0, base_y, -1.0)
+	root.add_child(c)
+	var inner := PlaceDetail.col(Color(0.78, 0.79, 0.77), 0.8)
+	var steel := PlaceKit.mat("steel_dark")
+	# Fundament (Betonklötze), Boden, Decke
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(c, Vector3(0.4, 0.8, 0.4), Vector3(sx * (HX - 0.3), -0.55, sz * (HZ - 0.25)), PlaceKit.mat("concrete"), true)
+	BuildKit.box(c, Vector3(HX * 2.0, 0.12, HZ * 2.0), Vector3(0, -0.06, 0), steel, true)
+	BuildKit.box(c, Vector3(HX * 2.0 - 0.16, 0.01, HZ * 2.0 - 0.16), Vector3(0, 0.005, 0), PlaceDetail.col(Color(0.12, 0.12, 0.13), 0.95), false)
+	BuildKit.box(c, Vector3(HX * 2.0 + 0.04, 0.14, HZ * 2.0 + 0.04), Vector3(0, H + 0.07, 0), PlaceKit.mat("corrugated"), true)
+	BuildKit.box(c, Vector3(HX * 2.0 - 0.16, 0.02, HZ * 2.0 - 0.16), Vector3(0, H - 0.01, 0), inner, false)
+	# Wände innen (hell gestrichen), Öffnungen: Tür rechts vorn, Fenster links vorn und an der linken Stirnseite
+	BuildKit.wall(c, Vector2(-HX, HZ - T * 0.5), Vector2(HX, HZ - T * 0.5), 0.0, H, T, inner, [Vector4(HX + 1.7, 0.95, 0.0, 2.05), Vector4(HX - 1.4, 1.0, 1.0, 1.75)], "Front")
+	BuildKit.wall(c, Vector2(HX, -HZ + T * 0.5), Vector2(-HX, -HZ + T * 0.5), 0.0, H, T, inner, [], "Back")
+	BuildKit.wall(c, Vector2(-HX + T * 0.5, -HZ + T), Vector2(-HX + T * 0.5, HZ - T), 0.0, H, T, inner, [Vector4(HZ - T, 0.8, 1.1, 1.7)], "Left")
+	BuildKit.wall(c, Vector2(HX - T * 0.5, HZ - T), Vector2(HX - T * 0.5, -HZ + T), 0.0, H, T, inner, [], "Right")
+	# Wellblech außen
+	var d := 0.03
+	PlaceDetail.corrugated(c, Vector2(HX * 2.0, H), Vector3(0, H * 0.5, -HZ - d), Vector3(0, 180, 0))
+	PlaceDetail.corrugated(c, Vector2(HZ * 2.0, H), Vector3(HX + d, H * 0.5, 0), Vector3(0, 90, 0))
+	PlaceDetail.corrugated(c, Vector2(HZ * 2.0 - 0.8, H), Vector3(-HX - d, H * 0.5, -0.4), Vector3(0, -90, 0))
+	PlaceDetail.corrugated(c, Vector2(0.15, H), Vector3(-HX - d, H * 0.5, HZ - 0.075), Vector3(0, -90, 0))
+	PlaceDetail.corrugated(c, Vector2(0.8, 1.1), Vector3(-HX - d, 0.55, HZ - 0.55), Vector3(0, -90, 0))
+	PlaceDetail.corrugated(c, Vector2(0.8, 0.9), Vector3(-HX - d, 2.15, HZ - 0.55), Vector3(0, -90, 0))
+	# Front in Streifen um Fenster (x -2,1 … -1,1) und Tür (x 1,2 … 2,2)
+	for seg: Vector4 in [Vector4(-HX, -2.1, 0.0, H), Vector4(-2.1, -1.1, 0.0, 1.0), Vector4(-2.1, -1.1, 1.75, H), Vector4(-1.1, 1.22, 0.0, H),
+			Vector4(1.22, 2.18, 2.05, H), Vector4(2.18, HX, 0.0, H)]:
+		PlaceDetail.corrugated(c, Vector2(seg.y - seg.x, seg.w - seg.z), Vector3((seg.x + seg.y) * 0.5, (seg.z + seg.w) * 0.5, HZ + d))
+	# Eckbeschläge (Container-Ecken)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			for yy: float in [0.08, H - 0.08]:
+				BuildKit.box(c, Vector3(0.18, 0.16, 0.18), Vector3(sx * (HX - 0.05), yy, sz * (HZ - 0.05)), steel, false)
+			BuildKit.box(c, Vector3(0.1, H, 0.1), Vector3(sx * (HX - 0.03), H * 0.5, sz * (HZ - 0.03)), steel, false)
+	# Stahltür (offen) und Fenster mit Gitter
+	PlaceDetail.door(c, Vector3(1.7, 0.0, HZ - T * 0.5), 0.0, 0.95, 2.05, "steel", -75.0)
+	PlaceDetail.window(c, Vector3(-1.6, 1.0, HZ - 0.02), 0.0, 1.0, 0.75, 0.1, "rect", Color(0.5, 0.58, 0.6, 0.4), "steel_dark", 1, true, "steel_dark")
+	PlaceDetail.window(c, Vector3(-HX + 0.02, 1.1, HZ - T - 0.4), -90.0, 0.8, 0.6, 0.1, "rect", Color(0.5, 0.58, 0.6, 0.4), "steel_dark", 1, true, "steel_dark")
+	# Gitterstufen vor der Tür
+	var grate := PlaceDetail.col(Color(0.3, 0.31, 0.3), 0.6, 0.7)
+	for k in 2:
+		BuildKit.box(c, Vector3(1.1, 0.04, 0.3), Vector3(1.7, -0.15 - k * 0.18, HZ + 0.2 + k * 0.28), grate, true)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(c, Vector3(0.04, 0.5, 0.7), Vector3(1.7 + sx * 0.55, -0.3, HZ + 0.33), grate, false, Vector3(-30, 0, 0))
+	# Beschriftung, Nummer, Warnzeichen
+	PlaceDetail.sign(c, "ReZort Industries\nMessstelle 4-Nord\nBetreten verboten", Vector3(-0.1, 1.7, HZ + 0.06), Vector2(1.2, 0.55), 0.0, Color(0.92, 0.92, 0.9), Color(0.7, 0.1, 0.08), 36)
+	var stencil := Label3D.new()
+	stencil.text = "RZ-4N  0417"
+	stencil.font_size = 96
+	stencil.pixel_size = 0.004
+	stencil.modulate = Color(0.85, 0.85, 0.8)
+	stencil.outline_size = 0
+	stencil.position = Vector3(0, 1.9, -HZ - 0.06)
+	stencil.rotation_degrees.y = 180.0
+	c.add_child(stencil)
+	PlaceDetail.sign(c, "⚡", Vector3(2.75, 1.5, HZ + 0.06), Vector2(0.22, 0.22), 0.0, Color(0.95, 0.8, 0.1), Color(0.05, 0.05, 0.05), 60, false)
+	# Klimagerät an der rechten Stirnseite, Kabeltrasse, Antenne, Scheinwerfer
+	var ac := Node3D.new()
+	ac.position = Vector3(HX + 0.25, 1.7, 0.2)
+	c.add_child(ac)
+	BuildKit.box(ac, Vector3(0.4, 0.6, 0.9), Vector3.ZERO, PlaceDetail.col(Color(0.82, 0.83, 0.8), 0.6), false)
+	BuildKit.cylinder(ac, 0.22, 0.02, Vector3(0.21, 0.0, 0.0), PlaceDetail.col(Color(0.1, 0.1, 0.1)), false, Vector3(0, 0, 90), -1.0, 16)
+	for k in 5:
+		BuildKit.box(ac, Vector3(0.01, 0.5, 0.012), Vector3(0.215, 0, -0.2 + k * 0.1), PlaceDetail.col(Color(0.3, 0.3, 0.3)), false)
+	BuildKit.box(c, Vector3(0.3, 0.04, 0.04), Vector3(HX + 0.12, 1.32, 0.2), steel, false)
+	var tray := PlaceDetail.col(Color(0.55, 0.56, 0.55), 0.5, 0.6)
+	BuildKit.box(c, Vector3(0.3, 0.06, 0.06), Vector3(-HX - 0.15, 0.4, -0.6), tray, false)
+	BuildKit.cylinder(c, 0.02, 2.0, Vector3(-1.9, H + 1.0, -0.6), PlaceKit.mat("metal"), false, Vector3.ZERO, 0.008, 6)
 	for k in 3:
-		BuildKit.cylinder(root, 0.05, 4.2, m + Vector3(1.9, 0.07, -1.6 + k * 0.12), PlaceKit.mat("dark"), false, Vector3(0, 40, 88), -1.0, 6)
+		BuildKit.box(c, Vector3(0.5 - k * 0.12, 0.012, 0.012), Vector3(-1.9, H + 1.3 + k * 0.25, -0.6), PlaceKit.mat("metal"), false)
+	PlaceDetail.lamp(c, Vector3(HX - 0.2, H - 0.15, HZ + 0.05), "flood", false, 20.0)
+	PlaceDetail.lamp(c, Vector3(1.7, 2.3, HZ + 0.06), "cage", true, 0.0, Color(1.0, 0.9, 0.7), 0.5, 4.0)
+	return c
+
+
+## Innenraum: Arbeitsplatz, Serverschrank, Regal, Whiteboard, Funde.
+static func _mess_inside(c: Node3D) -> void:
+	var y := 0.01
+	# Schreibtisch an der Rückwand mit Monitor, Tastatur, Becher, Papieren
+	PlaceDetail.table(c, Vector3(1.4, y, -0.82), Vector3(1.9, 0.76, 0.66), "table")
+	var ty := y + 0.76
+	var dark := PlaceDetail.col(Color(0.06, 0.06, 0.07), 0.4)
+	BuildKit.box(c, Vector3(0.5, 0.32, 0.03), Vector3(0.65, ty + 0.3, -1.02), dark, false)
+	var screen := BuildKit.emissive_mat(Color(0.05, 0.18, 0.1), 0.8)
+	BuildKit.box(c, Vector3(0.46, 0.28, 0.005), Vector3(0.65, ty + 0.3, -1.003), screen, false)
+	for k in 6:
+		BuildKit.box(c, Vector3(0.12 + (k * 37 % 5) * 0.05, 0.012, 0.002), Vector3(0.5 + (k * 37 % 5) * 0.025, ty + 0.4 - k * 0.035, -1.0), BuildKit.emissive_mat(Color(0.2, 0.9, 0.4), 1.5), false)
+	BuildKit.box(c, Vector3(0.05, 0.14, 0.05), Vector3(0.65, ty + 0.07, -1.04), dark, false)
+	BuildKit.box(c, Vector3(0.2, 0.012, 0.15), Vector3(0.65, ty + 0.006, -1.04), dark, false)
+	BuildKit.box(c, Vector3(0.44, 0.02, 0.15), Vector3(0.7, ty + 0.01, -0.72), dark, false)
+	BuildKit.box(c, Vector3(0.06, 0.02, 0.1), Vector3(1.0, ty + 0.01, -0.7), dark, false)
+	BuildKit.lathe(c, PackedVector2Array([Vector2(0, 0), Vector2(0.04, 0), Vector2(0.042, 0.1), Vector2(0.038, 0.1), Vector2(0.036, 0.01), Vector2(0, 0.01)]), Vector3(0.25, ty, -0.7), PlaceDetail.col(Color(0.85, 0.82, 0.75), 0.3), 10)
+	PlaceDetail.clutter(c, Vector3(1.85, ty, -0.95), Vector2(0.4, 0.3), 77, 2, ["papers"])
+	PlaceDetail.office_chair(c, Vector3(1.0, y, -0.15), 160.0)
+	PlaceKit.loot(c, "Keycard", "keycard_m4", 1, Vector3(1.15, ty + 0.01, -0.62), "card")
+	PlaceKit.loot(c, "Protocols", "rz_protocol", 1, Vector3(1.5, ty + 0.01, -0.72), "paper")
+	PlaceKit.blueprint(c, "bp_winch", "Kabelwinde", Vector3(2.15, ty + 0.03, -0.62))
+	# Wartungsprotokoll: Klemmbrett an der Wand über dem Tisch – groß und beschriftet (Christian 27.11.: wurde übersehen)
+	PlaceKit.note(c, "messstelle_log", Vector3(1.9, 1.3, -1.06), true)
+	BuildKit.box(c, Vector3(0.34, 0.46, 0.015), Vector3(1.9, 1.42, -1.17), PlaceKit.mat("wood_old"), false)
+	BuildKit.box(c, Vector3(0.28, 0.38, 0.004), Vector3(1.9, 1.4, -1.16), PlaceKit.mat("paper"), false)
+	BuildKit.box(c, Vector3(0.12, 0.035, 0.02), Vector3(1.9, 1.63, -1.155), PlaceKit.mat("metal"), false)
+	var log_lab := label(c, "WARTUNGS-\nPROTOKOLL\nMP4-N", Vector3(1.9, 1.5, -1.156), 18, Color(0.08, 0.08, 0.1))
+	log_lab.pixel_size = 0.0035
+	# Serverschrank mit blinkenden Lämpchen
+	var rack := Node3D.new()
+	rack.name = "Rack"
+	rack.position = Vector3(-2.6, y, -0.85)
+	c.add_child(rack)
+	BuildKit.box(rack, Vector3(0.6, 2.0, 0.65), Vector3(0, 1.0, 0), PlaceDetail.col(Color(0.1, 0.1, 0.11), 0.5, 0.5), true)
+	var leds := []
+	for k in 9:
+		BuildKit.box(rack, Vector3(0.5, 0.12, 0.01), Vector3(0, 0.3 + k * 0.18, 0.33), PlaceDetail.col(Color(0.18, 0.18, 0.2), 0.4, 0.6), false)
+		for j in 3:
+			var on := (k * 3 + j) % 4 != 0
+			var cl := Color(0.2, 1.0, 0.3) if (k + j) % 5 != 0 else Color(1.0, 0.55, 0.1)
+			var lm := BuildKit.emissive_mat(cl, 2.5 if on else 0.0)
+			BuildKit.box(rack, Vector3(0.012, 0.012, 0.004), Vector3(0.18 + j * 0.03, 0.3 + k * 0.18, 0.337), lm, false)
+			leds.append(lm)
+	var blink := Timer.new()
+	blink.wait_time = 0.35
+	blink.autostart = true
+	rack.add_child(blink)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 404
+	blink.timeout.connect(func() -> void:
+		for i in 3:
+			var lm2: StandardMaterial3D = leds[rng.randi() % leds.size()]
+			lm2.emission_energy_multiplier = 0.0 if lm2.emission_energy_multiplier > 0.5 else 2.5)
+	for k in 4:
+		PlaceDetail.cable(c, Vector3(-2.35, 1.8 - k * 0.3, -0.52), Vector3(-1.95 + k * 0.05, 2.5, -1.1), 0.25, 0.01, [Color(0.05, 0.05, 0.05), Color(0.1, 0.2, 0.6), Color(0.6, 0.5, 0.1), Color(0.5, 0.1, 0.1)][k] as Color)
+	# Regal mit Ordnern und Kartons, Funde unten
+	PlaceDetail.shelf(c, Vector3(-1.35, y, -1.18), 0.0, Vector3(1.1, 1.9, 0.4), 4, "steel_dark")
+	PlaceDetail.clutter(c, Vector3(-1.35, y + 1.26, -0.98), Vector2(1.0, 0.36), 51, 4, ["binders"])
+	PlaceDetail.clutter(c, Vector3(-1.35, y + 1.86, -0.98), Vector2(1.0, 0.36), 52, 3, ["boxes", "binders"])
+	PlaceDetail.clutter(c, Vector3(-1.35, y + 0.66, -0.98), Vector2(1.0, 0.36), 53, 3, ["boxes", "tools"])
+	PlaceKit.loot(c, "Electronics", "electronics", 3, Vector3(-1.6, y + 0.08, -0.98), "case")
+	PlaceKit.loot(c, "Batteries", "battery", 2, Vector3(-1.05, y + 0.08, -0.98), "case")
+	# Whiteboard an der linken Stirnseite (Skizze der Kabeltrasse), Kalender, Feuerlöscher, Erste Hilfe, Deckenleuchte
+	var wb := PlaceDetail.sign(c, "K4-NORD → MP4\nKopplung W-Serie ??\nDrift 17.09.: ↑↑\nW-17 → AUSSCHUSS?\n\n(nicht wegwischen!)", Vector3(-2.95, 1.55, -0.45), Vector2(0.9, 0.62), 90.0,
+			Color(0.95, 0.96, 0.95), Color(0.1, 0.2, 0.55), 30)
+	wb.name = "Whiteboard"
+	PlaceDetail.sign(c, "NOVEMBER\n\nMo Di Mi Do Fr Sa So\n2 3 4 5 6 7 8\n9 10 11 12 13 14 15\n16 ✕ 18 19 20 21 22", Vector3(2.95, 1.55, 0.3), Vector2(0.4, 0.5), -90.0,
+			Color(0.95, 0.94, 0.9), Color(0.15, 0.15, 0.15), 22)
+	var red := PlaceDetail.col(Color(0.75, 0.08, 0.06), 0.4, 0.2)
+	BuildKit.cylinder(c, 0.075, 0.5, Vector3(2.65, y + 0.25, 1.05), red, false, Vector3.ZERO, -1.0, 12)
+	BuildKit.box(c, Vector3(0.06, 0.06, 0.12), Vector3(2.65, y + 0.53, 1.07), dark, false)
+	BuildKit.box(c, Vector3(0.3, 0.22, 0.1), Vector3(0.6, 1.6, 1.12), PlaceDetail.col(Color(0.15, 0.55, 0.25), 0.5), false)
+	BuildKit.box(c, Vector3(0.1, 0.03, 0.005), Vector3(0.6, 1.6, 1.07), PlaceDetail.col(Color(0.95, 0.95, 0.95)), false)
+	BuildKit.box(c, Vector3(0.03, 0.1, 0.005), Vector3(0.6, 1.6, 1.07), PlaceDetail.col(Color(0.95, 0.95, 0.95)), false)
+	for sx: float in [-1.0, 1.0]:
+		var tube := BuildKit.emissive_mat(Color(0.85, 0.95, 1.0), 0.0 if sx < 0.0 else 1.2)
+		BuildKit.box(c, Vector3(1.2, 0.06, 0.16), Vector3(sx * 1.4, 2.55, 0), PlaceDetail.col(Color(0.8, 0.8, 0.78), 0.5), false)
+		BuildKit.box(c, Vector3(1.1, 0.03, 0.08), Vector3(sx * 1.4, 2.51, 0), tube, false)
+	var fl := OmniLight3D.new()
+	fl.light_color = Color(0.85, 0.95, 1.0)
+	fl.light_energy = 0.7
+	fl.omni_range = 4.5
+	fl.shadow_enabled = false
+	fl.position = Vector3(1.4, 2.35, 0)
+	c.add_child(fl)
+	PlaceDetail.litter(c, Vector3(1.6, y, 0.7), 0.6, 33, 6, ["leaf", "paper"])
+	# Leben im Container: Wandfugen, Kabelkanal, Pinnwand, Netzplan, Jacke am Haken, Kaffeeecke, Papierkorb, Heizlüfter
+	var seam := PlaceDetail.col(Color(0.62, 0.63, 0.61), 0.7)
+	for k in 5:
+		var x := -2.4 + k * 1.2
+		BuildKit.box(c, Vector3(0.025, 2.5, 0.006), Vector3(x, 1.27, -1.175), seam, false)
+		BuildKit.box(c, Vector3(0.025, 2.5, 0.006), Vector3(x, 1.27, 1.175), seam, false)
+	BuildKit.box(c, Vector3(5.9, 0.08, 0.06), Vector3(0, 2.42, -1.14), PlaceDetail.col(Color(0.88, 0.88, 0.86), 0.6), false)
+	BuildKit.box(c, Vector3(5.9, 0.06, 0.05), Vector3(0, 0.12, -1.15), PlaceDetail.col(Color(0.88, 0.88, 0.86), 0.6), false)
+	for k in 3:
+		BuildKit.box(c, Vector3(0.08, 0.05, 0.02), Vector3(0.3 + k * 0.9, 0.3, -1.165), PlaceDetail.col(Color(0.95, 0.95, 0.93), 0.5), false)
+	var cork := Node3D.new()
+	cork.position = Vector3(-0.3, 1.55, 1.15)
+	cork.rotation_degrees.y = 180.0
+	c.add_child(cork)
+	BuildKit.box(cork, Vector3(0.9, 0.6, 0.02), Vector3.ZERO, PlaceDetail.col(Color(0.62, 0.45, 0.28), 1.0), false)
+	var nrng := RandomNumberGenerator.new()
+	nrng.seed = 88
+	for k in 9:
+		var nc := [Color(0.95, 0.92, 0.6), Color(0.95, 0.95, 0.93), Color(0.7, 0.85, 0.95), Color(0.95, 0.75, 0.7)][k % 4] as Color
+		BuildKit.box(cork, Vector3(nrng.randf_range(0.1, 0.2), nrng.randf_range(0.08, 0.2), 0.004), Vector3(nrng.randf_range(-0.35, 0.35), nrng.randf_range(-0.22, 0.22), 0.013), PlaceDetail.col(nc, 0.9), false, Vector3(0, 0, nrng.randf_range(-8, 8)))
+	var map := PlaceDetail.sign(c, "MESSNETZ MP4\n· N  · O  · W  · Außenst.\n— K4-Nord —", Vector3(0.9, 1.6, 1.155), Vector2(0.8, 0.55), 180.0, Color(0.88, 0.9, 0.82), Color(0.15, 0.3, 0.2), 26)
+	for k in 6:
+		BuildKit.box(map, Vector3(0.012, 0.012, 0.002), Vector3(-0.3 + k * 0.12, -0.15 + sin(k * 1.7) * 0.08, 0.011), PlaceKit.mat("red"), false)
+	# Jacke am Haken neben der Tür
+	BuildKit.box(c, Vector3(0.04, 0.04, 0.08), Vector3(2.5, 1.8, 1.12), PlaceKit.mat("metal"), false)
+	var coat := PlaceDetail.col(Color(0.85, 0.42, 0.08), 0.9)
+	BuildKit.box(c, Vector3(0.45, 0.75, 0.14), Vector3(2.5, 1.38, 1.08), coat, false, Vector3(0, 0, 3))
+	BuildKit.box(c, Vector3(0.46, 0.05, 0.145), Vector3(2.5, 1.22, 1.08), PlaceDetail.col(Color(0.85, 0.85, 0.75), 0.4, 0.4), false)
+	PlaceDetail.sign(c, "ReZort", Vector3(2.5, 1.55, 1.005), Vector2(0.14, 0.05), 180.0, Color(0.85, 0.42, 0.08), Color(0.1, 0.1, 0.1), 20, false)
+	# Kaffeeecke auf einem Unterschrank an der rechten Stirnseite
+	BuildKit.box(c, Vector3(0.5, 0.8, 0.9), Vector3(2.7, y + 0.4, -0.55), PlaceDetail.col(Color(0.82, 0.82, 0.8), 0.6), true)
+	BuildKit.box(c, Vector3(0.22, 0.32, 0.25), Vector3(2.72, y + 0.96, -0.75), dark, false)
+	BuildKit.box(c, Vector3(0.14, 0.12, 0.012), Vector3(2.6, y + 0.88, -0.75), PlaceDetail.col(Color(0.15, 0.15, 0.17), 0.2), false)
+	BuildKit.cylinder(c, 0.06, 0.12, Vector3(2.72, y + 0.86, -0.75), PlaceDetail.col(Color(0.3, 0.32, 0.35, 1.0), 0.15), false, Vector3.ZERO, -1.0, 10)
+	for k in 3:
+		BuildKit.lathe(c, PackedVector2Array([Vector2(0, 0), Vector2(0.04, 0), Vector2(0.042, 0.1), Vector2(0.038, 0.1), Vector2(0.036, 0.01), Vector2(0, 0.01)]), Vector3(2.62 + (k % 2) * 0.1, y + 0.8, -0.35 + k * 0.08), PlaceDetail.col([Color(0.85, 0.82, 0.75), Color(0.6, 0.1, 0.08), Color(0.2, 0.3, 0.55)][k], 0.3), 10)
+	BuildKit.box(c, Vector3(0.3, 0.2, 0.2), Vector3(2.7, y + 0.9, -0.15), BuildKit.tex_mat("fabric", 0.3, Color(1.35, 1.12, 0.8)), false)
+	PlaceDetail.sign(c, "Bitte Kaffee\nnachkaufen!!\n– M.", Vector3(2.96, 1.35, -0.6), Vector2(0.18, 0.14), -90.0, Color(0.95, 0.92, 0.55), Color(0.15, 0.15, 0.3), 18, false)
+	# Papierkorb mit zerknülltem Papier, Heizlüfter, Hocker
+	BuildKit.lathe(c, PackedVector2Array([Vector2(0, 0), Vector2(0.12, 0), Vector2(0.14, 0.32), Vector2(0.135, 0.32), Vector2(0.115, 0.01), Vector2(0, 0.01)]), Vector3(2.2, y, -0.4), PlaceDetail.col(Color(0.25, 0.25, 0.28), 0.6, 0.4), 12)
+	for k in 4:
+		BuildKit.sphere(c, 0.04, Vector3(2.2 + sin(k * 2.0) * 0.05, y + 0.3 + (k % 2) * 0.03, -0.4 + cos(k * 2.0) * 0.05), PlaceKit.mat("paper"), Vector3(1, 0.8, 1), 5)
+	BuildKit.sphere(c, 0.04, Vector3(1.9, y + 0.03, -0.1), PlaceKit.mat("paper"), Vector3(1, 0.8, 1), 5)
+	BuildKit.box(c, Vector3(0.3, 0.4, 0.18), Vector3(-0.3, y + 0.2, 0.95), PlaceDetail.col(Color(0.82, 0.82, 0.8), 0.5), false, Vector3(0, 15, 0))
+	for k in 5:
+		BuildKit.box(c, Vector3(0.22, 0.015, 0.005), Vector3(-0.3, y + 0.1 + k * 0.05, 0.85), PlaceDetail.col(Color(0.2, 0.2, 0.2)), false, Vector3(0, 15, 0))
+	PlaceDetail.cable(c, Vector3(-0.3, y + 0.15, 0.86), Vector3(0.3, 0.3, -1.15), 0.05, 0.006)
+	var stool := Node3D.new()
+	stool.position = Vector3(-2.1, y, 0.6)
+	c.add_child(stool)
+	BuildKit.cylinder(stool, 0.17, 0.04, Vector3(0, 0.6, 0), PlaceDetail.col(Color(0.12, 0.12, 0.13), 0.8), false, Vector3.ZERO, -1.0, 12)
+	for k in 3:
+		var a := TAU * k / 3.0
+		BuildKit.beam_between(stool, Vector3(cos(a) * 0.08, 0.58, sin(a) * 0.08), Vector3(cos(a) * 0.2, 0.0, sin(a) * 0.2), 0.02, PlaceKit.mat("metal"))
+
+
+## Gelände: Stromaggregat, Kabeltrommel, Fässer, Paletten, Messpfähle, Mast, Schacht, Stefanies Spur.
+static func _mess_yard(root: Node3D) -> void:
+	# Stromaggregat (Gehäuse auf Kufen) mit Tank und Kanister
+	var gp := PlaceKit.on_ground(root, 5.4, -4.3)
+	var gen := Node3D.new()
+	gen.name = "Generator"
+	gen.position = gp
+	gen.rotation_degrees.y = 90.0
+	root.add_child(gen)
+	var green := PlaceDetail.col(Color(0.22, 0.32, 0.22), 0.6, 0.3)
+	BuildKit.box(gen, Vector3(1.8, 1.1, 0.95), Vector3(0, 0.65, 0), green, true)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(gen, Vector3(2.0, 0.1, 0.1), Vector3(0, 0.05, sx * 0.4), PlaceKit.mat("steel_dark"), false)
+	for k in 8:
+		BuildKit.box(gen, Vector3(0.02, 0.5, 0.012), Vector3(-0.6 + k * 0.08, 0.75, 0.48), PlaceDetail.col(Color(0.08, 0.08, 0.08)), false)
+	BuildKit.cylinder(gen, 0.05, 0.5, Vector3(0.7, 1.4, 0.0), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 8)
+	PlaceDetail.sign(gen, "ReZort\nNotstrom 20 kVA", Vector3(0.3, 0.95, 0.485), Vector2(0.4, 0.2), 0.0, Color(0.9, 0.9, 0.85), Color(0.1, 0.1, 0.1), 26)
+	PlaceDetail.cable(root, gp + Vector3(-0.4, 0.4, 0.0), Vector3(3.08, PlaceKit.ground(root, 3.1, -1.6) + 0.7, -1.6), 0.4, 0.02)
+	# Kabeltrommel, Fässer, Paletten, Eimer
+	var drum := PlaceKit.on_ground(root, 5.6, 3.6)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.cylinder(root, 0.6, 0.06, drum + Vector3(sx * 0.35, 0.6, 0), PlaceKit.mat("wood_old"), false, Vector3(0, 0, 90), -1.0, 16)
+	BuildKit.cylinder(root, 0.4, 0.64, drum + Vector3(0, 0.6, 0), PlaceDetail.col(Color(0.08, 0.08, 0.08), 0.6), true, Vector3(0, 0, 90), -1.0, 16)
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 6.6, -1.0), "rust")
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 7.1, -0.3), "rust", false, 40.0)
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 6.3, 0.6), "rust", true, 70.0)
+	PlaceDetail.pallet(root, PlaceKit.on_ground(root, -4.8, 4.3), 15.0)
+	PlaceDetail.pallet(root, PlaceKit.on_ground(root, -4.75, 4.3, 0.15), 22.0)
+	PlaceDetail.pallet(root, PlaceKit.on_ground(root, -7.6, 3.6), 90.0, true)
+	PlaceDetail.bucket(root, PlaceKit.on_ground(root, -3.6, 4.0), "metal", true)
+	PlaceDetail.crate(root, PlaceKit.on_ground(root, -5.9, 4.6), Vector3(0.7, 0.5, 0.5), 10.0)
+	PlaceDetail.crate(root, PlaceKit.on_ground(root, -5.9, 4.6, 0.5), Vector3(0.6, 0.4, 0.45), 30.0)
+	# Mast mit Schüssel, Leitersprossen, Kabel zum Container
+	var g := PlaceKit.ground(root, 5.5, 3.5)
+	BuildKit.cylinder(root, 0.09, 7.0, Vector3(5.5, g + 3.5, 1.8), PlaceKit.mat("metal"), true, Vector3.ZERO, 0.06, 10)
+	for k in 14:
+		BuildKit.box(root, Vector3(0.3, 0.025, 0.025), Vector3(5.5, g + 0.5 + k * 0.45, 1.9), PlaceKit.mat("metal"), false)
+	var dish := Node3D.new()
+	dish.position = Vector3(5.5, g + 6.4, 1.5)
+	dish.rotation_degrees = Vector3(65, 30, 0)
+	root.add_child(dish)
+	BuildKit.lathe(dish, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.3, 0.03), Vector2(0.55, 0.12), Vector2(0.6, 0.16), Vector2(0.58, 0.17), Vector2(0.0, 0.02)]), Vector3.ZERO, PlaceKit.mat("white"), 20)
+	BuildKit.cylinder(dish, 0.015, 0.5, Vector3(0, 0.3, 0), PlaceKit.mat("metal"), false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box(dish, Vector3(0.1, 0.1, 0.1), Vector3(0, 0.56, 0), PlaceDetail.col(Color(0.2, 0.2, 0.2)), false)
+	PlaceDetail.cable(root, Vector3(5.5, g + 5.8, 1.75), Vector3(3.0, PlaceKit.ground(root, 3, -1) + 2.9, -0.6), 0.6, 0.014)
+	# Messpfähle draußen im Wald (weiße Kästchen auf Pfosten mit Leuchtdiode)
+	for k in 5:
+		var mp := PlaceKit.on_ground(root, -14.0 + k * 7.0, -11.0 - (k % 2) * 3.0)
+		BuildKit.box(root, Vector3(0.08, 1.2, 0.08), mp + Vector3(0, 0.6, 0), PlaceKit.mat("wood_old"), false)
+		BuildKit.box(root, Vector3(0.18, 0.22, 0.12), mp + Vector3(0, 1.25, 0.05), PlaceKit.mat("white"), false)
+		BuildKit.box(root, Vector3(0.012, 0.012, 0.004), mp + Vector3(0.05, 1.3, 0.112), BuildKit.emissive_mat(Color(1.0, 0.2, 0.1), 2.0), false)
+		PlaceDetail.sign(root, "MP4-N/%02d" % (k + 1), mp + Vector3(0, 1.08, 0.115), Vector2(0.16, 0.05), 0.0, Color(0.95, 0.95, 0.9), Color(0.1, 0.1, 0.1), 18, false)
+	# Schachtdeckel mit Betonring, Warnstreifen, Kabeln im Schutzrohr
+	var m := PlaceKit.on_ground(root, -4.5, 3.5)
+	BuildKit.cylinder(root, 0.85, 0.2, m + Vector3(0, 0.05, 0), PlaceKit.mat("concrete"), true, Vector3.ZERO, -1.0, 18)
+	BuildKit.cylinder(root, 0.6, 0.1, m + Vector3(0, 0.18, 0), PlaceKit.mat("steel_dark"), true, Vector3.ZERO, -1.0, 14)
+	for k in 8:
+		var a := TAU * k / 8.0
+		BuildKit.box(root, Vector3(0.12, 0.012, 0.25), m + Vector3(cos(a) * 0.72, 0.155, sin(a) * 0.72), PlaceKit.mat("yellow") if k % 2 == 0 else PlaceDetail.col(Color(0.05, 0.05, 0.05)), false, Vector3(0, -rad_to_deg(a), 0))
+	var orange := PlaceDetail.col(Color(0.85, 0.4, 0.08), 0.6)
+	HandKit.tube(root, PackedVector3Array([m + Vector3(0.6, 0.1, -0.2), m + Vector3(1.5, 0.05, -1.0), m + Vector3(3.0, 0.05, -2.3), Vector3(-1.2, PlaceKit.ground(root, -1.2, 0.3) + 0.05, 0.3)]), 0.06, orange, 8)
+	HandKit.tube(root, PackedVector3Array([m + Vector3(-0.5, 0.1, 0.3), m + Vector3(-2.0, -0.2, 2.0), m + Vector3(-3.5, -0.3, 4.5)]), 0.06, orange, 8)
+	PlaceKit.inspect(root, "Shaft", "[E] Schachtdeckel ansehen", "Verschweißt. Die Kabel verschwinden durch eine Dichtung in die Tiefe. Wenn man das Ohr an den Deckel legt: ein tiefes, gleichmäßiges Brummen.", m, Vector3(1.3, 0.3, 1.3))
 	# Stefanies Spur: Haarspange im Zaun (Ostseite)
 	var clip := PlaceKit.on_ground(root, 8.15, 1.5, 1.05)
 	BuildKit.box(root, Vector3(0.012, 0.018, 0.07), clip, BuildKit.color_mat(Color(0.15, 0.3, 0.75), 0.4), false, Vector3(0, 0, 15))
 	BuildKit.box(root, Vector3(0.014, 0.014, 0.014), clip + Vector3(0.0, 0.01, 0.0), BuildKit.color_mat(Color(0.85, 0.85, 0.9), 0.3, 0.6), false)
 	PlaceKit.note(root, "stef_spange", clip - Vector3(0, 0.9, 0), true)
-	PlaceKit.inspect(root, "Shaft", "[E] Schachtdeckel ansehen", "Verschweißt. Die Kabel verschwinden durch eine Dichtung in die Tiefe. Wenn man das Ohr an den Deckel legt: ein tiefes, gleichmäßiges Brummen.", m, Vector3(1.3, 0.3, 1.3))
+	# Laub, Unkraut am Zaun
+	PlaceDetail.litter(root, Vector3(0, 0, 0), 9.0, 909, 70, ["leaf", "leaf", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.04)
+	for k in 16:
+		var a := TAU * k / 16.0
+		var p := Vector3(clampf(cos(a) * 11.0, -7.8, 7.8), 0, clampf(sin(a) * 9.0, -5.8, 5.8))
+		p.y = PlaceKit.ground(root, p.x, p.z)
+		PlaceDetail.weeds(root, p, 700 + k, 7, 0.5)
 
 
 ## Funkmast auf dem Siebensteinkopf: Gittermast, Technikhäuschen ohne Strom. Reparieren = Funkkontakt.

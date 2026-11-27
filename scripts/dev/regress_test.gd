@@ -3808,10 +3808,17 @@ func _t_ui_2611() -> void:
 		var u := hud.unread
 		hud.show_notification("Gespeichert.", 2.0)
 		_ok("Meldungen: Unwichtiges nur still auf der Uhr", hud.unread == u + 1 and hud.visible_thought() != "Gespeichert." and String(hud.log_entries[0]["text"]) == "Gespeichert.")
+		hud._queue.clear()
 		hud.show_notification("Ein ruhiger Gedanke.", 3.0)
 		hud.show_notification("Gefahr! Lauf!", 3.0)
 		await get_tree().create_timer(0.5).timeout
-		_ok("Meldungen: Gefahr drängelt vor", hud.visible_thought() == "Gefahr! Lauf!" or hud._queue.is_empty() == false and String(hud._queue[0][0]) == "Gefahr! Lauf!")
+		# andere Systeme können zwischendurch eigene Meldungen schicken – entscheidend: Gefahr steht vor dem ruhigen Gedanken
+		var order: Array = [hud.visible_thought()]
+		for q: Array in hud._queue:
+			order.append(String(q[0]))
+		var gi := order.find("Gefahr! Lauf!")
+		var ri := order.find("Ein ruhiger Gedanke.")
+		_ok("Meldungen: Gefahr drängelt vor", gi >= 0 and (ri < 0 or gi < ri), str(order))
 		hud._queue.clear()
 		hud.unread = 0
 		_ok("Bedürfnis-Ringe vorhanden", hud._needs != null)

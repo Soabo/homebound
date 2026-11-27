@@ -16,3 +16,5 @@ furn_painted_* : weathered_brown_planks (CC0) – geliefert von Christian 26.11.
 fab_couch_* : Poly Haven book_pattern (CC0), fab_bed_* : rough_linen (CC0), fab_curtain_* : quatrefoil_jacquard_fabric (CC0),
 fab_sack_* : hessian_380 (CC0), fab_kids_* : stretch_poplin (CC0), fab_blanket_* : terlenka (CC0) – geliefert von Christian 27.11.2026,
 Aufbereitung tools/textures_prep4.py
+plaster_*, corrugated_*, concrete_*, rust_* : berechnet (tools/textures_gen.py, 27.11.2026), frei verwendbar
+shingles_wood_* : aus furn_fine (Poly Haven fine_grained_wood, CC0) zusammengesetzt, gravel_* : Lage 4 des Bodenstapels (ambientCG Gravel040, CC0)

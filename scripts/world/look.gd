@@ -126,8 +126,16 @@ const PHOTO_SETS := {
 	"fab_sack": "res://assets/textures/ground/fab_sack_",
 	"fab_kids": "res://assets/textures/ground/fab_kids_",
 	"fab_blanket": "res://assets/textures/ground/fab_blanket_",
+	# Orte (27.11.): Kalkputz, Wellblech, Beton, Rost, Holzschindeln, Kies
+	"plaster": "res://assets/textures/ground/plaster_",
+	"corrugated": "res://assets/textures/ground/corrugated_",
+	"concrete": "res://assets/textures/ground/concrete_",
+	"rust": "res://assets/textures/ground/rust_",
+	"shingles_wood": "res://assets/textures/ground/shingles_wood_",
+	"gravel": "res://assets/textures/ground/gravel_",
 	"gred": "res://assets/textures/ground/gred_",
 	"plank_wall": "res://assets/textures/ground/plank_wall_",
+	"plank_wall_v": "res://assets/textures/ground/plank_wall_v_",
 }
 
 

@@ -57,37 +57,294 @@ static func _brunnen(root: Node3D) -> void:
 	PlaceKit.note(root, "brunnen_hinweis", Vector3(0.0, y + 0.55, 0.86), true)
 
 
-## Waldkapelle: Steinkapelle mit Bänken. Auf den Bänken liegen Steine – jeden Tag einer mehr.
+## Waldkapelle St. Gunther (27.11. neu, so detailliert wie die Hütte): weiß gekalkte Kapelle mit Granitsockel und
+## Eckquadern, steilem Schindeldach, Dachreiter mit Glocke und Zwiebelhaube, Vordach über der Rundbogentür.
+## Innen: Granitboden, Bretterdecke, Kirchenbänke mit Kniebänken, Altar mit Antependium und Altarbild, Kerzen,
+## Opferlichter, Kreuzweg, Votivtafeln, Liedtafel, Weihwasserbecken, Glockenseil, Spinnweben, Laub.
+## Auf den Bänken liegen Steine – jeden Tag einer mehr. Knotennamen (Chapel, Candles, Matches, Stones) bleiben.
 static func _kapelle(root: Node3D) -> void:
 	root.rotation_degrees.y = 40.0
-	var h := PlaceKit.hut(root, "Chapel", Vector3(0, PlaceKit.ground(root, 0, 0), 0), Vector2(4.6, 7.2), 3.0, 0.0, "stone", "gable", "shingles", 1.2, true)
-	# Dachreiter mit Kreuz
-	BuildKit.box(h, Vector3(0.7, 0.9, 0.7), Vector3(0, 4.8, 2.6), PlaceKit.mat("wood_old"), false)
-	BuildKit.cylinder(h, 0.55, 0.9, Vector3(0, 5.7, 2.6), PlaceKit.mat("shingles"), false, Vector3.ZERO, 0.0, 4)
-	BuildKit.box(h, Vector3(0.05, 0.6, 0.05), Vector3(0, 6.4, 2.6), PlaceKit.mat("rust"), false)
-	BuildKit.box(h, Vector3(0.3, 0.05, 0.05), Vector3(0, 6.5, 2.6), PlaceKit.mat("rust"), false)
-	# Bänke
-	var bench_mat := PlaceKit.mat("wood_old")
+	const HX := 2.3
+	const HZ := 3.6
+	const T := 0.45
+	const WALL_H := 3.2
+	const FLOOR := 0.15
+	const PITCH := 50.0
+	var g0 := PlaceKit.ground(root, 0, 0)
+	var h := Node3D.new()
+	h.name = "Chapel"
+	h.position = Vector3(0, g0, 0)
+	root.add_child(h)
+	var plaster := PlaceKit.mat("plaster")
+	var granite := PlaceKit.mat("stone")
+	# Sockel bis in den Hang, Granitband außen, Boden aus Granitplatten
+	BuildKit.box(h, Vector3(HX * 2.0 + 0.1, 1.4, HZ * 2.0 + 0.1), Vector3(0, -0.6, 0), PlaceKit.mat("stone_dark"), true)
+	BuildKit.box(h, Vector3(HX * 2.0 - T * 2.0 + 0.02, FLOOR, HZ * 2.0 - T * 2.0 + 0.02), Vector3(0, FLOOR * 0.5, 0), PlaceKit.mat("paving"), true)
+	# Wände (wall-lokal: +z = außen)
+	var front := BuildKit.wall(h, Vector2(-HX, HZ - T * 0.5), Vector2(HX, HZ - T * 0.5), 0.0, WALL_H, T, plaster, [Vector4(HX, 1.3, 0.0, 2.5)], "Front")
+	var back := BuildKit.wall(h, Vector2(HX, -HZ + T * 0.5), Vector2(-HX, -HZ + T * 0.5), 0.0, WALL_H, T, plaster, [], "Back")
+	var win_open := [Vector4(1.775, 0.7, 1.3, 2.8), Vector4(4.375, 0.7, 1.3, 2.8)]
+	var left := BuildKit.wall(h, Vector2(-HX + T * 0.5, -HZ + T), Vector2(-HX + T * 0.5, HZ - T), 0.0, WALL_H, T, plaster, win_open, "Left")
+	var right := BuildKit.wall(h, Vector2(HX - T * 0.5, HZ - T), Vector2(HX - T * 0.5, -HZ + T), 0.0, WALL_H, T, plaster, [Vector4(2.825, 0.7, 1.3, 2.8), Vector4(5.425, 0.7, 1.3, 2.8)], "Right")
+	# Rundbogen über Tür und Fenstern, Bleiglasfenster mit Gitter
+	PlaceDetail.arch_fill(front, Vector3(HX, 1.85, 0), 1.3, T, plaster)
+	var amber := Color(0.75, 0.6, 0.3, 0.55)
+	for w: Node3D in [left, right]:
+		var ats: Array = [1.775, 4.375] if w == left else [2.825, 5.425]
+		for at: float in ats:
+			PlaceDetail.arch_fill(w, Vector3(at, 2.45, 0), 0.7, T, plaster)
+			PlaceDetail.window(w, Vector3(at, 1.3, 0.04), 0.0, 0.7, 1.5, T, "arch", amber, "furn", 1, true)
+	# Granit: Sockelband, Eckquader, Türgewände
+	for side in 4:
+		var along := HX * 2.0 if side % 2 == 0 else HZ * 2.0
+		var nrm := [Vector3(0, 0, 1), Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(-1, 0, 0)][side] as Vector3
+		var off := HZ if side % 2 == 0 else HX
+		var size := Vector3(along + 0.1, 0.42, 0.06) if side % 2 == 0 else Vector3(0.06, 0.42, along + 0.1)
+		BuildKit.box(h, size, nrm * (off + 0.02) + Vector3(0, 0.21, 0), granite, false)
+	for cx: float in [-1.0, 1.0]:
+		for cz: float in [-1.0, 1.0]:
+			for k in 6:
+				var y := 0.6 + k * 0.42
+				var long_x := k % 2 == 0
+				BuildKit.box(h, Vector3(0.55 if long_x else 0.3, 0.38, 0.04), Vector3(cx * (HX - (0.275 if long_x else 0.15)), y, cz * (HZ + 0.02)), granite, false)
+				BuildKit.box(h, Vector3(0.04, 0.38, 0.3 if long_x else 0.55), Vector3(cx * (HX + 0.02), y, cz * (HZ - (0.15 if long_x else 0.275))), granite, false)
+	# Türgewände aus Granit mit Bogen, Tür (zweiflügelig, rechter Flügel halb offen)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(h, Vector3(0.16, 1.85, 0.12), Vector3(sx * 0.73, 0.925, HZ + 0.03), granite, false)
+	HandKit.tube(h, HandKit.arc(Vector3(0, 1.85, HZ + 0.03), 0.73, 0, 180, 16), 0.08, granite, 6, Vector3(0, 0, 1))
+	BuildKit.box(h, Vector3(0.16, 0.2, 0.14), Vector3(0, 2.6, HZ + 0.04), granite, false)   # Schlussstein
+	PlaceDetail.door(h, Vector3(0, FLOOR, HZ - T * 0.5), 0.0, 1.3, 2.5, "arch", 55.0, true, "wood_old")
+	# Stufen vor der Tür
+	for k in 2:
+		BuildKit.box(h, Vector3(1.8 - k * 0.2, 0.15, 0.4), Vector3(0, FLOOR - 0.075 - k * 0.15, HZ + 0.25 + k * 0.35), granite, true)
+	# Giebel, Gesims
+	var rise := HX * tan(deg_to_rad(PITCH))
+	for sz: float in [-1.0, 1.0]:
+		BuildKit.gable(h, HX * 2.0, rise, T, Vector3(0, WALL_H, sz * (HZ - T * 0.5)), 0.0, plaster)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(h, Vector3(0.12, 0.1, HZ * 2.0 + 0.1), Vector3(sx * (HX + 0.04), WALL_H - 0.05, 0), PlaceKit.mat("wood_old"), false)
+	# Rundfenster im Frontgiebel (Okulus)
+	var gm := BuildKit.glass_mat().duplicate() as StandardMaterial3D
+	gm.albedo_color = Color(0.4, 0.5, 0.6, 0.6)
+	BuildKit.cylinder(h, 0.3, 0.02, Vector3(0, WALL_H + 1.1, HZ + 0.01), gm, false, Vector3(90, 0, 0), -1.0, 18)
+	HandKit.tube(h, HandKit.arc(Vector3(0, WALL_H + 1.1, HZ + 0.02), 0.32, 0, 360, 20), 0.035, granite, 6, Vector3(0, 0, 1))
+	# Dach: zwei Schindelflächen mit Überstand, Stirnbretter, Firstbrett
+	var eave := 0.5
+	var run := HX + eave
+	var slope_len := run / cos(deg_to_rad(PITCH)) + 0.12
+	var ridge_y := WALL_H + rise
+	for sx: float in [-1.0, 1.0]:
+		var cx2 := sx * run * 0.5
+		var cy2 := ridge_y - run * tan(deg_to_rad(PITCH)) * 0.5 + 0.09
+		BuildKit.box(h, Vector3(slope_len, 0.12, HZ * 2.0 + 0.7), Vector3(cx2, cy2, 0), PlaceKit.mat("shingles"), true, Vector3(0, 0, -sx * PITCH))
+		# Ortgang-Bretter an den Giebelseiten
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(h, Vector3(slope_len, 0.22, 0.04), Vector3(cx2, cy2 - 0.08, sz * (HZ + 0.36)), PlaceKit.mat("wood_old"), false, Vector3(0, 0, -sx * PITCH))
+		# Traufbrett und Rinne
+		var ex := sx * (run - 0.02)
+		var ey := ridge_y - run * tan(deg_to_rad(PITCH)) + 0.02
+		BuildKit.box(h, Vector3(0.04, 0.2, HZ * 2.0 + 0.7), Vector3(ex, ey, 0), PlaceKit.mat("wood_old"), false)
+		PlaceDetail.gutter(h, Vector3(ex + sx * 0.06, ey - 0.06, -HZ - 0.3), Vector3(ex + sx * 0.06, ey - 0.06, HZ + 0.25), FLOOR - 0.15, "rust",
+				Vector3(-sx * (eave + 0.02), 0, -0.45))
+	BuildKit.box(h, Vector3(0.26, 0.06, HZ * 2.0 + 0.72), Vector3(0, ridge_y + 0.17, 0), PlaceKit.mat("wood_old"), false)
+	_kapelle_turret(h, Vector3(0, ridge_y, HZ - 1.0))
+	# Vordach über der Tür auf zwei Kopfbändern
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(h, Vector3(0.9, 0.05, 1.4), Vector3(sx * 0.45, 3.0, HZ + 0.5), PlaceKit.mat("shingles"), false, Vector3(0, 0, -sx * 30.0))
+		BuildKit.beam_between(h, Vector3(sx * 0.85, 2.2, HZ + 0.02), Vector3(sx * 0.85, 2.72, HZ + 1.05), 0.08, PlaceKit.mat("wood_old"))
+	# Innen: Bretterdecke mit Unterzügen
+	var ceil_y := WALL_H - 0.08
+	BuildKit.box(h, Vector3(HX * 2.0 - T * 2.0, 0.04, HZ * 2.0 - T * 2.0), Vector3(0, ceil_y, 0), PlaceKit.mat("wood_h"), false)
+	for k in 4:
+		BuildKit.box(h, Vector3(HX * 2.0 - T * 2.0, 0.14, 0.14), Vector3(0, ceil_y - 0.09, -2.4 + k * 1.6), PlaceKit.mat("wood_old"), false)
+	_kapelle_inside(h, FLOOR, HX - T, HZ - T, ceil_y)
+	# Außen: Bank, Feldkreuz, Weg aus Granitplatten, Laub, Unkraut am Sockel
+	var bench := Node3D.new()
+	bench.name = "OutsideBench"
+	bench.position = Vector3(HX + 0.45, FLOOR - 0.15, 1.2)
+	bench.rotation_degrees.y = 90.0
+	h.add_child(bench)
+	PlaceDetail.pew(bench, Vector3.ZERO, 1.4, "wood_old")
+	_kapelle_cross(root, Vector3(3.6, 0, 5.8))
+	for k in 7:
+		var p := Vector3(0.0 + sin(k * 1.3) * 0.15, 0, HZ + 1.2 + k * 0.75)
+		p.y = PlaceKit.ground(root, p.x, p.z) + 0.03
+		BuildKit.box(root, Vector3(randf_range(0.6, 0.8), 0.06, randf_range(0.45, 0.6)), p, PlaceKit.mat("stone"), false, Vector3(0, randf_range(-15, 15), 0))
+	PlaceDetail.litter(root, Vector3(0, 0, HZ + 2.0), 3.5, 401, 40, ["leaf", "leaf", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z))
+	for k in 10:
+		var a := k * 0.7
+		PlaceDetail.weeds(h, Vector3(cos(a) * (HX + 0.15) if k % 2 == 0 else (HX + 0.1) * (1.0 if k % 4 == 1 else -1.0), FLOOR - 0.15, sin(a) * HZ), 900 + k, 6, 0.3)
+
+
+## Dachreiter: Holztürmchen mit Schallöffnungen, Glocke, Zwiebelhaube aus Blech, Kreuz.
+static func _kapelle_turret(h: Node3D, at: Vector3) -> void:
+	var t := Node3D.new()
+	t.name = "Turret"
+	t.position = at
+	h.add_child(t)
+	var wood := PlaceKit.mat("wood_old")
+	BuildKit.box(t, Vector3(0.9, 0.9, 0.9), Vector3(0, -0.15, 0), PlaceKit.mat("plaster"), false)
+	# Glockenstube: vier Eckpfosten, Schallläden, Glocke
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(t, Vector3(0.1, 0.9, 0.1), Vector3(sx * 0.4, 0.75, sz * 0.4), wood, false)
+	for side in 4:
+		var rot := side * 90.0
+		var n := Node3D.new()
+		n.rotation_degrees.y = rot
+		t.add_child(n)
+		for k in 3:
+			BuildKit.box(n, Vector3(0.7, 0.08, 0.02), Vector3(0, 0.45 + k * 0.1, 0.4), wood, false, Vector3(35, 0, 0))
+		BuildKit.box(n, Vector3(0.9, 0.08, 0.08), Vector3(0, 1.22, 0.42), wood, false)
+	var bronze := BuildKit.color_mat(Color(0.42, 0.33, 0.16), 0.35, 0.85)
+	BuildKit.lathe(t, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.2, 0.0), Vector2(0.18, 0.05), Vector2(0.14, 0.2), Vector2(0.12, 0.33), Vector2(0.05, 0.38), Vector2(0.0, 0.38)]),
+			Vector3(0, 0.62, 0), bronze, 14)
+	BuildKit.box(t, Vector3(0.7, 0.06, 0.06), Vector3(0, 1.05, 0), wood, false)
+	# Zwiebelhaube (grüne Patina) mit Kreuz
+	var patina := BuildKit.color_mat(Color(0.32, 0.5, 0.42), 0.55, 0.4)
+	BuildKit.box(t, Vector3(1.0, 0.08, 1.0), Vector3(0, 1.28, 0), wood, false)
+	BuildKit.lathe(t, PackedVector2Array([Vector2(0.0, 0.0), Vector2(0.52, 0.0), Vector2(0.56, 0.12), Vector2(0.5, 0.32), Vector2(0.32, 0.55),
+			Vector2(0.14, 0.78), Vector2(0.1, 0.92), Vector2(0.14, 1.02), Vector2(0.08, 1.12), Vector2(0.03, 1.3), Vector2(0.0, 1.32)]), Vector3(0, 1.32, 0), patina, 16)
+	var iron := BuildKit.color_mat(Color(0.12, 0.11, 0.1), 0.5, 0.7)
+	BuildKit.box(t, Vector3(0.04, 0.6, 0.04), Vector3(0, 2.9, 0), iron, false)
+	BuildKit.box(t, Vector3(0.3, 0.04, 0.04), Vector3(0, 3.0, 0), iron, false)
+	BuildKit.sphere(t, 0.06, Vector3(0, 2.64, 0), BuildKit.color_mat(Color(0.75, 0.6, 0.25), 0.3, 0.9), Vector3.ONE, 10)
+
+
+## Innenraum der Kapelle. ix/iz = halbe Innenmaße, y = Bodenhöhe.
+static func _kapelle_inside(h: Node3D, y: float, ix: float, iz: float, ceil_y: float) -> void:
+	# Altarstufe, Kommunionbank mit Durchgang
+	BuildKit.box(h, Vector3(ix * 2.0, 0.15, 1.2), Vector3(0, y + 0.075, -iz + 0.6), PlaceKit.mat("stone"), true)
+	var rail := PlaceKit.mat("furn")
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(h, Vector3(ix - 0.4, 0.06, 0.16), Vector3(sx * (ix * 0.5 + 0.2), y + 0.8, -iz + 1.22), rail, false)
+		for k in 5:
+			BuildKit.cylinder(h, 0.025, 0.72, Vector3(sx * (0.5 + k * (ix - 0.5) / 4.6), y + 0.42, -iz + 1.22), rail, false, Vector3.ZERO, 0.02, 8)
+		BuildKit.collider_box(h, Vector3(ix - 0.4, 0.8, 0.16), Vector3(sx * (ix * 0.5 + 0.2), y + 0.4, -iz + 1.22))
+	var ay := y + 0.15
+	# Altar: Steintisch, weißes Tuch, rotes Antependium mit Goldborte
+	BuildKit.box(h, Vector3(1.5, 0.95, 0.7), Vector3(0, ay + 0.475, -iz + 0.5), PlaceKit.mat("stone"), true)
+	BuildKit.box(h, Vector3(1.62, 0.025, 0.78), Vector3(0, ay + 0.96, -iz + 0.5), PlaceDetail.col(Color(0.92, 0.9, 0.84), 0.9), false)
+	BuildKit.box(h, Vector3(1.6, 0.25, 0.01), Vector3(0, ay + 0.84, -iz + 0.895), PlaceDetail.col(Color(0.92, 0.9, 0.84), 0.9), false)
+	BuildKit.box(h, Vector3(1.3, 0.6, 0.01), Vector3(0, ay + 0.4, -iz + 0.86), PlaceDetail.col(Color(0.5, 0.08, 0.07), 0.8), false)
+	BuildKit.box(h, Vector3(1.3, 0.03, 0.012), Vector3(0, ay + 0.68, -iz + 0.862), PlaceDetail.col(Color(0.75, 0.6, 0.25), 0.3, 0.9), false)
+	BuildKit.box(h, Vector3(0.2, 0.2, 0.012), Vector3(0, ay + 0.42, -iz + 0.862), PlaceDetail.col(Color(0.75, 0.6, 0.25), 0.3, 0.9), false, Vector3(0, 0, 45))
+	# Altaraufbau: Säulen, Altarbild (St. Gunther als Einsiedler im Wald), Kreuz, Gesims
+	var gold := PlaceDetail.col(Color(0.7, 0.55, 0.22), 0.35, 0.85)
+	var wall_z := -iz + 0.04
+	BuildKit.box(h, Vector3(1.8, 0.3, 0.2), Vector3(0, ay + 1.12, wall_z + 0.1), PlaceKit.mat("furn"), false)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.cylinder(h, 0.07, 1.5, Vector3(sx * 0.72, ay + 2.0, wall_z + 0.12), PlaceDetail.col(Color(0.45, 0.18, 0.12), 0.4), false, Vector3.ZERO, 0.06, 12)
+		BuildKit.box(h, Vector3(0.2, 0.08, 0.2), Vector3(sx * 0.72, ay + 2.78, wall_z + 0.12), gold, false)
+	PlaceDetail.picture(h, Vector3(0, ay + 1.95, wall_z + 0.02), Vector2(1.1, 1.3), 0.0, Color(0.7, 0.55, 0.22),
+			[Color(0.12, 0.16, 0.12), Color(0.1, 0.08, 0.06)], true)
+	# angedeutete Figur im Bild: Einsiedler in brauner Kutte, Heiligenschein
+	BuildKit.box(h, Vector3(0.18, 0.55, 0.004), Vector3(-0.1, ay + 1.75, wall_z + 0.03), PlaceDetail.col(Color(0.32, 0.2, 0.12), 0.9), false)
+	BuildKit.cylinder(h, 0.06, 0.004, Vector3(-0.1, ay + 2.08, wall_z + 0.03), PlaceDetail.col(Color(0.85, 0.7, 0.4), 0.9), false, Vector3(90, 0, 0), -1.0, 10)
+	BuildKit.cylinder(h, 0.1, 0.003, Vector3(-0.1, ay + 2.1, wall_z + 0.029), gold, false, Vector3(90, 0, 0), -1.0, 14)
+	for k in 5:
+		BuildKit.box(h, Vector3(0.04, 0.5 + k * 0.08, 0.004), Vector3(0.12 + k * 0.08, ay + 1.6 + k * 0.04, wall_z + 0.03), PlaceDetail.col(Color(0.08, 0.14, 0.08), 0.9), false)
+	BuildKit.box(h, Vector3(1.9, 0.12, 0.26), Vector3(0, ay + 2.86, wall_z + 0.12), PlaceKit.mat("furn"), false)
+	BuildKit.box(h, Vector3(0.06, 0.5, 0.04), Vector3(0, ay + 3.15 - 0.2, wall_z + 0.2), PlaceKit.mat("furn"), false)
+	# Kreuz auf dem Altar, Leuchter mit Kerzen, Vasen mit Trockenblumen
+	BuildKit.box(h, Vector3(0.04, 0.42, 0.03), Vector3(0, ay + 1.18, -iz + 0.38), gold, false)
+	BuildKit.box(h, Vector3(0.2, 0.035, 0.03), Vector3(0, ay + 1.3, -iz + 0.38), gold, false)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.lathe(h, PackedVector2Array([Vector2(0, 0), Vector2(0.07, 0), Vector2(0.06, 0.02), Vector2(0.015, 0.06), Vector2(0.02, 0.2), Vector2(0.04, 0.24), Vector2(0, 0.24)]),
+				Vector3(sx * 0.5, ay + 0.97, -iz + 0.42), gold, 10)
+		PlaceDetail.candle(h, Vector3(sx * 0.5, ay + 1.21, -iz + 0.42), 0.26, true, sx > 0.0, 0.02)
+		BuildKit.lathe(h, PackedVector2Array([Vector2(0, 0), Vector2(0.05, 0), Vector2(0.07, 0.08), Vector2(0.04, 0.2), Vector2(0.05, 0.24), Vector2(0, 0.24)]),
+				Vector3(sx * 0.28, ay + 0.97, -iz + 0.62), PlaceDetail.col(Color(0.82, 0.8, 0.75), 0.3), 10)
+		for f in 6:
+			var a := f * 1.05
+			BuildKit.cylinder(h, 0.005, 0.32, Vector3(sx * 0.28 + cos(a) * 0.02, ay + 1.33, -iz + 0.62 + sin(a) * 0.02), PlaceDetail.col(Color(0.45, 0.38, 0.22), 1.0), false,
+					Vector3(cos(a) * 12.0, 0, sin(a) * 12.0), 0.003, 4)
+			BuildKit.sphere(h, 0.022, Vector3(sx * 0.28 + cos(a) * 0.06, ay + 1.5, -iz + 0.62 + sin(a) * 0.06), PlaceDetail.col(Color(0.5, 0.32, 0.3), 1.0), Vector3(1, 0.7, 1), 6)
+	PlaceKit.loot(h, "Candles", "candles", 4, Vector3(0.62, ay + 0.97, -iz + 0.68), "candles")
+	PlaceKit.loot(h, "Matches", "matches", 1, Vector3(-0.62, ay + 0.97, -iz + 0.7), "box")
+	# Ewiges Licht (rote Ampel) an der Kette
+	var lamp := Node3D.new()
+	lamp.position = Vector3(0.9, ceil_y - 0.15, -iz + 1.2)
+	h.add_child(lamp)
+	BuildKit.cylinder(lamp, 0.004, 0.9, Vector3(0, -0.45, 0), PlaceDetail.col(Color(0.6, 0.5, 0.2), 0.4, 0.8), false, Vector3.ZERO, -1.0, 4)
+	PlaceDetail.votive(lamp, Vector3(0, -1.0, 0), true)
+	# Bänke (je drei pro Seite), Steine darauf
 	var benches: Array[Vector3] = []
 	for row in 3:
 		for sx: float in [-1.0, 1.0]:
-			var p := Vector3(sx * 1.15, 0, 1.6 - row * 1.3)
+			var p := Vector3(sx * 1.08, y, 1.55 - row * 1.0)
 			benches.append(p)
-			BuildKit.box(h, Vector3(1.6, 0.06, 0.4), p + Vector3(0, 0.45, 0), bench_mat, true)
-			# Lehne hinten (vom Altar weg) – man sitzt mit Blick zum Altar (-z)
-			BuildKit.box(h, Vector3(1.6, 0.4, 0.05), p + Vector3(0, 0.75, 0.2), bench_mat, false)
-			for lx: float in [-0.7, 0.7]:
-				BuildKit.box(h, Vector3(0.06, 0.45, 0.35), p + Vector3(lx, 0.22, 0), bench_mat, false)
-	# Altar mit Kreuz, Kerzen, Gästebuch
-	BuildKit.box(h, Vector3(1.6, 0.95, 0.7), Vector3(0, 0.475, -2.9), PlaceKit.mat("stone"), true)
-	BuildKit.box(h, Vector3(1.7, 0.05, 0.75), Vector3(0, 0.97, -2.9), BuildKit.color_mat(Color(0.85, 0.82, 0.75)), false)
-	BuildKit.box(h, Vector3(0.08, 1.2, 0.06), Vector3(0, 1.9, -3.45), PlaceKit.mat("wood"), false)
-	BuildKit.box(h, Vector3(0.6, 0.08, 0.06), Vector3(0, 2.2, -3.45), PlaceKit.mat("wood"), false)
-	PlaceKit.loot(h, "Candles", "candles", 4, Vector3(0.45, 1.0, -2.8), "candles")
-	PlaceKit.loot(h, "Matches", "matches", 1, Vector3(-0.5, 1.0, -2.75), "box")
-	PlaceKit.note(h, "kapelle_buch", Vector3(0.0, 0.97, -2.75))
-	# Stefanies Spur: Gebetszettel unter der hintersten Bank
-	PlaceKit.note(h, "stef_kapelle", Vector3(-1.15, 0.0, 1.75))
+			PlaceDetail.pew(h, p, 1.25, "cabinet")
+	PlaceKit.note(h, "stef_kapelle", Vector3(-1.08, y, 1.75))
+	# Weihwasserbecken, Lesepult mit Gästebuch, Opferlichter, Opferstock, Glockenseil
+	BuildKit.lathe(h, PackedVector2Array([Vector2(0, 0), Vector2(0.06, 0), Vector2(0.06, 0.04), Vector2(0.16, 0.12), Vector2(0.16, 0.16), Vector2(0.13, 0.16), Vector2(0.12, 0.13), Vector2(0, 0.13)]),
+			Vector3(-0.95, y + 0.95, iz - 0.12), PlaceKit.mat("stone"), 14)
+	BuildKit.box(h, Vector3(0.12, 0.95, 0.12), Vector3(-0.95, y + 0.475, iz - 0.12), PlaceKit.mat("stone"), false)
+	var lect := Node3D.new()
+	lect.position = Vector3(-1.45, y, iz - 0.75)
+	lect.rotation_degrees.y = 60.0
+	h.add_child(lect)
+	BuildKit.box(lect, Vector3(0.1, 1.05, 0.1), Vector3(0, 0.525, 0), PlaceKit.mat("furn"), true)
+	BuildKit.box(lect, Vector3(0.5, 0.03, 0.38), Vector3(0, 1.1, 0), PlaceKit.mat("furn"), false, Vector3(-18, 0, 0))
+	BuildKit.box(lect, Vector3(0.36, 0.035, 0.26), Vector3(0, 1.135, 0.01), PlaceDetail.col(Color(0.35, 0.12, 0.08), 0.8), false, Vector3(-18, 0, 0))
+	BuildKit.box(lect, Vector3(0.34, 0.006, 0.24), Vector3(0, 1.155, 0.01), PlaceKit.mat("paper"), false, Vector3(-18, 0, 0))
+	BuildKit.cylinder(lect, 0.004, 0.14, Vector3(0.12, 1.17, 0.02), PlaceDetail.col(Color(0.1, 0.1, 0.3)), false, Vector3(0, 30, 80), -1.0, 4)
+	PlaceKit.note(lect, "kapelle_buch", Vector3(0, 1.0, 0.05))
+	var stand := Node3D.new()
+	stand.name = "VotiveStand"
+	stand.position = Vector3(1.4, y, iz - 0.55)
+	h.add_child(stand)
+	var iron := PlaceDetail.col(Color(0.1, 0.09, 0.08), 0.6, 0.7)
+	BuildKit.box(stand, Vector3(0.7, 0.03, 0.35), Vector3(0, 0.8, 0), iron, true)
+	BuildKit.box(stand, Vector3(0.7, 0.03, 0.25), Vector3(0, 0.95, -0.08), iron, false)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(stand, Vector3(0.03, 0.95, 0.03), Vector3(sx * 0.33, 0.475, 0.12), iron, false)
+		BuildKit.box(stand, Vector3(0.03, 0.95, 0.03), Vector3(sx * 0.33, 0.475, -0.12), iron, false)
+	var lit_count := 0
+	for k in 10:
+		var tier := k / 5
+		var lit := (k * 7) % 3 != 0
+		PlaceDetail.votive(stand, Vector3(-0.26 + (k % 5) * 0.13, 0.815 + tier * 0.15, 0.06 - tier * 0.14), lit)
+		lit_count += 1 if lit else 0
+	var vl := OmniLight3D.new()
+	vl.light_color = Color(1.0, 0.45, 0.3)
+	vl.light_energy = 0.55
+	vl.omni_range = 3.2
+	vl.shadow_enabled = false
+	vl.position = Vector3(0, 1.2, 0.1)
+	stand.add_child(vl)
+	BuildKit.box(h, Vector3(0.22, 0.32, 0.18), Vector3(1.4, y + 0.16, iz - 0.15), iron, true)   # Opferstock
+	BuildKit.box(h, Vector3(0.1, 0.008, 0.02), Vector3(1.4, y + 0.325, iz - 0.15), PlaceDetail.col(Color(0.02, 0.02, 0.02)), false)
+	PlaceDetail.sign(h, "Für die Armen\nder Pfarrei", Vector3(1.4, y + 0.5, iz - 0.02), Vector2(0.24, 0.12), 180.0, Color(0.85, 0.82, 0.72), Color(0.1, 0.08, 0.06), 20, false)
+	BuildKit.cylinder(h, 0.012, ceil_y - y - 0.9, Vector3(0.75, y + 0.9 + (ceil_y - y - 0.9) * 0.5, iz - 0.3), PlaceKit.mat("sackcloth"), false, Vector3.ZERO, -1.0, 6)
+	BuildKit.sphere(h, 0.035, Vector3(0.75, y + 0.88, iz - 0.3), PlaceKit.mat("sackcloth"), Vector3(1, 1.6, 1), 6)
+	# Kreuzweg (je drei Stationen pro Seite), Votivtafeln beim Altar, Liedtafel
+	for sx: float in [-1.0, 1.0]:
+		for k in 3:
+			var z := 1.6 - k * 1.25
+			if absf(z - (-1.6)) < 0.5 or absf(z - 1.0) < 0.5:
+				z += 0.55
+			var pic := PlaceDetail.picture(h, Vector3(sx * (ix - 0.02), y + 1.95, z), Vector2(0.26, 0.32), -sx * 90.0, Color(0.3, 0.22, 0.12),
+					[Color(0.35, 0.3, 0.25), Color(0.28, 0.22, 0.15)])
+			var lab := Label3D.new()
+			lab.text = ["I", "IV", "VII", "X", "XII", "XIV"][k + (0 if sx < 0.0 else 3)]
+			lab.font_size = 22
+			lab.pixel_size = 0.0018
+			lab.modulate = Color(0.1, 0.08, 0.05)
+			lab.outline_size = 0
+			lab.position = Vector3(0, 0.22, 0.02)
+			pic.add_child(lab)
+			BuildKit.box(pic, Vector3(0.012, 0.06, 0.012), Vector3(0, 0.22, 0.02), PlaceDetail.col(Color(0.2, 0.15, 0.1)), false)
+	for k in 4:
+		PlaceDetail.picture(h, Vector3(ix - 0.02, y + 1.0 + (k % 2) * 0.3, -iz + 0.45 + (k / 2) * 0.3), Vector2(0.18, 0.22), -90.0, Color(0.5, 0.4, 0.25),
+				[Color(0.6, 0.55, 0.42), Color(0.45, 0.38, 0.28)])
+	var hymn := PlaceDetail.sign(h, "84\n312\n—\n27", Vector3(-ix + 0.02, y + 1.8, -iz + 1.6), Vector2(0.3, 0.55), 90.0, Color(0.18, 0.12, 0.08), Color(0.9, 0.86, 0.75), 46)
+	hymn.name = "HymnBoard"
+	# Spinnweben, Laub an der Tür, ein umgekippter Strauß
+	PlaceDetail.cobweb(h, Vector3(-ix, ceil_y - 0.1, -iz), Vector3(1, 0, 0), Vector3(0, 0, 1), 0.45)
+	PlaceDetail.cobweb(h, Vector3(ix, ceil_y - 0.1, iz), Vector3(-1, 0, 0), Vector3(0, 0, -1), 0.4)
+	PlaceDetail.cobweb(h, Vector3(-ix, ceil_y - 0.1, iz), Vector3(1, 0, 0), Vector3(0, 0, -1), 0.3)
+	PlaceDetail.litter(h, Vector3(0.3, y, iz - 0.5), 0.9, 77, 18, ["leaf", "leaf", "leaf", "twig"])
 	# Steine auf den Bänken (wächst mit den Tagen)
 	var stones := Node3D.new()
 	stones.name = "Stones"
@@ -100,8 +357,8 @@ static func _kapelle(root: Node3D) -> void:
 		rng.seed = 4711
 		for i in count:
 			var b := benches[i % benches.size()]
-			var off := -0.6 + (i / benches.size()) * 0.4
-			BuildKit.sphere(stones, rng.randf_range(0.05, 0.08), b + Vector3(off, 0.52, rng.randf_range(-0.08, 0.08)), PlaceKit.mat("stone_dark"), Vector3(1.2, 0.7, 1.0), 6)
+			var off := -0.5 + (i / benches.size()) * 0.33
+			BuildKit.sphere(stones, rng.randf_range(0.05, 0.08), b + Vector3(off, 0.5, rng.randf_range(-0.06, 0.1)), PlaceKit.mat("stone_dark"), Vector3(1.2, 0.7, 1.0), 6)
 	place.call()
 	# Die Verbindung muss mit dem Ort verschwinden – sonst ruft die Uhr nach einem Neustart
 	# (Tod, neuer Tag) noch die alte, längst gelöschte Kapelle auf.
@@ -110,6 +367,30 @@ static func _kapelle(root: Node3D) -> void:
 	stones.tree_exiting.connect(func() -> void:
 		if TimeManager.day_changed.is_connected(on_day):
 			TimeManager.day_changed.disconnect(on_day))
+
+
+## Feldkreuz mit kleinem Dach und Herrgott, davor Grablicht und Trockenblumen.
+static func _kapelle_cross(root: Node3D, at: Vector3) -> void:
+	var g := PlaceKit.ground(root, at.x, at.z)
+	var c := Node3D.new()
+	c.name = "FieldCross"
+	c.position = Vector3(at.x, g, at.z)
+	c.rotation_degrees.y = -20.0
+	root.add_child(c)
+	var wood := PlaceKit.mat("wood_old")
+	BuildKit.box(c, Vector3(0.6, 0.3, 0.6), Vector3(0, 0.1, 0), PlaceKit.mat("stone"), true)
+	BuildKit.box(c, Vector3(0.14, 3.0, 0.12), Vector3(0, 1.6, 0), wood, true)
+	BuildKit.box(c, Vector3(1.3, 0.12, 0.1), Vector3(0, 2.5, 0), wood, false)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(c, Vector3(0.5, 0.03, 0.4), Vector3(sx * 0.22, 3.2, 0.08), PlaceKit.mat("tin"), false, Vector3(0, 0, -sx * 28.0))
+	var body := PlaceDetail.col(Color(0.82, 0.75, 0.62), 0.6)
+	BuildKit.box(c, Vector3(0.1, 0.55, 0.06), Vector3(0, 2.2, 0.1), body, false)
+	BuildKit.sphere(c, 0.05, Vector3(0, 2.5, 0.11), body, Vector3.ONE, 8)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(c, Vector3(0.38, 0.045, 0.04), Vector3(sx * 0.2, 2.44, 0.1), body, false, Vector3(0, 0, sx * 12.0))
+	BuildKit.box(c, Vector3(0.14, 0.18, 0.06), Vector3(0, 1.95, 0.1), PlaceDetail.col(Color(0.88, 0.86, 0.8)), false)
+	PlaceDetail.votive(c, Vector3(0.15, 0.25, 0.25), true)
+	PlaceDetail.votive(c, Vector3(-0.12, 0.25, 0.22), false)
 
 
 ## Hochstand-Friedhof: ein Dutzend umgestürzter Hochsitze im Kreis, alle zur Mitte gedreht.

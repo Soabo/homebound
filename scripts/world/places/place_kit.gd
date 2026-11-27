@@ -18,13 +18,13 @@ static func mat(kind: String) -> Material:
 		"bark": m = BuildKit.tex_mat("bark", 0.8)
 		"stone": m = BuildKit.tex_mat("stone", 0.7)
 		"stone_dark": m = BuildKit.tex_mat("stone_dark", 0.7)
-		"rock": m = SnowCover.register(BuildKit.tex_mat("rock", 2.0)) as StandardMaterial3D
+		"rock": m = BuildKit.tex_mat("rock", 2.0)
 		"concrete": m = BuildKit.tex_mat("metal", 2.5, Color(0.78, 0.77, 0.73), 0.95)
 		"metal": m = BuildKit.tex_mat("metal", 0.6, Color(1.2, 1.2, 1.2), 0.5)
 		"rust": m = BuildKit.tex_mat("metal", 0.5, Color(1.1, 0.65, 0.4), 0.7)
 		"steel_dark": m = BuildKit.tex_mat("metal", 0.5, Color(0.55, 0.57, 0.6), 0.4)
 		"shingles": m = BuildKit.tex_mat("shingles", 1.2)
-		"tin": m = SnowCover.register(BuildKit.tex_mat("metal", 0.3, Color(0.85, 0.88, 0.9), 0.5)) as StandardMaterial3D
+		"tin": m = BuildKit.tex_mat("metal", 0.3, Color(0.85, 0.88, 0.9), 0.5)
 		"fabric": m = BuildKit.tex_mat("fabric", 0.5)
 		"canvas": m = BuildKit.tex_mat("fabric", 0.6, Color(0.6, 0.68, 0.45))
 		"glass": m = BuildKit.glass_mat()
@@ -38,9 +38,59 @@ static func mat(kind: String) -> Material:
 		"olive": m = BuildKit.tex_mat("fabric", 0.5, Color(0.55, 0.6, 0.35))
 		"asphalt": m = BuildKit.tex_mat("stone_dark", 2.0, Color(0.55, 0.55, 0.58))
 		"mud": m = BuildKit.color_mat(Color(0.18, 0.15, 0.11), 1.0)
+		# neu 27.11.: Orte mit Foto-Materialien (im Retro-Stil die gezeichneten Ersatzstoffe)
+		"plaster": m = BuildKit.color_mat(Color(0.86, 0.84, 0.78), 0.9)
+		"gravel": m = BuildKit.tex_mat("stone", 0.5, Color(0.75, 0.73, 0.7))
+		"paving": m = BuildKit.tex_mat("stone", 0.8, Color(0.8, 0.78, 0.75))
+		"corrugated": m = BuildKit.tex_mat("metal", 0.3, Color(0.6, 0.7, 0.62), 0.5)
+		"furn": m = BuildKit.tex_mat("planks_h", 0.6, Color(0.8, 0.62, 0.45))
+		"table": m = BuildKit.tex_mat("planks_h", 0.6, Color(0.7, 0.55, 0.4))
+		"cabinet": m = BuildKit.tex_mat("planks_v", 0.6, Color(0.6, 0.45, 0.32))
+		"cloth": m = BuildKit.tex_mat("fabric", 0.4, Color(0.85, 0.8, 0.72))
+		"sackcloth": m = BuildKit.tex_mat("fabric", 0.4, Color(1.2, 1.05, 0.75))
 		_: m = BuildKit.color_mat(Color(1, 0, 1))
+	m = _photo(kind, m)
+	# Schnee nur auf Materialien, die ausschließlich draußen liegen (Dächer, Felsen, Straße) – sonst schneit es drinnen
+	if kind in ["rock", "tin", "shingles", "corrugated", "asphalt"] and m is BaseMaterial3D:
+		m = SnowCover.register(m as BaseMaterial3D)
 	_m[kind] = m
 	return m
+
+
+## Im klaren Stil bekommen die Ort-Materialien Foto-Texturen (Kachelgröße in m, Farbstich).
+const PHOTO := {
+	"wood": ["plank_wall_v", 2.4, Color(0.95, 0.9, 0.84)],
+	"wood_old": ["plank_wall_v", 2.4, Color(0.72, 0.72, 0.7)],
+	"wood_h": ["plank_wall", 2.4, Color(0.92, 0.88, 0.82)],
+	"stone": ["rock", 1.6, Color(0.92, 0.9, 0.88)],
+	"stone_dark": ["rock", 1.6, Color(0.6, 0.6, 0.6)],
+	"rock": ["rock", 2.0, Color.WHITE],
+	"concrete": ["concrete", 2.2, Color.WHITE],
+	"rust": ["rust", 1.0, Color.WHITE],
+	"shingles": ["shingles_wood", 1.0, Color.WHITE],
+	"tin": ["corrugated", 0.9, Color(0.9, 0.95, 1.0)],
+	"corrugated": ["corrugated", 0.9, Color.WHITE],
+	"plaster": ["plaster", 1.8, Color.WHITE],
+	"gravel": ["gravel", 1.2, Color.WHITE],
+	"paving": ["gred", 1.6, Color.WHITE],
+	"asphalt": ["concrete", 2.5, Color(0.42, 0.42, 0.44)],
+	"furn": ["furn_fine", 1.0, Color.WHITE],
+	"table": ["furn_table", 1.2, Color.WHITE],
+	"cabinet": ["furn_cabinet", 1.2, Color.WHITE],
+	"cloth": ["fab_bed", 0.6, Color(1.05, 1.0, 0.95)],
+	"sackcloth": ["fab_sack", 0.5, Color.WHITE],
+	"canvas": ["fab_sack", 0.8, Color(0.6, 0.7, 0.45)],
+}
+
+
+static func _photo(kind: String, m: Material) -> Material:
+	if not PHOTO.has(kind):
+		return m
+	var d: Array = PHOTO[kind]
+	var out := Look.photo_mat(m, String(d[0]), float(d[1]), d[2] as Color)
+	if out != m and out is StandardMaterial3D:
+		(out as StandardMaterial3D).normal_scale = 0.8   # Bauwerke dürfen etwas mehr Relief zeigen als Möbel
+	return out
 
 
 ## Bodenhöhe relativ zum Ort.
@@ -259,9 +309,7 @@ static func hut(root: Node3D, n: String, center: Vector3, size: Vector2, height:
 ## Zaun aus Pfosten und Maschendraht zwischen Punkten (lokal, Draufsicht). gap = Öffnungen entlang der Strecke.
 static func fence(root: Node3D, pts: Array, height: float = 2.0, gaps: Array = []) -> void:
 	var post := mat("metal")
-	var mesh := BuildKit.color_mat(Color(0.55, 0.57, 0.6, 0.55), 0.6, 0.6)
-	mesh.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mesh.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var mesh := chainlink_mat()
 	var dist := 0.0
 	for i in pts.size() - 1:
 		var a: Vector2 = pts[i]
@@ -286,6 +334,25 @@ static func fence(root: Node3D, pts: Array, height: float = 2.0, gaps: Array = [
 			var y := (g0 + g1) * 0.5 + height * 0.5
 			BuildKit.box(root, Vector3(seg.length(), height * 0.9, 0.02), Vector3(c.x, y, c.y), mesh, true, Vector3(0, -rad_to_deg(atan2(seg.y, seg.x)), 0))
 		dist += len
+
+
+## Maschendraht: Rauten-Textur mit Durchsicht (dreiseitig in Weltkoordinaten, Masche ≈ 5 cm).
+static func chainlink_mat() -> StandardMaterial3D:
+	if _m.has("_chainlink"):
+		return _m["_chainlink"]
+	var mesh := StandardMaterial3D.new()
+	mesh.albedo_texture = load("res://assets/textures/ground/chainlink.png")
+	mesh.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	mesh.alpha_scissor_threshold = 0.5
+	mesh.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mesh.uv1_triplanar = true
+	mesh.uv1_world_triplanar = true
+	mesh.uv1_scale = Vector3.ONE / 0.3
+	mesh.metallic = 0.6
+	mesh.roughness = 0.5
+	mesh.texture_filter = Look.tex_filter()
+	_m["_chainlink"] = mesh
+	return mesh
 
 
 ## Fernwirkung: Sichtweite für alle Teile eines Ortes begrenzen (große Teile weiter sichtbar).

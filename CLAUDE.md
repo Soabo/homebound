@@ -1007,6 +1007,26 @@
 - Messstelle 4-Nord: Wartungsprotokoll (Spur-Bedingung `note:messstelle_log`) jetzt großes beschriftetes Klemmbrett über dem Tisch, Hinweis nennt es.
 - Prüfung `RegressTest._t_fixes_2711`.
 
+## Lebendige Orte (Christian 27.11.: „Lass die Compounds leben!“ – so detailliert wie die Hütte)
+- Baukasten `PlaceDetail` (scripts/world/places/place_detail.gd): `arch_fill` (Bogenfeld über Rechtecköffnung), `window` (rect|arch, Sprossen/Blei,
+  Gitter, Fensterbank), `door` (plank|arch|steel, ein-/zweiflügelig, offen), `gutter` (Rinne + Fallrohr an der Wand), `candle`, `votive`, `lamp`
+  (wall|cage|flood|hanging), `pew`, `table`, `chair`, `office_chair`, `shelf`, `clutter` (books|binders|jars|cans|bottles|boxes|tools|papers),
+  `crate`, `barrel`, `pallet`, `bucket`, `sign`, `picture`, `litter` (Laub/Zweige/Papier/Steine), `cobweb`, `cable` (durchhängend), `corrugated`
+  (Wellblech mit echten Wellen), `weeds`. Wände mit `BuildKit.wall` → im zurückgegebenen Wandknoten ist +z außen (Fenster/Bogen als Kinder).
+- `PlaceKit.mat` nimmt im klaren Stil Foto-Texturen (`PlaceKit.PHOTO`): wood/wood_old = `plank_wall_v`, wood_h = plank_wall, stone = rock,
+  concrete, rust, shingles = `shingles_wood`, tin/corrugated = `corrugated`, neu plaster, gravel, paving (gred), furn, table, cabinet, cloth, sackcloth.
+  Schnee-Durchgang nur auf rock/tin/shingles/corrugated/asphalt (Innenräume sonst verschneit). Zäune: `PlaceKit.chainlink_mat()` (Rautentextur).
+- Neue erzeugte Texturen `tools/textures_gen.py`: plaster, corrugated, concrete, rust, shingles_wood (aus Foto-Maserung), gravel (Bodenstapel),
+  plank_wall_v (gedreht), chainlink.png.
+- Schnelle Ortsansicht (Sekunden): `scenes/dev/place_preview.tscn -- --place=ID --out=… --shots="cx,cy,cz:lx,ly,lz;…"` (Orts-Koordinaten).
+- Umgebaut: **Waldkapelle St. Gunther** (`PlacesNear._kapelle`, `_kapelle_turret`, `_kapelle_inside`, `_kapelle_cross`: Kalkputz, Granitsockel/
+  Eckquader, Rundbogentür, Bleiglasfenster, Schindeldach mit Rinnen, Dachreiter mit Glocke + Zwiebelhaube, Vordach, Bänke mit Kniebänken,
+  Altar mit Antependium/Altarbild/Leuchtern, Ewiges Licht, Opferlichter, Kreuzweg, Votivtafeln, Liedtafel, Weihwasser, Gästebuch auf Pult,
+  Glockenseil, Spinnweben, Feldkreuz) und **Messstelle 4-Nord** (`PlacesDay._messstelle`, `_mess_fence`, `_mess_container`, `_mess_inside`,
+  `_mess_yard`: Kies, Stacheldraht, offenes Tor + aufgebrochenes Schloss, Wellblech-Container mit Stufen/Klima/Scheinwerfer, Arbeitsplatz,
+  Serverschrank mit blinkenden LEDs, Regal, Whiteboard, Kalender, Pinnwand, Netzplan, Kaffeeecke, Aggregat, Kabeltrommel, Fässer, Messpfähle,
+  Mast mit Schüssel, Schacht mit Schutzrohren). Knotennamen der Funde/Notizen unverändert. Übrige Orte folgen nach Christians Rückmeldung.
+
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt
   und ohne Editor geändert werden kann. `BuildKit` liefert Kisten, Wände mit Öffnungen,
