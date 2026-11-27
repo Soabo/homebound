@@ -52,6 +52,12 @@
       "text": "In Stefanies Büro klingt der Boden unter dem Teppich hohl …"
     }
   ],
+  "lost_hint": {
+    "_info": "Christian 27.11.: einmalige Warnung, sobald man sich zum ersten Mal weiter als distance (m) von der Hütte entfernt (Flag hint_lost).",
+    "distance": 60.0,
+    "seconds": 9.0,
+    "text": "Ich muss aufpassen. Hier draußen sieht jeder Baum gleich aus – verlaufen darf ich mich auf keinen Fall. Auf den Wegen bleiben, auf die Wegweiser achten, und vor der Dunkelheit zurück sein."
+  },
   "packing": {
     "_info": "Mehrtagesmarsch (Christian 14.11.: der Spieler soll sich vorbereiten können). Gilt, sobald eine aktive Spur ein Ziel mit ring multi hat (map.json). intro = Gedanke beim ersten Mal (Flag packing_intro), items = Packliste im Tablet (Aufgaben) und auf der Karte: need = Gegenstände, food/water/fuel = Mindestanzahl (Essen, Wasser, Holz/Torf), optional = nur empfohlen. Beim Losgehen (weiter als leave_distance von der Hütte) einmal am Tag eine Warnung, wenn etwas fehlt oder es schon nach late_hour ist.",
     "intro": "Das ist kein Ausflug mehr, das sind zwei Tage da draußen, mit einer Nacht im Wald. Ich brauche ein Zelt, einen Schlafsack, Essen und Wasser für zwei Tage und Holz für zwei Feuer. (Packliste: Tablet, Aufgaben)",
@@ -178,8 +184,8 @@
       "thought": "Nord. Die Messstelle. Vom alten Brunnen laufen die Kabel genau dorthin – ich muss ihnen nur folgen.",
       "finish": "Meine Personalnummer. Und W-17 war ein Ersatzteil für genau diese Anlage.",
       "hint_days": 3,
-      "hint": "Die Kabeltrasse beginnt hinter dem Gartenzaun am alten Brunnen und läuft neben dem Nordweg nach Norden. Etwa ein halber Kilometer.",
-      "hint_ilse": "De Kabltrass fangt hinterm Gartnzaun am oidn Brunnen o und geht nebam Nordweg nach Norden. A hoiber Kilometer, ungefähr."
+      "hint": "Die Kabeltrasse beginnt hinter dem Gartenzaun am alten Brunnen und läuft neben dem Nordweg nach Norden. Etwa ein halber Kilometer. Im Container hängt ein Wartungsprotokoll an der Wand über dem Tisch – das muss ich lesen.",
+      "hint_ilse": "De Kabltrass fangt hinterm Gartnzaun am oidn Brunnen o und geht nebam Nordweg nach Norden. A hoiber Kilometer, ungefähr. Im Container hängt a Wartungsprotokoll an da Wand überm Tisch – des muaßt lesn."
     },
     {
       "id": "p2_suchgeraet",

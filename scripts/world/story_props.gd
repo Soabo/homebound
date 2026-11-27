@@ -14,6 +14,7 @@ const POST_EVERY := 35.0
 static var cable_posts: Array[Vector3] = []
 static var wendt_boxes: Dictionary = {}   ## Nummer -> Position (für Tests)
 static var memorial_pos := Vector3.INF   ## Totenbretter (für Tests)
+static var fourth_board: Node3D = null    ## viertes Brett „CHRISTIAN“ (unsichtbar, bis Dread es aufstellt)
 
 var _paint_red: StandardMaterial3D
 var _orange: StandardMaterial3D
@@ -299,42 +300,62 @@ func _totenbretter(tb: Dictionary) -> void:
 	root.rotation.y = atan2(-to_trail.x, -to_trail.y) + PI   # +z (Vorderseite) zum Weg
 	add_child(root)
 	memorial_pos = root.position
-	var wood := PlaceKit.mat("wood_old")
 	var boards: Array = tb.get("boards", [])
 	var n := boards.size()
 	for i in n:
-		var bd: Dictionary = boards[i]
-		var x := (i - (n - 1) * 0.5) * 0.42
-		var c: Array = bd.get("color", [0.85, 0.82, 0.74])
-		var paint := BuildKit.color_mat(Color(float(c[0]), float(c[1]), float(c[2])), 0.85)
-		var board := Node3D.new()
-		board.name = "Brett_%d" % i
-		board.position = Vector3(x, 0, 0)
-		board.rotation_degrees = Vector3(-4.0 - i * 1.5, (i - 1) * 3.0, (i - 1) * -1.2)   # leicht schief, wie von Hand gesetzt
-		root.add_child(board)
-		var h := 1.75 if i == 0 else 1.55
-		# Brett (bemalt), Rand, Spitze, kleines Dachl
-		BuildKit.box(board, Vector3(0.3, h, 0.035), Vector3(0, h * 0.5 - 0.25, 0), paint, true)
-		BuildKit.box(board, Vector3(0.34, 0.04, 0.05), Vector3(0, h - 0.23, 0.0), wood, false)
-		var roof_y := h - 0.18
-		BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(-0.085, roof_y, 0.03), wood, false, Vector3(0, 0, 35))
-		BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(0.085, roof_y, 0.03), wood, false, Vector3(0, 0, -35))
-		# schwarzes Kreuz oben
-		var black := BuildKit.color_mat(Color(0.08, 0.07, 0.06), 0.9)
-		BuildKit.box(board, Vector3(0.025, 0.16, 0.01), Vector3(0, h - 0.4, 0.022), black, false)
-		BuildKit.box(board, Vector3(0.1, 0.025, 0.01), Vector3(0, h - 0.36, 0.022), black, false)
-		var lab := Label3D.new()
-		lab.text = String(bd.get("text", ""))
-		lab.font_size = 17
-		lab.pixel_size = 0.0021
-		lab.modulate = Color(0.12, 0.1, 0.08)
-		lab.outline_size = 0
-		lab.double_sided = false
-		lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lab.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-		lab.position = Vector3(0, h - 0.52, 0.02)
-		board.add_child(lab)
+		_totenbrett(root, i, n, boards[i])
+	# Das vierte Brett („CHRISTIAN“) steht nur manchmal da – wann, entscheidet der ThreatDirector (Dread)
+	var fourth: Dictionary = tb.get("fourth", {})
+	if not fourth.is_empty():
+		var b4 := _totenbrett(root, n, n, fourth)
+		b4.name = "Brett_Christian"
+		fourth_board = b4
+		set_fourth_board(false)
 	# Grablicht davor (rotes Glas, kein echtes Licht – nur Farbe)
 	var glass := BuildKit.color_mat(Color(0.55, 0.06, 0.05), 0.3)
 	BuildKit.cylinder(root, 0.045, 0.12, Vector3(0.12, 0.06, 0.28), glass, false)
 	PlaceKit.note(root, String(tb.get("note", "totenbretter")), Vector3(0, 0.9, 0.25), true)
+
+
+## Viertes Brett zeigen/verbergen (unsichtbar auch ohne Kollision).
+static func set_fourth_board(on: bool) -> void:
+	if fourth_board == null or not is_instance_valid(fourth_board):
+		return
+	fourth_board.visible = on
+	fourth_board.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED
+
+
+## Ein Totenbrett (Index i bei n Brettern in der Reihe; i = n setzt es rechts daneben).
+func _totenbrett(root: Node3D, i: int, n: int, bd: Dictionary) -> Node3D:
+	var wood := PlaceKit.mat("wood_old")
+	var x := (i - (n - 1) * 0.5) * 0.42
+	var c: Array = bd.get("color", [0.85, 0.82, 0.74])
+	var paint := BuildKit.color_mat(Color(float(c[0]), float(c[1]), float(c[2])), 0.85)
+	var board := Node3D.new()
+	board.name = "Brett_%d" % i
+	board.position = Vector3(x, 0, 0)
+	board.rotation_degrees = Vector3(-4.0 - i * 1.5, (i - 1) * 3.0, (i - 1) * -1.2)   # leicht schief, wie von Hand gesetzt
+	root.add_child(board)
+	var h := 1.75 if i == 0 else 1.55
+	# Brett (bemalt), Rand, Spitze, kleines Dachl
+	BuildKit.box(board, Vector3(0.3, h, 0.035), Vector3(0, h * 0.5 - 0.25, 0), paint, true)
+	BuildKit.box(board, Vector3(0.34, 0.04, 0.05), Vector3(0, h - 0.23, 0.0), wood, false)
+	var roof_y := h - 0.18
+	BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(-0.085, roof_y, 0.03), wood, false, Vector3(0, 0, 35))
+	BuildKit.box(board, Vector3(0.24, 0.025, 0.14), Vector3(0.085, roof_y, 0.03), wood, false, Vector3(0, 0, -35))
+	# schwarzes Kreuz oben
+	var black := BuildKit.color_mat(Color(0.08, 0.07, 0.06), 0.9)
+	BuildKit.box(board, Vector3(0.025, 0.16, 0.01), Vector3(0, h - 0.4, 0.022), black, false)
+	BuildKit.box(board, Vector3(0.1, 0.025, 0.01), Vector3(0, h - 0.36, 0.022), black, false)
+	var lab := Label3D.new()
+	lab.text = String(bd.get("text", ""))
+	lab.font_size = 17
+	lab.pixel_size = 0.0021
+	lab.modulate = Color(0.12, 0.1, 0.08)
+	lab.outline_size = 0
+	lab.double_sided = false
+	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lab.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	lab.position = Vector3(0, h - 0.52, 0.02)
+	board.add_child(lab)
+	return board

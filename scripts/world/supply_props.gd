@@ -39,7 +39,7 @@ static func empty_cans(p: ItemPickup, at: Vector3, n: int, seed_value: int = 7) 
 	rng.seed = seed_value
 	for i in n:
 		var off := Vector3(-0.12 + (i % 2) * 0.1 + rng.randf_range(-0.02, 0.02), 0, -0.05 + (i / 2) * 0.09 + rng.randf_range(-0.02, 0.02))
-		var c := HandItems.can_body(p, at + off)
+		var c := HandItems.can_body(p, at + off, 0.0375, 0.108, "empty")
 		c.rotation.y = rng.randf() * TAU
 		var lie := rng.randf() < 0.3
 		if lie and i == n - 1:

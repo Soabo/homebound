@@ -1,8 +1,8 @@
 class_name Babyfon
 extends Interactable
 ## Babyfon-Empfänger auf Stefanies Schreibtisch: drei Leuchtbalken für Kinderzimmer, Dachboden und Keller.
-## In der Belagerungsnacht zeigen sie, wie stark es dort drückt (grün → rot), und man hört es leise knistern.
-## Braucht Strom. Die Sender stehen in den drei Räumen (nur Deko, `sender()`).
+## Seit 27.11. (Christian): In der Belagerungsnacht hält man die Basisstation in der linken Hand (`BabyfonHandheld`
+## in PlayerHands) – sie fehlt dann hier auf dem Schreibtisch. Läuft mit Batterien. Die Sender stehen in den Räumen (Deko, `sender()`).
 
 const LABELS := ["Kind", "Dach", "Keller"]
 
@@ -10,6 +10,7 @@ var _bars: Array[MeshInstance3D] = []
 var _mats: Array[StandardMaterial3D] = []
 var _power_led: StandardMaterial3D
 var _hiss: AudioStreamPlayer3D
+var _shape: CollisionShape3D
 
 
 func _ready() -> void:
@@ -48,6 +49,7 @@ func _ready() -> void:
 	cs.position = Vector3(0, 0.08, 0)
 	body.add_child(cs)
 	add_child(body)
+	_shape = cs
 	_hiss = AudioStreamPlayer3D.new()
 	_hiss.stream = SoundBank.get_sound("static")
 	_hiss.volume_db = -30.0
@@ -56,6 +58,14 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	# Belagerung: Basisstation ist in der Hand des Spielers
+	var in_hand := SiegeNight.current != null
+	visible = not in_hand
+	_shape.disabled = in_hand
+	if in_hand:
+		if _hiss.playing:
+			_hiss.stop()
+		return
 	var on := true   # läuft mit Batterien – auch bei Stromausfall (Christian 14.11.)
 	_power_led.emission_energy_multiplier = 1.5 if on else 0.0
 	var levels: Array = SiegeNight.current.monitor_levels() if SiegeNight.current else [-1.0, -1.0, -1.0]

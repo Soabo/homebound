@@ -319,16 +319,29 @@ static func _bottle(n: Node3D, kind: String) -> void:
 # --- Konserve, Becher, Glas, Ration ------------------------------------------
 
 ## Dosenkörper mit Rillen und umlaufendem Etikett (auch für Dosen im Regal).
-static func can_body(parent: Node, pos: Vector3, radius: float = 0.0375, height: float = 0.108) -> Node3D:
+## top: "closed" = volle Konserve mit Deckel (Christian 27.11.: man sah oben hinein), "open" = ohne Deckel
+## (Handmodell, das seinen eigenen Deckel aufzieht), "empty" = leere, ausgespülte Dose mit sichtbarer Innenseite.
+static func can_body(parent: Node, pos: Vector3, radius: float = 0.0375, height: float = 0.108, top: String = "closed") -> Node3D:
 	var c := Node3D.new()
 	c.position = pos
 	parent.add_child(c)
 	var tin := BuildKit.tex_mat("metal", 0.2, Color(1.3, 1.3, 1.28), 0.4)
 	var r := radius
 	var h := height
-	BuildKit.lathe(c, PackedVector2Array([Vector2(0.0, 0.004), Vector2(r * 0.9, 0.004), Vector2(r * 0.9, 0.0), Vector2(r * 1.03, 0.0), Vector2(r * 1.03, 0.006), Vector2(r, 0.008),
+	var prof := PackedVector2Array([Vector2(0.0, 0.004), Vector2(r * 0.9, 0.004), Vector2(r * 0.9, 0.0), Vector2(r * 1.03, 0.0), Vector2(r * 1.03, 0.006), Vector2(r, 0.008),
 			Vector2(r, 0.014), Vector2(r, h - 0.014), Vector2(r, h - 0.008), Vector2(r * 1.03, h - 0.006), Vector2(r * 1.03, h), Vector2(r * 0.9, h),
-			Vector2(r * 0.9, h - 0.004)]), Vector3.ZERO, tin, 12)
+			Vector2(r * 0.9, h - 0.004)])
+	if top == "closed":
+		# Deckel mit eingedrücktem Ring bis zur Mitte
+		prof.append_array([Vector2(r * 0.82, h - 0.005), Vector2(r * 0.78, h - 0.003), Vector2(0.0, h - 0.003)])
+	BuildKit.lathe(c, prof, Vector3.ZERO, tin, 12)
+	if top == "empty":
+		# Innenwand und Boden von innen sichtbar (sonst sieht man durch die Dose hindurch)
+		var inner := (tin as StandardMaterial3D).duplicate() as StandardMaterial3D
+		inner.cull_mode = BaseMaterial3D.CULL_DISABLED
+		inner.albedo_color = inner.albedo_color.darkened(0.25)
+		BuildKit.lathe(c, PackedVector2Array([Vector2(r * 0.9, h - 0.004), Vector2(r * 0.985, h - 0.012), Vector2(r * 0.985, 0.012), Vector2(r * 0.9, 0.007),
+				Vector2(0.0, 0.007)]), Vector3.ZERO, inner, 12)
 	_band(c, "can", r * 1.012, 0.012, h - 0.012, 0.75)
 	return c
 
@@ -336,7 +349,7 @@ static func can_body(parent: Node, pos: Vector3, radius: float = 0.0375, height:
 static func _can(n: Node3D) -> void:
 	var h := 0.108
 	var r := 0.0375
-	var c := can_body(n, Vector3(0, -h * 0.5, 0), r, h)
+	var c := can_body(n, Vector3(0, -h * 0.5, 0), r, h, "open")
 	var tin := BuildKit.tex_mat("metal", 0.2, Color(1.45, 1.45, 1.42), 0.3)
 	# Inhalt (sichtbar, wenn der Deckel aufgezogen ist) und Deckel mit Zuglasche
 	BuildKit.cylinder(c, r * 0.89, 0.002, Vector3(0, h - 0.012, 0), BuildKit.color_mat(Color(0.5, 0.26, 0.1), 0.7), false, Vector3.ZERO, -1.0, 12)

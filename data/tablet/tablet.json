@@ -1,5 +1,5 @@
 {
-  "_info": "Nachrichten auf dem Tablet (Couch). type = mail | news. day = ab diesem Tag lesbar (hour optional: ab dieser Uhrzeit). Texte sind Platzhalter – Namen und Story kann Christian anpassen. old = alte Mail aus der Zeit vor dem Spiel (Stefanie), steht unten in der Liste und gilt als gelesen (außer unread = true).",
+  "_info": "Nachrichten auf dem Tablet (Couch). type = mail | news. day = ab diesem Tag lesbar (hour optional: ab dieser Uhrzeit). Texte sind Platzhalter – Namen und Story kann Christian anpassen. old = alte Mail aus der Zeit vor dem Spiel (Stefanie), steht unten in der Liste und gilt als gelesen (außer unread = true). Christian 27.11.: mindestens jeden zweiten Tag etwas Neues (Katrin = Schwester, Waldkurier, Kanzlei/Polizei zum Unfall, beschädigte Nachrichten ohne Absender).",
   "messages": [
     {
       "id": "mail_sister_1",
@@ -14,8 +14,8 @@
       "type": "mail",
       "day": 1,
       "from": "Kanzlei Brandl & Seidl",
-      "subject": "Ihre Angelegenheit – Unfall vom 14. Oktober",
-      "body": "Sehr geehrter Mandant,\n\nwir dürfen Ihnen mitteilen, dass die Versicherung des Speditionsunternehmens die Haftung nun vollständig anerkannt hat. Das Strafverfahren gegen den Fahrer des Lastkraftwagens ist mit Urteil vom 2. Oktober rechtskräftig abgeschlossen.\n\nDie persönlichen Gegenstände Ihrer Frau und Ihrer Kinder, die sich noch im Fahrzeug befanden, haben wir Ihnen wie besprochen an die Hütte bringen lassen. Darunter befand sich ein eingepacktes Geschenk mit der Aufschrift „Für Papa“. Wir haben es selbstverständlich ungeöffnet gelassen.\n\nWeitere Post werden wir Ihnen, wie gewünscht, vorerst nicht zusenden.\n\nUnser aufrichtiges Beileid, weiterhin.\n\nMit freundlichen Grüßen\nDr. M. Seidl"
+      "subject": "Ihre Angelegenheit – Unfall vom 17. November",
+      "body": "Sehr geehrter Mandant,\n\nwir dürfen Ihnen mitteilen, dass die Versicherung des Speditionsunternehmens die Haftung nun vollständig anerkannt hat. Das Strafverfahren gegen den Fahrer des Lastkraftwagens ist mit Urteil vom 2. November rechtskräftig abgeschlossen.\n\nDie persönlichen Gegenstände Ihrer Frau und Ihrer Kinder, die sich noch im Fahrzeug befanden, haben wir Ihnen wie besprochen an die Hütte bringen lassen. Darunter befand sich ein eingepacktes Geschenk mit der Aufschrift „Für Papa“. Wir haben es selbstverständlich ungeöffnet gelassen.\n\nWeitere Post werden wir Ihnen, wie gewünscht, vorerst nicht zusenden.\n\nUnser aufrichtiges Beileid, weiterhin.\n\nMit freundlichen Grüßen\nDr. M. Seidl"
     },
     {
       "id": "news_lights_1",
@@ -79,6 +79,186 @@
       "old": true,
       "body": "Gesendet: vor einem Jahr, 18:42 Uhr\n\nWir sind los, es schüttet wie verrückt. Die Kinder fragen nach dir. Ben hat sein Geschenk für dich auf dem Schoß und lässt es keinen Moment los.\n\nKommst du nach, wenn du fertig bist? Mama hat für alle gekocht.\n\nFahr vorsichtig.\n\nS.",
       "unread": true
+    },
+    {
+      "id": "news_power_2",
+      "type": "news",
+      "day": 2,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Stromausfälle: Versorger findet keinen Fehler",
+      "body": "Zum zweiten Mal binnen einer Woche ist in Teilen des Landkreises nachts der Strom ausgefallen, diesmal zwischen Mauth und Finsterau für knapp vierzig Minuten.\n\nDie Techniker des Versorgers haben die Leitungen abgefahren und nichts gefunden: keine umgestürzten Bäume, keine beschädigten Masten. „Die Leitung war in Ordnung, sie hat nur keinen Strom geführt“, sagt ein Sprecher.\n\nAnwohner berichten erneut von einem tiefen Brummen und davon, dass die Uhren an Herd und Radiowecker danach alle auf dieselbe Zeit sprangen: 3:17 Uhr."
+    },
+    {
+      "id": "mail_sister_2",
+      "type": "mail",
+      "day": 3,
+      "hour": 18,
+      "from": "Katrin",
+      "subject": "Noch mal ich",
+      "body": "Hey,\n\nkeine Antwort ist auch eine Antwort, ich weiß. Ich schreibe trotzdem, dann hast du was zu lesen, wenn du willst.\n\nMama hat am Sonntag Geburtstag. Sie wünscht sich nichts. Sie sagt, sie hat alles, was sie braucht, und dann schaut sie auf das Foto von euch fünf auf dem Klavier. Wenn du ihr eine Karte schickst, würde sie die bis Ostern mit sich herumtragen.\n\nIch hoffe, du hast genug Holz. Im Wetterbericht reden sie vom ersten Schnee bei euch oben.\n\nK."
+    },
+    {
+      "id": "mail_garbled_1",
+      "type": "mail",
+      "day": 5,
+      "hour": 3.3,
+      "from": "(kein Absender)",
+      "subject": "▒▒▒▒▒▒▒",
+      "body": "▒▒▒ UEBERTRAGUNG ▒▒ MP-4 ▒▒▒▒\n\n...signal stabil seit 0317 ... bauteil ▒▒-17 ▒▒ nicht zurueckgemeldet ... standort weiterhin ▒▒▒▒▒▒ ...\n\n▒▒ wiederholung ▒▒ wiederholung ▒▒\n\n...sie hoeren ▒▒▒▒ sie hoeren ▒▒▒\n\n[Nachricht beschädigt – 2 von 31 Blöcken lesbar]"
+    },
+    {
+      "id": "mail_lawyer_2",
+      "type": "mail",
+      "day": 7,
+      "hour": 10,
+      "from": "Kanzlei Brandl & Seidl",
+      "subject": "Nachtrag zum Gutachten",
+      "body": "Sehr geehrter Mandant,\n\nentgegen unserer Ankündigung erlauben wir uns doch eine kurze Mitteilung, da uns das Gutachten der Gegenseite nun vollständig vorliegt.\n\nDer Fahrtenschreiber des Lastkraftwagens weist für den Unfallabend eine Lücke von elf Minuten auf, unmittelbar vor dem Zusammenstoß. Der Sachverständige vermutet einen Spannungsabfall in der Bordelektrik. Auch die Straßenbeleuchtung an der Unfallstelle war nach Angaben der Gemeinde zu diesem Zeitpunkt ausgefallen.\n\nAn der rechtlichen Bewertung ändert dies nichts. Wir wollten Ihnen diese Information jedoch nicht vorenthalten.\n\nMit freundlichen Grüßen\nDr. M. Seidl"
+    },
+    {
+      "id": "news_hiker_9",
+      "type": "news",
+      "day": 9,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Vermisster Wanderer wohlbehalten gefunden",
+      "body": "Der seit Samstag vermisste Wanderer aus Regensburg ist am Dienstagmorgen von der Bergwacht unterhalb des Rachel gefunden worden – unterkühlt, aber unverletzt.\n\nDer erfahrene Bergsteiger hatte sich nach eigenen Angaben auf einem markierten Weg verlaufen. „Die Wegweiser haben gestimmt, die Richtung hat gestimmt. Aber der Wald hat sich irgendwie gedreht, sobald ich nicht hingeschaut habe“, sagte er den Rettern.\n\nDie Bergwacht mahnt: In der dunklen Jahreszeit früh aufbrechen, auf den Wegen bleiben und vor Einbruch der Dunkelheit zurück sein."
+    },
+    {
+      "id": "mail_sister_3",
+      "type": "mail",
+      "day": 11,
+      "hour": 19,
+      "from": "Katrin",
+      "subject": "Kisten bei Mama",
+      "body": "Hey Bruderherz,\n\nich habe bei Mama den Speicher ausgeräumt. Da stand noch eine Kiste mit Sachen von euch: Lenas Zeichenblock, Bens Gummistiefel (die mit den Haien), ein Stapel Urlaubsfotos.\n\nAuf einem Bild seid ihr alle vor einer Hütte im Wald, Stefanie zeigt mit dem Finger auf irgendwas hinter euch, und alle lachen. Auf der Rückseite steht in ihrer Schrift nur „MP4 – ist es das?“. Weißt du, was sie damit meinte? Ich hab es nicht verstanden.\n\nIch heb dir die Kiste auf. Iss bitte was Warmes.\n\nK."
+    },
+    {
+      "id": "mail_garbled_2",
+      "type": "mail",
+      "day": 13,
+      "hour": 2.5,
+      "from": "w.wendt@",
+      "subject": "Re: Re: ▒▒▒gabe",
+      "body": "...wie besprochen Beobachtung ab ▒▒.▒▒. eingestellt. Objekt C. hat Standort bezogen, allein. Verhalten unauffaellig ▒▒▒▒▒ \n\n...kann das nicht mehr ▒▒▒▒ die Kinder ▒▒▒▒▒▒▒\n\n--- weitergeleitete Nachricht ---\nVon: ▒▒▒▒▒▒@▒▒▒▒▒▒\nNicht antworten. Nicht melden. Die Messung hat Vorrang.\n\n[Diese Nachricht wurde Ihnen irrtümlich zugestellt]"
+    },
+    {
+      "id": "news_forest_15",
+      "type": "news",
+      "day": 15,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Forstrevier Finsterau ohne Förster",
+      "body": "Seit dem Sommer ist das Forstrevier zwischen Finsterau und der Grenze verwaist. Revierförster Georg W. ist nach Angaben der Nationalparkverwaltung seit Monaten nicht mehr zum Dienst erschienen; sein Dienstwagen stand wochenlang am Parkplatz Reschbachklause.\n\nDie Vertretung kommt aus Mauth und schafft nach eigenen Worten „nur das Nötigste“. Spaziergänger berichten, die Hochsitze im Revier seien „ordentlich wie immer“, an einigen hingen sogar frische Notizzettel.\n\nDie Polizei sieht keinen Anlass für Ermittlungen."
+    },
+    {
+      "id": "mail_police_17",
+      "type": "mail",
+      "day": 17,
+      "hour": 11,
+      "from": "Polizeiinspektion Freyung – Verkehr",
+      "subject": "Rückgabe Mobiltelefon",
+      "body": "Sehr geehrter Herr,\n\ndas Mobiltelefon Ihrer verstorbenen Ehefrau wurde aus der Asservatenkammer freigegeben und wird Ihnen auf Wunsch zugesandt.\n\nDer Vollständigkeit halber: Bei der Auswertung fiel auf, dass das Gerät am Unfallabend um 18:51 Uhr zuletzt im Bereich des Rasthauses Waldblick an der B12 eingebucht war, gut zwanzig Minuten vor dem Unfall und nicht auf dem üblichen Weg zu Ihrer Schwiegermutter. Ob dort angehalten wurde, ließ sich nicht klären.\n\nFür das Verfahren ist dies ohne Bedeutung.\n\nMit freundlichen Grüßen\nPHK Danninger"
+    },
+    {
+      "id": "mail_sister_4",
+      "type": "mail",
+      "day": 19,
+      "hour": 18,
+      "from": "Katrin",
+      "subject": "Advent",
+      "body": "Hey,\n\nbei uns hängen jetzt überall Lichter. Ich hab für Mama einen Adventskranz gebunden, sie hat die erste Kerze angezündet und gesagt: „Die ist für den Christian, damit er heimfindet.“\n\nIch weiß, das ist zu viel. Ich soll dich in Ruhe lassen. Aber wenn du irgendwann reden willst, ich bin da, auch nachts.\n\nUnd falls du dich wunderst, warum ich so viel schreibe: Weil ich weiß, dass Stefanie mich sonst heimsuchen würde.\n\nK."
+    },
+    {
+      "id": "mail_garbled_3",
+      "type": "mail",
+      "day": 21,
+      "hour": 3.2,
+      "from": "(kein Absender)",
+      "subject": "aufnahme_0317",
+      "body": "Anhang: aufnahme_0317.wav (0:00 min)\n\n▒▒▒▒▒▒▒▒▒\n\nhoerst du uns\n\n▒▒▒▒▒▒▒▒▒\n\n[Anhang kann nicht abgespielt werden]"
+    },
+    {
+      "id": "news_deer_23",
+      "type": "news",
+      "day": 23,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Rehe und Hirsche verlassen den Wald",
+      "body": "Jäger und Landwirte im Grenzgebiet melden ungewöhnlich viele Rehe und Rotwild auf offenen Feldern und sogar in Ortschaften – mitten am Tag, dicht gedrängt, scheu wie nie.\n\n„Die stehen am Waldrand und schauen zurück in den Wald, als würde da was rauskommen“, berichtet ein Landwirt aus Bischofsreut. Der Nationalpark spricht von einem möglichen Zusammenhang mit dem frühen Wintereinbruch.\n\nIn mehreren Dörfern bleiben seit einigen Nächten die Hunde lieber im Haus."
+    },
+    {
+      "id": "mail_driver_25",
+      "type": "mail",
+      "day": 25,
+      "hour": 12,
+      "from": "Kanzlei Brandl & Seidl",
+      "subject": "Schreiben des Unfallverursachers (Weiterleitung)",
+      "body": "Sehr geehrter Mandant,\n\nder Fahrer des Lastkraftwagens, Herr K., hat über seinen Verteidiger ein Schreiben an Sie gerichtet. Wir leiten es Ihnen ungekürzt weiter; Sie müssen es nicht lesen.\n\n---\n\n„Ich weiß nicht, ob Sie das lesen. Ich muss es trotzdem schreiben.\n\nIch habe Ihre Frau nicht gesehen. Da war ein Licht über der Straße, ganz still, so hell, dass ich nichts mehr gesehen habe, nicht mal meine Hände. Danach weiß ich nichts mehr. Als es weg war, stand der Lastwagen quer und es war elf Minuten später.\n\nIch weiß, dass mir das keiner glaubt. Ich glaube es ja selber nicht. Es tut mir leid. Jeden Tag.“\n\n---\n\nMit freundlichen Grüßen\nDr. M. Seidl"
+    },
+    {
+      "id": "mail_sister_5",
+      "type": "mail",
+      "day": 27,
+      "hour": 19,
+      "from": "Katrin",
+      "subject": "Eine Kerze",
+      "body": "Hey,\n\nam Sonntag war ich in der Kirche und habe vier Kerzen angezündet. Eine für Stefanie, eine für Lena, eine für Ben. Und eine für dich, weil du ja auch irgendwie nicht mehr da bist.\n\nDas sollte kein Vorwurf sein. Es ist nur so.\n\nPass auf dich auf da oben.\n\nK."
+    },
+    {
+      "id": "mail_stef_draft",
+      "type": "mail",
+      "day": 29,
+      "hour": 7.5,
+      "from": "Stefanie (Entwurf)",
+      "subject": "Liste Hütte",
+      "body": "[Nicht gesendeter Entwurf – mit dem Konto synchronisiert]\n\nFür die Hütte:\n– Gummistiefel Ben (die mit den Haien!)\n– Lenas Malsachen + Block\n– Taschenlampen, Batterien\n– Wolldecken\n– die Mappe NICHT vergessen, nicht im Auto liegen lassen\n– C. nichts sagen, bevor wir dort sind. Erst zeigen, dann erklären.\n\nWenn er fragt, warum ausgerechnet diese Hütte –"
+    },
+    {
+      "id": "news_radio_31",
+      "type": "news",
+      "day": 31,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Funkstörungen im Grenzgebiet",
+      "body": "Funkamateure im Bayerischen Wald melden seit Wochen nachts ein gleichmäßiges Störsignal auf mehreren Bändern. Es beginnt jeden Abend kurz nach Einbruch der Dunkelheit und endet im Morgengrauen.\n\nEin pensionierter Fernmeldetechniker aus Grafenau hat es aufgezeichnet und verlangsamt abgespielt. „Das ist kein Rauschen“, sagt er. „Das hat einen Rhythmus. Wie Atmen. Oder wie jemand, der zählt.“\n\nDie Bundesnetzagentur prüft."
+    },
+    {
+      "id": "mail_sister_6",
+      "type": "mail",
+      "day": 33,
+      "hour": 18,
+      "from": "Katrin",
+      "subject": "Weihnachten",
+      "body": "Hey Bruderherz,\n\nnächste Woche ist Weihnachten. Mama deckt für dich mit, das tut sie einfach, ich kann es ihr nicht ausreden.\n\nDu musst nicht kommen. Aber falls doch: Der Schlüssel liegt wie immer unterm Blumentopf, und es gibt Kartoffelsalat. Den guten, mit Gurke, so wie Ben ihn immer haben wollte.\n\nIch hab dich lieb, du Sturkopf.\n\nK."
+    },
+    {
+      "id": "mail_garbled_4",
+      "type": "mail",
+      "day": 35,
+      "hour": 3.3,
+      "from": "(kein Absender)",
+      "subject": "48.91 / 13.60",
+      "body": "48.91 / 13.60\n48.91 / 13.60\n48.91 / 13.60\n\n▒▒▒ der schluessel ist im ▒▒▒▒▒▒ unter dem ▒▒▒▒▒▒\n\nwir warten"
+    },
+    {
+      "id": "news_storm_37",
+      "type": "news",
+      "day": 37,
+      "hour": 8,
+      "from": "Waldkurier – Regionales",
+      "subject": "Rauhnächte: Alte Bräuche, neue Ängste",
+      "body": "Zwischen Thomastag und Dreikönig beginnen die Rauhnächte, und in den Dörfern unter dem Lusen erzählt man sich in diesem Jahr mehr als sonst von der Wilden Jagd.\n\nIn mehreren Häusern wird wieder geräuchert, die Älteren hängen keine Wäsche mehr auf und lassen nachts die Türen zu. „Früher war das Brauchtum“, sagt eine Bäuerin aus Finsterau. „Heuer meint man's ernst.“\n\nDer Wetterdienst warnt für die Nacht zum Mittwoch vor Sturmböen in den Hochlagen."
+    },
+    {
+      "id": "mail_sister_7",
+      "type": "mail",
+      "day": 39,
+      "hour": 17,
+      "from": "Katrin",
+      "subject": "Frohe Weihnachten",
+      "body": "Frohe Weihnachten, Christian.\n\nWir sitzen hier, Mama, ich und dein leerer Teller. Mama hat ein Foto von euch daneben gestellt.\n\nIch wollte nur, dass du weißt: Heute Abend denkt hier jemand an dich. Ganz fest.\n\nK."
     }
   ]
 }

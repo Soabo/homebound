@@ -11,6 +11,7 @@ extends Node3D
 ## nach unten ab und der neue kommt von unten.
 
 const LEFT_REST := Vector3(-0.2, -0.215, -0.36)
+const WATCH_LIGHT_ROT := Vector3(2, 10, 0)
 const HIDE_DROP := 0.5
 const SWITCH_SPEED := 6.5
 
@@ -82,6 +83,11 @@ var _watch_on: bool = false
 var log_raise: float = 0.0
 var log_wanted: bool = false
 var force_log: bool = false   ## nur für Bilder/Tests: Uhr gehoben halten wie mit J
+var force_babyfon: bool = false   ## nur für Bilder/Tests: Babyfon in der Hand wie in der Belagerung
+var _babyfon: BabyfonHandheld
+var babyfon_offset := Vector3(0.05, 0.03, -0.02)
+var babyfon_rot := Vector3(6, 14, 0)
+var _left_mode: String = "watch"   ## watch | build | babyfon
 var _checklist: Node3D
 var _watch_node: Node3D
 var log_offset := Vector3(0.24, 0.13, 0.11)   ## so weit wandert der linke Arm zur Mitte und nach oben
@@ -292,7 +298,7 @@ func _build_left() -> void:
 	BuildKit.box(watch, Vector3(0.016, 0.008, 0.003), Vector3(0, top + 0.006, -0.0222), dark, false)
 	watch_light = SpotLight3D.new()
 	watch_light.position = Vector3(0, top + 0.006, -0.034)
-	watch_light.rotation_degrees = Vector3(2, 10, 0)
+	watch_light.rotation_degrees = WATCH_LIGHT_ROT
 	watch_light.light_color = Color(1.0, 0.97, 0.9)
 	watch_light.light_energy = 4.5
 	watch_light.spot_range = 24.0
@@ -309,7 +315,7 @@ func _build_left() -> void:
 	_screen_light.position = Vector3(0, top + 0.045, 0)
 	_screen_light.light_color = Color(0.92, 0.95, 1.0)
 	_screen_light.light_energy = 0.0
-	_screen_light.omni_range = 4.5
+	_screen_light.omni_range = 5.5
 	_screen_light.omni_attenuation = 1.6
 	_screen_light.shadow_enabled = false
 	_screen_light.light_cull_mask = 0xFFFFF & ~HANDS_LAYER
@@ -323,7 +329,17 @@ func _build_left() -> void:
 	_hammer = HandItems.build(holder, "hammer")
 	_hammer.rotation_degrees = _hammer.get_meta("tilt", Vector3.ZERO)
 	_hammer.visible = false
-	_set_left_mode(false)
+	# Babyfon-Basisstation (Belagerungsnacht): Griff in der Faust, Display zum Spieler
+	var bf_holder := Node3D.new()
+	bf_holder.position = HandRig.grip_center(r_grip)
+	bf_holder.rotation_degrees = Vector3(0, 0, -90)
+	_l_wrist.add_child(bf_holder)
+	_babyfon = BabyfonHandheld.new()
+	_babyfon.name = "BabyfonHandheld"
+	_babyfon.rotation_degrees = Vector3(-12, 0, 0)
+	bf_holder.add_child(_babyfon)
+	_babyfon.visible = false
+	_set_left_mode("watch")
 	_no_shadows(_left)
 
 
@@ -399,10 +415,17 @@ func hammer_taps(hits: int = 1) -> void:
 	_tap_hits = maxi(hits, 1)
 
 
-## Linke Hand: Uhr ablesen/leuchten (Handrücken oben) oder Hammer halten (Daumen oben).
-func _set_left_mode(build: bool) -> void:
-	_hammer.visible = build
-	if build:
+## Linke Hand: Uhr ablesen/leuchten (Handrücken oben), Hammer oder Babyfon halten (Daumen oben).
+func _set_left_mode(mode: String) -> void:
+	_left_mode = mode
+	_hammer.visible = mode == "build"
+	if _babyfon:
+		_babyfon.visible = mode == "babyfon"
+	if mode == "babyfon":
+		_left_arm.rotation_degrees = Vector3(8, -6, 2)
+		_l_wrist.rotation_degrees = Vector3(0, 0, 90)
+		_l_hand.set_pose(HandRig.grip(0.0135))
+	elif mode == "build":
 		_left_arm.rotation_degrees = Vector3(2, -12, 4)
 		_l_wrist.rotation_degrees = Vector3(0, 0, 90)
 		_l_hand.set_pose(HandRig.grip(0.0135))
@@ -445,7 +468,7 @@ func _set_glow(on: bool) -> void:
 	if screen_mode:
 		watch_light.light_energy = 0.0
 		_led.emission_energy_multiplier = 0.0
-		_screen_light.light_energy = 0.55 if lit else 0.0
+		_screen_light.light_energy = 0.85 if lit else 0.0   # Christian 27.11.: etwas heller (vorher 0,55)
 		_screen.emission = Color(1.0, 1.0, 1.0)
 		_screen.emission_energy_multiplier = 3.0 if lit else (0.1 if _watch_on else 0.0)
 		return
@@ -829,10 +852,13 @@ func _process(delta: float) -> void:
 			and (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or force_log)
 	var log_ready := _left_out < 0.2 or not (_watch_on or log_wanted)   # erst heben, wenn der Arm im Bild ist
 	log_raise = move_toward(log_raise, 1.0 if log_wanted and log_ready else 0.0, delta * LOG_SPEED)
-	var left_wanted := (_watch_on or build or log_wanted or log_raise > 0.0) and not GameState.dead
-	if build != _hammer.visible and _left_out >= 0.99:
-		_set_left_mode(build)
-	if left_wanted and (build == _hammer.visible):
+	# Belagerungsnacht: die Babyfon-Basisstation liegt in der linken Hand (Christian 27.11.)
+	var hold_bf := (SiegeNight.current != null or force_babyfon) and not build and not log_wanted and log_raise <= 0.0
+	var mode := "build" if build else ("babyfon" if hold_bf else "watch")
+	var left_wanted := (_watch_on or build or hold_bf or log_wanted or log_raise > 0.0) and not GameState.dead
+	if mode != _left_mode and _left_out >= 0.99:
+		_set_left_mode(mode)
+	if left_wanted and mode == _left_mode:
 		_left_out = move_toward(_left_out, 0.0, delta * SWITCH_SPEED)
 	else:
 		_left_out = move_toward(_left_out, 1.0, delta * SWITCH_SPEED)
@@ -1205,6 +1231,10 @@ func _pose_left(delta: float = 0.0) -> void:
 	var e := _left_out * _left_out
 	_left.position = LEFT_REST + Vector3(0, -HIDE_DROP * e, 0) + Vector3(0, sin(_time * 1.7 + 1.0) * 0.0025, 0)
 	_left.rotation_degrees = Vector3(-35.0 * e, 0, sin(_time * 1.1 + 0.6) * 0.5)
+	if _left_mode == "babyfon":
+		# Babyfon etwas angehoben und zur Mitte, damit man das Display lesen kann
+		_left.position += babyfon_offset
+		_left.rotation_degrees += babyfon_rot
 	if _hammer.visible:
 		# Hammer etwas weiter ins Bild
 		_left.position += Vector3(0.02, -0.03, -0.05)
@@ -1225,6 +1255,11 @@ func _pose_left(delta: float = 0.0) -> void:
 		_left.rotation_degrees += log_rot * k
 	_update_log_display()
 	_update_compass(delta)
+	# Mit dem Babyfon in der Hand ist das Handgelenk gedreht – die LED leuchtet trotzdem dorthin, wohin man schaut
+	if _left_mode == "babyfon" and is_inside_tree():
+		watch_light.global_basis = global_basis * Basis.from_euler(Vector3(deg_to_rad(-3.0), deg_to_rad(5.0), 0.0))
+	elif watch_light.rotation_degrees != WATCH_LIGHT_ROT:
+		watch_light.rotation_degrees = WATCH_LIGHT_ROT
 
 
 ## Display beim Blick auf die Aufgaben: Checkliste statt Kompass, Display leuchtet von selbst.

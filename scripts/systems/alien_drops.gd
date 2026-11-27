@@ -171,12 +171,8 @@ func morning(kinds: Array) -> Array:
 			continue
 		spawn(String(dd["item"]), pos)
 		out.append(String(dd["item"]))
-	# Aufnahmen der eigenen Kameras
-	if not Supplies.cameras.is_empty():
-		if kinds.has("creature") and _rng.randf() < 0.6:
-			add_footage("rec_creature")
-		if kinds.has("drone") and _rng.randf() < 0.6:
-			add_footage("rec_drone")
+	# Aufnahmen der eigenen Kameras entstehen nur noch, wenn eine Kamera das echte Wesen gefilmt hat
+	# (Surveillance._check_filming) – nicht mehr per Zufall am Morgen (Christian 27.11.).
 	return out
 
 

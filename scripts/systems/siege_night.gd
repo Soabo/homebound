@@ -58,7 +58,7 @@ func _ready() -> void:
 	for i in order.size():
 		tasks[order[i]] = {"p": 0.0, "on": i < n}
 	wind = 1.0
-	EventBus.notify("Sie kommen. Halte die Hütte bis zum Morgengrauen.", 5.0)
+	EventBus.notify("Sie kommen. Halte die Hütte bis zum Morgengrauen. Das Babyfon habe ich in der Hand – es zeigt mir, wo es brennt.", 6.0)
 	SoundBank.play_ui(self, "sting_creature", -4.0)
 	get_tree().call_group("music_box", "start_siege")
 	# noch nie erklärt (z. B. nach dem Laden mitten in der Nacht): jetzt erklären
@@ -456,7 +456,7 @@ func _on_noise(pos: Vector3, radius: float) -> void:
 	if radius >= 6.0 and _t - _noise_note_t > 40.0 and (active("attic") or active("window")):
 		_noise_note_t = _t
 		SoundBank.play_at(get_parent(), "scratch", Vector3(pos.x, Cabin.WALL_TOP + 0.6, pos.z), -6.0, 0.8)
-		EventBus.notify("Oben hört das Kratzen kurz auf. Dann ist es genau über dir. Leise sein!", 3.5)
+		EventBus.notify("Zu laut! Das Kratzen auf dem Dach verstummt – jetzt ist es genau über mir. Es hört jeden Schritt. Leise gehen (Alt) oder ducken (Strg).", 5.0)
 
 
 func is_safe(p: Player) -> bool:
@@ -615,6 +615,31 @@ func finish(survived: bool) -> void:
 
 
 ## Für das Babyfon: Druck je Raum (Kinderzimmer, Dachboden, Keller), -1 = nicht aktiv heute Nacht.
+## Babyfon 2.0 (Christian 27.11.): nur die Aufgaben dieser Nacht, jeweils mit Raum und Druck 0..1.
+## Fenster: Raum des Fensters, an dem sie gerade steht (sonst „Fenster“).
+const WINDOW_ROOMS := {"WindowLiving": "Stube", "WindowBedroom": "Schlafz.", "WindowKids": "Kinderz.",
+		"WindowKidsNorth": "Kinderz.", "WindowOffice": "Büro", "WindowOfficeWest": "Büro", "WindowTechnical": "Bad",
+		"WindowWorkshopEast": "Werkst.", "WindowWorkshopFront": "Werkst."}
+const ROW_LABELS := {"music": "Spieluhr · Kinderz.", "attic": "Dachboden · Luke", "cellar": "Keller · Mauer", "fake": "Etwas rückt näher"}
+
+
+func monitor_rows() -> Array:
+	var out := []
+	for id: String in TASK_ORDER:
+		if not active(id):
+			continue
+		var label := String(ROW_LABELS.get(id, id))
+		if id == "window":
+			label = "Fenster"
+			if _stalker_phase != "away" and is_instance_valid(_window):
+				label = "Fenster · %s" % String(WINDOW_ROOMS.get(String(_window.name), "?"))
+		var lv := pressure(id)
+		if id == "window" and _stalker_phase == "approach":
+			lv = maxf(lv, 0.2)   # sie ist schon unterwegs zu diesem Fenster
+		out.append({"id": id, "label": label, "level": lv})
+	return out
+
+
 func monitor_levels() -> Array:
 	var out := []
 	for id: String in ["music", "attic", "cellar"]:

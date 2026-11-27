@@ -1,5 +1,5 @@
 {
-  "_info": "Baupläne, die nach und nach freigeschaltet werden (Christian 12.11.2026). Rezepte in data/items/recipes.json verweisen mit \"blueprint\" auf eine ID hier. on = Auslöser: item (Gegenstand zum ersten Mal im Rucksack, auch Liste), flag (Tasks.flag, z. B. unrest_night = Morgen nach der ersten Nacht mit Alien-Aktivität, creature_visited = Kreatur war am Haus, radio_day_N = Funkmeldung von Tag N gehört), fuel_below (Dieseltank in Prozent). Ohne on = Bauplan muss in der Welt gefunden werden (PlaceKit.blueprint). hint = graue Zeile an der Werkbank, text = Meldung beim Freischalten. Holzsachen (Bretter, Nägel, Holzzaun) brauchen keinen Bauplan.",
+  "_info": "Baupläne, die nach und nach freigeschaltet werden (Christian 12.11.2026). Rezepte in data/items/recipes.json verweisen mit \"blueprint\" auf eine ID hier. on = Auslöser: item (Gegenstand zum ersten Mal im Rucksack, auch Liste), flag (Tasks.flag, z. B. unrest_night = Morgen nach der ersten Nacht mit Alien-Aktivität, creature_visited = Kreatur war am Haus, radio_day_N = Funkmeldung von Tag N gehört), fuel_below (Dieseltank in Prozent), task (sobald diese Aufgabe aus tasks.json freigeschaltet ist). Ohne on = Bauplan muss in der Welt gefunden werden (PlaceKit.blueprint). hint = graue Zeile an der Werkbank, text = Meldung beim Freischalten. Holzsachen (Bretter, Nägel, Holzzaun) brauchen keinen Bauplan.",
   "bp_stone": {
     "on": {"item": "stone"},
     "hint": "Dafür fehlen noch Steine.",
@@ -35,7 +35,7 @@
     "text": "Georg Wendts Anleitung: Bärenfalle und Kleintierschlinge. (Werkbank)"
   },
   "bp_filter": {
-    "on": {"flag": "radio_day_7", "item": "water_tainted"},
+    "on": {"flag": "radio_day_7", "item": "water_tainted", "task": "filter"},
     "hint": "Solange das Wasser sauber ist, braucht man keinen Filter.",
     "text": "Das Wasser im Tal ist nicht mehr sicher. Ein Filter aus Holzkohle und Dosen müsste helfen. (Werkbank)"
   },
@@ -44,8 +44,8 @@
     "text": "Anleitung für eine Leuchte mit Bewegungsmelder. (Werkbank)"
   },
   "bp_gasifier": {
-    "on": {"fuel_below": 20},
+    "on": {"fuel_below": 20, "task": "gasifier"},
     "hint": "Solange Diesel da ist, denkt man nicht daran.",
-    "text": "Der Diesel wird knapp. Im Schuppen lag doch das alte Handbuch für einen Holzvergaser … (Werkbank)"
+    "text": "Im Schuppen lag doch das alte Handbuch für einen Holzvergaser – damit kann ich den Bausatz an der Werkbank bauen."
   }
 }

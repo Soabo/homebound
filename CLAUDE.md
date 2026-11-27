@@ -964,7 +964,7 @@
 - Holz gibt es immer einzeln (Talstämme, Waldstämme, Polter, Holzstapel am Schuppen `woodpile.per_take` 1; Steine weiter 2).
 - „Radio“ heißt in allen Texten „Funkgerät“ (Knoten/Klasse bleiben `Radio`, „Autoradio“ am Wrack bleibt).
 - Analysegerät Stufe 2 steht weiter vorn auf dem Funktisch. Umzugskarton: geöffnet steht er herausgezogen vor dem Tisch
-  (`MovingBox.PULL`), damit der Deckel nicht durch die Platte geht. Schaukelstuhl-Lehne neigt nach hinten.
+  (seit 27.11.: bleibt unter dem Tisch, Deckel ist dann „aufgerissen“ weg – `MovingBox._torn`). Schaukelstuhl-Lehne neigt nach hinten.
 - Drudenfuß-Brett über der Haustür: liegt auf den Stämmen (HALF_Z + LOG_R), zwischen Türzarge und Vordach; Kreide auf dem Brett,
   `shaded` (leuchtet nicht mehr). Der Drudenfuß ist Absicht (Waldlerhaus, Schutzzeichen gegen die Drud).
 - Holzlager `WoodStore` (Cabin/WoodStore, Werkstatt-Ostwand statt Sägebock, persistent): bis 20 Scheite sichtbar, [E] eins nehmen,
@@ -987,6 +987,25 @@
   (Echtzeit-Prüfung `RegressTest._t_siege_kids_2711`, auch mit Software-Grafik: Bilder laufen weiter, Speicher bleibt gleich). Vermutlich
   Grafiktreiber. Vorsicht: Blitz-Licht ohne Schatten/Volumennebel; Protokollzeilen `[Siege] Fenster …` und `[Blitz] bei …` in godot.log
   (Windows: %APPDATA%\Godot\app_userdata\Homebound\logs\). Optionen `--kids-ms=`, `--kids-log` (Bildzeit + Speicher je Bild).
+
+## Christians Liste 27.11. abends (bis Tag 7 gespielt)
+- Speicherkarten `rec_creature`/`rec_drone` nur, wenn eine eingebaute Kamera mit Strom das echte Wesen im Bild hat
+  (`Surveillance._check_filming`/`filmed(pos, who)`: Blickkegel, `FILM_RANGE`, freie Sicht). Lauernde Monitor-Gestalt und Zufall am Morgen geben keine mehr.
+- Konserven geschlossen: `HandItems.can_body(…, top)` closed (Standard, Deckel bis zur Mitte) | open (Handmodell mit eigenem Deckel) |
+  empty (leere Dosen: Innenwand + Boden sichtbar, beidseitig).
+- Einmaliger Gedanke „nicht verlaufen“ ab story.json `lost_hint.distance` (60 m) von der Hütte (`Story._check_lost_hint`, Flag `hint_lost`).
+- Uhr-Display-Licht 0,85 (vorher 0,55), Reichweite 5,5 m.
+- Baupläne: blueprints.json `on.task` = frei, sobald die Aufgabe freigeschaltet ist (Holzvergaser, Wasserfilter); `Research.check_unlocks` hört auf `Tasks.changed`.
+- Tablet: 19 neue Nachrichten bis Tag 39 (mind. jeden 2. Tag): Katrin (Schwester), Waldkurier, Kanzlei/Polizei zum Unfall (Fahrtenschreiber-Lücke,
+  Handy an der Raststätte, Brief des Fahrers), beschädigte Nachrichten ohne Absender, Stefanies Entwurf („die Mappe NICHT vergessen“). Unfall = 17. November.
+- Viertes Totenbrett „CHRISTIAN“ (map.json totenbretter `fourth`, `StoryProps.fourth_board`/`set_fourth_board`): `Dread._check_fourth_board`,
+  ThreatConfig `fourth_board_*` (ab Tag, Chance/Tag, Abstand). Taucht nur auf, wenn man weit weg ist, erschreckt aus der Nähe, weg nach dem Entfernen.
+- Belagerung: Lärm-Meldung klarer („Zu laut! … Leise gehen (Alt) oder ducken (Strg)“).
+- Babyfon 2.0: In der Belagerungsnacht hält man die Basisstation links (`BabyfonHandheld`, PlayerHands `_left_mode` watch|build|babyfon,
+  `babyfon_offset/rot`, LED zielt trotzdem nach vorn). Zeilen = nur die Aufgaben dieser Nacht (`SiegeNight.monitor_rows`: Fenster mit Raum,
+  Spieluhr, Dachboden, Keller, Falsches Ding), dringendste blinkt, Piepen bei Rot. Schreibtisch-Babyfon ist dann weg. Vorschau: hands_preview `--left=babyfon`.
+- Messstelle 4-Nord: Wartungsprotokoll (Spur-Bedingung `note:messstelle_log`) jetzt großes beschriftetes Klemmbrett über dem Tisch, Hinweis nennt es.
+- Prüfung `RegressTest._t_fixes_2711`.
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

@@ -131,7 +131,8 @@
     {"text": "Zum frommen\nAndenken an\n\nSTEFANIE\n\nMama", "color": [0.86, 0.82, 0.72]},
     {"text": "Zum frommen\nAndenken an\n\nLENA\n9 Jahre\n\nunser\nSonnenschein", "color": [0.80, 0.86, 0.90]},
     {"text": "Zum frommen\nAndenken an\n\nBEN\n6 Jahre\n\nunser\nKleiner", "color": [0.86, 0.88, 0.78]}
-  ]},
+  ],
+  "fourth": {"text": "Zum frommen\nAndenken an\n\nCHRISTIAN\n\nPapa", "color": [0.62, 0.58, 0.5]}},
   "wendt_boxes": [
     {"note": "wendt_kp1", "place": "kapelle", "nr": 1},
     {"note": "wendt_kp2", "place": "friedhof", "nr": 2},

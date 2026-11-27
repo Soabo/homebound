@@ -50,8 +50,13 @@ static func _messstelle(root: Node3D) -> void:
 	PlaceKit.loot(c, "Keycard", "keycard_m4", 1, Vector3(1.1, 0.83, -0.7), "card")
 	PlaceKit.loot(c, "Protocols", "rz_protocol", 1, Vector3(0.75, 0.83, -0.75), "paper")
 	PlaceKit.blueprint(c, "bp_winch", "Kabelwinde", Vector3(1.7, 0.83, -0.85))
-	PlaceKit.note(c, "messstelle_log", Vector3(2.2, 1.4, -1.22), true)
-	BuildKit.box(c, Vector3(0.24, 0.32, 0.01), Vector3(2.2, 1.4, -1.24), PlaceKit.mat("paper"), false)
+	# Wartungsprotokoll: Klemmbrett an der Wand über dem Tisch – groß und beschriftet (Christian 27.11.: wurde übersehen)
+	PlaceKit.note(c, "messstelle_log", Vector3(2.1, 1.3, -1.12), true)
+	BuildKit.box(c, Vector3(0.34, 0.46, 0.015), Vector3(2.1, 1.42, -1.25), PlaceKit.mat("wood_old"), false)
+	BuildKit.box(c, Vector3(0.28, 0.38, 0.004), Vector3(2.1, 1.4, -1.24), PlaceKit.mat("paper"), false)
+	BuildKit.box(c, Vector3(0.12, 0.035, 0.02), Vector3(2.1, 1.63, -1.235), PlaceKit.mat("metal"), false)
+	var log_lab := label(c, "WARTUNGS-\nPROTOKOLL\nMP4-N", Vector3(2.1, 1.5, -1.236), 18, Color(0.08, 0.08, 0.1))
+	log_lab.pixel_size = 0.0035
 	# Mast mit Schüssel
 	var g := PlaceKit.ground(root, 5.5, 3.5)
 	BuildKit.cylinder(root, 0.07, 7.0, Vector3(5.5, g + 3.5, 3.5), PlaceKit.mat("metal"), true, Vector3.ZERO, 0.05, 8)

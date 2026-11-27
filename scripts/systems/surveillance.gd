@@ -164,6 +164,10 @@ func _process(delta: float) -> void:
 		_remove_lurker()
 	_was_viewing = viewing
 	_update_lurker(delta)
+	_film_t -= delta
+	if _film_t <= 0.0:
+		_film_t = 0.5
+		_check_filming()
 	if _phantom and _time > _phantom_until:
 		_phantom.queue_free()
 		_phantom = null
@@ -256,6 +260,57 @@ func spawn_lurker(only_spot: int = -1) -> bool:
 	return false
 
 
+## Aufnahmen gibt es nur, wenn eine eingebaute Kamera mit Strom das echte Wesen im Bild hatte
+## (Kreatur bzw. Drohne). Die Gestalt, die nur auf dem Monitor lauert, zählt nicht.
+var _film_t: float = 0.0
+const FILM_RANGE := 26.0
+
+
+func _check_filming() -> void:
+	if not PowerManager.has_power():
+		return
+	var drops := AlienDrops.get_for(get_tree())
+	if drops == null:
+		return
+	if not drops.footage.has("rec_creature") and Inventory.count("rec_creature") <= 0 and not Research.done.has("an_rec_creature"):
+		for c in get_tree().get_nodes_in_group("creature"):
+			if c is Creature and filmed(c.global_position + Vector3(0, 1.2, 0), c):
+				drops.add_footage("rec_creature")
+				break
+	if not drops.footage.has("rec_drone") and Inventory.count("rec_drone") <= 0 and not Research.done.has("an_rec_drone"):
+		for d in get_tree().get_nodes_in_group("drone"):
+			if d is Node3D and filmed((d as Node3D).global_position, d):
+				drops.add_footage("rec_drone")
+				break
+
+
+## Hat irgendeine eingebaute Kamera diesen Punkt im Bild (Blickkegel, Reichweite, freie Sicht)?
+func filmed(pos: Vector3, who: Node = null) -> bool:
+	for cam: SecurityCamera in cameras:
+		if cam == null or not is_instance_valid(cam) or not cam.is_inside_tree():
+			continue
+		var eye := cam.eye_transform()
+		var to := pos - eye.origin
+		var dist := to.length()
+		if dist > FILM_RANGE or dist < 0.3:
+			continue
+		var fwd := -eye.basis.z.normalized()
+		if fwd.dot(to / dist) < cos(deg_to_rad(cam.fov * 0.5)):
+			continue
+		var q := PhysicsRayQueryParameters3D.create(eye.origin + fwd * 0.2, pos)
+		var space := cam.get_world_3d().direct_space_state
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			return true
+		var col: Object = hit.get("collider")
+		var n := col as Node
+		while n != null:
+			if n == who:
+				return true
+			n = n.get_parent()
+	return false
+
+
 func _porch_height(p: Vector3) -> float:
 	# Veranda vor der Hütte liegt etwas höher als das Gelände
 	if p.z > Cabin.HALF_Z and p.z < Cabin.HALF_Z + 1.6 and p.x > -6.0 and p.x < 1.6:
@@ -265,10 +320,7 @@ func _porch_height(p: Vector3) -> float:
 
 func _build_lurker(pos: Vector3, kind: String) -> void:
 	_last_lurk = _time
-	# Forschung 2.0: Die Kamera hat sie aufgezeichnet – am Monitor abholen
-	var drops := AlienDrops.get_for(get_tree())
-	if drops and Inventory.count("rec_creature") <= 0 and not Research.done.has("an_rec_creature"):
-		drops.add_footage("rec_creature")
+	# Die lauernde Gestalt gibt es nur auf dem Bildschirm – sie ist keine Aufnahme wert (Christian 27.11.).
 	_lurker = Node3D.new()
 	_lurker.name = "CameraLurker"
 	get_tree().current_scene.add_child(_lurker)

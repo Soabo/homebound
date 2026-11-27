@@ -51,6 +51,7 @@ func _process(delta: float) -> void:
 	update(true)
 	_check_deadline()
 	_check_packing()
+	_check_lost_hint()
 
 
 ## Alles einmal prüfen: Hinweise, Phasen, Spuren. announce = Gedanken/Meldungen zeigen.
@@ -283,6 +284,27 @@ func packing_status() -> Array:
 			have = Inventory.count_fuel()
 		out.append({"label": it["label"], "have": have, "need": need, "ok": have >= need, "optional": bool(it.get("optional", false))})
 	return out
+
+
+## Christian 27.11.: Wer sich zum ersten Mal weit von der Hütte entfernt, bekommt einmalig die Warnung, sich nicht zu verlaufen.
+var _lost_t: float = 0.0
+
+
+func _check_lost_hint() -> void:
+	if Tasks.flags.has("hint_lost"):
+		return
+	_lost_t -= get_process_delta_time()
+	if _lost_t > 0.0:
+		return
+	_lost_t = 1.0
+	var p := get_tree().get_first_node_in_group("player") as Node3D
+	if p == null:
+		return
+	var lh: Dictionary = data().get("lost_hint", {})
+	if Vector2(p.global_position.x, p.global_position.z).length() < float(lh.get("distance", 60.0)):
+		return
+	Tasks.flag("hint_lost")
+	EventBus.notify(String(lh.get("text", "")), float(lh.get("seconds", 8.0)))
 
 
 func _check_packing() -> void:

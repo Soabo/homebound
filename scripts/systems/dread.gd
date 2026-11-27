@@ -54,6 +54,7 @@ func _process(delta: float) -> void:
 	if night != _night_key:
 		_night_key = night
 		_reset_night()
+	_check_fourth_board(player, delta)
 	if TimeManager.is_night():
 		_check_hiding(player, delta)
 		_check_stillness(player, delta)
@@ -203,6 +204,65 @@ func escalate(kind: String) -> void:
 		td.call("_fire", "creature" if td.call("current_night") >= cfg().visit_from_night else "sighting")
 		return
 	td.call("_fire", kind)
+
+
+# --- Viertes Totenbrett (Christian 27.11.) ------------------------------------------
+# Manchmal steht neben Stefanie, Lena und Ben ein viertes Brett: „CHRISTIAN“. Es taucht nur auf, wenn man nicht
+# hinsieht (weit weg), erschreckt aus der Nähe und ist wieder weg, sobald man sich entfernt hat.
+var board_armed := false
+var board_shown := false
+var board_seen := false
+var last_board_day: int = -100
+var _board_day: int = -1
+var _board_t: float = 0.0
+
+
+func _check_fourth_board(player: Player, delta: float) -> void:
+	var c := cfg()
+	if TimeManager.day != _board_day:
+		_board_day = TimeManager.day
+		board_armed = TimeManager.day >= c.fourth_board_from_day and TimeManager.day - last_board_day >= c.fourth_board_gap \
+				and _rng.randf() < c.fourth_board_chance
+	_board_t -= delta
+	if _board_t > 0.0:
+		return
+	_board_t = 0.5
+	if StoryProps.fourth_board == null or not is_instance_valid(StoryProps.fourth_board):
+		return
+	update_fourth_board(player)
+
+
+func update_fourth_board(player: Player) -> void:
+	var c := cfg()
+	var b := StoryProps.fourth_board
+	var at := b.global_position + Vector3(0, 1.0, 0)
+	var dist := player.global_position.distance_to(at)
+	if not board_shown:
+		if board_armed and dist > c.fourth_board_show_distance:
+			board_shown = true
+			board_seen = false
+			StoryProps.set_fourth_board(true)
+		return
+	if not board_seen:
+		var cam := player.get_viewport().get_camera_3d()
+		if cam and dist < c.fourth_board_seen_distance and (-cam.global_basis.z).dot((at - cam.global_position).normalized()) > 0.75:
+			board_seen = true
+			last_board_day = TimeManager.day
+			EventBus.fear_spike.emit(c.fourth_board_fear)
+			var amb := get_tree().current_scene.get_node_or_null("NatureAmbience")
+			if amb and amb.has_method("silence_for"):
+				amb.call("silence_for", 12.0, true)
+		elif not board_armed and dist > c.fourth_board_show_distance:
+			_hide_fourth_board()   # neuer Tag, nie gesehen: still wieder weg
+		return
+	if dist > c.fourth_board_show_distance * 0.85:
+		_hide_fourth_board()
+
+
+func _hide_fourth_board() -> void:
+	board_shown = false
+	board_armed = false
+	StoryProps.set_fourth_board(false)
 
 
 # --- 3. Tagsüber -----------------------------------------------------------------

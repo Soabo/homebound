@@ -334,3 +334,14 @@ extends Resource
 ## Gesicht am Fenster bei Tag erst ab diesem Tag; Zerfleischer bei Tag nahe der Hütte ab Phase 2, mindestens so weit von der Hütte (m)
 @export var day_window_from_day: int = 7
 @export var day_mauler_min_distance: float = 35.0
+
+@export_group("Viertes Totenbrett (Christian 27.11.)")
+## Manchmal steht bei den drei Totenbrettern ein viertes: „CHRISTIAN“. Ab diesem Tag, Chance pro Tag,
+## mindestens so viele Tage Abstand. Es taucht nur auf, solange man weiter weg ist als show_distance (m),
+## erschreckt beim Hinsehen aus der Nähe (fear) und ist weg, sobald man sich danach wieder entfernt.
+@export var fourth_board_from_day: int = 4
+@export var fourth_board_chance: float = 0.25
+@export var fourth_board_gap: int = 4
+@export var fourth_board_show_distance: float = 35.0
+@export var fourth_board_seen_distance: float = 9.0
+@export var fourth_board_fear: float = 0.35

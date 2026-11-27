@@ -5,7 +5,7 @@ extends Node
 ## mode=rig:  nur die Hand in vier Ansichten      --pose=relaxed|fist|open|grip:0.017
 ## mode=item: ein Gegenstand in vier Ansichten    --item=axe|tin_snips|water|food|… (Gegenstands-ID)
 ## mode=fp:   Blick des Spielers                  --item=ID --action=swing --p=0.0,0.3,0.6 (mehrere Bilder: bild_0.png …)
-##            --left=watch|hammer|none  --log=0..1 (Uhr zum Gesicht, Aufgaben)  --night  --yaw=GRAD (Blickrichtung, für den Kompass)  --retro (mit Bildfilter)
+##            --left=watch|hammer|babyfon|none (--bfoff=x,y,z --bfrot=x,y,z)  --log=0..1 (Uhr zum Gesicht, Aufgaben)  --night  --yaw=GRAD (Blickrichtung, für den Kompass)  --retro (mit Bildfilter)
 
 var _args: Dictionary = {}
 
@@ -133,7 +133,17 @@ func _run_fp() -> void:
 	hands._right_out = 0.0
 	if left != "none":
 		if left == "hammer":
-			hands._set_left_mode(true)
+			hands._set_left_mode("build")
+		elif left == "babyfon":
+			hands._set_left_mode("babyfon")
+			hands._babyfon.preview_rows = [{"id": "window", "label": "Fenster · Kinderz.", "level": 0.82},
+					{"id": "music", "label": "Spieluhr · Kinderz.", "level": 0.35}, {"id": "attic", "label": "Dachboden · Luke", "level": 0.1}]
+			if _args.has("bfoff"):
+				var bo := _arg("bfoff", "0,0,0").split(",")
+				hands.babyfon_offset = Vector3(float(bo[0]), float(bo[1]), float(bo[2]))
+			if _args.has("bfrot"):
+				var br := _arg("bfrot", "0,0,0").split(",")
+				hands.babyfon_rot = Vector3(float(br[0]), float(br[1]), float(br[2]))
 		hands._left_out = 0.0
 		hands._left.visible = true
 	hands._right.visible = true

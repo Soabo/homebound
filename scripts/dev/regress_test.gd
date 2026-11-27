@@ -401,6 +401,7 @@ func _t_more() -> void:
 	await _t_ui_2611()
 	await _t_fixes_2611()
 	await _t_siege_kids_2711()
+	await _t_fixes_2711()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3180,7 +3181,7 @@ func _t_bayerwald_2411() -> void:
 	var edge := WorldMap.trail_info(p2.x, p2.y).x
 	var boards := 0
 	for c in tb.get_children():
-		if c.name.begins_with("Brett_"):
+		if c.name.begins_with("Brett_") and c.name != "Brett_Christian":   # das vierte steht nur manchmal da
 			boards += 1
 	_ok("Totenbretter: drei Bretter am Wegrand des Gunthersteigs (%.1f m neben dem Weg)" % edge,
 			boards == 3 and edge >= 0.9 and edge <= 2.6 and Terrain.yard_distance(p2.x, p2.y) >= 1.9 \
@@ -3886,7 +3887,7 @@ func _t_fixes_2611() -> void:
 	var was := box.opened
 	box.opened = true
 	box._apply()
-	_ok("Umzugskarton steht offen vor dem Tisch", box.position.z > z0 + 0.5 or was)
+	_ok("Umzugskarton bleibt offen unter dem Tisch, Deckel weg", absf(box.position.z - z0) < 0.01 and not box._lid.visible)
 	box.opened = was
 	box._apply()
 	var sign := cabin.get_node("Drudenfuss") as Node3D
@@ -3965,3 +3966,117 @@ func _t_siege_kids_2711() -> void:
 	p.global_position = keep
 	p.rotation = keep_rot
 	p.head.rotation = Vector3.ZERO
+
+
+## Christians Liste 27.11. abends (bis Tag 7 gespielt).
+func _t_fixes_2711() -> void:
+	var sc := _scene()
+	var p := _player()
+	var keep := p.global_position
+	# 1. Speicherkarte nur, wenn eine Kamera die echte Kreatur filmt – die lauernde Gestalt zählt nicht
+	var surv := get_tree().get_first_node_in_group("surveillance") as Surveillance
+	if surv == null:
+		surv = sc.find_child("Surveillance", true, false) as Surveillance
+	var drops := AlienDrops.get_for(get_tree())
+	_ok("Überwachung und Funde da", surv != null and drops != null)
+	if surv and drops:
+		if surv.cameras.is_empty() or not surv.installed(0):
+			surv.install_defaults()
+		var had := drops.footage.duplicate()
+		drops.footage.erase("rec_creature")
+		surv._build_lurker(Vector3(5.0, 0.0, 9.0), "crouch")
+		_ok("Lauernde Gestalt am Monitor gibt keine Speicherkarte", not drops.footage.has("rec_creature"))
+		surv._remove_lurker()
+		var cam: SecurityCamera = surv.cameras[0]
+		var eye := cam.eye_transform()
+		var front := eye.origin - eye.basis.z * 6.0
+		_ok("Kamera sieht, was vor ihr ist", surv.filmed(front))
+		_ok("Kamera sieht nicht, was hinter ihr ist", not surv.filmed(eye.origin + eye.basis.z * 6.0))
+		drops.footage = had
+	# 2. Umzugskarton bleibt unter dem Tisch (Prüfung in _t_fixes_2611), Deckel weg
+	# 3. Verlaufen-Hinweis einmalig
+	Tasks.flags.erase("hint_lost")
+	p.global_position = Vector3(0, Terrain.height_at(0, -75) + 1.0, -75)
+	Story._lost_t = 0.0
+	Story._check_lost_hint()
+	var hud := get_tree().get_first_node_in_group("hud") as Hud
+	_ok("Weit weg vom Haus: Hinweis aufs Verlaufen (einmalig)", Tasks.flags.has("hint_lost") and hud != null and hud.current_notification().contains("verlaufen"))
+	p.global_position = keep
+	# 4. Display-Licht heller
+	p.hands.set_watch(true)
+	if not p.hands.screen_mode:
+		p.hands.toggle_screen_mode()
+	_ok("Uhr-Display leuchtet heller (≥ 0,8)", p.hands._screen_light.light_energy >= 0.8)
+	p.hands.toggle_screen_mode()
+	p.hands.set_watch(false)
+	# 5. Holzvergaser: Aufgabe da → Bauplan da
+	var had_bp := Research.blueprints.has("bp_gasifier")
+	Research.blueprints.erase("bp_gasifier")
+	var had_task := Tasks.unlocked.has("gasifier")
+	if not had_task:
+		Tasks.unlocked.append("gasifier")
+	Research.check_unlocks()
+	_ok("Aufgabe Holzvergaser schaltet den Bauplan frei", Research.blueprints.has("bp_gasifier"))
+	if not had_task:
+		Tasks.unlocked.erase("gasifier")
+	if not had_bp:
+		Research.blueprints.erase("bp_gasifier")
+	# 6. Posteingang: mindestens jeden zweiten Tag etwas Neues
+	var days := {}
+	for m: Dictionary in (DataDB.load_json("res://data/tablet/tablet.json") as Dictionary)["messages"]:
+		if not m.get("old", false):
+			days[int(m.get("day", 1))] = true
+	var gap := 0
+	var worst := 0
+	for d in range(1, 40):
+		gap = 0 if days.has(d) else gap + 1
+		worst = maxi(worst, gap)
+	_ok("Tablet: bis Tag 39 höchstens ein Tag ohne neue Nachricht", worst <= 1, "längste Lücke %d" % worst)
+	# 7. Viertes Totenbrett
+	var dr: Dread = ThreatDirector.dread
+	_ok("Viertes Totenbrett gebaut und versteckt", StoryProps.fourth_board != null and not StoryProps.fourth_board.visible)
+	if dr and StoryProps.fourth_board:
+		var b := StoryProps.fourth_board
+		dr.board_armed = true
+		dr.board_shown = false
+		p.global_position = b.global_position + Vector3(0, 0, 60)
+		dr.update_fourth_board(p)
+		_ok("Viertes Brett steht da, wenn man weit weg ist", b.visible and b.process_mode != Node.PROCESS_MODE_DISABLED)
+		dr.board_seen = true
+		p.global_position = b.global_position + Vector3(0, 0, 60)
+		dr.update_fourth_board(p)
+		_ok("… und ist weg, sobald man sich nach dem Sehen entfernt", not b.visible and b.process_mode == Node.PROCESS_MODE_DISABLED)
+		p.global_position = keep
+	# 8./9. Belagerung: Babyfon in der linken Hand, nur Aufgaben dieser Nacht
+	var s := SiegeNight.new()
+	s.cfg = ThreatDirector.config
+	s.index = 0
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	s.set_process(false)
+	sc.add_child(s)
+	var rows := s.monitor_rows()
+	var on := s.tasks.keys().filter(func(k: String) -> bool: return s.tasks[k]["on"])
+	_ok("Babyfon zeigt genau die Aufgaben der Nacht", rows.size() == on.size(), "%s / %s" % [str(rows.map(func(r: Dictionary) -> String: return r["id"])), str(on)])
+	for i in 40:
+		await get_tree().process_frame
+	_ok("Belagerung: Babyfon liegt in der linken Hand", p.hands._left_mode == "babyfon" and p.hands._babyfon.visible)
+	var desk := get_tree().get_first_node_in_group("babyfon") as Node3D
+	_ok("… und fehlt auf dem Schreibtisch", desk == null or not desk.visible)
+	s.finish(true)
+	for i in 40:
+		await get_tree().process_frame
+	_ok("Nach der Belagerung wieder Uhr-Hand", p.hands._left_mode == "watch")
+	_ok("Belagerungs-Meldung erklärt, was los ist", FileAccess.get_file_as_string("res://scripts/systems/siege_night.gd").contains("Zu laut!"))
+	# 10. Messstelle: Protokoll gut sichtbar an der Wand
+	# 12. Konserven geschlossen: Deckel bis zur Mitte
+	var tmp := Node3D.new()
+	sc.add_child(tmp)
+	var can := HandItems.can_body(tmp, Vector3.ZERO)
+	var mi := can.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	var top_center := false
+	for v: Vector3 in mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		if v.y > 0.1 and Vector2(v.x, v.z).length() < 0.001:
+			top_center = true
+	_ok("Konserve hat einen geschlossenen Deckel", top_center)
+	tmp.queue_free()
+	p.global_position = keep

@@ -32,6 +32,23 @@ func _ready() -> void:
 	add_child(_lid)
 	BuildKit.box(_lid, Vector3(0.5, 0.01, 0.38), Vector3(0, 0, 0.19), card, false)
 	BuildKit.box(_lid, Vector3(0.5, 0.004, 0.05), Vector3(0, 0.007, 0.19), BuildKit.color_mat(Color(0.75, 0.7, 0.5)), false)
+	# Geöffnet: Deckel aufgerissen – nur zerfetzte Reste mit Klebeband stehen am Rand (Christian 27.11.)
+	_torn = Node3D.new()
+	add_child(_torn)
+	var tape := BuildKit.color_mat(Color(0.75, 0.7, 0.5))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 17
+	for s: float in [-1.0, 1.0]:
+		var x := -0.21
+		while x < 0.21:
+			var w := rng.randf_range(0.04, 0.09)
+			var hgt := rng.randf_range(0.012, 0.045)
+			BuildKit.box(_torn, Vector3(w, hgt, 0.01), Vector3(x + w * 0.5, 0.3 + hgt * 0.5, s * 0.19), card, false,
+					Vector3(s * rng.randf_range(15.0, 40.0), 0, rng.randf_range(-6.0, 6.0)))
+			x += w + rng.randf_range(0.005, 0.02)
+		BuildKit.box(_torn, Vector3(0.012, rng.randf_range(0.015, 0.03), rng.randf_range(0.12, 0.3)), Vector3(s * 0.25, 0.31, rng.randf_range(-0.05, 0.05)), card, false,
+				Vector3(0, 0, -s * rng.randf_range(15.0, 35.0)))
+		BuildKit.box(_torn, Vector3(0.08, 0.003, 0.03), Vector3(rng.randf_range(-0.1, 0.1), 0.303, s * 0.2), tape, false, Vector3(s * 30.0, 0, 0))
 	# Inhalt: Helm, Ordner, W-17
 	BuildKit.sphere(self, 0.13, Vector3(-0.12, 0.18, 0.0), BuildKit.color_mat(Color(0.95, 0.85, 0.2), 0.5), Vector3(1.0, 0.7, 1.15), 10)
 	BuildKit.box(self, Vector3(0.22, 0.04, 0.3), Vector3(0.12, 0.05, 0.0), BuildKit.color_mat(Color(0.2, 0.3, 0.55), 0.7), false)
@@ -50,16 +67,13 @@ func _ready() -> void:
 	_apply()
 
 
-## Geöffnet steht der Karton vor dem Funktisch: so weit herausgezogen, dass der Deckel nicht durch die Tischplatte geht.
-const PULL := 0.62
-var _home_z := INF
+## Der Karton bleibt unter dem Funktisch stehen. Geöffnet ist der Deckel einfach weg (aufgerissen), statt aufzuklappen.
+var _torn: Node3D
 
 
 func _apply() -> void:
-	if _home_z == INF:
-		_home_z = position.z
-	position.z = _home_z + (PULL if opened else 0.0)
-	_lid.rotation_degrees.x = -105.0 if opened else 0.0
+	_lid.visible = not opened
+	_torn.visible = opened
 	_w17_vis.visible = not w17_taken
 
 

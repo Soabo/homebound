@@ -59,6 +59,7 @@ func _ready() -> void:
 	Inventory.changed.connect(_on_inventory_changed)
 	EventBus.flag_set.connect(func(_n: String) -> void: check_unlocks())
 	PowerManager.fuel_changed.connect(func(_f: float) -> void: check_unlocks())
+	Tasks.changed.connect(check_unlocks)
 
 
 func data() -> Dictionary:
@@ -137,6 +138,9 @@ func check_unlocks() -> void:
 			hit = hit or Tasks.flags.has(String(on["flag"]))
 		if on.has("fuel_below"):
 			hit = hit or PowerManager.fuel < float(on["fuel_below"])
+		# Christian 27.11.: Sobald eine Aufgabe zum Bau auffordert, muss auch der Bauplan da sein.
+		if on.has("task"):
+			hit = hit or Tasks.unlocked.has(String(on["task"])) or Tasks.done.has(String(on["task"]))
 		if hit:
 			unlock_blueprint(id)
 
