@@ -119,6 +119,13 @@ const PHOTO_SETS := {
 	"furn_table": "res://assets/textures/ground/furn_table_",
 	"furn_cabinet": "res://assets/textures/ground/furn_cabinet_",
 	"furn_painted": "res://assets/textures/ground/furn_painted_",
+	# Stoffe (Christian 27.11., Poly Haven CC0): Couch, Bettwäsche, Vorhänge, Säcke, Kinderbett, Wolldecke
+	"fab_couch": "res://assets/textures/ground/fab_couch_",
+	"fab_bed": "res://assets/textures/ground/fab_bed_",
+	"fab_curtain": "res://assets/textures/ground/fab_curtain_",
+	"fab_sack": "res://assets/textures/ground/fab_sack_",
+	"fab_kids": "res://assets/textures/ground/fab_kids_",
+	"fab_blanket": "res://assets/textures/ground/fab_blanket_",
 	"gred": "res://assets/textures/ground/gred_",
 	"plank_wall": "res://assets/textures/ground/plank_wall_",
 }

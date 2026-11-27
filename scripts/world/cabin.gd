@@ -486,8 +486,8 @@ func _build_openings() -> void:
 	_shutters(Vector3(4.0, FLOOR_Y + 1.0, HALF_Z + 0.2), 0.0, 1.0, 0.9)
 	_shutters(Vector3(-3.5, FLOOR_Y + 1.0, -HALF_Z - 0.2), 180.0, 1.0, 0.9)
 	# Vorhänge innen
-	_curtains(Vector3(0.0, FLOOR_Y + 2.15, HALF_Z - CLAD - 0.08), 0.0, 1.3, BuildKit.tex_mat("fabric", 0.6, Color(1.5, 1.3, 0.95)), "WindowLiving")
-	_curtains(Vector3(-3.5, FLOOR_Y + 2.05, -HALF_Z + CLAD + 0.08), 180.0, 1.0, BuildKit.tex_mat("fabric_red", 0.6), "WindowBedroom")
+	_curtains(Vector3(0.0, FLOOR_Y + 2.15, HALF_Z - CLAD - 0.08), 0.0, 1.3, Look.photo_mat(BuildKit.tex_mat("fabric", 0.6, Color(1.5, 1.3, 0.95)), "fab_curtain", 0.6, Color(1.0, 0.92, 0.85)), "WindowLiving")
+	_curtains(Vector3(-3.5, FLOOR_Y + 2.05, -HALF_Z + CLAD + 0.08), 180.0, 1.0, Look.photo_mat(BuildKit.tex_mat("fabric_red", 0.6), "fab_curtain", 0.6), "WindowBedroom")
 
 
 func _window(node_name: String, pos: Vector3, rot_y: float, w: float, h: float) -> void:
@@ -532,6 +532,8 @@ func _curtains(rod_pos: Vector3, rot_y: float, w: float, mat: Material, window_n
 			n.add_child(pivot)
 			BuildKit.box(pivot, Vector3(0.1, 1.4, 0.02), Vector3(0, -0.72, 0), mat, false)
 			n.panels.append(pivot)
+	# Stoff schwingt: Muster am Vorhang festmachen (sonst „schwimmt“ es beim Wehen)
+	BuildKit.localize_materials(n)
 
 
 # --- Abnutzung: ausgetretene Laufwege, Flecken, Wasserränder, Ruß --------
@@ -868,7 +870,7 @@ func _sofa(pos: Vector3, rot_y: float) -> void:
 	n.position = pos
 	n.rotation_degrees.y = rot_y
 	add_child(n)
-	var fabric := BuildKit.tex_mat("fabric", 0.5)
+	var fabric := Look.photo_mat(BuildKit.tex_mat("fabric", 0.5), "fab_couch", 0.5)
 	var leg := m_wood_dark
 	# Lokale Achsen: Sitzfläche entlang x, Front zeigt nach -z
 	BuildKit.box_mm(n, Vector3(-0.85, 0.1, -0.45), Vector3(0.85, 0.32, 0.45), fabric, true)
@@ -884,7 +886,7 @@ func _sofa(pos: Vector3, rot_y: float) -> void:
 	BuildKit.box(n, Vector3(0.38, 0.36, 0.12), Vector3(-0.55, 0.62, 0.08), BuildKit.tex_mat("blanket", 0.3), false, Vector3(-15, 10, 0))
 	BuildKit.box(n, Vector3(0.36, 0.34, 0.12), Vector3(0.6, 0.6, 0.08), BuildKit.tex_mat("fabric_red", 0.3), false, Vector3(-15, -12, 5))
 	# Wolldecke über der Lehne
-	BuildKit.box(n, Vector3(0.6, 0.02, 0.5), Vector3(0.1, 0.86, 0.2), BuildKit.tex_mat("blanket", 0.5), false, Vector3(-70, 0, 0))
+	BuildKit.box(n, Vector3(0.6, 0.02, 0.5), Vector3(0.1, 0.86, 0.2), Look.photo_mat(BuildKit.tex_mat("blanket", 0.5), "fab_blanket", 0.5), false, Vector3(-70, 0, 0))
 
 
 func _rocking_chair(pos: Vector3, rot_y: float) -> void:

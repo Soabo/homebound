@@ -979,6 +979,14 @@
   stellt selbst auf „klar“.
 - Schnelle Hüttenansicht ohne Welt (wenig Speicher, Sekunden): `scenes/dev/cabin_preview.tscn -- --out=… --cam=x,y,z --look=x,y,z [--open=MovingBox]`.
 - Prüfung `RegressTest._t_fixes_2611`.
+- Stoff-Texturen (Christian 27.11., Poly Haven CC0, `tools/textures_prep4.py`, Webmuster aus der Höhenkarte in die Farbe, nur klarer Stil,
+  über `Look.photo_mat`): `fab_couch` (Sofa), `fab_bed` (Bettlaken/Kissen, Bens Bettwäsche), `fab_blanket` (Wolldecken: Bett, Sofa, Kinderzimmer-Höhle),
+  `fab_curtain` (Vorhänge Wohn- und Schlafzimmer; `_curtains` ruft `BuildKit.localize_materials`, damit das Muster beim Wehen nicht schwimmt),
+  `fab_kids` (Lenas Bettwäsche), `fab_sack` (Kellersäcke).
+- Absturz 27.11. (Belagerung, Kinderzimmerfenster angeleuchtet → Blitz blieb als Standbild stehen, Spiel beendet): hier nicht nachstellbar
+  (Echtzeit-Prüfung `RegressTest._t_siege_kids_2711`, auch mit Software-Grafik: Bilder laufen weiter, Speicher bleibt gleich). Vermutlich
+  Grafiktreiber. Vorsicht: Blitz-Licht ohne Schatten/Volumennebel; Protokollzeilen `[Siege] Fenster …` und `[Blitz] bei …` in godot.log
+  (Windows: %APPDATA%\Godot\app_userdata\Homebound\logs\). Optionen `--kids-ms=`, `--kids-log` (Bildzeit + Speicher je Bild).
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

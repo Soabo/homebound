@@ -285,8 +285,8 @@ func _kids_furniture(x0: float, x1: float, z0: float, z1: float) -> void:
 	var iz1 := z1 - Cabin.CLAD - 0.03
 	# Kinderbetten: bemaltes, abgeplatztes Holz im klaren Stil (Christian 26.11.)
 	var frame := Look.photo_mat(BuildKit.tex_mat("planks_h", 0.8, Color(0.95, 0.9, 0.8)), "furn_painted", 1.0, Color(1.05, 1.0, 0.95))
-	var sheet_a := BuildKit.tex_mat("fabric", 0.5, Color(0.9, 1.5, 1.0))     # Lena: grün
-	var sheet_b := BuildKit.tex_mat("fabric", 0.5, Color(1.0, 1.1, 1.7))     # Ben: blau
+	var sheet_a := Look.photo_mat(BuildKit.tex_mat("fabric", 0.5, Color(0.9, 1.5, 1.0)), "fab_kids", 0.5)     # Lena: grün
+	var sheet_b := Look.photo_mat(BuildKit.tex_mat("fabric", 0.5, Color(1.0, 1.1, 1.7)), "fab_bed", 0.5)      # Ben: blau (Leinen)
 	# Zwei Kinderbetten an der Westwand, das Fenster dazwischen bleibt frei
 	for b: Array in [[iz0, sheet_a, "Lena"], [iz1 - 1.75, sheet_b, "Ben"]]:
 		var bz: float = b[0]
@@ -471,7 +471,7 @@ func _cellar() -> void:
 		BuildKit.cylinder(j, 0.06, 0.16, Vector3(shelf_x + 0.2, fy + 0.5425, -6.1 + i * 0.25), glass, false, Vector3.ZERO, -1.0, 10)
 		BuildKit.cylinder(j, 0.062, 0.02, Vector3(shelf_x + 0.2, fy + 0.6325, -6.1 + i * 0.25), c.m_iron, false, Vector3.ZERO, -1.0, 10)
 		jars.visuals.append(j)
-	var sack := BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95))
+	var sack := Look.photo_mat(BuildKit.tex_mat("fabric", 0.4, Color(1.4, 1.25, 0.95)), "fab_sack", 0.4)
 	BuildKit.sphere(c, 0.28, Vector3(0.0, fy + 0.22, -3.0), sack, Vector3(1.0, 0.8, 0.8), 10)
 	BuildKit.sphere(c, 0.28, Vector3(-0.1, fy + 0.22, -2.6), sack, Vector3(0.9, 0.8, 0.9), 10)
 	# Wintervorrat (Christian 24.11.): Kartoffeln und Karotten aus Stefanies Einlagerung – im Beet wächst jetzt nur Wintergemüse

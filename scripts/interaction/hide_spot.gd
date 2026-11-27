@@ -246,7 +246,7 @@ func _build_chest() -> void:
 
 ## Deckenhöhle in der Kinderzimmer-Ecke: eine Wolldecke über die Umzugskisten bis zur Wand, vorn eine Klappe.
 func _build_fort() -> void:
-	var blanket := BuildKit.tex_mat("blanket", 0.6)
+	var blanket := Look.photo_mat(BuildKit.tex_mat("blanket", 0.6), "fab_blanket", 0.6)
 	var w := size.x
 	var h := size.y
 	var d := size.z

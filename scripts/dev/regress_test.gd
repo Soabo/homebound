@@ -400,6 +400,7 @@ func _t_more() -> void:
 	await _t_fixes_2511c()
 	await _t_ui_2611()
 	await _t_fixes_2611()
+	await _t_siege_kids_2711()
 
 
 ## Mehrtagesmarsch (14.11.): Ansage, Packliste, Warnung beim Losgehen
@@ -3892,3 +3893,75 @@ func _t_fixes_2611() -> void:
 	_ok("Zeichen über der Tür liegt auf den Stämmen, unter dem Vordach", absf(sign.position.z - (Cabin.HALF_Z + Cabin.LOG_R)) < 0.01 and sign.position.y + 0.125 < Cabin.FLOOR_Y + 2.47)
 	var brief: Dictionary = DataDB.load_json("res://data/story/siege_briefing.json")
 	_ok("Belagerung: „Schaffst du eine Aufgabe nicht“", JSON.stringify(brief).contains("Schaffst du eine Aufgabe nicht"))
+
+
+## Absturz 27.11.: Belagerung, Kinderzimmer, Kreatur am Fenster angeleuchtet → Blitz blieb stehen, Spiel beendet.
+## Echtzeit: nur Fensteraufgabe, Spieler im Kinderzimmer leuchtet jedes Mal hinein. Bilder müssen weiterlaufen.
+func _t_siege_kids_2711() -> void:
+	var p := _player()
+	var keep := p.global_position
+	var keep_rot := p.rotation
+	var td := ThreatDirector
+	var fast := td.config.duplicate() as ThreatConfig
+	fast.siege_window_approach = Vector2(0.3, 0.6)
+	fast.siege_window_pause = Vector2(0.5, 1.0)
+	fast.siege_window_seconds = 30.0
+	var s := SiegeNight.new()
+	s.cfg = fast
+	s.index = 0
+	s.end_total = TimeManager.get_total_hours() + 100.0
+	_scene().add_child(s)
+	for id in s.tasks:
+		s.tasks[id]["on"] = id == "window"
+	var kids: Array = []
+	for w in get_tree().get_nodes_in_group("entry_point"):
+		if w is CabinWindow and String(w.name).begins_with("WindowKids"):
+			kids.append(w)
+	_ok("Kinderzimmer hat zwei Fenster", kids.size() == 2)
+	var repels := 0
+	var frames := 0
+	var worst := 0
+	var t0 := Time.get_ticks_msec()
+	var last := t0
+	s._stalker_phase = "away"
+	s._stalker_t = 0.1
+	var run_ms := 20000
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--kids-ms="):
+			run_ms = int(arg.substr(10))
+	var log_frames := OS.get_cmdline_user_args().has("--kids-log")
+	while Time.get_ticks_msec() - t0 < run_ms:
+		# nur Kinderzimmerfenster zulassen
+		if s._stalker_phase == "approach" and not (s._window in kids):
+			s._window = kids[repels % 2]
+		if s._stalker_phase == "work" and is_instance_valid(s._window):
+			var win: CabinWindow = s._window
+			var wpos := win.global_position + Vector3(0, win.height * 0.5, 0)
+			p.global_position = win.inside_point() + (win.inside_point() - win.global_position).normalized() * 1.2
+			p.global_position.y = Cabin.FLOOR_Y
+			p.look_at(Vector3(wpos.x, p.global_position.y + 1.0, wpos.z), Vector3.UP)
+			p.rotation.x = 0.0
+			p.head.rotation.x = 0.0
+			p.set_flashlight(true)
+		var before := s._stalker_phase
+		await get_tree().process_frame
+		var now := Time.get_ticks_msec()
+		var dt_ms := now - last
+		worst = maxi(worst, dt_ms)
+		last = now
+		frames += 1
+		if log_frames:
+			print("[Kids] Bild %d: %d ms, Phase %s -> %s, Speicher %d MB, Grafik %d MB, Objekte %d, Knoten %d" % [frames, dt_ms, before, s._stalker_phase,
+				OS.get_static_memory_usage() / 1048576, int(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED)) / 1048576,
+				int(Performance.get_monitor(Performance.OBJECT_COUNT)), int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))])
+		if before == "work" and s._stalker_phase == "away":
+			repels += 1
+			p.set_flashlight(false)
+	_ok("Kinderzimmer: mehrfach vertrieben, Bilder laufen weiter", repels >= 3 and frames > 60,
+		"vertrieben %d, Bilder %d, längstes Bild %d ms" % [repels, frames, worst])
+	p.set_flashlight(false)
+	s.finish(true)
+	await get_tree().process_frame
+	p.global_position = keep
+	p.rotation = keep_rot
+	p.head.rotation = Vector3.ZERO

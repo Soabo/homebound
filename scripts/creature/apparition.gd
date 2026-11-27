@@ -235,7 +235,11 @@ static func flash(parent: Node, pos: Vector3, scare: bool = false) -> void:
 	light.light_color = Color(0.6, 0.85, 1.0)
 	light.omni_range = 9.0
 	light.light_energy = 9.0
+	# Vorsicht (Absturz 27.11.): kein Schatten, kein Volumennebel – der Blitz soll die Grafikkarte nicht belasten
+	light.shadow_enabled = false
+	light.light_volumetric_fog_energy = 0.0
 	root.add_child(light)
+	print("[Blitz] bei %s" % str(pos.snapped(Vector3.ONE * 0.1)))
 	var mat := BuildKit.emissive_mat(Color(0.75, 0.92, 1.0), 6.0)
 	var core := BuildKit.sphere(root, 0.6, Vector3.ZERO, mat, Vector3(0.5, 1.6, 0.5), 12)
 	var tw := root.create_tween()

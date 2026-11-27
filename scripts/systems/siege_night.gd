@@ -365,6 +365,7 @@ func _hide_stalker(flash: bool) -> void:
 
 
 func _repel() -> void:
+	print("[Siege] Fenster %s: angeleuchtet, sie weicht zurück" % (String(_window.name) if is_instance_valid(_window) else "?"))
 	CreatureSounds.play(get_parent(), "recoil", _window.outside_point() + Vector3(0, 1.6, 0), 0.0)
 	_hide_stalker(true)
 	_stalker_phase = "away"

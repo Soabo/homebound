@@ -10,9 +10,9 @@ const WIDTH := 1.5
 
 func _ready() -> void:
 	var frame := BuildKit.tex_mat("planks_h", 0.8, Color(0.75, 0.7, 0.68))
-	var sheet := BuildKit.tex_mat("fabric", 0.5, Color(1.7, 1.66, 1.55))
-	var blanket := BuildKit.tex_mat("blanket", 0.6)
-	var pillow := BuildKit.tex_mat("fabric", 0.4, Color(1.9, 1.85, 1.75))
+	var sheet := Look.photo_mat(BuildKit.tex_mat("fabric", 0.5, Color(1.7, 1.66, 1.55)), "fab_bed", 0.6, Color(1.1, 1.1, 1.1))
+	var blanket := Look.photo_mat(BuildKit.tex_mat("blanket", 0.6), "fab_blanket", 0.6)
+	var pillow := Look.photo_mat(BuildKit.tex_mat("fabric", 0.4, Color(1.9, 1.85, 1.75)), "fab_bed", 0.5, Color(1.2, 1.2, 1.2))
 	BuildKit.box_mm(self, Vector3(0, 0.1, 0), Vector3(WIDTH, 0.32, LENGTH), frame, true)
 	# Pfosten am Kopf- und Fußende
 	for p: Vector2 in [Vector2(0.05, 0.0), Vector2(WIDTH - 0.05, 0.0), Vector2(0.05, LENGTH - 0.05), Vector2(WIDTH - 0.05, LENGTH - 0.05)]:
