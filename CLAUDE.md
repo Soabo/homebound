@@ -1025,7 +1025,18 @@
   Glockenseil, Spinnweben, Feldkreuz) und **Messstelle 4-Nord** (`PlacesDay._messstelle`, `_mess_fence`, `_mess_container`, `_mess_inside`,
   `_mess_yard`: Kies, Stacheldraht, offenes Tor + aufgebrochenes Schloss, Wellblech-Container mit Stufen/Klima/Scheinwerfer, Arbeitsplatz,
   Serverschrank mit blinkenden LEDs, Regal, Whiteboard, Kalender, Pinnwand, Netzplan, Kaffeeecke, Aggregat, Kabeltrommel, Fässer, Messpfähle,
-  Mast mit Schüssel, Schacht mit Schutzrohren). Knotennamen der Funde/Notizen unverändert. Übrige Orte folgen nach Christians Rückmeldung.
+  Mast mit Schüssel, Schacht mit Schutzrohren). Knotennamen der Funde/Notizen unverändert.
+- Teil 2/3 (Christian 28.11.: „Mache nun die anderen Orte“): `PlaceKit.hut` baut jetzt selbst Fensterrahmen + Glas (kaputte Hütten:
+  Scherben), Türzarge, offenes Türblatt „DoorLeaf“ (65°, bei Ilse/Schacht B per `PlacesFar._drop_door_leaf` entfernt), Stufe, Eckbretter,
+  Unkraut; Satteldach mit Ort-/Traufbrettern, Rinne + Fallrohr, Firstbrett; Flachdach mit Attika, Fallrohr, Lüfter, Sockel (Beton/Stein).
+  Jeder Ort hat eine eigene `_<ort>_details`-Funktion am Ende von places_near/day/far.gd (brunnen, friedhof, imkerei, funkmast, see,
+  steinbruch, kontrollpunkt, ferienlager, schaefer, moor, windwurf, spiegel, klause, aussenstelle, ilse (warmes Licht, Rauch, Briefkasten
+  „I. Rankl“), tunnel, wetterstation, gewaechshaus, wal, raststation, grenze). Eigene Klassen: `RangerTower._details` (Sitzbrett,
+  Thermoskanne, Geweih, Schild „Jagdliche Einrichtung“, Salzlecke, Futterraufe), `StreamCave._details` (Tropfsteine, Pfützen, Wendts
+  Lager, Kreidestriche, Knochen, Warnschild, Feuerstelle), `CrashSite._build_details` (Glutnester, Glasperlen, Absperrband der Firma,
+  Messpflock „MP-4 / W“, Handschuh, Stiefelspuren), `AlienStructure._details` (totes Gras, Glasadern, schwebende Kiesel, tote Vögel,
+  Beobachtungskamera „ObserverCam“, Messpflöcke). Altenreuth war schon ausgebaut.
+  Vorschau auch für diese Klassen: place_preview `--place=hochsitz|hoehle|absturz|struktur` (Blick über Gelände bei y = 0).
 
 - Engine: Godot 4.7.2 (Forward+), Physik: Jolt.
 - Die Welt wird per GDScript gebaut (`scripts/world/*`), damit alles als Text im Repo liegt

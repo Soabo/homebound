@@ -74,6 +74,7 @@ func _ready() -> void:
 	_build_trees()
 	_build_finds()
 	_build_smoke()
+	_build_details()
 
 
 func _p(x: float, z: float, lift: float = 0.0) -> Vector3:
@@ -325,3 +326,61 @@ static func drop_tissue(scene: Node, at: Vector3, always: bool = false) -> void:
 	BuildKit.cylinder(v, 0.18, 0.004, Vector3(0.05, 0.004, 0.03), BuildKit.color_mat(Color(0.12, 0.16, 0.14), 0.1, 0.3), false, Vector3.ZERO, -1.0, 10)
 	p.visuals.append(v)
 	EventBus.notify("Etwas Graues ist am Boden zurückgeblieben …", 3.0)
+
+
+## Lebendige Orte: Glutnester mit Glimmen, Glasperlen aus geschmolzenem Sand, verbrannte Zapfen und Nadeln,
+## hängende abgerissene Äste, Absperrpflöcke mit Flatterband (die Firma war schon da), Fußabdruck-Platten,
+## ein vergessener Einweghandschuh und ein Messpflock mit Etikett „MP-4 / W“.
+func _build_details() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1948
+	var ember := BuildKit.emissive_mat(Color(1.0, 0.35, 0.08), 1.2)
+	var ash := PlaceDetail.col(Color(0.18, 0.17, 0.16), 1.0)
+	for k in 7:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(1.5, 6.0)
+		var p := _p(cos(a) * d, sin(a) * d, 0.02)
+		BuildKit.cylinder(self, rng.randf_range(0.25, 0.5), 0.03, p, ash, false, Vector3.ZERO, -1.0, 10)
+		for e in 3:
+			BuildKit.sphere(self, 0.03, p + Vector3(rng.randf_range(-0.2, 0.2), 0.03, rng.randf_range(-0.2, 0.2)), ember, Vector3(1.4, 0.5, 1.0), 5)
+	var glass := PlaceDetail.col(Color(0.2, 0.45, 0.4), 0.1, 0.0)
+	for k in 22:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(2.0, 7.0)
+		BuildKit.sphere(self, rng.randf_range(0.015, 0.04), _p(cos(a) * d, sin(a) * d, 0.02), glass, Vector3(1.0, 0.6, 1.0), 5)
+	var charred := PlaceDetail.col(Color(0.09, 0.08, 0.07), 1.0)
+	for k in 30:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(3.0, 10.0)
+		var p := _p(cos(a) * d, sin(a) * d, 0.02)
+		if k % 3 == 0:
+			BuildKit.sphere(self, 0.035, p + Vector3(0, 0.02, 0), charred, Vector3(0.8, 1.4, 0.8), 5)
+		else:
+			BuildKit.cylinder(self, 0.01, rng.randf_range(0.2, 0.6), p, charred, false, Vector3(90, rng.randf() * 360.0, 0), 0.005, 5)
+	# Absperrung der Firma: Pflöcke mit rot-weißem Flatterband, an einer Stelle gerissen
+	var stake_mat := PlaceKit.mat("wood")
+	var tape_a := PlaceDetail.col(Color(0.85, 0.1, 0.08), 0.6)
+	var posts: Array[Vector3] = []
+	for k in 10:
+		var a := TAU * k / 10.0 + 0.2
+		var p := _p(cos(a) * 12.5, sin(a) * 12.5, 0.0)
+		BuildKit.box(self, Vector3(0.05, 1.0, 0.05), p + Vector3(0, 0.5, 0), stake_mat, false)
+		posts.append(p + Vector3(0, 0.85, 0))
+	for k in 10:
+		if k == 6:
+			continue
+		var a := posts[k]
+		var b := posts[(k + 1) % 10]
+		PlaceDetail.cable(self, a, b, 0.25, 0.012, Color(0.85, 0.12, 0.08) if k % 2 == 0 else Color(0.92, 0.9, 0.88))
+	BuildKit.box(self, Vector3(0.03, 0.6, 0.01), posts[6] + Vector3(0.05, -0.32, 0), tape_a, false, Vector3(0, 0, 8))
+	BuildKit.box(self, Vector3(0.03, 0.55, 0.01), posts[7] + Vector3(-0.05, -0.3, 0), tape_a, false, Vector3(0, 0, -12))
+	# Messpflock mit Etikett
+	var mp := _p(4.5, -4.0)
+	BuildKit.box(self, Vector3(0.04, 0.7, 0.04), mp + Vector3(0, 0.35, 0), PlaceDetail.col(Color(0.95, 0.45, 0.05), 0.6), false)
+	PlaceDetail.sign(self, "MP-4 / W\n11.17", mp + Vector3(0, 0.6, 0.03), Vector2(0.12, 0.08), 0.0, Color(0.95, 0.95, 0.9), Color(0.1, 0.1, 0.1), 14)
+	# Einweghandschuh (blau) und Stiefelabdrücke im Ruß
+	BuildKit.box(self, Vector3(0.09, 0.015, 0.2), _p(-5.0, 1.5, 0.02), PlaceDetail.col(Color(0.2, 0.4, 0.85), 0.4), false, Vector3(0, 40, 0))
+	var print_mat := PlaceDetail.col(Color(0.03, 0.03, 0.03), 1.0)
+	for k in 8:
+		var t := float(k)
+		BuildKit.box(self, Vector3(0.11, 0.004, 0.29), _p(-10.5 + t * 0.9, -6.0 + t * 0.55 + (0.12 if k % 2 == 0 else -0.12), 0.05), print_mat, false, Vector3(0, -58, 0))

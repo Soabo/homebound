@@ -108,6 +108,46 @@ func _ready() -> void:
 	round_note.anchor = Vector3(0.55, DECK + 1.0, -1.3)
 	round_note.hide_paper = true
 	add_child(round_note)
+	_details()
+
+
+## Lebendige Orte: Sitzbrett mit Kissen, Thermoskanne, Patronenschachtel-Dose als Aschenbecher, Geweih am Pfosten,
+## Schild „Jagdliche Einrichtung“, Salzlecke und Futterraufe in Sichtweite, Laub und Zweige.
+func _details() -> void:
+	var wood := PlaceKit.mat("wood_old")
+	BuildKit.box(self, Vector3(1.8, 0.05, 0.35), Vector3(0, DECK + 0.5, -1.2), wood, false)
+	for sx: float in [-0.8, 0.8]:
+		BuildKit.box(self, Vector3(0.06, 0.45, 0.3), Vector3(sx, DECK + 0.28, -1.2), wood, false)
+	BuildKit.box(self, Vector3(0.45, 0.06, 0.32), Vector3(-0.3, DECK + 0.55, -1.2), PlaceKit.mat("cloth"), false)
+	BuildKit.cylinder(self, 0.045, 0.3, Vector3(1.25, DECK + 1.2, -1.2), PlaceDetail.col(Color(0.15, 0.3, 0.2), 0.4, 0.5), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.cylinder(self, 0.04, 0.03, Vector3(-1.25, DECK + 1.04, -0.4), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 10)
+	var bone := PlaceDetail.col(Color(0.82, 0.78, 0.68), 0.7)
+	var ant := Vector3(0, DECK + 2.0, -1.44)
+	BuildKit.box(self, Vector3(0.2, 0.25, 0.03), ant, wood, false)
+	for sx: float in [-1.0, 1.0]:
+		HandKit.tube(self, PackedVector3Array([ant + Vector3(sx * 0.04, 0.05, 0.03), ant + Vector3(sx * 0.15, 0.2, 0.05), ant + Vector3(sx * 0.2, 0.35, 0.03)]), 0.012, bone, 5)
+	var sp := Vector3(1.9, 0, 2.6)
+	BuildKit.box(self, Vector3(0.08, 1.3, 0.08), sp + Vector3(0, 0.65, 0), wood, true)
+	PlaceDetail.sign(self, "Jagdliche Einrichtung\nBetreten verboten!\nRevier Finsterau", sp + Vector3(0, 1.15, 0.05), Vector2(0.45, 0.3), 0.0, Color(0.92, 0.9, 0.82), Color(0.25, 0.15, 0.05), 24)
+	# Salzlecke und Futterraufe auf der Lichtung vor dem Hochsitz (+z)
+	var sl := Vector3(-3.0, 0, 9.0)
+	sl.y = Terrain.height_at(global_position.x + sl.x, global_position.z + sl.z) - global_position.y if is_inside_tree() else 0.0
+	BuildKit.cylinder(self, 0.08, 1.4, sl + Vector3(0, 0.7, 0), PlaceKit.mat("bark"), false, Vector3.ZERO, 0.07, 8)
+	BuildKit.box(self, Vector3(0.18, 0.12, 0.18), sl + Vector3(0, 1.45, 0), PlaceDetail.col(Color(0.82, 0.78, 0.72), 0.8), false)
+	var fr := Vector3(3.0, 0, 11.0)
+	fr.y = Terrain.height_at(global_position.x + fr.x, global_position.z + fr.z) - global_position.y if is_inside_tree() else 0.0
+	var rack := Node3D.new()
+	rack.position = fr
+	rack.rotation_degrees.y = 20.0
+	add_child(rack)
+	for sx: float in [-0.9, 0.9]:
+		BuildKit.box(rack, Vector3(0.1, 1.8, 0.1), Vector3(sx, 0.9, 0), wood, true)
+	for k in 7:
+		BuildKit.box(rack, Vector3(0.03, 0.8, 0.03), Vector3(-0.75 + k * 0.25, 1.1, 0.1), wood, false, Vector3(25, 0, 0))
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(rack, Vector3(2.2, 0.04, 0.7), Vector3(0, 1.95, sx * 0.25), PlaceKit.mat("shingles"), false, Vector3(-sx * 30.0, 0, 0))
+	for k in 14:
+		BuildKit.box(rack, Vector3(0.02, 0.5, 0.02), Vector3(-0.7 + k * 0.1, 1.15, 0.16), PlaceDetail.col(Color(0.42, 0.36, 0.2), 1.0), false, Vector3(25 + (k % 3) * 8, 0, (k % 5) * 6 - 12))
 
 
 ## Mittelpunkt des Pfostens (sx, sz) auf Höhe y – die Pfosten stehen leicht schräg.

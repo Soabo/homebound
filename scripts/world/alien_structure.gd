@@ -87,6 +87,7 @@ func _ready() -> void:
 	_spawn_shard()
 	WorldState.changed.connect(_on_world_changed)
 	_on_world_changed()
+	_details()
 
 
 func _beam(a: Vector3, b: Vector3, r: float, mat: Material) -> void:
@@ -167,3 +168,67 @@ func _process(delta: float) -> void:
 		var pl := get_tree().get_first_node_in_group("player") as Node3D
 		if pl and pl.global_position.distance_to(global_position) < 40.0:
 			SoundBank.play_at(self, "signal", global_position + Vector3(0, 5, 0), -8.0, randf_range(0.35, 0.45))
+
+
+## Lebendige Orte: Kreis aus totem, grauem Gras und Asche um die Struktur, schwebende Kiesel unter dem Kristall,
+## tote Vögel, ein Hochstand-Stativ mit Kamera der Firma (Linse auf die Struktur), Messpflöcke, Glasadern im Boden.
+func _details() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7840
+	var gnd := func(x: float, z: float) -> float:
+		return Terrain.height_at(SITE.x + x, SITE.z + z) - position.y
+	var dead := PlaceDetail.col(Color(0.42, 0.42, 0.4), 1.0)
+	for k in 90:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(3.8, 11.0)
+		var x := cos(a) * d
+		var z := sin(a) * d
+		BuildKit.box(self, Vector3(0.015, rng.randf_range(0.1, 0.25), 0.015), Vector3(x, float(gnd.call(x, z)) + 0.06, z), dead, false,
+				Vector3(rng.randf_range(-40, 40), rng.randf() * 360.0, 0))
+	var vein := BuildKit.emissive_mat(Color(0.3, 0.9, 1.0), 0.6)
+	for k in 6:
+		var a := TAU * k / 6.0 + 0.3
+		for s in 5:
+			var d := 3.7 + s * 0.9
+			var x := cos(a + s * 0.08) * d
+			var z := sin(a + s * 0.08) * d
+			BuildKit.box(self, Vector3(0.95, 0.012, 0.03), Vector3(x, float(gnd.call(x, z)) + 0.015, z), vein, false, Vector3(0, -rad_to_deg(a + s * 0.08), 0))
+	# Kiesel schweben im Feld unter dem Kristall
+	var pebble := PlaceKit.mat("stone")
+	for k in 9:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(0.3, 1.6)
+		BuildKit.sphere(self, rng.randf_range(0.04, 0.1), Vector3(cos(a) * d, rng.randf_range(0.4, 2.2), sin(a) * d), pebble, Vector3(1.2, 0.8, 1.0), 6)
+	# tote Vögel
+	var feather := PlaceDetail.col(Color(0.12, 0.11, 0.1), 0.9)
+	for k in 3:
+		var a := rng.randf() * TAU
+		var d := rng.randf_range(4.0, 8.0)
+		var x := cos(a) * d
+		var z := sin(a) * d
+		var at := Vector3(x, float(gnd.call(x, z)) + 0.04, z)
+		BuildKit.sphere(self, 0.06, at, feather, Vector3(1.0, 0.6, 1.6), 7)
+		BuildKit.box(self, Vector3(0.18, 0.005, 0.07), at + Vector3(0.06, -0.02, 0), feather, false, Vector3(0, rng.randf() * 360.0, 10))
+	# Stativ mit Kamera der Firma am Waldrand, Linse zur Struktur
+	var tri := Node3D.new()
+	tri.name = "ObserverCam"
+	var tx := 12.5
+	var tz := -4.0
+	tri.position = Vector3(tx, float(gnd.call(tx, tz)), tz)
+	add_child(tri)
+	tri.look_at(global_position + Vector3(0, 1.2, 0), Vector3.UP)
+	var metal := PlaceDetail.col(Color(0.15, 0.15, 0.16), 0.5, 0.6)
+	for k in 3:
+		var a := TAU * k / 3.0
+		HandKit.tube(tri, PackedVector3Array([Vector3(0, 1.25, 0), Vector3(cos(a) * 0.45, 0.0, sin(a) * 0.45)]), 0.015, metal, 5)
+	BuildKit.box(tri, Vector3(0.16, 0.12, 0.22), Vector3(0, 1.33, 0), PlaceDetail.col(Color(0.82, 0.8, 0.74), 0.6), false)
+	BuildKit.cylinder(tri, 0.045, 0.1, Vector3(0, 1.33, -0.15), metal, false, Vector3(90, 0, 0), -1.0, 10)
+	BuildKit.sphere(tri, 0.012, Vector3(0.06, 1.4, -0.11), BuildKit.emissive_mat(Color(1.0, 0.1, 0.05), 2.0), Vector3.ONE, 5)
+	BuildKit.box(tri, Vector3(0.2, 0.25, 0.08), Vector3(0, 0.55, 0.05), PlaceDetail.col(Color(0.25, 0.27, 0.22), 0.8), false)
+	PlaceDetail.sign(tri, "ReZort · WW-Beob. 3", Vector3(0, 1.33, 0.115), Vector2(0.14, 0.05), 0.0, Color(0.9, 0.9, 0.88), Color(0.1, 0.1, 0.1), 12)
+	# Messpflöcke im Viereck
+	for k in 4:
+		var a := TAU * k / 4.0 + PI * 0.25
+		var x := cos(a) * 10.0
+		var z := sin(a) * 10.0
+		BuildKit.box(self, Vector3(0.05, 0.8, 0.05), Vector3(x, float(gnd.call(x, z)) + 0.4, z), PlaceDetail.col(Color(0.95, 0.45, 0.05), 0.6), false)

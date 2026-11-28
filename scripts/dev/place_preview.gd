@@ -44,13 +44,25 @@ func _ready() -> void:
 	sun.light_energy = 0.08 if night else 1.3
 	sun.shadow_enabled = true
 	add_child(sun)
-	var root := Node3D.new()
-	root.name = id
-	add_child(root)
-	root.global_position = WorldMap.place_point(id)
-	var built := PlacesNear.build(id, root) or PlacesDay.build(id, root) or PlacesFar.build(id, root)
-	if not built:
-		push_error("Ort unbekannt: " + id)
+	var root: Node3D
+	# Einzelne Orte mit eigener Klasse (bauen sich selbst an ihren festen Platz)
+	var cls: Node3D = null
+	match id:
+		"hochsitz": cls = RangerTower.new()
+		"hoehle": cls = StreamCave.new()
+		"absturz": cls = CrashSite.new()
+		"struktur": cls = AlienStructure.new()
+	if cls != null:
+		add_child(cls)
+		root = cls
+	else:
+		root = Node3D.new()
+		root.name = id
+		add_child(root)
+		root.global_position = WorldMap.place_point(id)
+		var built := PlacesNear.build(id, root) or PlacesDay.build(id, root) or PlacesFar.build(id, root)
+		if not built:
+			push_error("Ort unbekannt: " + id)
 	_ground(root, radius)
 	for i in 5:
 		await get_tree().process_frame
@@ -65,8 +77,12 @@ func _ready() -> void:
 	else:
 		list.append([cam_p, look])
 	for i in list.size():
-		cam.global_position = root.to_global(list[i][0])
-		cam.look_at(root.to_global(list[i][1]))
+		# Orte, die selbst auf y = 0 stehen (Absturzstelle): Blick über dem Gelände
+		var lift := Vector3.ZERO
+		if cls != null and absf(root.global_position.y) < 0.01:
+			lift.y = Terrain.height_at(root.global_position.x, root.global_position.z)
+		cam.global_position = root.to_global(list[i][0] + lift)
+		cam.look_at(root.to_global(list[i][1] + lift))
 		for k in 12:
 			await get_tree().process_frame
 		var path := out if list.size() == 1 else out.replace(".png", "_%d.png" % i)

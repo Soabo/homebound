@@ -297,6 +297,20 @@ static func hut(root: Node3D, n: String, center: Vector3, size: Vector2, height:
 	_hut_details(h, walls, size, height, t, wall_mat, door, broken)
 	if roof == "flat":
 		BuildKit.box(h, Vector3(size.x + 0.4, 0.16, size.y + 0.4), Vector3(0, height + 0.08, 0), mat(roof_mat), true)
+		# Lebendige Orte: Attika-Kante, Fallrohr an einer Ecke, Lüftungshaube; Sockelband an Betonbauten
+		var edge := mat("metal") if roof_mat != "concrete" else mat("concrete")
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(h, Vector3(size.x + 0.44, 0.14, 0.06), Vector3(0, height + 0.2, sz * (hz + 0.2)), edge, false)
+		for sx: float in [-1.0, 1.0]:
+			BuildKit.box(h, Vector3(0.06, 0.14, size.y + 0.44), Vector3(sx * (hx + 0.2), height + 0.2, 0), edge, false)
+		HandKit.tube(h, PackedVector3Array([Vector3(hx + 0.12, height + 0.05, -hz + 0.2), Vector3(hx + 0.08, height - 0.3, -hz + 0.2), Vector3(hx + 0.08, 0.15, -hz + 0.2), Vector3(hx + 0.25, 0.04, -hz + 0.2)]), 0.04, mat("rust"), 8)
+		if size.x > 3.0:
+			BuildKit.box(h, Vector3(0.5, 0.35, 0.5), Vector3(-hx * 0.5, height + 0.33, -hz * 0.3), mat("metal"), false)
+			BuildKit.box(h, Vector3(0.6, 0.04, 0.6), Vector3(-hx * 0.5, height + 0.52, -hz * 0.3), mat("metal"), false)
+		if wall_mat == "concrete" or wall_mat == "stone":
+			BuildKit.box(h, Vector3(size.x + 0.06, 0.3, 0.04), Vector3(0, 0.15, -(hz + 0.02)), mat("stone_dark"), false)   # vorn nicht (Tür)
+			for sx: float in [-1.0, 1.0]:
+				BuildKit.box(h, Vector3(0.04, 0.3, size.y + 0.06), Vector3(sx * (hx + 0.02), 0.15, 0), mat("stone_dark"), false)
 	elif roof == "gable":
 		var rise := minf(size.x * 0.35, 1.6)
 		var slope := sqrt(hx * hx + rise * rise) + 0.3

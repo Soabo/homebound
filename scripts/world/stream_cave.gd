@@ -106,3 +106,61 @@ func _ready() -> void:
 	radio.anchor = Vector3(cx - 2.25, 0.0, 2.45)
 	radio.hide_paper = true
 	add_child(radio)
+	_details(cx, rng)
+
+
+## Lebendige Orte: Tropfsteinzapfen, Pfützen, Wendts Lager im Gang (Isomatte, Kocher, Dosen, Kerzenstummel),
+## Kreidemarken an der Wand, Knochen kleiner Tiere vor der Kammer, Warnschild und Feuerstelle vor dem Eingang.
+func _details(cx: float, rng: RandomNumberGenerator) -> void:
+	var drip := BuildKit.tex_mat("rock", 1.0, Color(0.55, 0.53, 0.5))
+	var wet := PlaceDetail.col(Color(0.3, 0.3, 0.3), 0.15, 0.0)
+	for k in 26:
+		var dx := rng.randf_range(1.0, LENGTH + 5.0)
+		var half := (WIDTH * 0.5 - 0.3) if dx < LENGTH else 2.6
+		var top := HEIGHT - 0.05 if dx < LENGTH else HEIGHT + 0.85
+		var ln := rng.randf_range(0.08, 0.35)
+		BuildKit.cylinder(self, 0.035, ln, Vector3(dx, top - ln * 0.5, rng.randf_range(-half, half)), drip, false, Vector3(180, 0, 0), 0.004, 6)
+	for k in 5:
+		var px := rng.randf_range(2.0, LENGTH + 4.0)
+		BuildKit.cylinder(self, rng.randf_range(0.2, 0.45), 0.004, Vector3(px, 0.025, rng.randf_range(-0.8, 0.8)), wet, false, Vector3.ZERO, -1.0, 14)
+	# Wendts Lager auf halbem Weg (gegen die Südwand)
+	var camp := Vector3(5.5, 0.02, 1.0)
+	BuildKit.box(self, Vector3(1.8, 0.02, 0.55), camp + Vector3(0, 0.01, 0), PlaceDetail.col(Color(0.18, 0.32, 0.22), 0.9), false, Vector3(0, 4, 0))
+	BuildKit.cylinder(self, 0.08, 0.1, camp + Vector3(1.2, 0.05, -0.4), PlaceDetail.col(Color(0.5, 0.5, 0.52), 0.4, 0.7), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.cylinder(self, 0.06, 0.06, camp + Vector3(1.2, 0.13, -0.4), PlaceDetail.col(Color(0.25, 0.25, 0.27), 0.5, 0.6), false, Vector3.ZERO, -1.0, 10)
+	for k in 3:
+		var cp := camp + Vector3(0.9 + k * 0.14, 0.0, -0.75 + (k % 2) * 0.1)
+		HandItems.can_body(self, cp, 0.035, 0.1, "empty" if k > 0 else "closed")
+	PlaceDetail.candle(self, camp + Vector3(-1.1, 0.0, -0.55), 0.05)
+	PlaceDetail.litter(self, camp + Vector3(0, 0.02, -0.4), 1.0, 44, 4, ["paper"])
+	# Kreidemarken: Pfeile und Striche zum Zählen der Nächte
+	var chalk := PlaceDetail.col(Color(0.88, 0.88, 0.84), 1.0)
+	for k in 9:
+		BuildKit.box(self, Vector3(0.012, 0.16, 0.004), Vector3(4.4 + k * 0.06, 1.35, WIDTH * 0.5 - 0.02), chalk, false, Vector3(0, 0, -10 if k == 4 else 0))
+	BuildKit.box(self, Vector3(0.5, 0.012, 0.004), Vector3(4.6, 1.43, WIDTH * 0.5 - 0.02), chalk, false, Vector3(0, 0, 18))
+	for k in 3:
+		var ax := 2.0 + k * 3.5
+		BuildKit.box(self, Vector3(0.45, 0.025, 0.004), Vector3(ax, 1.6, -WIDTH * 0.5 + 0.02), chalk, false)
+		for sgn: float in [-1.0, 1.0]:
+			BuildKit.box(self, Vector3(0.16, 0.025, 0.004), Vector3(ax + 0.17, 1.6 + sgn * 0.05, -WIDTH * 0.5 + 0.02), chalk, false, Vector3(0, 0, -sgn * 35))
+	# Knochen vor der Kammer
+	var bone := PlaceDetail.col(Color(0.8, 0.77, 0.68), 0.7)
+	for k in 9:
+		BuildKit.cylinder(self, 0.012, rng.randf_range(0.06, 0.18), Vector3(LENGTH + rng.randf_range(-1.0, 1.5), 0.04, rng.randf_range(-1.0, 1.0)), bone, false,
+				Vector3(90, rng.randf() * 360.0, 0), -1.0, 5)
+	BuildKit.sphere(self, 0.05, Vector3(LENGTH + 0.6, 0.06, -0.7), bone, Vector3(1.0, 0.8, 1.4), 7)
+	# vor dem Eingang: Warnschild am Pflock, alte Feuerstelle, Laub
+	var sp := Vector3(-2.6, 0.0, -2.8)
+	BuildKit.box(self, Vector3(0.07, 1.2, 0.07), sp + Vector3(0, 0.6, 0), PlaceKit.mat("wood_old"), true)
+	PlaceDetail.sign(self, "Höhle – Betreten auf\neigene Gefahr!\nSteinschlag · Fledermäuse", sp + Vector3(-0.05, 1.05, 0), Vector2(0.46, 0.28), -90.0,
+			Color(0.9, 0.85, 0.55), Color(0.1, 0.08, 0.05), 22)
+	var fire := Vector3(-3.5, 0.0, 1.8)
+	for k in 9:
+		var a := TAU * k / 9.0
+		BuildKit.sphere(self, 0.12, fire + Vector3(cos(a) * 0.45, 0.05, sin(a) * 0.45), PlaceKit.mat("stone"), Vector3(1.2, 0.7, 1.0), 6)
+	BuildKit.cylinder(self, 0.32, 0.02, fire + Vector3(0, 0.01, 0), PlaceDetail.col(Color(0.06, 0.05, 0.05), 1.0), false, Vector3.ZERO, -1.0, 12)
+	for k in 3:
+		BuildKit.cylinder(self, 0.04, 0.45, fire + Vector3(0, 0.05, 0), PlaceDetail.col(Color(0.1, 0.08, 0.07), 1.0), false, Vector3(90, k * 60.0, 0), 0.03, 6)
+	BuildKit.cylinder(self, 0.18, 1.6, fire + Vector3(0, 0.18, 1.0), PlaceKit.mat("bark"), true, Vector3(0, 0, 90), 0.16, 9)
+	PlaceDetail.litter(self, Vector3(-3.0, 0.0, 0.0), 3.5, 46, 30, ["leaf", "twig", "stone"], func(x: float, z: float) -> float:
+		return Terrain.height_at(SITE.x + x, SITE.z + z) - position.y + 0.01)
