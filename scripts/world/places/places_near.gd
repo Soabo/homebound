@@ -55,6 +55,51 @@ static func _brunnen(root: Node3D) -> void:
 	shaft.winch = winch
 	root.add_child(shaft)
 	PlaceKit.note(root, "brunnen_hinweis", Vector3(0.0, y + 0.55, 0.86), true)
+	_brunnen_details(root, y)
+
+
+## Lebendige Orte: Pflaster um den Brunnen, Moos, Eimer an der Kette, Kurbel, Seilrolle, Trog, Laub.
+static func _brunnen_details(root: Node3D, y: float) -> void:
+	var stone := PlaceKit.mat("stone")
+	var wood := PlaceKit.mat("wood_old")
+	# Pflasterring aus flachen Granitplatten
+	for i in 18:
+		var a := TAU * i / 18.0 + 0.1
+		var r := 1.25 + (i % 2) * 0.12
+		var p := PlaceKit.on_ground(root, cos(a) * r, sin(a) * r, 0.02)
+		BuildKit.box(root, Vector3(0.45, 0.06, 0.32), p, stone, false, Vector3(randf_range(-3, 3), -rad_to_deg(a) + 90.0, 0))
+	# Abdeckstein-Kranz auf dem Ring, Moosflecken
+	var moss := PlaceDetail.col(Color(0.14, 0.19, 0.08), 1.0)
+	for i in 14:
+		var a := TAU * (i + 0.5) / 14.0
+		BuildKit.box(root, Vector3(0.38, 0.08, 0.3), Vector3(cos(a) * 0.74, y + 0.84, sin(a) * 0.74), stone, false, Vector3(0, -rad_to_deg(a) + 90.0, 0))
+		if i % 3 == 0:
+			BuildKit.box(root, Vector3(0.25, 0.02, 0.2), Vector3(cos(a) * 0.76, y + 0.885, sin(a) * 0.76), moss, false, Vector3(0, -rad_to_deg(a), 0))
+	# Kurbel mit Griff, Kette und Eimer (hängt am Querholz)
+	var iron := PlaceDetail.col(Color(0.18, 0.12, 0.08), 0.6, 0.7)
+	BuildKit.box(root, Vector3(0.04, 0.32, 0.04), Vector3(1.0, y + 1.78, 0.0), iron, false)
+	BuildKit.cylinder(root, 0.025, 0.2, Vector3(1.1, y + 1.62, 0.0), wood, false, Vector3(0, 0, 90), -1.0, 6)
+	BuildKit.cylinder(root, 0.1, 0.5, Vector3(0, y + 1.9, 0), PlaceDetail.col(Color(0.14, 0.14, 0.14), 0.6, 0.6), false, Vector3(0, 0, 90), -1.0, 10)
+	for k in 9:
+		BuildKit.cylinder(root, 0.012, 0.05, Vector3(0.1, y + 1.82 - k * 0.05, 0.0), iron, false, Vector3(0, k * 90.0, 0), -1.0, 5)
+	PlaceDetail.bucket(root, Vector3(0.1, y + 1.1, 0.0), "wood_old")
+	# Dachbretter, Firstbrett
+	BuildKit.box(root, Vector3(0.16, 0.04, 2.04), Vector3(0, y + 2.85, 0), wood, false)
+	for sz: float in [-1.0, 1.0]:
+		for sx: float in [-1.0, 1.0]:
+			BuildKit.box(root, Vector3(1.0, 0.12, 0.03), Vector3(sx * 0.45, y + 2.5, sz * 1.0), wood, false, Vector3(0, 0, -sx * 32.0))
+	# Steintrog mit Wasser, daneben ein zweiter Eimer und ein Seil
+	var tp := PlaceKit.on_ground(root, 1.9, 0.9)
+	BuildKit.box(root, Vector3(1.1, 0.45, 0.5), tp + Vector3(0, 0.22, 0), stone, true, Vector3(0, 20, 0))
+	var water := BuildKit.color_mat(Color(0.08, 0.1, 0.1), 0.05, 0.2)
+	BuildKit.box(root, Vector3(0.95, 0.02, 0.36), tp + Vector3(0, 0.4, 0), water, false, Vector3(0, 20, 0))
+	PlaceDetail.bucket(root, PlaceKit.on_ground(root, 2.6, 0.2), "metal", true)
+	for k in 3:
+		HandKit.tube(root, HandKit.arc(PlaceKit.on_ground(root, 1.3, -1.6, 0.03 + k * 0.03), 0.22 - k * 0.03, 0, 360, 14, Vector3.RIGHT, Vector3.FORWARD), 0.015, PlaceKit.mat("sackcloth"), 5)
+	PlaceDetail.litter(root, Vector3.ZERO, 3.0, 61, 30, ["leaf", "leaf", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+	for k in 8:
+		var a := TAU * k / 8.0
+		PlaceDetail.weeds(root, PlaceKit.on_ground(root, cos(a) * 1.05, sin(a) * 1.05), 610 + k, 6, 0.15)
 
 
 ## Waldkapelle St. Gunther (27.11. neu, so detailliert wie die Hütte): weiß gekalkte Kapelle mit Granitsockel und
@@ -437,6 +482,46 @@ static func _friedhof(root: Node3D) -> void:
 	var post := PlaceKit.on_ground(root, 0.0, 3.4)
 	BuildKit.box(root, Vector3(0.1, 1.4, 0.1), post + Vector3(0, 0.7, 0), wood, true)
 	PlaceKit.note(root, "friedhof_liste", post + Vector3(0, 1.1, 0.06), true)
+	_friedhof_details(root, rng)
+
+
+## Lebendige Orte: Sitzbretter, Schießscharten, Strichlisten in den Pfosten, herumliegende Sprossen und Bretter,
+## verkohlte Scheite in der Mitte, Geweih, Blechdose als Laterne, Zettelpfosten mit Schutzdach, Laub.
+static func _friedhof_details(root: Node3D, rng: RandomNumberGenerator) -> void:
+	var wood := PlaceKit.mat("wood_old")
+	for i in 12:
+		var stand := root.get_node_or_null("Stand_%d" % i) as Node3D
+		if stand == null:
+			continue
+		BuildKit.box(stand, Vector3(1.2, 0.05, 0.3), Vector3(0, 3.65, -0.45), wood, false)
+		BuildKit.box(stand, Vector3(1.3, 0.05, 0.2), Vector3(0, 3.95, 0.68), wood, false)
+		for k in rng.randi_range(3, 7):
+			BuildKit.box(stand, Vector3(0.008, 0.08, 0.004), Vector3(-0.66 + k * 0.025, 1.4, 0.66), PlaceDetail.col(Color(0.12, 0.1, 0.08)), false)
+		if i % 4 == 1:
+			BuildKit.cylinder(stand, 0.04, 0.09, Vector3(0.5, 3.4, -0.62), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 8)
+	# herumliegende Leitersprossen und Bretter
+	for k in 14:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(4.0, 12.0)
+		var p := PlaceKit.on_ground(root, cos(a) * r, sin(a) * r, 0.03)
+		BuildKit.box(root, Vector3(rng.randf_range(0.5, 1.6), 0.04, 0.1 if k % 2 == 0 else 0.22), p, wood, false, Vector3(rng.randf_range(-6, 6), rng.randf() * 360.0, 0))
+	# verkohlte Scheite und Asche in der Mitte, Geweih
+	var char := PlaceDetail.col(Color(0.06, 0.05, 0.045), 1.0)
+	for k in 7:
+		var a := TAU * k / 7.0
+		BuildKit.cylinder(root, 0.06, 0.8, PlaceKit.on_ground(root, cos(a) * 0.5, sin(a) * 0.5, 0.08), char, false, Vector3(80, -rad_to_deg(a), 0), 0.04, 6)
+	var bone := PlaceDetail.col(Color(0.82, 0.78, 0.68), 0.7)
+	var ant := PlaceKit.on_ground(root, 0.3, -0.2, 0.15)
+	for sx: float in [-1.0, 1.0]:
+		HandKit.tube(root, PackedVector3Array([ant, ant + Vector3(sx * 0.18, 0.12, 0.05), ant + Vector3(sx * 0.32, 0.3, 0.0), ant + Vector3(sx * 0.4, 0.48, -0.05)]), 0.018, bone, 6)
+		HandKit.tube(root, PackedVector3Array([ant + Vector3(sx * 0.25, 0.2, 0.02), ant + Vector3(sx * 0.18, 0.36, 0.1)]), 0.012, bone, 5)
+	BuildKit.sphere(root, 0.08, ant, bone, Vector3(1.0, 0.7, 1.4), 8)
+	# Schutzdach über dem Zettelpfosten
+	var post := PlaceKit.on_ground(root, 0.0, 3.4)
+	BuildKit.box(root, Vector3(0.4, 0.03, 0.3), post + Vector3(0, 1.45, 0.06), PlaceKit.mat("shingles"), false, Vector3(-15, 0, 0))
+	for k in 3:
+		BuildKit.box(root, Vector3(0.002, 0.003, 0.05), post + Vector3(-0.03 + k * 0.03, 1.32, 0.055), PlaceKit.mat("metal"), false)
+	PlaceDetail.litter(root, Vector3.ZERO, 15.0, 1213, 110, ["leaf", "leaf", "leaf", "twig", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
 
 
 ## Imkerei Brandl: Bienenhaus, Bienenkästen in zwei Reihen. In manchen wächst graues Geflecht.
@@ -486,3 +571,86 @@ static func _imkerei(root: Node3D) -> void:
 				BuildKit.box(hive, Vector3(0.62, 0.05, 0.56), Vector3(0, 1.07, 0), PlaceKit.mat("tin"), false)
 	PlaceKit.loot(root, "Comb", "alien_comb", 1, PlaceKit.on_ground(root, 1.5, 5.2, 1.06), "alien")
 	PlaceKit.loot(root, "Comb2", "alien_comb", 1, PlaceKit.on_ground(root, -4.5, 2.0, 1.06), "alien")
+	_imkerei_details(root, h)
+
+
+## Lebendige Orte: Honigschleuder, Rähmchen, Smoker, Imkerhut am Haken, Gläser im Regal, Wachsblöcke, Kalender;
+## draußen Fluglöcher, Steine auf den Deckeln, Schubkarre, Bank, Schild „Honig ab Hof“, verblühtes Beet, Laub.
+static func _imkerei_details(root: Node3D, h: Node3D) -> void:
+	var metal := PlaceKit.mat("metal")
+	# Honigschleuder (Edelstahltrommel mit Kurbel) auf der Werkbank-Seite
+	var ex := Node3D.new()
+	ex.position = Vector3(2.35, 0.06, 0.4)
+	h.add_child(ex)
+	BuildKit.cylinder(ex, 0.3, 0.7, Vector3(0, 0.55, 0), PlaceDetail.col(Color(0.75, 0.76, 0.78), 0.3, 0.4), true, Vector3.ZERO, -1.0, 16)
+	for k in 3:
+		var a := TAU * k / 3.0
+		BuildKit.cylinder(ex, 0.025, 0.25, Vector3(cos(a) * 0.26, 0.1, sin(a) * 0.26), metal, false, Vector3.ZERO, -1.0, 6)
+	BuildKit.box(ex, Vector3(0.65, 0.04, 0.06), Vector3(0, 0.92, 0), metal, false)
+	BuildKit.box(ex, Vector3(0.04, 0.18, 0.04), Vector3(0.3, 1.02, 0), metal, false)
+	BuildKit.cylinder(ex, 0.02, 0.12, Vector3(0.36, 1.1, 0), PlaceDetail.col(Color(0.1, 0.1, 0.1)), false, Vector3(0, 0, 90), -1.0, 6)
+	BuildKit.cylinder(ex, 0.03, 0.08, Vector3(0, 0.25, 0.3), metal, false, Vector3(90, 0, 0), -1.0, 6)
+	# Rähmchen-Stapel, Smoker, Gläser, Wachsblöcke
+	for k in 6:
+		var f := Node3D.new()
+		f.position = Vector3(1.55 + (k % 3) * 0.02, 0.86 + k * 0.03, -1.45)
+		f.rotation_degrees.y = (k % 2) * 6.0
+		h.add_child(f)
+		BuildKit.box(f, Vector3(0.45, 0.025, 0.25), Vector3.ZERO, PlaceKit.mat("wood"), false)
+		BuildKit.box(f, Vector3(0.4, 0.01, 0.2), Vector3(0, 0.014, 0), PlaceDetail.col(Color(0.75, 0.6, 0.25), 0.5), false)
+	var smoker := Node3D.new()
+	smoker.position = Vector3(1.0, 0.81, -1.45)
+	h.add_child(smoker)
+	BuildKit.cylinder(smoker, 0.06, 0.2, Vector3(0, 0.1, 0), PlaceDetail.col(Color(0.4, 0.38, 0.35), 0.4, 0.8), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.lathe(smoker, PackedVector2Array([Vector2(0.06, 0), Vector2(0.03, 0.06), Vector2(0.012, 0.1), Vector2(0, 0.1)]), Vector3(0, 0.2, 0), metal, 10)
+	BuildKit.box(smoker, Vector3(0.1, 0.04, 0.16), Vector3(-0.1, 0.1, 0), PlaceKit.mat("cloth"), false, Vector3(0, 0, 20))
+	PlaceDetail.clutter(h, Vector3(-1.4, 1.52, -1.6), Vector2(2.2, 0.36), 401, 5, ["jars"])
+	PlaceDetail.clutter(h, Vector3(-1.4, 1.02, -1.6), Vector2(2.2, 0.36), 402, 4, ["jars", "boxes"])
+	for k in 3:
+		BuildKit.box(h, Vector3(0.14, 0.08, 0.1), Vector3(-0.3 - k * 0.16, 1.06 + (k % 2) * 0.0, -1.55), PlaceDetail.col(Color(0.85, 0.7, 0.3), 0.6), false, Vector3(0, k * 10.0, 0))
+	# Imkerhut mit Schleier und Handschuhe am Haken neben der Tür
+	BuildKit.box(h, Vector3(0.04, 0.04, 0.1), Vector3(1.4, 1.75, 1.88), metal, false)
+	BuildKit.cylinder(h, 0.2, 0.02, Vector3(1.4, 1.62, 1.82), PlaceDetail.col(Color(0.9, 0.88, 0.8), 0.8), false, Vector3(70, 0, 0), -1.0, 14)
+	var veil := BuildKit.color_mat(Color(0.15, 0.15, 0.15, 0.55), 0.9)
+	veil.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	veil.cull_mode = BaseMaterial3D.CULL_DISABLED
+	BuildKit.cylinder(h, 0.17, 0.35, Vector3(1.4, 1.42, 1.86), veil, false, Vector3(70, 0, 0), 0.2, 14)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(h, Vector3(0.1, 0.28, 0.05), Vector3(1.7 + sx * 0.07, 1.45, 1.9), PlaceDetail.col(Color(0.85, 0.75, 0.55), 0.9), false, Vector3(0, 0, sx * 6.0))
+	PlaceDetail.sign(h, "Schleudern:\nSa 14.11.\n— 38 Gläser —\nKasten 3 + 6:\nSIEHE NOTIZ", Vector3(-2.95, 1.5, 0.5), Vector2(0.35, 0.45), 90.0, Color(0.95, 0.93, 0.85), Color(0.2, 0.15, 0.1), 22)
+	PlaceDetail.lamp(h, Vector3(0, 2.4, 0), "hanging", false)
+	PlaceDetail.cobweb(h, Vector3(-2.9, 2.4, -1.9), Vector3(1, 0, 0), Vector3(0, 0, 1), 0.4)
+	# draußen: Fluglöcher und Steine auf den Kastendeckeln, Kastenständer
+	for row in 2:
+		for k in 4:
+			var hive := root.get_node_or_null("Hive_%d_%d" % [row, k]) as Node3D
+			if hive == null:
+				continue
+			BuildKit.box(hive, Vector3(0.3, 0.025, 0.01), Vector3(0, 0.45, 0.255), PlaceDetail.col(Color(0.05, 0.04, 0.03)), false)
+			BuildKit.box(hive, Vector3(0.36, 0.015, 0.08), Vector3(0, 0.43, 0.29), PlaceKit.mat("wood_old"), false)
+			if not ((row == 1 and k == 2) or (row == 0 and k == 0)):
+				BuildKit.sphere(hive, 0.1, Vector3(0.05, 1.15, -0.05), PlaceKit.mat("stone"), Vector3(1.3, 0.7, 1.0), 7)
+	# Schubkarre, Bank, Schild am Weg, verblühtes Beet
+	var wb := Node3D.new()
+	wb.position = PlaceKit.on_ground(root, 4.2, -2.5)
+	wb.rotation_degrees.y = 30.0
+	root.add_child(wb)
+	BuildKit.lathe(wb, PackedVector2Array([Vector2(0, 0), Vector2(0.3, 0.0), Vector2(0.42, 0.3), Vector2(0.4, 0.3), Vector2(0.28, 0.02), Vector2(0, 0.02)]), Vector3(0, 0.3, 0), PlaceKit.mat("rust"), 12).scale = Vector3(1.0, 1.0, 1.5)
+	BuildKit.cylinder(wb, 0.16, 0.06, Vector3(0, 0.16, 0.75), PlaceDetail.col(Color(0.08, 0.08, 0.08)), false, Vector3(0, 0, 90), -1.0, 12)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.beam_between(wb, Vector3(sx * 0.2, 0.3, 0.6), Vector3(sx * 0.28, 0.55, -0.9), 0.03, PlaceKit.mat("wood_old"))
+		BuildKit.box(wb, Vector3(0.03, 0.3, 0.03), Vector3(sx * 0.22, 0.15, -0.35), metal, false)
+	var bench := Node3D.new()
+	bench.position = PlaceKit.on_ground(root, -2.0, -3.4)
+	root.add_child(bench)
+	PlaceDetail.pew(bench, Vector3.ZERO, 1.6, "wood_old")
+	var sp := PlaceKit.on_ground(root, -6.5, 6.5)
+	BuildKit.box(root, Vector3(0.1, 1.5, 0.1), sp + Vector3(0, 0.75, 0), PlaceKit.mat("wood_old"), true)
+	PlaceDetail.sign(root, "Honig ab Hof\n€ 6,– / Glas\nKasse des Vertrauens", sp + Vector3(0, 1.3, 0.06), Vector2(0.6, 0.36), 0.0, Color(0.95, 0.85, 0.35), Color(0.25, 0.15, 0.05), 30)
+	BuildKit.box(root, Vector3(0.25, 0.2, 0.18), sp + Vector3(0, 0.9, 0.1), PlaceKit.mat("tin"), false)
+	for k in 12:
+		var p := PlaceKit.on_ground(root, 3.0 + (k % 4) * 0.5, -4.5 + (k / 4) * 0.5)
+		BuildKit.cylinder(root, 0.006, 0.45, p + Vector3(0, 0.22, 0), PlaceDetail.col(Color(0.35, 0.3, 0.15), 1.0), false, Vector3(randf_range(-15, 15), 0, randf_range(-15, 15)), 0.003, 4)
+		BuildKit.sphere(root, 0.03, p + Vector3(0, 0.45, 0), PlaceDetail.col(Color(0.3, 0.22, 0.12), 1.0), Vector3.ONE, 5)
+	BuildKit.box(root, Vector3(2.2, 0.15, 1.7), PlaceKit.on_ground(root, 3.75, -3.75, 0.0), PlaceKit.mat("wood_old"), false)
+	PlaceDetail.litter(root, Vector3(0, 0, 2.0), 7.0, 455, 70, ["leaf", "leaf", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)

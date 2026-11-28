@@ -481,6 +481,7 @@ static func _funkmast(root: Node3D) -> void:
 	if fix.done:
 		apply.call()
 	fix.acted.connect(apply)
+	_funkmast_details(root, hut)
 
 
 ## Rachelsee: Bootshaus mit Steg, ein Auto halb im Wasser, darin ein Firmenausweis.
@@ -535,6 +536,7 @@ static func _see(root: Node3D) -> void:
 		for sz: float in [-1.3, 1.3]:
 			BuildKit.cylinder(car, 0.32, 0.22, Vector3(sx, 0.15, sz), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 12)
 	PlaceKit.note(car, "see_ausweis", Vector3(0.95, 0.95, 0.3), true)
+	_see_details(root, house, car, level)
 
 
 ## Granitbruch: tiefe Grube, Bagger, Bürocontainer am Rand, verschlossenes Sprengstofflager in der Wand.
@@ -580,6 +582,7 @@ static func _steinbruch(root: Node3D) -> void:
 	PlaceKit.loot(office, "Key", "quarry_key", 1, Vector3(-0.8, 0.8, -0.8), "card")
 	PlaceKit.blueprint(office, "bp_charge", "Sprengladung", Vector3(1.4, 0.06, -0.8))
 	PlaceKit.loot(office, "Nails", "nails", 20, Vector3(1.6, 0.06, 0.6), "box", 10)
+	_steinbruch_details(root, dig, office)
 
 
 ## Kontrollpunkt an der Straße: Schranke, Armeezelte, Sandsäcke, umgekippter LKW. Niemand mehr da.
@@ -635,6 +638,7 @@ static func _kontrollpunkt(root: Node3D) -> void:
 		for sx: float in [-1.1, 1.1]:
 			BuildKit.cylinder(truck, 0.5, 0.4, Vector3(sx, -1.2, sz), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 12)
 	BuildKit.collider_box(root, Vector3(3.0, 2.6, 7.5), PlaceKit.on_ground(root, -13.0, 9.0, 1.2), Vector3(0, 70, 0))
+	_kontrollpunkt_details(root)
 
 
 ## Ferienlager Waldfuchs: kleine Hütten im Halbkreis, Speisehütte, Fahnenmast. Die Betten sind frisch gemacht.
@@ -671,6 +675,7 @@ static func _ferienlager(root: Node3D) -> void:
 		BuildKit.cylinder(root, 0.33, 0.03, bp + Vector3(0, 0.33, -0.5), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 12)
 		BuildKit.cylinder(root, 0.33, 0.03, bp + Vector3(0, 0.33, 0.5), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 12)
 		BuildKit.box(root, Vector3(0.04, 0.04, 1.0), bp + Vector3(0, 0.55, 0), BuildKit.color_mat([Color(0.7, 0.1, 0.1), Color(0.1, 0.3, 0.7), Color(0.2, 0.6, 0.2)][k]), false, Vector3(-15, 0, 0))
+	_ferienlager_details(root, canteen)
 
 
 ## Schäferkarren: Bauwagen auf einer Lichtung, die Herde liegt in einem perfekten Kreis, Köpfe nach innen.
@@ -706,6 +711,7 @@ static func _schaefer(root: Node3D) -> void:
 	for k in 10:
 		var a := TAU * k / 10.0
 		BuildKit.cylinder(root, 0.06, 1.1, PlaceKit.on_ground(root, cos(a) * 13.0 + 3.0, sin(a) * 6.0 - 22.0, 0.55), PlaceKit.mat("bark"), false, Vector3.ZERO, -1.0, 6)
+	_schaefer_details(root, wagon)
 
 
 ## Finsterauer Filz (Hochmoor): Holzstege über den Schlamm, Tümpel, Torfstich. Am Rand eines Tümpels liegt jemand.
@@ -768,6 +774,7 @@ static func _moor(root: Node3D) -> void:
 	var tp := PlaceKit.on_ground(root, 22.0, 30.0)
 	PlaceKit.loot(root, "Peat", "peat", 6, tp, "peat", 2)
 	BuildKit.box(root, Vector3(2.0, 0.02, 1.2), tp + Vector3(1.6, -0.1, 0), PlaceKit.mat("mud"), false)
+	_moor_details(root, tp, corpse)
 
 
 ## Totholzhang (Windwurf): Hunderte Bäume liegen strahlenförmig um einen kleinen Krater – weg von einem Punkt.
@@ -809,6 +816,7 @@ static func _windwurf(root: Node3D) -> void:
 	PlaceKit.loot(root, "Probe", "probe_core", 1, PlaceKit.on_ground(root, 0.3, -0.2), "device")
 	PlaceKit.loot(root, "Wood1", "wood", 6, PlaceKit.on_ground(root, 12.0, 6.0), "logs", 2)
 	PlaceKit.loot(root, "Wood2", "wood", 6, PlaceKit.on_ground(root, -14.0, -8.0), "logs", 2)
+	_windwurf_details(root, rng)
 
 
 ## Lichtung der Spiegel: Spiegel an kahlen Stämmen, alle nach oben gerichtet. Darunter ein verlassenes Lager.
@@ -842,6 +850,7 @@ static func _spiegel(root: Node3D) -> void:
 	PlaceKit.loot(root, "Water", "water", 1, c + Vector3(1.0, 0.0, -0.6), "bottles")
 	for k in 3:
 		BuildKit.box(root, Vector3(0.22, 0.3, 0.14), c + Vector3(-1.2 + k * 0.3, 0.15, 1.3), BuildKit.color_mat(Color(0.2, 0.35, 0.6), 0.4), false, Vector3(0, 0, 80))
+	_spiegel_details(root, c, rng)
 
 
 ## Alter Feldspat-Stollen in der Ostwand des Granitbruchs: Holzportal, Türstöcke, Schienen, ein Hunt (Förderwagen),
@@ -968,3 +977,610 @@ static func _klause(root: Node3D) -> void:
 	label(root, "RESCHBACHKLAUSE\nTriftklause · erbaut 1849", tp + Vector3(0, 1.45, 0.1), 22, Color(0.1, 0.08, 0.05))
 	PlaceKit.note(root, "klause_tafel", tp + Vector3(0.3, 1.15, 0.1))
 	PlaceKit.loot(root, "Planks", "planks", 3, PlaceKit.on_ground(root, -7.0, -1.5), "logs", 1)
+	_klause_details(root, bed, top)
+
+
+## Lebendige Orte: Zaun mit Tor um den Mast, Steigleiter mit Rückenschutz, Kabelpritsche zur Technikhütte,
+## Antennen, Warnschilder, Kiesfläche, Dieseltank, Kabeltrommel, Hütte innen mit Pult, Telefon, Schaltplan.
+static func _funkmast_details(root: Node3D, hut: Node3D) -> void:
+	var g := PlaceKit.ground(root, 0, 0)
+	var steel := PlaceKit.mat("metal")
+	PlaceKit.fence(root, [Vector2(-4.5, -4.5), Vector2(4.5, -4.5), Vector2(4.5, 4.5), Vector2(-4.5, 4.5), Vector2(-4.5, -4.5)], 2.0, [Vector2(27.5, 30.0)])
+	for gx in 3:
+		for gz in 3:
+			var p := PlaceKit.on_ground(root, -3.0 + gx * 3.0, -3.0 + gz * 3.0, 0.02)
+			BuildKit.box(root, Vector3(3.05, 0.04, 3.05), p, PlaceKit.mat("gravel"), false)
+	# Steigleiter mit Rückenschutz (Ringe) an einem Bein
+	for k in 40:
+		BuildKit.box(root, Vector3(0.4, 0.025, 0.025), Vector3(0.0, g + 0.4 + k * 0.6, 1.05 - k * 0.012), steel, false)
+	for k in 10:
+		HandKit.tube(root, HandKit.arc(Vector3(0, g + 3.0 + k * 2.2, 1.05 - (3.0 + k * 2.2) * 0.02), 0.38, 200, 340, 8, Vector3.RIGHT, Vector3.FORWARD), 0.012, steel, 4)
+	# Plattform oben, Richtantennen, Kabelbündel nach unten
+	BuildKit.box(root, Vector3(1.6, 0.06, 1.6), Vector3(0, g + 24.5, 0), PlaceKit.mat("steel_dark"), false)
+	for k in 4:
+		var a := k * 90.0 + 45.0
+		var off := Vector3(0, 0, 0.8).rotated(Vector3.UP, deg_to_rad(a))
+		BuildKit.box(root, Vector3(0.04, 0.5, 1.6), Vector3(off.x, g + 24.8, off.z), steel, false, Vector3(0, a, 0))
+		BuildKit.box(root, Vector3(0.28, 1.6, 0.1), Vector3(off.x * 0.7, g + 26.3, off.z * 0.7), PlaceKit.mat("white"), false, Vector3(0, a, 0))
+	PlaceDetail.cable(root, Vector3(0.2, g + 24.4, 0.3), Vector3(0.3, g + 1.0, 0.8), 0.0, 0.035)
+	# Kabelpritsche zur Hütte
+	var hp := hut.global_position - root.global_position
+	for k in 6:
+		var t := float(k) / 5.0
+		var p := Vector3(0.6, g, 0.8).lerp(Vector3(hp.x - 1.2, g, hp.z), t)
+		p.y = PlaceKit.ground(root, p.x, p.z)
+		BuildKit.box(root, Vector3(0.06, 0.9, 0.06), p + Vector3(0, 0.45, 0), steel, false)
+	PlaceDetail.cable(root, Vector3(0.6, g + 0.9, 0.8), Vector3(hp.x - 1.2, PlaceKit.ground(root, hp.x - 1.2, hp.z) + 0.9, hp.z), 0.05, 0.05)
+	PlaceDetail.sign(root, "Funkstation Siebensteinkopf\nBetreten verboten – Lebensgefahr", PlaceKit.on_ground(root, -4.55, -1.0, 1.3), Vector2(0.7, 0.36), -90.0, Color(0.95, 0.8, 0.1), Color(0.05, 0.05, 0.05), 28)
+	PlaceDetail.sign(root, "Hochfrequenz!\nHerzschrittmacher-\nträger fernbleiben", PlaceKit.on_ground(root, 1.5, 4.55, 1.3), Vector2(0.45, 0.36), 0.0, Color(0.95, 0.95, 0.9), Color(0.6, 0.1, 0.08), 24)
+	# Dieseltank, Kabeltrommel, Fass
+	var tp := PlaceKit.on_ground(root, 8.5, -1.0)
+	BuildKit.cylinder(root, 0.6, 2.0, tp + Vector3(0, 0.75, 0), PlaceDetail.col(Color(0.3, 0.38, 0.3), 0.6, 0.4), true, Vector3(90, 0, 0), -1.0, 16)
+	for sz: float in [-0.7, 0.7]:
+		BuildKit.box(root, Vector3(1.0, 0.2, 0.15), tp + Vector3(0, 0.1, sz), PlaceKit.mat("concrete"), false)
+	PlaceDetail.sign(root, "DIESEL", tp + Vector3(0.61, 0.85, 0), Vector2(0.4, 0.15), 90.0, Color(0.95, 0.95, 0.9), Color(0.1, 0.1, 0.1), 28, false)
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 9.5, 1.2), "rust", true, 30.0)
+	# Hütte innen: Pult, Telefon, Schaltplan, Leuchte, Stuhl
+	PlaceDetail.table(hut, Vector3(1.15, 0.06, 0.55), Vector3(1.0, 0.75, 0.55), "steel_dark", 90.0)
+	BuildKit.box(hut, Vector3(0.22, 0.08, 0.18), Vector3(1.15, 0.85, 0.5), PlaceDetail.col(Color(0.15, 0.15, 0.15), 0.4), false)
+	PlaceDetail.office_chair(hut, Vector3(0.6, 0.06, 0.55), -90.0)
+	PlaceDetail.sign(hut, "SCHALTPLAN NA 20\n— Netz —|— Akku —|— Sender K7 —", Vector3(-1.45, 1.5, 0.3), Vector2(0.9, 0.5), 90.0, Color(0.92, 0.94, 0.95), Color(0.1, 0.2, 0.5), 22)
+	PlaceDetail.lamp(hut, Vector3(0, 2.3, 0), "hanging", false)
+	PlaceDetail.clutter(hut, Vector3(1.15, 0.81, 0.3), Vector2(0.4, 0.3), 77, 2, ["papers"])
+	PlaceDetail.litter(root, Vector3(4.0, 0, 2.0), 7.0, 433, 40, ["leaf", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Bootshaus mit Rudern, Rettungsring, Netzen, Bojen, Seilen, Werkzeugbrett; Steg mit Pollern, Leiter und
+## Laternenpfahl; Bank, Schilf, Schild; das Auto mit Scheinwerfern, Stoßstangen, offener Tür, Kennzeichen.
+static func _see_details(root: Node3D, house: Node3D, car: Node3D, level: float) -> void:
+	var wood := PlaceKit.mat("wood_old")
+	for k in 2:
+		BuildKit.box(house, Vector3(0.06, 0.04, 2.4), Vector3(1.75, 1.2 + k * 0.15, 0.0), PlaceKit.mat("furn"), false, Vector3(0, 0, 70))
+		BuildKit.box(house, Vector3(0.18, 0.02, 0.5), Vector3(1.8, 1.2 + k * 0.15, -1.1), PlaceKit.mat("furn"), false, Vector3(0, 0, 70))
+	HandKit.tube(house, HandKit.arc(Vector3(-1.95, 1.4, 1.0), 0.28, 0, 360, 18, Vector3.FORWARD, Vector3.UP), 0.07, PlaceDetail.col(Color(0.9, 0.3, 0.1), 0.7), 8)
+	for k in 4:
+		HandKit.tube(house, HandKit.arc(Vector3(-1.96, 1.4, 1.0), 0.29, k * 90.0 + 20.0, k * 90.0 + 50.0, 4, Vector3.FORWARD, Vector3.UP), 0.072, PlaceDetail.col(Color(0.95, 0.95, 0.92), 0.7), 8)
+	var net := BuildKit.color_mat(Color(0.35, 0.38, 0.3, 0.7), 1.0)
+	net.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	net.cull_mode = BaseMaterial3D.CULL_DISABLED
+	BuildKit.box(house, Vector3(0.02, 1.2, 1.4), Vector3(1.93, 1.4, -1.6), net, false, Vector3(0, 0, 4))
+	for k in 3:
+		BuildKit.sphere(house, 0.11, Vector3(1.85, 0.75 + k * 0.08, -1.2 - k * 0.3), PlaceDetail.col([Color(0.9, 0.4, 0.1), Color(0.95, 0.95, 0.9), Color(0.85, 0.15, 0.1)][k], 0.5), Vector3(1, 1.2, 1), 8)
+	PlaceDetail.shelf(house, Vector3(0.0, 0.06, -2.4), 0.0, Vector3(1.4, 1.6, 0.35), 4, "wood_old")
+	PlaceDetail.clutter(house, Vector3(0.0, 0.88, -2.22), Vector2(1.3, 0.3), 88, 4, ["jars", "tools", "boxes"])
+	PlaceDetail.clutter(house, Vector3(0.0, 1.38, -2.22), Vector2(1.3, 0.3), 89, 3, ["bottles", "cans"])
+	PlaceDetail.lamp(house, Vector3(0, 2.2, 0), "hanging", false)
+	# Steg: Poller, Leiter am Ende, Laternenpfahl, Taue
+	for k in 4:
+		BuildKit.cylinder(root, 0.1, 0.5, Vector3(0.75 + (k % 2) * 1.5, level + 0.75, 10.0 + (k / 2) * 10.0), PlaceKit.mat("bark"), false, Vector3.ZERO, 0.08, 8)
+	for k in 5:
+		BuildKit.box(root, Vector3(0.5, 0.04, 0.05), Vector3(1.5, level + 0.3 - k * 0.3, 24.25), PlaceKit.mat("metal"), false)
+	for sx: float in [-0.25, 0.25]:
+		BuildKit.box(root, Vector3(0.04, 1.6, 0.04), Vector3(1.5 + sx, level - 0.1, 24.25), PlaceKit.mat("metal"), false)
+	BuildKit.cylinder(root, 0.06, 2.4, Vector3(2.25, level + 1.65, 14.0), wood, false, Vector3.ZERO, 0.05, 8)
+	PlaceDetail.lamp(root, Vector3(2.25, level + 2.8, 14.0), "wall", false, -90.0)
+	PlaceDetail.cable(root, Vector3(2.25, level + 0.75, 20.0), Vector3(3.2, level + 0.35, 18.8), 0.15, 0.015, Color(0.65, 0.55, 0.35))
+	# Bank am Ufer, Schild, Schilf
+	var bench := Node3D.new()
+	bench.position = PlaceKit.on_ground(root, -3.5, 7.0)
+	bench.rotation_degrees.y = 180.0
+	root.add_child(bench)
+	PlaceDetail.pew(bench, Vector3.ZERO, 1.6, "wood_old")
+	var sp := PlaceKit.on_ground(root, 4.5, 7.0)
+	BuildKit.box(root, Vector3(0.08, 1.4, 0.08), sp + Vector3(0, 0.7, 0), wood, true)
+	PlaceDetail.sign(root, "Rachelsee\nBaden und Bootfahren\nverboten – Nationalpark", sp + Vector3(0, 1.25, 0.05), Vector2(0.6, 0.36), 0.0, Color(0.25, 0.4, 0.25), Color(0.95, 0.95, 0.9), 28)
+	var reed := PlaceDetail.col(Color(0.55, 0.5, 0.3), 1.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 707
+	for k in 90:
+		var x := rng.randf_range(-14.0, 12.0)
+		if absf(x - 1.5) < 1.5:
+			continue
+		var z := 9.0 + rng.randf_range(-1.0, 2.0)
+		var y := minf(PlaceKit.ground(root, x, z), level)
+		var h := rng.randf_range(0.8, 1.6)
+		BuildKit.cylinder(root, 0.008, h, Vector3(x, y + h * 0.5, z), reed, false, Vector3(rng.randf_range(-12, 12), 0, rng.randf_range(-12, 12)), 0.003, 3)
+		if k % 4 == 0:
+			BuildKit.cylinder(root, 0.025, 0.14, Vector3(x, y + h - 0.05, z), PlaceDetail.col(Color(0.3, 0.2, 0.12), 1.0), false, Vector3.ZERO, -1.0, 6)
+	# Auto: Scheinwerfer, Stoßstangen, Rückleuchten, Kennzeichen, offene Fahrertür
+	var chrome := PlaceDetail.col(Color(0.6, 0.62, 0.64), 0.3, 0.8)
+	for sx: float in [-0.65, 0.65]:
+		BuildKit.box(car, Vector3(0.35, 0.15, 0.03), Vector3(sx, 0.6, 2.16), PlaceDetail.col(Color(0.85, 0.85, 0.8), 0.2), false)
+		BuildKit.box(car, Vector3(0.3, 0.12, 0.03), Vector3(sx, 0.62, -2.16), PlaceDetail.col(Color(0.6, 0.05, 0.05), 0.3), false)
+	for sz: float in [2.17, -2.17]:
+		BuildKit.box(car, Vector3(1.85, 0.12, 0.08), Vector3(0, 0.25, sz), chrome, false)
+	PlaceDetail.sign(car, "PA-RZ 404", Vector3(0, 0.38, 2.22), Vector2(0.52, 0.11), 0.0, Color(0.95, 0.95, 0.92), Color(0.05, 0.05, 0.05), 40)
+	var door := Node3D.new()
+	door.position = Vector3(0.9, 0.45, 0.6)
+	door.rotation_degrees.y = 55.0
+	car.add_child(door)
+	BuildKit.box(door, Vector3(0.05, 0.65, 1.1), Vector3(0, 0, -0.55), BuildKit.tex_mat("car_paint", 1.0, Color(0.35, 0.4, 0.5)), false)
+	BuildKit.box(door, Vector3(0.03, 0.4, 0.9), Vector3(0, 0.55, -0.5), PlaceKit.mat("glass"), false)
+	BuildKit.box(car, Vector3(1.4, 0.4, 0.5), Vector3(0, 0.75, -0.6), PlaceDetail.col(Color(0.15, 0.13, 0.12), 0.9), false)
+	BuildKit.box(car, Vector3(1.4, 0.4, 0.5), Vector3(0, 0.75, 0.4), PlaceDetail.col(Color(0.15, 0.13, 0.12), 0.9), false)
+	BuildKit.cylinder(car, 0.18, 0.04, Vector3(0.4, 1.0, 0.75), PlaceDetail.col(Color(0.08, 0.08, 0.08)), false, Vector3(60, 0, 0), -1.0, 12)
+	PlaceDetail.litter(root, Vector3(0, 0, 5.0), 7.0, 909, 50, ["leaf", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Bagger mit Ketten, Schaufelzähnen, Sitz und Hydraulik; gesägte Granitblöcke mit Bohrlöchern,
+## Schotterkegel, Dixi-Klo, Warnschilder, Kabeltrommel; Büro mit Helmen, Schichtplan, Kaffeemaschine.
+static func _steinbruch_details(root: Node3D, dig: Node3D, office: Node3D) -> void:
+	var dark := PlaceKit.mat("dark")
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(dig, Vector3(0.65, 0.75, 3.9), Vector3(sx * 1.05, 0.38, 0), PlaceDetail.col(Color(0.12, 0.12, 0.12), 0.7, 0.4), false)
+		for k in 13:
+			BuildKit.box(dig, Vector3(0.67, 0.05, 0.08), Vector3(sx * 1.05, 0.76, -1.8 + k * 0.3), dark, false)
+	for k in 5:
+		BuildKit.box(dig, Vector3(0.1, 0.18, 0.12), Vector3(0.1 + k * 0.2, 0.2, 6.6), PlaceKit.mat("steel_dark"), false, Vector3(30, 0, 0))
+	BuildKit.box(dig, Vector3(0.5, 0.15, 0.5), Vector3(-0.6, 2.25, 0.4), PlaceDetail.col(Color(0.15, 0.15, 0.15), 0.8), false)
+	BuildKit.box(dig, Vector3(0.5, 0.5, 0.1), Vector3(-0.6, 2.5, 0.15), PlaceDetail.col(Color(0.15, 0.15, 0.15), 0.8), false)
+	BuildKit.cylinder(dig, 0.08, 2.0, Vector3(0.75, 3.1, 1.9), PlaceKit.mat("metal"), false, Vector3(-60, 0, 0), -1.0, 8)
+	BuildKit.cylinder(dig, 0.06, 0.6, Vector3(-0.9, 2.3, -1.4), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 8)
+	# Granitblöcke (gesägt, Bohrlochreihen), Schotterkegel
+	var granite := PlaceKit.mat("stone")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3131
+	for k in 9:
+		var p := PlaceKit.on_ground(root, -10.0 + (k % 3) * 2.4, 6.0 + (k / 3) * 1.8)
+		var sz := Vector3(rng.randf_range(1.6, 2.2), rng.randf_range(0.9, 1.3), rng.randf_range(1.0, 1.4))
+		var b := BuildKit.box(root, sz, p + Vector3(0, sz.y * 0.5, 0), granite, true, Vector3(0, rng.randf_range(-8, 8), 0))
+		for d in 5:
+			BuildKit.cylinder(b, 0.025, sz.y + 0.01, Vector3(-sz.x * 0.4 + d * sz.x * 0.2, 0, sz.z * 0.5 - 0.02), PlaceDetail.col(Color(0.25, 0.25, 0.25)), false, Vector3.ZERO, -1.0, 6)
+		if k % 3 == 0:
+			var top := BuildKit.box(root, sz * 0.8, p + Vector3(0, sz.y + sz.y * 0.4, 0), granite, true, Vector3(0, rng.randf_range(-15, 15), 0))
+			top.name = "Block_%d" % k
+	for k in 3:
+		var cp := PlaceKit.on_ground(root, 14.0 + k * 5.0, -8.0 - k * 3.0)
+		BuildKit.lathe(root, PackedVector2Array([Vector2(0, 0), Vector2(3.2 - k * 0.6, 0), Vector2(0.3, 2.0 - k * 0.3), Vector2(0, 2.05 - k * 0.3)]), cp, PlaceKit.mat("gravel"), 14)
+		BuildKit.collider_box(root, Vector3(3.0, 1.5, 3.0), cp + Vector3(0, 0.75, 0))
+	# Dixi-Klo neben dem Büro
+	var dp := PlaceKit.on_ground(root, 26.0, -33.0)
+	var dixi := Node3D.new()
+	dixi.position = dp
+	dixi.rotation_degrees.y = 230.0
+	root.add_child(dixi)
+	BuildKit.box(dixi, Vector3(1.1, 2.2, 1.1), Vector3(0, 1.1, 0), PlaceDetail.col(Color(0.15, 0.35, 0.7), 0.5), true)
+	BuildKit.box(dixi, Vector3(1.15, 0.12, 1.15), Vector3(0, 2.25, 0), PlaceDetail.col(Color(0.9, 0.9, 0.88), 0.5), false)
+	BuildKit.box(dixi, Vector3(0.8, 1.9, 0.02), Vector3(0, 1.0, 0.56), PlaceDetail.col(Color(0.12, 0.3, 0.6), 0.5), false)
+	BuildKit.box(dixi, Vector3(0.12, 0.05, 0.02), Vector3(0.25, 1.1, 0.575), PlaceDetail.col(Color(0.8, 0.1, 0.1)), false)
+	# Warnschilder, Kabeltrommel, Fässer
+	PlaceDetail.sign(root, "STEINBRUCH\nBetreten verboten!\nSteinschlag – Sprengarbeiten", PlaceKit.on_ground(root, 22.0, -30.0, 1.3), Vector2(0.7, 0.45), 230.0, Color(0.95, 0.8, 0.1), Color(0.05, 0.05, 0.05), 28)
+	BuildKit.box(root, Vector3(0.08, 1.2, 0.08), PlaceKit.on_ground(root, 22.0, -30.0, 0.6), PlaceKit.mat("metal"), true)
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 4.0, 9.0), "rust")
+	PlaceDetail.barrel(root, PlaceKit.on_ground(root, 4.8, 9.6), "rust", true, 80.0)
+	var dr := PlaceKit.on_ground(root, 9.0, 9.5)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.cylinder(root, 0.55, 0.05, dr + Vector3(sx * 0.3, 0.55, 0), PlaceKit.mat("wood_old"), false, Vector3(0, 0, 90), -1.0, 14)
+	BuildKit.cylinder(root, 0.38, 0.56, dr + Vector3(0, 0.55, 0), PlaceDetail.col(Color(0.1, 0.1, 0.1), 0.6), true, Vector3(0, 0, 90), -1.0, 14)
+	# Büro: Helme am Haken, Schichtplan, Kaffeemaschine, Stuhl
+	for k in 3:
+		BuildKit.sphere(office, 0.14, Vector3(1.6 - k * 0.35, 1.6, 1.05), PlaceDetail.col([Color(0.95, 0.8, 0.1), Color(0.95, 0.95, 0.92), Color(0.9, 0.45, 0.1)][k], 0.5), Vector3(1.0, 0.75, 1.1), 10)
+	PlaceDetail.sign(office, "SCHICHTPLAN KW 46\nMo–Fr 6:00\nSprengung Do 11:00\n— Bereich Ost GESPERRT —", Vector3(0.6, 1.5, -1.15), Vector2(0.6, 0.45), 0.0, Color(0.95, 0.95, 0.93), Color(0.1, 0.1, 0.2), 22)
+	BuildKit.box(office, Vector3(0.22, 0.3, 0.24), Vector3(-1.9, 0.95, -0.85), PlaceDetail.col(Color(0.1, 0.1, 0.1), 0.4), false)
+	PlaceDetail.chair(office, Vector3(-1.2, 0.06, -0.1), 180.0, "furn")
+	PlaceDetail.clutter(office, Vector3(-1.2, 0.8, -0.6), Vector2(1.2, 0.3), 31, 2, ["papers", "binders"])
+	PlaceDetail.litter(root, Vector3(0, 0, 0), 20.0, 3132, 80, ["stone", "stone", "leaf", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.03)
+
+
+## Lebendige Orte: Polizeiwagen mit Blaulicht und offener Tür, Leitkegel, Nagelband, Warndreieck, Schild „Halt Polizei“,
+## Feldbetten, Funktisch mit Lampe und Karte, Kanister, Kisten, Absperrband, liegengelassener Helm, Lampenmast.
+static func _kontrollpunkt_details(root: Node3D) -> void:
+	var orange := PlaceDetail.col(Color(0.95, 0.4, 0.08), 0.6)
+	var white := PlaceDetail.col(Color(0.95, 0.95, 0.92), 0.6)
+	for k in 8:
+		var cp := PlaceKit.on_ground(root, -3.0 + (k % 4) * 1.6, -2.0 if k < 4 else 2.2)
+		var cone := Node3D.new()
+		cone.position = cp
+		if k == 5:
+			cone.rotation_degrees.z = 88.0
+			cone.position.y += 0.12
+		root.add_child(cone)
+		BuildKit.box(cone, Vector3(0.36, 0.03, 0.36), Vector3(0, 0.015, 0), PlaceDetail.col(Color(0.1, 0.1, 0.1)), false)
+		BuildKit.lathe(cone, PackedVector2Array([Vector2(0, 0.03), Vector2(0.15, 0.03), Vector2(0.03, 0.7), Vector2(0, 0.7)]), Vector3.ZERO, orange, 10)
+		BuildKit.cylinder(cone, 0.095, 0.08, Vector3(0, 0.35, 0), white, false, Vector3.ZERO, 0.075, 10)
+	# Nagelband über die Fahrbahn
+	var sp := PlaceKit.on_ground(root, 2.5, 0.0, 0.02)
+	BuildKit.box(root, Vector3(0.12, 0.03, 6.0), sp, PlaceDetail.col(Color(0.1, 0.1, 0.1), 0.6), false, Vector3(0, 10, 0))
+	for k in 20:
+		BuildKit.box(root, Vector3(0.015, 0.06, 0.015), sp + Vector3(0.0, 0.03, -2.85 + k * 0.3).rotated(Vector3.UP, deg_to_rad(10.0)), PlaceKit.mat("metal"), false)
+	# Schild auf Ständer
+	var hp := PlaceKit.on_ground(root, -5.0, -5.0)
+	BuildKit.box(root, Vector3(0.05, 1.6, 0.05), hp + Vector3(0, 0.8, 0), PlaceKit.mat("metal"), true)
+	PlaceDetail.sign(root, "HALT\nPOLIZEI\nGrenzkontrolle", hp + Vector3(0, 1.45, 0.04), Vector2(0.6, 0.6), 0.0, Color(0.9, 0.9, 0.88), Color(0.1, 0.35, 0.15), 40)
+	var tri := PlaceKit.on_ground(root, 6.0, -1.0, 0.0)
+	for k in 3:
+		var a := k * 120.0
+		BuildKit.box(root, Vector3(0.5, 0.06, 0.03), tri + Vector3(0, 0.25, 0) + Vector3(0, 0.15, 0).rotated(Vector3.FORWARD, deg_to_rad(a + 90.0)), PlaceDetail.col(Color(0.85, 0.1, 0.08), 0.4), false, Vector3(0, 0, a))
+	# Polizeiwagen (verlassen, Tür offen, Blaulicht aus)
+	var car := Node3D.new()
+	car.name = "PoliceCar"
+	car.position = PlaceKit.on_ground(root, 4.0, 6.5, 0.3)
+	car.rotation_degrees.y = 100.0
+	root.add_child(car)
+	var paint := PlaceDetail.col(Color(0.9, 0.9, 0.88), 0.4, 0.2)
+	var green := PlaceDetail.col(Color(0.1, 0.35, 0.6), 0.4, 0.2)
+	BuildKit.box(car, Vector3(1.8, 0.7, 4.6), Vector3(0, 0.45, 0), paint, true)
+	BuildKit.box(car, Vector3(1.6, 0.55, 2.4), Vector3(0, 1.08, -0.2), paint, false)
+	BuildKit.box(car, Vector3(1.82, 0.18, 4.62), Vector3(0, 0.5, 0), green, false)
+	BuildKit.box(car, Vector3(1.55, 0.45, 0.04), Vector3(0, 1.1, 1.0), PlaceKit.mat("glass"), false, Vector3(-30, 0, 0))
+	BuildKit.box(car, Vector3(1.0, 0.1, 0.25), Vector3(0, 1.42, -0.2), PlaceDetail.col(Color(0.15, 0.2, 0.8), 0.3), false)
+	PlaceDetail.sign(car, "POLIZEI", Vector3(0.92, 0.72, 0.6), Vector2(0.9, 0.16), 90.0, Color(0.1, 0.35, 0.6), Color(0.95, 0.95, 0.95), 40, false)
+	for sx: float in [-0.92, 0.92]:
+		for sz: float in [-1.4, 1.4]:
+			BuildKit.cylinder(car, 0.32, 0.22, Vector3(sx, 0.15, sz), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 12)
+	var door := Node3D.new()
+	door.position = Vector3(0.9, 0.45, 0.7)
+	door.rotation_degrees.y = 60.0
+	car.add_child(door)
+	BuildKit.box(door, Vector3(0.05, 0.65, 1.1), Vector3(0, 0, -0.55), paint, false)
+	# Feldbetten und Funktisch in den Zelten, Kisten, Kanister
+	for t in 2:
+		var tent := root.get_node_or_null("Tent%d" % (t + 1)) as Node3D
+		if tent == null:
+			continue
+		for b in 2:
+			var cot := Node3D.new()
+			cot.position = Vector3(-0.9 + b * 1.8, 0, 0.8 if t == 0 else -0.2)
+			tent.add_child(cot)
+			BuildKit.box(cot, Vector3(0.7, 0.04, 1.9), Vector3(0, 0.42, 0), PlaceKit.mat("olive"), false)
+			for sz: float in [-0.85, 0.85]:
+				BuildKit.box(cot, Vector3(0.75, 0.42, 0.04), Vector3(0, 0.21, sz), PlaceKit.mat("metal"), false)
+			BuildKit.box(cot, Vector3(0.6, 0.08, 0.5), Vector3(0, 0.48, -0.6), PlaceKit.mat("cloth"), false)
+		PlaceDetail.lamp(tent, Vector3(0, 1.9, 0), "hanging", false)
+		PlaceDetail.crate(tent, Vector3(1.3, 0, -2.0), Vector3(0.6, 0.4, 0.4), 10.0)
+	var t1 := root.get_node_or_null("Tent1") as Node3D
+	if t1:
+		PlaceDetail.sign(t1, "LAGEKARTE\nB12 · Mauth · Finsterau\nSperrkreis MP4 (rot)", Vector3(0, 1.3, -2.44), Vector2(0.9, 0.6), 0.0, Color(0.88, 0.9, 0.82), Color(0.15, 0.25, 0.15), 26)
+		BuildKit.cylinder(t1, 0.2, 0.004, Vector3(0.2, 1.25, -2.43), PlaceKit.mat("red"), false, Vector3(90, 0, 0), -1.0, 16)
+	for k in 4:
+		var jp := PlaceKit.on_ground(root, 9.0 + k * 0.45, -8.0)
+		BuildKit.box(root, Vector3(0.18, 0.46, 0.34), jp + Vector3(0, 0.23, 0), PlaceKit.mat("olive"), false)
+		BuildKit.box(root, Vector3(0.06, 0.06, 0.1), jp + Vector3(0, 0.49, 0.1), PlaceKit.mat("olive"), false)
+	# Absperrband zwischen den Sandsäcken, liegengelassener Helm, Lampenmast
+	for k in 2:
+		var a := PlaceKit.on_ground(root, -7.0 + k * 14.0, -3.5, 0.9)
+		var b := PlaceKit.on_ground(root, -7.0 + k * 14.0, 3.5, 0.9)
+		var a2 := PlaceKit.on_ground(root, -7.0 + k * 14.0, -3.5, 0.9)
+		PlaceDetail.cable(root, a, a2 + Vector3(0, 0, -3.0), 0.1, 0.012, Color(0.9, 0.1, 0.08))
+		PlaceDetail.cable(root, b, b + Vector3(0, 0, 3.0), 0.1, 0.012, Color(0.95, 0.95, 0.95))
+	BuildKit.sphere(root, 0.15, PlaceKit.on_ground(root, 1.0, 4.0, 0.08), PlaceKit.mat("olive"), Vector3(1.0, 0.7, 1.15), 10)
+	var lp := PlaceKit.on_ground(root, -6.0, 6.0)
+	BuildKit.cylinder(root, 0.06, 4.0, lp + Vector3(0, 2.0, 0), PlaceKit.mat("metal"), true, Vector3.ZERO, 0.05, 8)
+	PlaceDetail.lamp(root, lp + Vector3(0, 3.9, 0), "flood", false, 120.0)
+	BuildKit.box(root, Vector3(0.6, 0.5, 0.4), lp + Vector3(0.6, 0.25, 0), PlaceDetail.col(Color(0.3, 0.38, 0.3), 0.6), true)
+	PlaceDetail.cable(root, lp + Vector3(0.35, 0.3, 0), lp + Vector3(0.04, 0.5, 0), 0.05, 0.015)
+	PlaceDetail.litter(root, Vector3(0, 0, 0), 12.0, 4545, 60, ["leaf", "leaf", "paper", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Speisehütte mit Tischdecken, Geschirr, Küchenzeile, Pinnwand mit Kinderbildern; Lagerfeuerkreis mit
+## Baumstamm-Bänken, Schaukel, Volleyballnetz, Plumpsklo, Waschrinne, Wegweiserpfahl, vergessene Rucksäcke.
+static func _ferienlager_details(root: Node3D, canteen: Node3D) -> void:
+	var wood := PlaceKit.mat("wood_old")
+	# Speisehütte innen
+	for k in 2:
+		BuildKit.box(canteen, Vector3(3.05, 0.01, 0.95), Vector3(-1.8 + k * 3.6, 0.78, 0.0), PlaceDetail.col(Color(0.75, 0.2, 0.18), 0.9), false)
+		for sz: float in [-0.75, 0.75]:
+			BuildKit.box(canteen, Vector3(3.0, 0.05, 0.3), Vector3(-1.8 + k * 3.6, 0.45, sz), PlaceKit.mat("furn"), true)
+		for d in 4:
+			BuildKit.cylinder(canteen, 0.11, 0.015, Vector3(-3.0 + k * 3.6 + d * 0.8, 0.79, 0.25 - (d % 2) * 0.5), PlaceDetail.col(Color(0.95, 0.95, 0.92), 0.3), false, Vector3.ZERO, -1.0, 12)
+			BuildKit.lathe(canteen, PackedVector2Array([Vector2(0, 0), Vector2(0.035, 0), Vector2(0.04, 0.09), Vector2(0.036, 0.09), Vector2(0.032, 0.01), Vector2(0, 0.01)]), Vector3(-2.8 + k * 3.6 + d * 0.8, 0.79, 0.35 - (d % 2) * 0.7), PlaceDetail.col(Color(0.3, 0.5, 0.75), 0.3), 10)
+	BuildKit.box(canteen, Vector3(2.0, 0.9, 0.6), Vector3(2.6, 0.45, -2.1), PlaceKit.mat("cabinet"), true)
+	BuildKit.box(canteen, Vector3(0.5, 0.15, 0.4), Vector3(2.2, 0.95, -2.1), PlaceKit.mat("metal"), false)
+	PlaceDetail.clutter(canteen, Vector3(3.0, 0.9, -2.1), Vector2(0.8, 0.4), 919, 3, ["cans", "jars"])
+	var board := PlaceDetail.sign(canteen, "WOCHENPLAN\nMo Schnitzeljagd · Di Bach · Mi Wanderung Lusen\nDo Lagerfeuer · Fr Abschlussfest", Vector3(-1.0, 1.6, -2.42), Vector2(1.4, 0.7), 0.0, Color(0.62, 0.45, 0.28), Color(0.1, 0.08, 0.05), 24)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2468
+	for k in 6:
+		var c := Color.from_hsv(rng.randf(), 0.4, 0.95)
+		BuildKit.box(board, Vector3(0.2, 0.15, 0.004), Vector3(-0.55 + k * 0.22, -0.22 + (k % 2) * 0.06, 0.012), PlaceDetail.col(c, 0.9), false, Vector3(0, 0, rng.randf_range(-10, 10)))
+	PlaceDetail.lamp(canteen, Vector3(-1.8, 2.3, 0), "hanging", false)
+	PlaceDetail.lamp(canteen, Vector3(1.8, 2.3, 0), "hanging", false)
+	# Lagerfeuerkreis mit Stammbänken
+	var fp := PlaceKit.on_ground(root, -6.0, 8.0)
+	for k in 10:
+		var a := TAU * k / 10.0
+		BuildKit.sphere(root, 0.16, fp + Vector3(cos(a) * 0.7, 0.06, sin(a) * 0.7), PlaceKit.mat("stone"), Vector3(1.2, 0.7, 1.0), 7)
+	for k in 5:
+		BuildKit.cylinder(root, 0.05, 0.6, fp + Vector3(cos(k * 1.3) * 0.2, 0.08, sin(k * 1.3) * 0.2), PlaceDetail.col(Color(0.07, 0.06, 0.05), 1.0), false, Vector3(80, k * 70.0, 0), 0.035, 6)
+	for k in 4:
+		var a := TAU * k / 4.0 + 0.4
+		var lp := fp + Vector3(cos(a) * 2.4, 0, sin(a) * 2.4)
+		lp.y = PlaceKit.ground(root, lp.x, lp.z)
+		BuildKit.cylinder(root, 0.2, 1.8, lp + Vector3(0, 0.2, 0), PlaceKit.mat("bark"), true, Vector3(0, -rad_to_deg(a), 90), -1.0, 10)
+	# Schaukel, Volleyballnetz, Plumpsklo, Waschrinne
+	var sw := PlaceKit.on_ground(root, 7.0, 6.0)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.beam_between(root, sw + Vector3(sx * 1.2, 0, sz * 0.6), sw + Vector3(sx * 1.0, 2.4, 0), 0.06, wood)
+	BuildKit.cylinder(root, 0.06, 2.2, sw + Vector3(0, 2.42, 0), wood, false, Vector3(0, 0, 90), -1.0, 8)
+	for sx: float in [-0.3, 0.3]:
+		PlaceDetail.cable(root, sw + Vector3(sx, 2.4, 0), sw + Vector3(sx, 0.55, 0.0), 0.0, 0.01, Color(0.6, 0.5, 0.35))
+	BuildKit.box(root, Vector3(0.7, 0.04, 0.22), sw + Vector3(0, 0.55, 0), wood, false)
+	var vp := PlaceKit.on_ground(root, 10.0, -4.0)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.cylinder(root, 0.04, 2.5, vp + Vector3(sx * 4.0, 1.25, 0), PlaceKit.mat("metal"), true, Vector3.ZERO, -1.0, 6)
+	var net := BuildKit.color_mat(Color(0.15, 0.15, 0.15, 0.55), 1.0)
+	net.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	net.cull_mode = BaseMaterial3D.CULL_DISABLED
+	BuildKit.box(root, Vector3(8.0, 0.8, 0.01), vp + Vector3(0, 2.0, 0), net, false, Vector3(0, 0, 3))
+	BuildKit.sphere(root, 0.11, PlaceKit.on_ground(root, 11.5, -2.5, 0.11), PlaceDetail.col(Color(0.95, 0.95, 0.9), 0.6), Vector3.ONE, 10)
+	var op := PlaceKit.on_ground(root, -12.0, -10.0)
+	var out := Node3D.new()
+	out.position = op
+	out.rotation_degrees.y = 60.0
+	root.add_child(out)
+	BuildKit.box(out, Vector3(1.2, 2.1, 1.2), Vector3(0, 1.05, 0), PlaceKit.mat("wood"), true)
+	BuildKit.box(out, Vector3(1.4, 0.06, 1.5), Vector3(0, 2.15, 0), PlaceKit.mat("shingles"), false, Vector3(-12, 0, 0))
+	BuildKit.box(out, Vector3(0.12, 0.2, 0.02), Vector3(0, 1.75, 0.61), PlaceDetail.col(Color(0.05, 0.05, 0.05)), false, Vector3(0, 0, 45))
+	var wt := PlaceKit.on_ground(root, -4.0, -2.0)
+	BuildKit.box(root, Vector3(3.0, 0.3, 0.5), wt + Vector3(0, 0.8, 0), PlaceKit.mat("metal"), true)
+	for k in 4:
+		BuildKit.cylinder(root, 0.015, 0.25, wt + Vector3(-1.2 + k * 0.8, 1.05, -0.2), PlaceKit.mat("metal"), false, Vector3(-30, 0, 0), -1.0, 6)
+	for sx: float in [-1.4, 1.4]:
+		BuildKit.box(root, Vector3(0.1, 0.8, 0.1), wt + Vector3(sx, 0.4, 0), PlaceKit.mat("metal"), false)
+	# Wegweiserpfahl im Lager, vergessene Rucksäcke
+	var gp := PlaceKit.on_ground(root, 3.0, 2.0)
+	BuildKit.box(root, Vector3(0.1, 2.4, 0.1), gp + Vector3(0, 1.2, 0), wood, true)
+	var dirs := [["Speisehütte", 0.0], ["Lagerfeuer", 140.0], ["Klo", 210.0], ["Bach", 300.0]]
+	for k in dirs.size():
+		var sg := PlaceDetail.sign(root, String(dirs[k][0]), gp + Vector3(0, 2.1 - k * 0.25, 0), Vector2(0.6, 0.14), float(dirs[k][1]), Color(0.9, 0.8, 0.55), Color(0.2, 0.12, 0.05), 28, false)
+		sg.position += Vector3(0.3, 0, 0).rotated(Vector3.UP, deg_to_rad(float(dirs[k][1])))
+	for k in 2:
+		var bp := PlaceKit.on_ground(root, -2.0 + k * 1.2, 5.0, 0.2)
+		BuildKit.box(root, Vector3(0.35, 0.45, 0.22), bp, PlaceDetail.col([Color(0.8, 0.2, 0.2), Color(0.2, 0.4, 0.75)][k], 0.8), false, Vector3(-70 + k * 20, k * 40.0, 0))
+	PlaceDetail.litter(root, Vector3(0, 0, 0), 14.0, 1357, 90, ["leaf", "leaf", "twig", "paper"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Schäferkarren mit Treppe, Tür, Ofenrohr, Fensterläden, Innenleben (Pritsche, Ofen, Kessel);
+## Zaunlatten im Pferch, Heuballen, Tränke, Hundehütte mit leerer Kette, Hirtenstab, Wäscheleine.
+static func _schaefer_details(root: Node3D, wagon: Node3D) -> void:
+	var wood := PlaceKit.mat("wood_old")
+	for k in 3:
+		BuildKit.box(wagon, Vector3(0.8, 0.05, 0.3), Vector3(-0.5, -0.5 + k * 0.25, 2.45 - k * 0.12), wood, true)
+	BuildKit.box(wagon, Vector3(0.75, 1.75, 0.05), Vector3(-0.5, 0.9, 2.13), PlaceKit.mat("wood_h"), false)
+	BuildKit.cylinder(wagon, 0.025, 0.1, Vector3(-0.2, 1.0, 2.18), PlaceKit.mat("metal"), false, Vector3(90, 0, 0), -1.0, 6)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(wagon, Vector3(0.05, 0.6, 0.6), Vector3(sx * 1.13, 1.3, -0.6), PlaceKit.mat("glass"), false)
+		BuildKit.box(wagon, Vector3(0.04, 0.62, 0.3), Vector3(sx * 1.15, 1.3, -1.06), PlaceDetail.col(Color(0.2, 0.35, 0.22), 0.8), false, Vector3(0, sx * 30.0, 0))
+	BuildKit.cylinder(wagon, 0.07, 1.0, Vector3(0.6, 3.0, -1.2), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.cylinder(wagon, 0.12, 0.1, Vector3(0.6, 3.5, -1.2), PlaceKit.mat("rust"), false, Vector3.ZERO, -1.0, 8)
+	BuildKit.box(wagon, Vector3(2.3, 0.08, 0.5), Vector3(0, 0.1, 2.3), wood, false)
+	# Deichsel
+	BuildKit.beam_between(wagon, Vector3(0, -0.3, -2.1), Vector3(0, -0.6, -3.6), 0.07, wood)
+	# Heuballen, Tränke, Hundehütte, Hirtenstab, Wäscheleine
+	for k in 4:
+		var hp := PlaceKit.on_ground(root, 5.0 + (k % 2) * 1.4, -16.0 - (k / 2) * 1.0, 0.6)
+		BuildKit.cylinder(root, 0.6, 1.2, hp, PlaceDetail.col(Color(0.52, 0.45, 0.26), 1.0), true, Vector3(0, k * 25.0, 90), -1.0, 14)
+	var tr := PlaceKit.on_ground(root, 3.0, -20.0)
+	BuildKit.box(root, Vector3(2.0, 0.4, 0.6), tr + Vector3(0, 0.2, 0), PlaceKit.mat("metal"), true)
+	BuildKit.box(root, Vector3(1.9, 0.02, 0.5), tr + Vector3(0, 0.36, 0), BuildKit.color_mat(Color(0.08, 0.1, 0.1), 0.05, 0.2), false)
+	var dh := PlaceKit.on_ground(root, -3.5, -13.0)
+	var dog := Node3D.new()
+	dog.position = dh
+	dog.rotation_degrees.y = 20.0
+	root.add_child(dog)
+	BuildKit.box(dog, Vector3(0.9, 0.7, 1.1), Vector3(0, 0.35, 0), PlaceKit.mat("wood"), true)
+	for sx: float in [-1.0, 1.0]:
+		BuildKit.box(dog, Vector3(0.6, 0.04, 1.25), Vector3(sx * 0.25, 0.85, 0), PlaceKit.mat("shingles"), false, Vector3(0, 0, -sx * 35.0))
+	BuildKit.box(dog, Vector3(0.4, 0.45, 0.02), Vector3(0, 0.26, 0.56), PlaceDetail.col(Color(0.03, 0.03, 0.03)), false)
+	for k in 10:
+		BuildKit.cylinder(root, 0.01, 0.05, dh + Vector3(0.1 + k * 0.08, 0.02, 0.7 + sin(k) * 0.05), PlaceKit.mat("metal"), false, Vector3(90, k * 45.0, 0), -1.0, 5)
+	BuildKit.cylinder(root, 0.06, 0.03, dh + Vector3(0.95, 0.03, 0.75), PlaceKit.mat("metal"), false, Vector3.ZERO, 0.05, 10)
+	var cr := PlaceKit.on_ground(root, 1.6, -11.5)
+	HandKit.tube(root, PackedVector3Array([cr, cr + Vector3(0.05, 1.5, 0.3), cr + Vector3(0.05, 1.7, 0.42), cr + Vector3(0.05, 1.62, 0.55)]), 0.02, wood, 6)
+	var lp1 := PlaceKit.on_ground(root, -2.0, -17.5)
+	var lp2 := PlaceKit.on_ground(root, -6.0, -16.0)
+	for lp: Vector3 in [lp1, lp2]:
+		BuildKit.box(root, Vector3(0.08, 1.8, 0.08), lp + Vector3(0, 0.9, 0), wood, true)
+	PlaceDetail.cable(root, lp1 + Vector3(0, 1.75, 0), lp2 + Vector3(0, 1.75, 0), 0.2, 0.006, Color(0.8, 0.8, 0.75))
+	for k in 3:
+		var t := 0.3 + k * 0.2
+		var p := (lp1 + Vector3(0, 1.75, 0)).lerp(lp2 + Vector3(0, 1.75, 0), t) + Vector3(0, -0.2 * 4.0 * t * (1.0 - t) - 0.25, 0)
+		BuildKit.box(root, Vector3(0.4, 0.5, 0.01), p, PlaceDetail.col([Color(0.4, 0.35, 0.5), Color(0.8, 0.78, 0.7), Color(0.3, 0.4, 0.3)][k], 0.9), false, Vector3(0, rad_to_deg(atan2(lp2.z - lp1.z, lp2.x - lp1.x)) * -1.0, 0))
+	# Zaunlatten am Pferch
+	for k in 10:
+		var a := TAU * k / 10.0
+		var b := TAU * (k + 1) / 10.0
+		var pa := PlaceKit.on_ground(root, cos(a) * 13.0 + 3.0, sin(a) * 6.0 - 22.0, 0.8)
+		var pb := PlaceKit.on_ground(root, cos(b) * 13.0 + 3.0, sin(b) * 6.0 - 22.0, 0.8)
+		if k == 3:
+			continue
+		BuildKit.beam_between(root, pa, pb, 0.05, wood)
+		BuildKit.beam_between(root, pa - Vector3(0, 0.4, 0), pb - Vector3(0, 0.4, 0), 0.05, wood)
+	PlaceDetail.litter(root, Vector3(0, 0, -14.0), 8.0, 2121, 50, ["leaf", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Torfziegel zum Trocknen, Spaten im Stich, Schubkarre; Unterstand mit Bank und Tafel „Moorschichten“;
+## Moorleiche mit Anorak, Rucksack, Taschenlampe und einem Stiefel im Schlamm; Birkenstangen, Wollgras.
+static func _moor_details(root: Node3D, tp: Vector3, corpse: Node3D) -> void:
+	var peat := PlaceDetail.col(Color(0.18, 0.12, 0.07), 1.0)
+	for row in 3:
+		for k in 8:
+			BuildKit.box(root, Vector3(0.28, 0.12, 0.12), tp + Vector3(-1.5 + k * 0.32, 0.06 + row * 0.12, 1.2 + (row % 2) * 0.06), peat, false, Vector3(0, (k * 13) % 7 - 3.0, 0))
+	var sp := tp + Vector3(1.0, 0.0, -0.4)
+	BuildKit.box(root, Vector3(0.2, 0.3, 0.02), sp + Vector3(0, 0.05, 0), PlaceKit.mat("metal"), false, Vector3(-15, 0, 0))
+	BuildKit.cylinder(root, 0.02, 1.0, sp + Vector3(0, 0.65, -0.12), PlaceKit.mat("wood_old"), false, Vector3(-15, 0, 0), -1.0, 6)
+	BuildKit.box(root, Vector3(0.14, 0.03, 0.03), sp + Vector3(0, 1.15, -0.25), PlaceKit.mat("wood_old"), false)
+	# Unterstand mit Bank und Tafel am Steg
+	var us := PlaceKit.on_ground(root, 24.5, 80.0)
+	var shelter := Node3D.new()
+	shelter.name = "Shelter"
+	shelter.position = us
+	shelter.rotation_degrees.y = 15.0
+	root.add_child(shelter)
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			BuildKit.box(shelter, Vector3(0.12, 2.2 if sz < 0.0 else 2.6, 0.12), Vector3(sx * 1.2, 1.1 if sz < 0.0 else 1.3, sz * 0.7), PlaceKit.mat("wood_old"), true)
+	BuildKit.box(shelter, Vector3(2.8, 0.08, 1.9), Vector3(0, 2.5, 0), PlaceKit.mat("shingles"), false, Vector3(-12, 0, 0))
+	BuildKit.box(shelter, Vector3(2.5, 1.2, 0.04), Vector3(0, 1.6, -0.72), PlaceKit.mat("wood"), true)
+	PlaceDetail.pew(shelter, Vector3(0, 0, -0.35), 2.0, "wood_old")
+	PlaceDetail.sign(shelter, "MOORSCHICHTEN\nTorf wächst 1 mm im Jahr.\nDieser Filz ist 9000 Jahre alt.\nWas hier versinkt, bleibt.", Vector3(0, 1.75, -0.69), Vector2(1.6, 0.8), 0.0, Color(0.85, 0.8, 0.65), Color(0.15, 0.1, 0.05), 28)
+	for k in 5:
+		BuildKit.box(shelter, Vector3(1.4, 0.1, 0.01), Vector3(0, 1.45 - k * 0.1, -0.68), PlaceDetail.col(Color(0.15 + k * 0.08, 0.1 + k * 0.05, 0.05), 1.0), false)
+	# Moorleiche: Anorak, Rucksack, Lampe, Stiefel
+	BuildKit.box(corpse, Vector3(0.5, 0.18, 0.6), Vector3(0, 0.1, 0.0), PlaceDetail.col(Color(0.15, 0.25, 0.32), 0.9), false)
+	BuildKit.box(corpse, Vector3(0.4, 0.3, 0.25), Vector3(0.45, 0.08, 0.3), PlaceDetail.col(Color(0.5, 0.3, 0.12), 0.9), false, Vector3(0, 30, 70))
+	BuildKit.cylinder(corpse, 0.025, 0.18, Vector3(-0.5, 0.03, -0.3), PlaceDetail.col(Color(0.1, 0.1, 0.1), 0.5), false, Vector3(0, 40, 90), -1.0, 8)
+	BuildKit.box(corpse, Vector3(0.12, 0.3, 0.28), Vector3(0.1, 0.05, 1.5), PlaceDetail.col(Color(0.1, 0.25, 0.12), 0.5), false, Vector3(20, 0, 10))
+	# Birkenstangen und Wollgras um den Torfstich
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 818
+	for k in 6:
+		var p := tp + Vector3(rng.randf_range(-4, 4), 0, rng.randf_range(-3, 3))
+		p.y = PlaceKit.ground(root, p.x, p.z)
+		BuildKit.cylinder(root, 0.04, 2.5, p + Vector3(0, 0.3, 0), PlaceDetail.col(Color(0.7, 0.68, 0.62), 0.9), false, Vector3(80, rng.randf() * 360.0, 0), 0.03, 6)
+	for k in 40:
+		var p := tp + Vector3(rng.randf_range(-6, 6), 0, rng.randf_range(-5, 5))
+		p.y = PlaceKit.ground(root, p.x, p.z)
+		BuildKit.cylinder(root, 0.004, 0.35, p + Vector3(0, 0.17, 0), PlaceDetail.col(Color(0.5, 0.45, 0.25), 1.0), false, Vector3(rng.randf_range(-10, 10), 0, 0), 0.002, 3)
+		BuildKit.sphere(root, 0.03, p + Vector3(0, 0.36, 0), PlaceDetail.col(Color(0.95, 0.95, 0.9), 1.0), Vector3(1, 1.3, 1), 5)
+
+
+## Lebendige Orte: Wurzelteller mit herausragenden Wurzeln, Baumstümpfe mit gesplitterten Enden, Absperrband und Warnschild,
+## verlassener Rückezug, Sondensplitter und verglaster Boden um den Krater, Rinde und Äste.
+static func _windwurf_details(root: Node3D, rng: RandomNumberGenerator) -> void:
+	var wood := PlaceKit.mat("bark")
+	var root_mat := PlaceDetail.col(Color(0.3, 0.22, 0.14), 0.9)
+	rng.seed = 778
+	for i in 18:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(10.0, 30.0)
+		var p := PlaceKit.on_ground(root, cos(a) * r, sin(a) * r)
+		# Stumpf mit gesplittertem Ende
+		var h := rng.randf_range(0.8, 2.6)
+		BuildKit.cylinder(root, 0.3, h, p + Vector3(0, h * 0.5, 0), wood, true, Vector3.ZERO, 0.28, 8)
+		for k in 5:
+			var sa := k * 72.0 + rng.randf_range(-15, 15)
+			var off := Vector3(0.18, 0, 0).rotated(Vector3.UP, deg_to_rad(sa))
+			BuildKit.box(root, Vector3(0.1, rng.randf_range(0.3, 0.8), 0.08), p + off + Vector3(0, h + 0.2, 0), PlaceDetail.col(Color(0.75, 0.65, 0.48), 0.9), false, Vector3(rng.randf_range(-20, 20), sa, rng.randf_range(-20, 20)))
+		# Wurzeln am Fuß
+		for k in 5:
+			var ra := k * 72.0 + 30.0
+			var d := Vector3(cos(deg_to_rad(ra)), 0, sin(deg_to_rad(ra)))
+			HandKit.tube(root, PackedVector3Array([p + Vector3(0, 0.2, 0), p + d * 0.5 + Vector3(0, 0.05, 0), p + d * 1.0 + Vector3(0, -0.05, 0)]), 0.07, root_mat, 6)
+	# Absperrband und Warnschild am Rand
+	for k in 4:
+		var a1 := TAU * k / 8.0 + 2.0
+		var a2 := TAU * (k + 1) / 8.0 + 2.0
+		var p1 := PlaceKit.on_ground(root, cos(a1) * 66.0, sin(a1) * 66.0, 0.9)
+		var p2 := PlaceKit.on_ground(root, cos(a2) * 66.0, sin(a2) * 66.0, 0.9)
+		BuildKit.box(root, Vector3(0.06, 1.0, 0.06), p1 - Vector3(0, 0.45, 0), PlaceKit.mat("wood_old"), false)
+		PlaceDetail.cable(root, p1, p2, 0.4, 0.012, Color(0.9, 0.1, 0.08) if k % 2 == 0 else Color(0.95, 0.95, 0.95))
+	var wp := PlaceKit.on_ground(root, cos(2.0) * 66.0, sin(2.0) * 66.0)
+	PlaceDetail.sign(root, "LEBENSGEFAHR\nTotholz – Betreten verboten\nNationalparkverwaltung", wp + Vector3(0, 1.4, 0), Vector2(0.7, 0.45), -rad_to_deg(2.0) - 90.0, Color(0.95, 0.85, 0.1), Color(0.05, 0.05, 0.05), 28)
+	# Rückezug (Forstmaschine), verlassen, mit Kran
+	var tr := Node3D.new()
+	tr.name = "Skidder"
+	tr.position = PlaceKit.on_ground(root, 30.0, 18.0, 0.6)
+	tr.rotation_degrees.y = 40.0
+	root.add_child(tr)
+	var green := PlaceDetail.col(Color(0.25, 0.42, 0.15), 0.5, 0.3)
+	BuildKit.box(tr, Vector3(2.2, 1.2, 2.6), Vector3(0, 0.8, -1.6), green, true)
+	BuildKit.box(tr, Vector3(1.8, 1.4, 1.6), Vector3(0, 2.0, -1.8), PlaceKit.mat("glass"), false)
+	BuildKit.box(tr, Vector3(2.4, 0.5, 4.0), Vector3(0, 0.7, 1.6), PlaceDetail.col(Color(0.2, 0.2, 0.2), 0.6, 0.4), true)
+	for sz: float in [-2.2, -0.8, 0.8, 2.4]:
+		for sx: float in [-1.15, 1.15]:
+			BuildKit.cylinder(tr, 0.6, 0.5, Vector3(sx, 0.0, sz), PlaceKit.mat("dark"), false, Vector3(0, 0, 90), -1.0, 14)
+	BuildKit.beam_between(tr, Vector3(0, 1.2, 0.0), Vector3(0.5, 3.4, 1.2), 0.12, PlaceKit.mat("yellow"))
+	BuildKit.beam_between(tr, Vector3(0.5, 3.4, 1.2), Vector3(0.8, 2.0, 3.6), 0.1, PlaceKit.mat("yellow"))
+	for k in 3:
+		BuildKit.cylinder(tr, 0.22, 4.2, Vector3(-0.5 + k * 0.5, 1.2, 1.8), PlaceKit.mat("bark"), false, Vector3(90, 0, 0), 0.2, 8)
+	# Sondensplitter, verglaster Boden im Krater
+	var glass := BuildKit.color_mat(Color(0.12, 0.14, 0.12), 0.05, 0.6)
+	for k in 10:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(0.5, 3.5)
+		BuildKit.box(root, Vector3(rng.randf_range(0.2, 0.6), 0.01, rng.randf_range(0.2, 0.5)), PlaceKit.on_ground(root, cos(a) * r, sin(a) * r, 0.04), glass, false, Vector3(0, rng.randf() * 360.0, 0))
+	for k in 7:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(2.0, 9.0)
+		BuildKit.box(root, Vector3(0.12, 0.03, 0.25), PlaceKit.on_ground(root, cos(a) * r, sin(a) * r, 0.04), PlaceDetail.col(Color(0.5, 0.52, 0.5), 0.3, 0.8), false, Vector3(rng.randf_range(-30, 30), rng.randf() * 360.0, 0))
+	PlaceDetail.litter(root, Vector3.ZERO, 30.0, 779, 160, ["twig", "twig", "leaf", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Planen-Lager mit Abspannseilen, Kocher, Topf, Laterne, Schlafsack, Kiste mit verpackten Spiegeln,
+## Leiter an einem Stamm, Seile in die Bäume, Spiegelscherben am Boden, Stativ mit Kompass, Skizzen.
+static func _spiegel_details(root: Node3D, c: Vector3, rng: RandomNumberGenerator) -> void:
+	var rope := Color(0.6, 0.5, 0.32)
+	for sx: float in [-1.0, 1.0]:
+		PlaceDetail.cable(root, c + Vector3(sx * 1.5, 1.6, 1.3), c + Vector3(sx * 2.6, 0.02, 2.2), 0.05, 0.008, rope)
+		PlaceDetail.cable(root, c + Vector3(sx * 1.5, 0.6, -1.3), c + Vector3(sx * 2.4, 0.02, -2.0), 0.03, 0.008, rope)
+	var st := c + Vector3(0.9, 0.0, 0.0)
+	BuildKit.cylinder(root, 0.1, 0.12, st + Vector3(0, 0.06, 0), PlaceDetail.col(Color(0.3, 0.3, 0.32), 0.4, 0.8), false, Vector3.ZERO, -1.0, 10)
+	BuildKit.cylinder(root, 0.11, 0.12, st + Vector3(0, 0.18, 0), PlaceDetail.col(Color(0.25, 0.25, 0.26), 0.3, 0.8), false, Vector3.ZERO, 0.1, 12)
+	PlaceDetail.lamp(root, c + Vector3(0, 1.0, 0.0), "hanging", false)
+	BuildKit.box(root, Vector3(0.75, 0.15, 2.0), c + Vector3(-0.5, 0.15, -0.2), PlaceDetail.col(Color(0.15, 0.25, 0.4), 0.8), false)
+	var crate := c + Vector3(-1.8, 0, -0.8)
+	PlaceDetail.crate(root, crate, Vector3(0.9, 0.5, 0.6), 15.0)
+	var mirror := BuildKit.color_mat(Color(0.75, 0.8, 0.85), 0.05, 0.95)
+	for k in 4:
+		BuildKit.box(root, Vector3(0.5, 0.6, 0.02), crate + Vector3(-0.25 + k * 0.15, 0.6, 0.0), PlaceKit.mat("cloth"), false, Vector3(0, 15, 8))
+	for k in 18:
+		var a := rng.randf() * TAU
+		var r := rng.randf_range(2.0, 20.0)
+		BuildKit.box(root, Vector3(rng.randf_range(0.05, 0.18), 0.004, rng.randf_range(0.05, 0.14)), PlaceKit.on_ground(root, cos(a) * r, sin(a) * r, 0.02), mirror, false, Vector3(0, rng.randf() * 360.0, 0))
+	# Leiter an einem der Stämme, Seile hinauf
+	var a0 := TAU * 3 / 14.0
+	var tp := PlaceKit.on_ground(root, cos(a0) * 22.0, sin(a0) * 22.0)
+	var lad := Node3D.new()
+	lad.position = tp + Vector3(-cos(a0), 0, -sin(a0)) * 1.2
+	lad.rotation = Vector3(deg_to_rad(-15.0), atan2(-cos(a0), -sin(a0)) + PI, 0)
+	root.add_child(lad)
+	for sx: float in [-0.22, 0.22]:
+		BuildKit.box(lad, Vector3(0.05, 4.5, 0.06), Vector3(sx, 2.25, 0), PlaceKit.mat("wood_old"), false)
+	for k in 13:
+		BuildKit.box(lad, Vector3(0.44, 0.04, 0.04), Vector3(0, 0.3 + k * 0.33, 0), PlaceKit.mat("wood_old"), false)
+	for k in 3:
+		var a := TAU * (k * 4 + 1) / 14.0
+		var p := PlaceKit.on_ground(root, cos(a) * 22.0, sin(a) * 22.0)
+		PlaceDetail.cable(root, p + Vector3(-cos(a) * 0.3, 8.0, -sin(a) * 0.3), p + Vector3(-cos(a) * 1.0, 0.05, -sin(a) * 1.0), 0.0, 0.01, rope)
+	# Stativ mit Kompass und Skizzenblock
+	var tri := c + Vector3(3.0, 0, -1.5)
+	for k in 3:
+		var a := TAU * k / 3.0
+		BuildKit.beam_between(root, tri + Vector3(0, 1.3, 0), tri + Vector3(cos(a) * 0.45, 0, sin(a) * 0.45), 0.015, PlaceKit.mat("metal"))
+	BuildKit.cylinder(root, 0.07, 0.03, tri + Vector3(0, 1.33, 0), PlaceDetail.col(Color(0.7, 0.6, 0.3), 0.3, 0.8), false, Vector3.ZERO, -1.0, 12)
+	PlaceDetail.clutter(root, c + Vector3(0.2, 0.0, 0.9), Vector2(0.6, 0.3), 991, 2, ["papers"])
+	PlaceDetail.litter(root, Vector3.ZERO, 20.0, 992, 90, ["leaf", "leaf", "twig"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)
+
+
+## Lebendige Orte: Steinlagen und Moos an den Widerlagern, eiserne Ringe, Treibholz vor dem Tor, Triftstämme am Ufer,
+## Flößerhaken, Pegellatte, Bank, Weg aus Trittsteinen.
+static func _klause_details(root: Node3D, bed: float, top: float) -> void:
+	var dark := PlaceDetail.col(Color(0.25, 0.25, 0.24), 0.9)
+	var moss := PlaceDetail.col(Color(0.15, 0.22, 0.08), 1.0)
+	for sx: float in [-1.0, 1.0]:
+		var y := bed
+		while y < top:
+			BuildKit.box(root, Vector3(3.02, 0.03, 3.22), Vector3(sx * 4.5, y, 0), dark, false)
+			y += 0.45
+		for k in 6:
+			BuildKit.box(root, Vector3(0.6, 0.02, 0.5), Vector3(sx * 4.5 + (k % 3 - 1) * 0.8, top + 0.01, -1.0 + (k / 3) * 2.0), moss, false, Vector3(0, k * 33.0, 0))
+		BuildKit.box(root, Vector3(0.04, 0.4, 0.4), Vector3(sx * 3.0, top - 0.6, -1.62), moss, false)
+		HandKit.tube(root, HandKit.arc(Vector3(sx * 3.0, top - 0.5, -1.65), 0.1, 0, 360, 12, Vector3.RIGHT, Vector3.UP), 0.015, PlaceKit.mat("rust"), 5)
+	# Treibholz vor dem Tor (Bergseite = -z)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1849
+	for k in 9:
+		BuildKit.cylinder(root, rng.randf_range(0.06, 0.15), rng.randf_range(1.2, 3.0), Vector3(rng.randf_range(-1.6, 1.6), bed + 0.4 + rng.randf() * 0.4, -0.6 - rng.randf() * 1.0), PlaceKit.mat("bark"), false,
+				Vector3(rng.randf_range(-20, 20), rng.randf_range(-50, 50), 90), -1.0, 6)
+	# Triftstämme am Ufer, Flößerhaken, Pegellatte
+	for k in 5:
+		var p := PlaceKit.on_ground(root, 8.0 + (k % 2) * 0.3, -3.0 + k * 0.45, 0.2)
+		BuildKit.cylinder(root, 0.2, 4.0, p + Vector3(0, (k / 2) * 0.32, 0), PlaceKit.mat("bark"), true, Vector3(90, 0, 0), 0.18, 8)
+	var hk := PlaceKit.on_ground(root, 7.0, 2.0, 0.05)
+	BuildKit.cylinder(root, 0.025, 3.0, hk, PlaceKit.mat("wood_old"), false, Vector3(90, 30, 0), -1.0, 6)
+	BuildKit.box(root, Vector3(0.05, 0.04, 0.2), hk + Vector3(1.5, 0, 0).rotated(Vector3.UP, deg_to_rad(-60.0)), PlaceKit.mat("rust"), false)
+	var pg := Vector3(-2.9, bed, -1.65)
+	BuildKit.box(root, Vector3(0.12, top - bed + 0.5, 0.02), pg + Vector3(0, (top - bed + 0.5) * 0.5 - 0.3, 0), PlaceDetail.col(Color(0.95, 0.95, 0.9), 0.6), false)
+	for k in int((top - bed) / 0.1):
+		BuildKit.box(root, Vector3(0.06 if k % 5 != 0 else 0.1, 0.012, 0.004), pg + Vector3(-0.02, k * 0.1 - 0.25, -0.012), PlaceDetail.col(Color(0.1, 0.1, 0.1)), false)
+	# Bank und Trittsteine
+	var bench := Node3D.new()
+	bench.position = PlaceKit.on_ground(root, -8.5, 0.5)
+	bench.rotation_degrees.y = 90.0
+	root.add_child(bench)
+	PlaceDetail.pew(bench, Vector3.ZERO, 1.5, "wood_old")
+	for k in 6:
+		BuildKit.box(root, Vector3(0.6, 0.08, 0.5), PlaceKit.on_ground(root, -9.0 + k * 0.6, 3.5 + sin(k) * 0.4, 0.03), PlaceKit.mat("stone"), false, Vector3(0, k * 20.0, 0))
+	PlaceDetail.litter(root, Vector3(-7.5, 0, 0), 4.0, 1850, 30, ["leaf", "twig", "stone"], func(x: float, z: float) -> float: return PlaceKit.ground(root, x, z) + 0.02)

@@ -287,10 +287,14 @@ static func hut(root: Node3D, n: String, center: Vector3, size: Vector2, height:
 	var front_open := [Vector4(hx, door, 0.0, 2.05)] if door > 0.0 else []
 	if windows and size.x > 4.0:
 		front_open.append(Vector4(hx * 0.45, 0.8, 0.9, 1.7))
-	BuildKit.wall(h, Vector2(-hx, hz), Vector2(hx, hz), 0.0, height, t, wm, front_open, "Front")
-	BuildKit.wall(h, Vector2(hx, -hz), Vector2(-hx, -hz), 0.0, height, t, wm, win, "Back")
-	BuildKit.wall(h, Vector2(-hx, -hz), Vector2(-hx, hz), 0.0, height, t, wm, win if size.y > 3.0 else [], "Left")
-	BuildKit.wall(h, Vector2(hx, hz), Vector2(hx, -hz), 0.0, height, t, wm, [] if broken else (win if size.y > 3.0 else []), "Right")
+	var walls := {
+		"Front": [BuildKit.wall(h, Vector2(-hx, hz), Vector2(hx, hz), 0.0, height, t, wm, front_open, "Front"), front_open],
+		"Back": [BuildKit.wall(h, Vector2(hx, -hz), Vector2(-hx, -hz), 0.0, height, t, wm, win, "Back"), win],
+		"Left": [BuildKit.wall(h, Vector2(-hx, -hz), Vector2(-hx, hz), 0.0, height, t, wm, win if size.y > 3.0 else [], "Left"), win if size.y > 3.0 else []],
+		"Right": [BuildKit.wall(h, Vector2(hx, hz), Vector2(hx, -hz), 0.0, height, t, wm, [] if broken else (win if size.y > 3.0 else []), "Right"),
+				[] if broken else (win if size.y > 3.0 else [])],
+	}
+	_hut_details(h, walls, size, height, t, wall_mat, door, broken)
 	if roof == "flat":
 		BuildKit.box(h, Vector3(size.x + 0.4, 0.16, size.y + 0.4), Vector3(0, height + 0.08, 0), mat(roof_mat), true)
 	elif roof == "gable":
@@ -303,7 +307,63 @@ static func hut(root: Node3D, n: String, center: Vector3, size: Vector2, height:
 			BuildKit.box(h, Vector3(slope, 0.1, size.y + 0.5), Vector3(sx * hx * 0.5, height + rise * 0.5 + 0.05, 0), mat(roof_mat), true, Vector3(0, 0, -sx * ang))
 		for sz: float in [-1.0, 1.0]:
 			BuildKit.gable(h, size.x, rise, t, Vector3(0, height, sz * (hz - t * 0.5)), 0.0, wm)
+		# Lebendige Orte: Stirnbretter, Firstbrett, Traufbretter, Rinne mit Fallrohr
+		var ow := mat("wood_old")
+		for sx: float in [-1.0, 1.0]:
+			if broken and sx > 0.0:
+				continue
+			for sz: float in [-1.0, 1.0]:
+				BuildKit.box(h, Vector3(slope, 0.16, 0.035), Vector3(sx * hx * 0.5, height + rise * 0.5 - 0.02, sz * (hz + 0.26)), ow, false, Vector3(0, 0, -sx * ang))
+			var ex := sx * (hx + 0.3 * cos(deg_to_rad(ang)))
+			var ey := height - 0.3 * sin(deg_to_rad(ang)) + 0.02
+			BuildKit.box(h, Vector3(0.035, 0.16, size.y + 0.5), Vector3(ex, ey, 0), ow, false)
+			if not broken and sx < 0.0:
+				PlaceDetail.gutter(h, Vector3(ex - 0.05, ey - 0.05, -hz - 0.25), Vector3(ex - 0.05, ey - 0.05, hz + 0.2), 0.0, "rust", Vector3(0.3, 0, -0.3))
+		if not broken:
+			BuildKit.box(h, Vector3(0.22, 0.05, size.y + 0.52), Vector3(0, height + rise + 0.08, 0), ow, false)
 	return h
+
+
+## Fenster mit Rahmen/Glas/Fensterbank, Tür mit Zarge und Beschlägen, Eckbretter, Stufe, Unkraut – für alle Hütten der Orte.
+static func _hut_details(h: Node3D, walls: Dictionary, size: Vector2, height: float, t: float, wall_mat: String, door: float, broken: bool) -> void:
+	var hx := size.x * 0.5
+	var hz := size.y * 0.5
+	var frame := "wood_old" if wall_mat != "concrete" else "steel_dark"
+	for key: String in walls:
+		var w: Node3D = walls[key][0]
+		for o: Vector4 in walls[key][1]:
+			if o.z < 0.01:
+				# Tür: Zarge außen + Flügel (halb offen, nach innen)
+				var ow := mat(frame)
+				for sx: float in [-1.0, 1.0]:
+					BuildKit.box(w, Vector3(0.08, o.w + 0.08, 0.04), Vector3(o.x + sx * (o.y * 0.5 + 0.04), (o.w + 0.08) * 0.5, t * 0.5 + 0.02), ow, false)
+				BuildKit.box(w, Vector3(o.y + 0.24, 0.1, 0.05), Vector3(o.x, o.w + 0.06, t * 0.5 + 0.02), ow, false)
+				var leaf := PlaceDetail.door(w, Vector3(o.x, 0.0, -t * 0.25), 0.0, o.y - 0.04, o.w - 0.02,
+						"steel" if wall_mat == "concrete" else "plank", 25.0 if broken else 65.0, false, "wood_old")
+				leaf.name = "DoorLeaf"
+				# Schwelle / Stufe davor
+				BuildKit.box(w, Vector3(o.y + 0.4, 0.14, 0.4), Vector3(o.x, -0.05, t * 0.5 + 0.2), mat("stone"), true)
+			else:
+				if broken:
+					var ow2 := mat(frame)
+					BuildKit.box(w, Vector3(o.y, 0.05, 0.08), Vector3(o.x, o.z, 0), ow2, false)
+					BuildKit.box(w, Vector3(o.y, 0.05, 0.08), Vector3(o.x, o.w, 0), ow2, false)
+					var shard := BuildKit.glass_mat()
+					BuildKit.box(w, Vector3(o.y * 0.3, 0.25, 0.006), Vector3(o.x - o.y * 0.3, o.z + 0.14, 0), shard, false, Vector3(0, 0, 25))
+					BuildKit.box(w, Vector3(o.y * 0.2, 0.18, 0.006), Vector3(o.x + o.y * 0.32, o.w - 0.1, 0), shard, false, Vector3(0, 0, -35))
+				else:
+					PlaceDetail.window(w, Vector3(o.x, o.z, 0.0), 0.0, o.y, o.w - o.z, t, "rect", Color(0.5, 0.56, 0.55, 0.4), frame, 1, false, "wood_old")
+	# Eckbretter an Holzhütten
+	if wall_mat in ["wood", "wood_old", "wood_h"]:
+		var cm := mat("wood_old")
+		for sx: float in [-1.0, 1.0]:
+			for sz: float in [-1.0, 1.0]:
+				BuildKit.box(h, Vector3(0.12, height, 0.12), Vector3(sx * (hx + 0.01), height * 0.5, sz * (hz + 0.01)), cm, false)
+	# Unkraut und Laub am Sockel (fester Zufall je Hütte)
+	var seed_v := int(absf(h.position.x * 31.0 + h.position.z * 17.0)) + 5
+	for k in 6:
+		var a := k * 1.1 + seed_v
+		PlaceDetail.weeds(h, Vector3(clampf(cos(a) * hx * 1.3, -hx - 0.1, hx + 0.1), 0.0, clampf(sin(a) * hz * 1.3, -hz - 0.1, hz + 0.1)), seed_v + k, 5, 0.25)
 
 
 ## Zaun aus Pfosten und Maschendraht zwischen Punkten (lokal, Draufsicht). gap = Öffnungen entlang der Strecke.
